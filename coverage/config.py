@@ -658,6 +658,7 @@ def config_files_to_try(config_file: bool | str) -> list[tuple[str, bool, bool]]
     assert isinstance(config_file, str)
     files_to_try = [
         (config_file, True, specified_file),
+        (".coveragerc.toml", True, False),
         ("setup.cfg", False, False),
         ("tox.ini", False, False),
         ("pyproject.toml", False, False),
