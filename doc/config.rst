@@ -39,7 +39,7 @@ environment variable.
 
 If ``.coveragerc`` doesn't exist and another file hasn't been specified, then
 coverage.py will look for settings in other common configuration files, in this
-order: setup.cfg, tox.ini, or pyproject.toml.  The first file found with
+order: .coveragerc.toml, setup.cfg, tox.ini, or pyproject.toml.  The first file found with
 coverage.py settings will be used and other files won't be consulted.
 
 Coverage.py will read from "pyproject.toml" if TOML support is available,
@@ -199,7 +199,7 @@ Here's a sample configuration file, in each syntax:
         directory = coverage_html_report
 
     .. code-tab:: toml
-        :caption: pyproject.toml
+        :caption: .coveragerc.toml or pyproject.toml
 
         [tool.coverage.run]
         branch = true
@@ -606,7 +606,7 @@ equivalent when combining data from different machines:
             c:\myproj\src
 
     .. code-tab:: toml
-        :caption: pyproject.toml
+        :caption: .coveragerc.toml or pyproject.toml
 
         [tool.coverage.paths]
         source = [
