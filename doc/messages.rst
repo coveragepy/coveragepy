@@ -191,7 +191,7 @@ file:
         disable_warnings = no-data-collected
 
     .. code-tab:: toml
-        :caption: pyproject.toml
+        :caption: .coveragerc.toml or pyproject.toml
 
         [tool.coverage.run]
         disable_warnings = ["no-data-collected"]
@@ -202,4 +202,4 @@ file:
         [coverage:run]
         disable_warnings = no-data-collected
 
-.. [[[end]]] (sum: SJKFvPoXO2)
+.. [[[end]]] (sum: lZkA6+wMrL)

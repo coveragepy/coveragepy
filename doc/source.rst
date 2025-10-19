@@ -115,7 +115,7 @@ current directory:
             utils/tirefire.py
 
     .. code-tab:: toml
-        :caption: pyproject.toml
+        :caption: .coveragerc.toml or pyproject.toml
 
         [tool.coverage.run]
         omit = [
@@ -139,7 +139,7 @@ current directory:
             # omit this single file
             utils/tirefire.py
 
-.. [[[end]]] (sum: hK0nQ8wMeg)
+.. [[[end]]] (sum: 6pS//9tCe4)
 
 The ``source``, ``include``, and ``omit`` values all work together to determine
 the source that will be measured.

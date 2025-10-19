@@ -93,7 +93,7 @@ def show_configs(ini, toml):
     print(".. tabs::\n")
     for name, syntax, text in [
         (".coveragerc", "ini", ini),
-        ("pyproject.toml", "toml", toml),
+        (".coveragerc.toml or pyproject.toml", "toml", toml),
         ("setup.cfg or tox.ini", "ini", ini2),
     ]:
         print(f"    .. code-tab:: {syntax}")
