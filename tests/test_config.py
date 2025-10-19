@@ -1037,19 +1037,25 @@ class ConfigFileTest(UsingModulesMixin, CoverageTest):
 
     def test_coveragerc_toml_priority(self) -> None:
         """Test that .coveragerc.toml has priority over pyproject.toml."""
-        self.make_file(".coveragerc.toml", """\
+        self.make_file(
+            ".coveragerc.toml",
+            """\
             [tool.coverage.run]
             timid = true
             data_file = ".toml-data.dat"
             branch = true
-            """)
+            """,
+        )
 
-        self.make_file("pyproject.toml", """\
+        self.make_file(
+            "pyproject.toml",
+            """\
             [tool.coverage.run]
             timid = false
             data_file = "pyproject-data.dat"
             branch = false
-            """)
+            """,
+        )
         cov = coverage.Coverage()
 
         assert cov.config.timid is True
