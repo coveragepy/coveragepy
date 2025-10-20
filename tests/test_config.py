@@ -75,7 +75,7 @@ class ConfigTest(CoverageTest):
         assert cov.config.data_file == "delete.me"
 
     @pytest.mark.parametrize("filename", ["pyproject.toml", ".coveragerc.toml"])
-    def test_toml_config_file(self, filename) -> None:
+    def test_toml_config_file(self, filename: str) -> None:
         # A pyproject.toml and .coveragerc.toml file will be read into the configuration.
         self.make_file(
             filename,
@@ -109,7 +109,7 @@ class ConfigTest(CoverageTest):
         assert cov.config.get_plugin_options("plugins.a_plugin") == {"hello": "world"}
 
     @pytest.mark.parametrize("filename", ["pyproject.toml", ".coveragerc.toml"])
-    def test_toml_ints_can_be_floats(self, filename) -> None:
+    def test_toml_ints_can_be_floats(self, filename: str) -> None:
         # Test that our class doesn't reject integers when loading floats
         self.make_file(
             filename,
@@ -301,7 +301,7 @@ class ConfigTest(CoverageTest):
             ('[tool.coverage.report]\nfail_under="s"', "couldn't convert to a float"),
         ],
     )
-    def test_toml_parse_errors(self, filename, bad_config: str, msg: str) -> None:
+    def test_toml_parse_errors(self, filename: str, bad_config: str, msg: str) -> None:
         # Im-parsable values raise ConfigError, with details.
         self.make_file(filename, bad_config)
         with pytest.raises(ConfigError, match=msg):
@@ -333,7 +333,7 @@ class ConfigTest(CoverageTest):
         assert cov.config.exclude_list == ["the_$one", "anotherZZZ", "xZZZy", "xy", "huh${X}what"]
 
     @pytest.mark.parametrize("filename", ["pyproject.toml", ".coveragerc.toml"])
-    def test_environment_vars_in_toml_config(self, filename) -> None:
+    def test_environment_vars_in_toml_config(self, filename: str) -> None:
         # Config files can have $envvars in them.
         self.make_file(
             filename,
@@ -405,7 +405,7 @@ class ConfigTest(CoverageTest):
         self.assert_tilde_results()
 
     @pytest.mark.parametrize("filename", ["pyproject.toml", ".coveragerc.toml"])
-    def test_tilde_in_toml_config(self, filename) -> None:
+    def test_tilde_in_toml_config(self, filename: str) -> None:
         # Config entries that are file paths can be tilde-expanded.
         self.make_file(
             filename,
@@ -546,7 +546,7 @@ class ConfigTest(CoverageTest):
             _ = coverage.Coverage()
 
     @pytest.mark.parametrize("filename", ["pyproject.toml", ".coveragerc.toml"])
-    def test_unknown_option_toml(self, filename) -> None:
+    def test_unknown_option_toml(self, filename: str) -> None:
         self.make_file(
             filename,
             """\
@@ -614,7 +614,7 @@ class ConfigTest(CoverageTest):
             config.get("xyzzy", "foo")
 
     @pytest.mark.parametrize("filename", ["pyproject.toml", ".coveragerc.toml"])
-    def test_exclude_also(self, filename) -> None:
+    def test_exclude_also(self, filename: str) -> None:
         self.make_file(
             filename,
             """\
@@ -966,7 +966,7 @@ class ConfigFileTest(UsingModulesMixin, CoverageTest):
 
     @pytest.mark.skipif(env.PYVERSION >= (3, 11), reason="Python 3.11 has toml in stdlib")
     @pytest.mark.parametrize("filename", ["pyproject.toml", ".coveragerc.toml"])
-    def test_no_toml_installed_pyproject_toml(self, filename) -> None:
+    def test_no_toml_installed_pyproject_toml(self, filename: str) -> None:
         # Can't have coverage config in pyproject.toml/.coveragerc.toml without toml installed.
         self.make_file(
             filename,
@@ -983,7 +983,7 @@ class ConfigFileTest(UsingModulesMixin, CoverageTest):
 
     @pytest.mark.skipif(env.PYVERSION >= (3, 11), reason="Python 3.11 has toml in stdlib")
     @pytest.mark.parametrize("filename", ["pyproject.toml", ".coveragerc.toml"])
-    def test_no_toml_installed_pyproject_toml_shorter_syntax(self, filename) -> None:
+    def test_no_toml_installed_pyproject_toml_shorter_syntax(self, filename: str) -> None:
         # Can't have coverage config in pyproject.toml/.coveragerc.toml without toml installed.
         self.make_file(
             filename,
