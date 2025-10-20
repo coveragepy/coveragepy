@@ -181,9 +181,9 @@ Version 7.10.7 — 2025-09-21
   LCOV reports could take far too long due to some quadratic behavior when
   creating the function and class index pages.  This is now fixed, closing
   `issue 2048`_.  Thanks to Daniel Diniz for help diagnosing the problem.
-- New feature: coverage.py now supports `.coveragerc.toml` configuration files.
+- New feature: coverage.py now supports :file:`.coveragerc.toml` configuration files.
   These files use TOML syntax and take priority over `pyproject.toml` but lower
-  priority than `.coveragerc` files.
+  priority than :file:`.coveragerc` files.
 
 - Most warnings and a few errors now have links to a page in the docs
   explaining the specific message.  Closes `issue 1921`_.
