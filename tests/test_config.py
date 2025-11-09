@@ -1017,7 +1017,7 @@ class ConfigFileTest(UsingModulesMixin, CoverageTest):
             assert cov.config.data_file == ".coverage"
 
     @pytest.mark.parametrize("filename", ["pyproject.toml", ".coveragerc.toml"])
-    def test_exceptions_from_missing_toml_things(self, filename) -> None:
+    def test_exceptions_from_missing_toml_things(self, filename: str) -> None:
         self.make_file(
             filename,
             """\
