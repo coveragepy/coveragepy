@@ -140,12 +140,8 @@ coverage.wire_up_filter = function () {
     const table_body_rows = table.querySelectorAll("tbody tr");
     const no_rows = document.getElementById("no_rows");
 
-    const header_row = table.tHead ? table.tHead.rows[table.tHead.rows.length - 1] : table.rows[0];
-    const column_count = header_row ? header_row.cells.length : table.rows[0].cells.length;
-    const footer = table.tFoot ? table.tFoot.rows[0] : null;
-    const ratio_columns = footer ?
-        Array.from(footer.cells).map(cell => Boolean(cell.dataset.ratio)) :
-        Array.from({length: column_count}, () => false);
+    const footer = table.tFoot.rows[0];
+    const ratio_columns = Array.from(footer.cells).map(cell => Boolean(cell.dataset.ratio));
 
     // Observe filter keyevents.
     const filter_handler = (event => {
