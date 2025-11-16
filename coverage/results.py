@@ -333,29 +333,29 @@ class Numbers:
         """Return numerator/denominator for branch coverage."""
         return self.n_executed_branches, self.n_branches
 
+    def _percent(self, numerator: int, denominator: int) -> float:
+        """Helper for pc_* properties."""
+        if denominator > 0:
+            return (100.0 * numerator) / denominator
+        return 100.0
+
     @property
     def pc_covered(self) -> float:
         """Returns a single percentage value for coverage."""
-        if self.n_statements > 0:
-            numerator, denominator = self.ratio_covered
-            pc_cov = (100.0 * numerator) / denominator
-        else:
-            pc_cov = 100.0
-        return pc_cov
+        numerator, denominator = self.ratio_covered
+        if self.n_statements == 0:
+            return 100.0
+        return self._percent(numerator, denominator)
 
     @property
     def pc_statements(self) -> float:
         """Returns the percentage covered for statements."""
-        if self.n_statements > 0:
-            return (100.0 * self.n_executed) / self.n_statements
-        return 100.0
+        return self._percent(self.n_executed, self.n_statements)
 
     @property
     def pc_branches(self) -> float:
         """Returns the percentage covered for branches."""
-        if self.n_branches > 0:
-            return (100.0 * self.n_executed_branches) / self.n_branches
-        return 100.0
+        return self._percent(self.n_executed_branches, self.n_branches)
 
     @property
     def pc_covered_str(self) -> str:
