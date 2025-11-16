@@ -23,6 +23,10 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
+- The HTML report now shows separate coverage totals for statements and
+  branches, as well as the usual combined coverage percentage. Thanks to Ryuta
+  for the `discussion <issue 2081_>`_ and the `implementation <pull 2085_>`_.
+
 - Fix: ``except*`` clauses were not handled properly under the "sysmon"
   measurement core, causing KeyError exceptions as described in `issue 2086`_.
   This is now fixed.
@@ -33,7 +37,9 @@ Unreleased
 - A small tweak to the HTML report: file paths now use thin spaces around
   slashes to make them easier to read.
 
+.. _issue 2081: https://github.com/coveragepy/coveragepy/issues/2081
 .. _issue 2083: https://github.com/coveragepy/coveragepy/issues/2083
+.. _pull 2085: https://github.com/coveragepy/coveragepy/pull/2085
 .. _issue 2086: https://github.com/coveragepy/coveragepy/issues/2086
 
 

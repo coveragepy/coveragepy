@@ -194,7 +194,7 @@ coverage.wire_up_filter = function () {
             for (let column = 0; column < totals.length; column++) {
                 // Accumulate dynamic totals
                 cell = row.cells[column]  // nosemgrep: eslint.detect-object-injection
-                if (cell.classList.contains("name")) {
+                if (cell.matches(".name, .spacer")) {
                     continue;
                 }
                 if (ratio_columns[column] && cell.dataset.ratio) {
@@ -225,7 +225,7 @@ coverage.wire_up_filter = function () {
         for (let column = 0; column < totals.length; column++) {
             // Get footer cell element.
             const cell = footer.cells[column];  // nosemgrep: eslint.detect-object-injection
-            if (cell.classList.contains("name")) {
+            if (cell.matches(".name, .spacer")) {
                 continue;
             }
 

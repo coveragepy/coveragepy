@@ -855,7 +855,7 @@ class HtmlGoldTest(HtmlTestHelpers, CoverageTest):
             "out/a/index.html",
             '<a href="a_py.html">a.py</a>',
             '<span class="pc_cov">67%</span>',
-            '<td class="right" data-ratio="2 3">67%</td>',
+            '<td data-ratio="2 3">67%</td>',
         )
 
     def test_b_branch(self) -> None:
@@ -927,7 +927,7 @@ class HtmlGoldTest(HtmlTestHelpers, CoverageTest):
             "out/b_branch/index.html",
             '<a href="b_py.html">b.py</a>',
             '<span class="pc_cov">70%</span>',
-            '<td class="right" data-ratio="16 23">70%</td>',
+            '<td data-ratio="16 23">70%</td>',
         )
 
     def test_bom(self) -> None:

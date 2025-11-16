@@ -244,11 +244,13 @@ class ReportWithJinjaTest(CoverageTest):
             """\
         <tbody>
             <tr class="region">
-                <td class="name left"><a href="good_j2.html">good.j2</a></td>
+                <td class="name"><a href="good_j2.html">good.j2</a></td>
+                <td class="spacer">&nbsp;</td>
                 <td>3</td>
                 <td>1</td>
                 <td>0</td>
-                <td class="right" data-ratio="2 3">67%</td>
+                <td class="spacer">&nbsp;</td>
+                <td data-ratio="2 3">67%</td>
             </tr>
         </tbody>""",
         )

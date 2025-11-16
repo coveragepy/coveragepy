@@ -733,6 +733,7 @@ $border-indicator-width: .2em;
     }
     td, th {
         text-align: right;
+        vertical-align: baseline;
         padding: .25em .5em;
         border-bottom: 1px solid $light-gray2;
         @include border-color-dark($dark-gray2);
@@ -742,12 +743,23 @@ $border-indicator-width: .2em;
             font-family: $font-normal;
             min-width: 15em;
         }
+        &.left {
+            text-align: left;
+        }
+        &.spacer {
+            border: none;
+            padding: 0;
+            &:hover {
+                background: inherit;
+            }
+        }
     }
     th {
         font-family: $font-normal;
         font-style: italic;
         color: $light-gray6;
         @include color-dark($dark-gray6);
+        border-color: #ccc;
         cursor: pointer;
         &:hover {
             background: $light-gray2;
@@ -777,10 +789,7 @@ $border-indicator-width: .2em;
         th {
             cursor: default;
             font-style: normal;
-            text-align: left;
-        }
-        .group-label {
-            font-weight: bold;
+            border-color: #999;
         }
     }
     td.name {
@@ -797,7 +806,6 @@ $border-indicator-width: .2em;
     tr.total td,
     tr.total_dynamic td {
         font-weight: bold;
-        border-top: 1px solid #ccc;
         border-bottom: none;
     }
     tr.region:hover {
