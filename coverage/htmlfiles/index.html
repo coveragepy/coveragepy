@@ -81,15 +81,30 @@
     <table class="index" data-sortable>
         <thead>
             {# The title="" attr doesn't work in Safari. #}
+            {% if has_arcs %}
+            <tr class="tablehead grouphead">
+                <th>&nbsp;</th>
+                {% if region_noun %}
+                <th>&nbsp;</th>
+                {% endif %}
+                <th colspan="4" class="group-label">Statements</th>
+                <th colspan="3" class="group-label">Branches</th>
+                <th colspan="1" class="group-label">Overall</th>
+            </tr>
+            {% endif %}
             <tr class="tablehead" title="Click to sort">
                 <th id="file" class="name left" aria-sort="none" data-shortcut="f">File<span class="arrows"></span></th>
                 {% if region_noun %}
                 <th id="region" class="name left" aria-sort="none" data-default-sort-order="ascending" data-shortcut="n">{{ region_noun }}<span class="arrows"></span></th>
                 {% endif %}
+                {% if has_arcs %}
+                <th id="statements_coverage" aria-sort="none" data-default-sort-order="descending">coverage<span class="arrows"></span></th>
+                {% endif %}
                 <th id="statements" aria-sort="none" data-default-sort-order="descending" data-shortcut="s">statements<span class="arrows"></span></th>
                 <th id="missing" aria-sort="none" data-default-sort-order="descending" data-shortcut="m">missing<span class="arrows"></span></th>
                 <th id="excluded" aria-sort="none" data-default-sort-order="descending" data-shortcut="x">excluded<span class="arrows"></span></th>
                 {% if has_arcs %}
+                <th id="branches_coverage" aria-sort="none" data-default-sort-order="descending">coverage<span class="arrows"></span></th>
                 <th id="branches" aria-sort="none" data-default-sort-order="descending" data-shortcut="b">branches<span class="arrows"></span></th>
                 <th id="partial" aria-sort="none" data-default-sort-order="descending" data-shortcut="p">partial<span class="arrows"></span></th>
                 {% endif %}
@@ -103,10 +118,14 @@
                 {% if region_noun %}
                 <td class="name left"><a href="{{region.url}}">{{region.description}}</a></td>
                 {% endif %}
+                {% if has_arcs %}
+                <td data-ratio="{{region.nums.ratio_statements|pair}}">{{region.nums.pc_statements_str}}%</td>
+                {% endif %}
                 <td>{{region.nums.n_statements}}</td>
                 <td>{{region.nums.n_missing}}</td>
                 <td>{{region.nums.n_excluded}}</td>
                 {% if has_arcs %}
+                <td data-ratio="{{region.nums.ratio_branches|pair}}">{{region.nums.pc_branches_str}}%</td>
                 <td>{{region.nums.n_branches}}</td>
                 <td>{{region.nums.n_partial_branches}}</td>
                 {% endif %}
@@ -120,10 +139,14 @@
                 {% if region_noun %}
                 <td class="name left">&nbsp;</td>
                 {% endif %}
+                {% if has_arcs %}
+                <td data-ratio="{{totals.ratio_statements|pair}}">{{totals.pc_statements_str}}%</td>
+                {% endif %}
                 <td>{{totals.n_statements}}</td>
                 <td>{{totals.n_missing}}</td>
                 <td>{{totals.n_excluded}}</td>
                 {% if has_arcs %}
+                <td data-ratio="{{totals.ratio_branches|pair}}">{{totals.pc_branches_str}}%</td>
                 <td>{{totals.n_branches}}</td>
                 <td>{{totals.n_partial_branches}}</td>
                 {% endif %}

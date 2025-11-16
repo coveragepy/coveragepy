@@ -773,6 +773,16 @@ $border-indicator-width: .2em;
             content: " ▼";
         }
     }
+    tr.grouphead {
+        th {
+            cursor: default;
+            font-style: normal;
+            text-align: left;
+        }
+        .group-label {
+            font-weight: bold;
+        }
+    }
     td.name {
         font-size: 1.15em;
         a {

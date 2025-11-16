@@ -352,6 +352,10 @@ kbd { border: 1px solid black; border-color: #888 #333 #333 #888; padding: .1em 
 
 #index th[aria-sort="descending"] .arrows::after { content: " ▼"; }
 
+#index tr.grouphead th { cursor: default; font-style: normal; text-align: left; }
+
+#index tr.grouphead .group-label { font-weight: bold; }
+
 #index td.name { font-size: 1.15em; }
 
 #index td.name a { text-decoration: none; color: inherit; }

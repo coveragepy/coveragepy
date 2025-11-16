@@ -324,14 +324,35 @@ class Numbers:
         return self.n_branches - self.n_missing_branches
 
     @property
+    def ratio_statements(self) -> tuple[int, int]:
+        """Return numerator/denominator for statement coverage."""
+        return self.n_executed, self.n_statements
+
+    @property
+    def ratio_branches(self) -> tuple[int, int]:
+        """Return numerator/denominator for branch coverage."""
+        return self.n_executed_branches, self.n_branches
+
+    def _percent(self, numerator: int, denominator: int) -> float:
+        """Helper for pc_* properties."""
+        if denominator > 0:
+            return (100.0 * numerator) / denominator
+        return 100.0
+
+    @property
     def pc_covered(self) -> float:
         """Returns a single percentage value for coverage."""
-        if self.n_statements > 0:
-            numerator, denominator = self.ratio_covered
-            pc_cov = (100.0 * numerator) / denominator
-        else:
-            pc_cov = 100.0
-        return pc_cov
+        return self._percent(*self.ratio_covered)
+
+    @property
+    def pc_statements(self) -> float:
+        """Returns the percentage covered for statements."""
+        return self._percent(*self.ratio_statements)
+
+    @property
+    def pc_branches(self) -> float:
+        """Returns the percentage covered for branches."""
+        return self._percent(*self.ratio_branches)
 
     @property
     def pc_covered_str(self) -> str:
@@ -343,6 +364,16 @@ class Numbers:
 
         """
         return display_covered(self.pc_covered, self.precision)
+
+    @property
+    def pc_statements_str(self) -> str:
+        """Returns the statement percent covered without a percent sign."""
+        return display_covered(self.pc_statements, self.precision)
+
+    @property
+    def pc_branches_str(self) -> str:
+        """Returns the branch percent covered without a percent sign."""
+        return display_covered(self.pc_branches, self.precision)
 
     @property
     def ratio_covered(self) -> tuple[int, int]:
