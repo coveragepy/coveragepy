@@ -324,12 +324,12 @@ class Numbers:
         return self.n_branches - self.n_missing_branches
 
     @property
-    def statements_ratio(self) -> tuple[int, int]:
+    def ratio_statements(self) -> tuple[int, int]:
         """Return numerator/denominator for statement coverage."""
         return self.n_executed, self.n_statements
 
     @property
-    def branches_ratio(self) -> tuple[int, int]:
+    def ratio_branches(self) -> tuple[int, int]:
         """Return numerator/denominator for branch coverage."""
         return self.n_executed_branches, self.n_branches
 

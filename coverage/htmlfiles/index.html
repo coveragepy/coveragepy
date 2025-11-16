@@ -119,13 +119,13 @@
                 <td class="name left"><a href="{{region.url}}">{{region.description}}</a></td>
                 {% endif %}
                 {% if has_arcs %}
-                <td data-ratio="{{region.nums.statements_ratio|pair}}">{{region.nums.pc_statements_str}}%</td>
+                <td data-ratio="{{region.nums.ratio_statements|pair}}">{{region.nums.pc_statements_str}}%</td>
                 {% endif %}
                 <td>{{region.nums.n_statements}}</td>
                 <td>{{region.nums.n_missing}}</td>
                 <td>{{region.nums.n_excluded}}</td>
                 {% if has_arcs %}
-                <td data-ratio="{{region.nums.branches_ratio|pair}}">{{region.nums.pc_branches_str}}%</td>
+                <td data-ratio="{{region.nums.ratio_branches|pair}}">{{region.nums.pc_branches_str}}%</td>
                 <td>{{region.nums.n_branches}}</td>
                 <td>{{region.nums.n_partial_branches}}</td>
                 {% endif %}
@@ -140,13 +140,13 @@
                 <td class="name left">&nbsp;</td>
                 {% endif %}
                 {% if has_arcs %}
-                <td data-ratio="{{totals.statements_ratio|pair}}">{{totals.pc_statements_str}}%</td>
+                <td data-ratio="{{totals.ratio_statements|pair}}">{{totals.pc_statements_str}}%</td>
                 {% endif %}
                 <td>{{totals.n_statements}}</td>
                 <td>{{totals.n_missing}}</td>
                 <td>{{totals.n_excluded}}</td>
                 {% if has_arcs %}
-                <td data-ratio="{{totals.branches_ratio|pair}}">{{totals.pc_branches_str}}%</td>
+                <td data-ratio="{{totals.ratio_branches|pair}}">{{totals.pc_branches_str}}%</td>
                 <td>{{totals.n_branches}}</td>
                 <td>{{totals.n_partial_branches}}</td>
                 {% endif %}
