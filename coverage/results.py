@@ -342,20 +342,17 @@ class Numbers:
     @property
     def pc_covered(self) -> float:
         """Returns a single percentage value for coverage."""
-        numerator, denominator = self.ratio_covered
-        if self.n_statements == 0:
-            return 100.0
-        return self._percent(numerator, denominator)
+        return self._percent(*self.ratio_covered)
 
     @property
     def pc_statements(self) -> float:
         """Returns the percentage covered for statements."""
-        return self._percent(self.n_executed, self.n_statements)
+        return self._percent(*self.ratio_statements)
 
     @property
     def pc_branches(self) -> float:
         """Returns the percentage covered for branches."""
-        return self._percent(self.n_executed_branches, self.n_branches)
+        return self._percent(*self.ratio_branches)
 
     @property
     def pc_covered_str(self) -> str:
