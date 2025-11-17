@@ -116,7 +116,9 @@ did not execute all of their exits.
 
 The :ref:`JSON report <cmd_json>` includes more data that can be used to
 re-calculate the total percentage. Individual files have a ``summary`` key,
-and the report as a whole has a ``totals`` key that include items like these:
+and the report as a whole has a ``totals`` key that include items like these.
+The ``percent_statements_covered`` value is always included, and when branch
+coverage is measured there are matching branch values:
 
 .. code-block:: json
 
@@ -130,7 +132,11 @@ and the report as a whole has a ``totals`` key that include items like these:
         "num_partial_branches": 5,
         "num_statements": 114,
         "percent_covered": 10.76923076923077,
-        "percent_covered_display": "11"
+        "percent_covered_display": "11",
+        "percent_statements_covered": 7.894736842105263,
+        "percent_statements_covered_display": "8",
+        "percent_branches_covered": 31.25,
+        "percent_branches_covered_display": "31"
     }
 
 The total percentage is calculated as::
