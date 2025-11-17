@@ -51,6 +51,8 @@ class JsonReporter:
             "percent_covered_display": nums.pc_covered_str,
             "missing_lines": nums.n_missing,
             "excluded_lines": nums.n_excluded,
+            "percent_statements_covered": nums.pc_statements,
+            "percent_statements_covered_display": nums.pc_statements_str,
         }
 
     def make_branch_summary(self, nums: Numbers) -> JsonObj:
@@ -60,6 +62,8 @@ class JsonReporter:
             "num_partial_branches": nums.n_partial_branches,
             "covered_branches": nums.n_executed_branches,
             "missing_branches": nums.n_missing_branches,
+            "percent_branches_covered": nums.pc_branches,
+            "percent_branches_covered_display": nums.pc_branches_str,
         }
 
     def report(self, morfs: Iterable[TMorf] | None, outfile: IO[str]) -> float:
