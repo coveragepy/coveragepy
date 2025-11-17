@@ -129,6 +129,10 @@ class JsonReportTest(UsingModulesMixin, CoverageTest):
                 "missing_branches": 3,
                 "percent_covered": 57.142857142857146,
                 "percent_covered_display": "57",
+                "percent_statements_covered": 62.5,
+                "percent_statements_covered_display": "62",
+                "percent_branches_covered": 50.0,
+                "percent_branches_covered_display": "50",
             },
         }
         expected_result = {
@@ -151,6 +155,10 @@ class JsonReportTest(UsingModulesMixin, CoverageTest):
                 "percent_covered_display": "57",
                 "covered_branches": 3,
                 "missing_branches": 3,
+                "percent_statements_covered": 62.5,
+                "percent_statements_covered_display": "62",
+                "percent_branches_covered": 50.0,
+                "percent_branches_covered_display": "50",
             },
         }
         # With regions, a lot of data is duplicated.
@@ -171,6 +179,8 @@ class JsonReportTest(UsingModulesMixin, CoverageTest):
                 "num_statements": 8,
                 "percent_covered": 62.5,
                 "percent_covered_display": "62",
+                "percent_statements_covered": 62.5,
+                "percent_statements_covered_display": "62",
             },
         }
         expected_result = {
@@ -189,6 +199,8 @@ class JsonReportTest(UsingModulesMixin, CoverageTest):
                 "num_statements": 8,
                 "percent_covered": 62.5,
                 "percent_covered_display": "62",
+                "percent_statements_covered": 62.5,
+                "percent_statements_covered_display": "62",
             },
         }
         # With regions, a lot of data is duplicated.
@@ -213,6 +225,8 @@ class JsonReportTest(UsingModulesMixin, CoverageTest):
                                 "num_statements": 8,
                                 "percent_covered": 87.5,
                                 "percent_covered_display": "88",
+                                "percent_statements_covered": 87.5,
+                                "percent_statements_covered_display": "88",
                             },
                         },
                         "C": {
@@ -226,6 +240,8 @@ class JsonReportTest(UsingModulesMixin, CoverageTest):
                                 "num_statements": 0,
                                 "percent_covered": 100.0,
                                 "percent_covered_display": "100",
+                                "percent_statements_covered": 100.0,
+                                "percent_statements_covered_display": "100",
                             },
                         },
                         "D": {
@@ -239,6 +255,8 @@ class JsonReportTest(UsingModulesMixin, CoverageTest):
                                 "num_statements": 4,
                                 "percent_covered": 0.0,
                                 "percent_covered_display": "0",
+                                "percent_statements_covered": 0.0,
+                                "percent_statements_covered_display": "0",
                             },
                         },
                     },
@@ -256,6 +274,8 @@ class JsonReportTest(UsingModulesMixin, CoverageTest):
                                 "num_statements": 7,
                                 "percent_covered": 100.0,
                                 "percent_covered_display": "100",
+                                "percent_statements_covered": 100.0,
+                                "percent_statements_covered_display": "100",
                             },
                         },
                         "c": {
@@ -269,6 +289,8 @@ class JsonReportTest(UsingModulesMixin, CoverageTest):
                                 "num_statements": 1,
                                 "percent_covered": 0.0,
                                 "percent_covered_display": "0",
+                                "percent_statements_covered": 0.0,
+                                "percent_statements_covered_display": "0",
                             },
                         },
                         "D.e": {
@@ -282,6 +304,8 @@ class JsonReportTest(UsingModulesMixin, CoverageTest):
                                 "num_statements": 3,
                                 "percent_covered": 0.0,
                                 "percent_covered_display": "0",
+                                "percent_statements_covered": 0.0,
+                                "percent_statements_covered_display": "0",
                             },
                         },
                         "D.f": {
@@ -295,6 +319,8 @@ class JsonReportTest(UsingModulesMixin, CoverageTest):
                                 "num_statements": 1,
                                 "percent_covered": 0.0,
                                 "percent_covered_display": "0",
+                                "percent_statements_covered": 0.0,
+                                "percent_statements_covered_display": "0",
                             },
                         },
                     },
@@ -306,6 +332,8 @@ class JsonReportTest(UsingModulesMixin, CoverageTest):
                         "num_statements": 12,
                         "percent_covered": 58.333333333333336,
                         "percent_covered_display": "58",
+                        "percent_statements_covered": 58.333333333333336,
+                        "percent_statements_covered_display": "58",
                     },
                 },
             },
@@ -321,6 +349,8 @@ class JsonReportTest(UsingModulesMixin, CoverageTest):
                 "num_statements": 12,
                 "percent_covered": 58.333333333333336,
                 "percent_covered_display": "58",
+                "percent_statements_covered": 58.333333333333336,
+                "percent_statements_covered_display": "58",
             },
         }
         self._assert_expected_json_report_with_regions(cov, expected_result)
@@ -348,6 +378,10 @@ class JsonReportTest(UsingModulesMixin, CoverageTest):
                                 "num_statements": 8,
                                 "percent_covered": 87.5,
                                 "percent_covered_display": "88",
+                                "percent_statements_covered": 87.5,
+                                "percent_statements_covered_display": "88",
+                                "percent_branches_covered": 100.0,
+                                "percent_branches_covered_display": "100",
                             },
                         },
                         "C": {
@@ -367,6 +401,10 @@ class JsonReportTest(UsingModulesMixin, CoverageTest):
                                 "num_statements": 0,
                                 "percent_covered": 100.0,
                                 "percent_covered_display": "100",
+                                "percent_statements_covered": 100.0,
+                                "percent_statements_covered_display": "100",
+                                "percent_branches_covered": 100.0,
+                                "percent_branches_covered_display": "100",
                             },
                         },
                         "D": {
@@ -386,6 +424,10 @@ class JsonReportTest(UsingModulesMixin, CoverageTest):
                                 "num_statements": 4,
                                 "percent_covered": 0.0,
                                 "percent_covered_display": "0",
+                                "percent_statements_covered": 0.0,
+                                "percent_statements_covered_display": "0",
+                                "percent_branches_covered": 0.0,
+                                "percent_branches_covered_display": "0",
                             },
                         },
                     },
@@ -410,6 +452,10 @@ class JsonReportTest(UsingModulesMixin, CoverageTest):
                                 "num_statements": 7,
                                 "percent_covered": 100.0,
                                 "percent_covered_display": "100",
+                                "percent_statements_covered": 100.0,
+                                "percent_statements_covered_display": "100",
+                                "percent_branches_covered": 100.0,
+                                "percent_branches_covered_display": "100",
                             },
                         },
                         "D.e": {
@@ -429,6 +475,10 @@ class JsonReportTest(UsingModulesMixin, CoverageTest):
                                 "num_statements": 3,
                                 "percent_covered": 0.0,
                                 "percent_covered_display": "0",
+                                "percent_statements_covered": 0.0,
+                                "percent_statements_covered_display": "0",
+                                "percent_branches_covered": 0.0,
+                                "percent_branches_covered_display": "0",
                             },
                         },
                         "D.f": {
@@ -448,6 +498,10 @@ class JsonReportTest(UsingModulesMixin, CoverageTest):
                                 "num_statements": 1,
                                 "percent_covered": 0.0,
                                 "percent_covered_display": "0",
+                                "percent_statements_covered": 0.0,
+                                "percent_statements_covered_display": "0",
+                                "percent_branches_covered": 100.0,
+                                "percent_branches_covered_display": "100",
                             },
                         },
                         "c": {
@@ -467,6 +521,10 @@ class JsonReportTest(UsingModulesMixin, CoverageTest):
                                 "num_statements": 1,
                                 "percent_covered": 0.0,
                                 "percent_covered_display": "0",
+                                "percent_statements_covered": 0.0,
+                                "percent_statements_covered_display": "0",
+                                "percent_branches_covered": 100.0,
+                                "percent_branches_covered_display": "100",
                             },
                         },
                     },
@@ -483,6 +541,10 @@ class JsonReportTest(UsingModulesMixin, CoverageTest):
                         "num_statements": 12,
                         "percent_covered": 50.0,
                         "percent_covered_display": "50",
+                        "percent_statements_covered": 58.333333333333336,
+                        "percent_statements_covered_display": "58",
+                        "percent_branches_covered": 0.0,
+                        "percent_branches_covered_display": "0",
                     },
                 },
             },
@@ -502,6 +564,10 @@ class JsonReportTest(UsingModulesMixin, CoverageTest):
                 "num_statements": 12,
                 "percent_covered": 50.0,
                 "percent_covered_display": "50",
+                "percent_statements_covered": 58.333333333333336,
+                "percent_statements_covered_display": "58",
+                "percent_branches_covered": 0.0,
+                "percent_branches_covered_display": "0",
             },
         }
         self._assert_expected_json_report_with_regions(cov, expected_result)
@@ -540,6 +606,8 @@ class JsonReportTest(UsingModulesMixin, CoverageTest):
                 "num_statements": 8,
                 "percent_covered": 62.5,
                 "percent_covered_display": "62.50",
+                "percent_statements_covered": 62.5,
+                "percent_statements_covered_display": "62.50",
             },
         }
         expected_result = {
@@ -558,6 +626,8 @@ class JsonReportTest(UsingModulesMixin, CoverageTest):
                 "num_statements": 8,
                 "percent_covered": 62.5,
                 "percent_covered_display": "62.50",
+                "percent_statements_covered": 62.5,
+                "percent_statements_covered_display": "62.50",
             },
         }
         # With regions, a lot of data is duplicated.
