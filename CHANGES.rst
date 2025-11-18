@@ -28,6 +28,9 @@ Unreleased
   Otsuka for the `discussion <issue 2081_>`_ and the `implementation
   <pull 2085_>`_.
 
+- The JSON report now include separate coverage totals for statements and
+  branches, thanks to `Ryuta Otsuka <pull 2090_>`_.
+
 - Fix: ``except*`` clauses were not handled properly under the "sysmon"
   measurement core, causing KeyError exceptions as described in `issue 2086`_.
   This is now fixed.
@@ -47,6 +50,7 @@ Unreleased
 .. _issue 2083: https://github.com/coveragepy/coveragepy/issues/2083
 .. _pull 2085: https://github.com/coveragepy/coveragepy/pull/2085
 .. _issue 2086: https://github.com/coveragepy/coveragepy/issues/2086
+.. _pull 2090: https://github.com/coveragepy/coveragepy/pull/2090
 .. _issue 2091: https://github.com/coveragepy/coveragepy/issues/2091
 
 
