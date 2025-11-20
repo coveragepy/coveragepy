@@ -262,7 +262,7 @@ jobs:
           echo "sha10=$SHA10" >> $GITHUB_ENV
           echo "slug=$SLUG" >> $GITHUB_ENV
           echo "report_dir=reports/$SLUG/htmlcov" >> $GITHUB_ENV
-          echo "url=https://covergepy.github.io/metacov-reports/reports/$SLUG/htmlcov/index.html" >> $GITHUB_ENV
+          echo "url=https://coveragepy.github.io/metacov-reports/reports/$SLUG/htmlcov" >> $GITHUB_ENV
           echo "branch=${REF#refs/heads/}" >> $GITHUB_ENV
 
       - name: "Checkout reports repo"
