@@ -129,3 +129,41 @@ While we might expect this line of code to be reported as covered, the
 generator did not iterate until ``StopIteration`` is raised, the indication
 that the loop is complete. This is another case
 where adding ``# pragma: no branch`` may be desirable.
+
+
+Missing Branches in branch-coverage
+-----------------------------------
+symbol:(->)
+When running Coverage.py with branch measurement enabled, you may see missing branches reported in the form:
+12->10  , why is it backward? This indicates that the loop never repeated (or never ran), so the backward branch was not taken.
+
+For example::
+    
+    10: for x in items:
+    11:     print(x)
+    12:     # end of loop body
+    13: print("done")
+    
+Possible branches:
+
+    10 -> 11 (enter loop body)
+    12 -> 10 (loop-back,repeat the loop)
+    10 -> 13 (skip loop entirely)
+
+Case 1 — items is empty : 10 -> 13 (skip loop is executed)
+Missing:
+    10 -> 11
+    12 -> 10
+
+Case 2 — items = [1] : 10 -> 11 (entered loop body,exceuted once,not repeated)
+Missing:
+    12 -> 10 
+
+Coverage.py will report:
+    12->10 
+
+For a full list of control-flow constructs 
+(if/else, for loops, while loops, try/except) and 
+their branch examples,see the :doc:`Command-line report <commands/cmd_report>`.
+
+

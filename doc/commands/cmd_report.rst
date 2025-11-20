@@ -138,3 +138,70 @@ sign.
 Other common reporting options are described above in :ref:`cmd_reporting`.
 These options can also be set in your .coveragerc file. See
 :ref:`Configuration: [report] <config_report>`.
+
+Additional examples of missing branches
+---------------------------------------
+
+Below are small examples showing how common Python constructs appear in the
+``Missing`` column when branch coverage is enabled.
+
+``if / else`` example
+^^^^^^^^^^^^^^^^^^^^^
+    10: if flag:
+    11:     do_true()
+    12: else:
+    13:     do_false()
+
+If ``flag`` is always true, the false branch is never taken.  
+The report will show::
+
+    10->13
+    Indicating that line 10 never bracnhed to 13.
+
+``for`` loop example
+^^^^^^^^^^^^^^^^^^^^
+    20: for x in items:
+    21:     print(x)
+
+A ``for`` loop has an entry branch (``20->21``) and a loop-back branch
+(``21->20``) :
+
+* If ``items`` is empty: both branches are missing.
+* If ``items`` has one element: only the loop-back branch is missing.
+
+For a single-iteration loop you might see::
+       21->20
+       Meaning the loop never repeated.
+
+``while`` loop example
+^^^^^^^^^^^^^^^^^^^^^^
+    30: while condition:
+    31:     blah()
+    32: #exit
+
+A ``while`` loop creates:
+
+* ``30->31`` (enter body)
+* ``31->30`` (repeat loop)
+* ``30->32`` (exit loop)
+
+If the loop body runs once but the condition becomes false immediately,
+the repeat loop will be missing::
+    31->30
+    If the loop never runs at all, both ``30->31`` and ``31->30`` will be missing.
+
+``try / except`` example
+^^^^^^^^^^^^^^^^^^^^^^^^
+    40: try:
+    41:     blah()
+    42: except ValueError:
+    43:     handler()
+    44:print(a)
+
+* ``41->42`` when a ``ValueError`` is raised
+* ``41->44`` on normal execution
+
+If ``blah()`` never raises ``ValueError``, the missing branch will appear as::
+    41->42
+    Means the branch where blah() raises ValueError and jumps to the 
+    except block was never executed.
