@@ -152,11 +152,10 @@ Below are small examples showing how common Python constructs appear in the
     12: else:
     13:     do_false()
 
-If ``flag`` is always true, the false branch is never taken.  
+If ``flag`` is always true,the false branch is never taken.
 The report will show::
-
-    10->13
-    Indicating that line 10 never bracnhed to 13.
+10->13
+Indicating that line 10 never bracnhed to 13.
 
 ``for`` loop example
 ^^^^^^^^^^^^^^^^^^^^
@@ -170,8 +169,8 @@ A ``for`` loop has an entry branch (``20->21``) and a loop-back branch
 * If ``items`` has one element: only the loop-back branch is missing.
 
 For a single-iteration loop you might see::
-       21->20
-       Meaning the loop never repeated.
+21->20
+Meaning the loop never repeated.
 
 ``while`` loop example
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -187,8 +186,8 @@ A ``while`` loop creates:
 
 If the loop body runs once but the condition becomes false immediately,
 the repeat loop will be missing::
-    31->30
-    If the loop never runs at all, both ``30->31`` and ``31->30`` will be missing.
+31->30
+If the loop never runs at all, both ``30->31`` and ``31->30`` will be missing.
 
 ``try / except`` example
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -202,6 +201,6 @@ the repeat loop will be missing::
 * ``41->44`` on normal execution
 
 If ``blah()`` never raises ``ValueError``, the missing branch will appear as::
-    41->42
-    Means the branch where blah() raises ValueError and jumps to the 
-    except block was never executed.
+41->42
+Means the branch where blah() raises ValueError and jumps to the
+except block was never executed.
