@@ -40,13 +40,12 @@ To measure branch coverage, run coverage.py with the ``--branch`` flag::
 
 When you report on the results with ``coverage report`` or ``coverage html``,
 the percentage of branch possibilities taken will be included in the percentage
-covered total for each file. The coverage percentage for a file is the actual
-executions divided by the execution opportunities. Each line in the file is an
-execution opportunity, as is each branch destination.
+covered total for each file. Each line in the file is an execution opportunity,
+as is each branch destination.
 
 The HTML report gives information about which lines had missing branches. Lines
-that were missing some branches are shown in yellow, with an annotation at the
-far right showing branch destination line numbers that were not exercised.
+that were missing some branches are shown in yellow, with an annotation showing
+branch destination line numbers that were not exercised.
 
 The XML and JSON reports produced by ``coverage xml`` and ``coverage json``
 also include branch information, including separate statement and branch
@@ -95,39 +94,29 @@ branch. For example::
 
 Here the ``while`` loop will never exit normally, so it doesn't take both of
 its "possible" branches. For some of these constructs, such as ``while True:``
-and ``if 0:``, coverage.py understands what is going on. In these cases, the
-line will not be marked as a partial branch.
+and ``if 0:``, coverage.py understands what is going on.
 
-But there are many ways in your own code to write intentionally partial
-branches, and you don't want coverage.py pestering you about them. You can
-tell coverage.py that you don't want them flagged by marking them with a
-pragma::
+But there are many ways to intentionally write partial branches. You can mark
+them with a pragma::
 
     i = 0
     while i < 999999999:  # pragma: no branch
         if eventually():
             break
 
-Here the ``while`` loop will never complete because the ``break`` will always
-be taken at some point. Coverage.py can't work that out on its own, but the
-``no branch`` pragma indicates that the branch is known to be partial, and the
-line is not flagged.
-
 Generator expressions
-=====================
+---------------------
 
-Generator expressions may also report partial branch coverage. Consider the
-following example::
+Generator expressions may also report partial branch coverage. Example::
 
     value = next(i for i in range(1))
 
-While we might expect this line of code to be reported as covered, the
-generator does not iterate until ``StopIteration`` is raised — the indication
-that the loop is complete. This is another case where adding
-``# pragma: no branch`` may be desirable.
+The generator does not iterate until ``StopIteration`` is raised. This is
+another case where adding ``# pragma: no branch`` may be desirable.
 
 Missing branches in branch coverage
 -----------------------------------
+
 For example::
 
     10: for x in items:
@@ -138,7 +127,7 @@ For example::
 Possible branches::
 
     10 -> 11   (enter loop body)
-    12 -> 10   (loop back and repeat)
+    12 -> 10   (repeat loop)
     10 -> 13   (skip loop entirely)
 
 Case 1 — ``items`` is empty::
@@ -147,7 +136,7 @@ Case 1 — ``items`` is empty::
         10 -> 11
         12 -> 10
 
-Case 2 — ``items = [1]`` (entered loop once, not repeated)::
+Case 2 — ``items = [1]``::
 
     Missing:
         12 -> 10
@@ -156,11 +145,12 @@ Coverage.py will report::
 
     12->10
 
-Below are small examples showing how common Python constructs appear in the
+Below are examples showing how common control-flow structures appear in the
 ``Missing`` column when branch coverage is enabled.
 
 ``if / else`` example
 ^^^^^^^^^^^^^^^^^^^^^
+
 Example::
 
     10: if flag:
@@ -168,65 +158,62 @@ Example::
     12: else:
     13:     do_false()
 
-If ``flag`` is always true,the false branch is never taken.
+If ``flag`` is always true, the false branch is never taken.
+
 The report will show::
 
-10->13
-Indicating that line 10 never bracnhed to 13.
+    10->13
 
 ``for`` loop example
 ^^^^^^^^^^^^^^^^^^^^
+
 Example::
 
     20: for x in items:
     21:     print(x)
 
-A ``for`` loop has an entry branch (``20->21``) and a loop-back branch
-(``21->20``) :
+A ``for`` loop has:
 
-* If ``items`` is empty: both branches are missing.
-* If ``items`` has one element: only the loop-back branch is missing.
+* ``20->21`` (enter body)
+* ``21->20`` (repeat)
 
 For a single-iteration loop you might see::
 
-21->20
-Meaning the loop never repeated.
+    21->20
 
 ``while`` loop example
 ^^^^^^^^^^^^^^^^^^^^^^
+
 Example::
 
     30: while condition:
     31:     blah()
-    32: #exit
+    32: # exit
 
-A ``while`` loop creates:
+A ``while`` loop has:
 
-* ``30->31`` (enter body)
-* ``31->30`` (repeat loop)
-* ``30->32`` (exit loop)
+* ``30->31`` (enter)
+* ``31->30`` (repeat)
+* ``30->32`` (exit)
 
-If the loop body runs once but the condition becomes false immediately,
-the repeat loop will be missing::
+If the repeat never happens::
 
-31->30
-If the loop never runs at all, both ``30->31`` and ``31->30`` will be missing.
+    31->30
 
 ``try / except`` example
 ^^^^^^^^^^^^^^^^^^^^^^^^
+
 Example::
 
     40: try:
     41:     blah()
     42: except ValueError:
     43:     handler()
-    44:print(a)
+    44: print(a)
 
-* ``41->42`` when a ``ValueError`` is raised
+* ``41->42`` when ``ValueError`` is raised
 * ``41->44`` on normal execution
 
-If ``blah()`` never raises ``ValueError``, the missing branch will appear as::
+If ``blah()`` never raises ``ValueError``, the report will show::
 
-41->42
-Means the branch where blah() raises ValueError and jumps to the
-except block was never executed.
+    41->42
