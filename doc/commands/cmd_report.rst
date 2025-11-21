@@ -108,14 +108,14 @@ line, like "55->50".
 Missing branches
 ----------------
 
-Missing branches are shown such as ``12->10``.why is it backward?
+Missing branches are shown such as ``12->10``.Sometimes branches appear backward.
 This means that execution never moved from line 12 back to line 10. Backward
 branches often come from loops: if a loop never repeats (or never runs),
 the backward branch is missing.
 
 For detailed examples of how branch coverage works in loops and other control
 flow constructs (``if/else``, ``for`` loops, ``while`` loops, ``try/except``),
-see :doc:`branch </branch>`.
+see :ref:`branch`.
 
 You can restrict the report to only certain files by naming them on the
 command line::

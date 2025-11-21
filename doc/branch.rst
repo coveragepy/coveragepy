@@ -40,16 +40,19 @@ To measure branch coverage, run coverage.py with the ``--branch`` flag::
 
 When you report on the results with ``coverage report`` or ``coverage html``,
 the percentage of branch possibilities taken will be included in the percentage
-covered total for each file. Each line in the file is an execution opportunity,
-as is each branch destination.
+covered total for each file.  The coverage percentage for a file is the actual
+executions divided by the execution opportunities.  Each line in the file is an
+execution opportunity, as is each branch destination.
 
 The HTML report gives information about which lines had missing branches. Lines
-that were missing some branches are shown in yellow, with an annotation showing
-branch destination line numbers that were not exercised.
+that were missing some branches are shown in yellow, with an annotation at the
+far right showing branch destination line numbers that were not exercised.
+
 
 The XML and JSON reports produced by ``coverage xml`` and ``coverage json``
 also include branch information, including separate statement and branch
 coverage percentages.
+
 
 How it works
 ------------
@@ -85,34 +88,45 @@ Structurally partial branches
 -----------------------------
 
 Sometimes branching constructs are used in unusual ways that don't actually
-branch. For example::
+branch.  For example::
 
     while True:
         if cond:
             break
         do_something()
 
-Here the ``while`` loop will never exit normally, so it doesn't take both of
-its "possible" branches. For some of these constructs, such as ``while True:``
-and ``if 0:``, coverage.py understands what is going on.
+Here the while loop will never exit normally, so it doesn't take both of its
+"possible" branches.  For some of these constructs, such as "while True:" and
+"if 0:", coverage.py understands what is going on.  In these cases, the line
+will not be marked as a partial branch.
 
-But there are many ways to intentionally write partial branches. You can mark
-them with a pragma::
+But there are many ways in your own code to write intentionally partial
+branches, and you don't want coverage.py pestering you about them.  You can
+tell coverage.py that you don't want them flagged by marking them with a
+pragma::
 
     i = 0
     while i < 999999999:  # pragma: no branch
         if eventually():
             break
 
+Here the while loop will never complete because the break will always be taken
+at some point.  Coverage.py can't work that out on its own, but the "no branch"
+pragma indicates that the branch is known to be partial, and the line is not
+flagged.
+
 Generator expressions
----------------------
+=====================
 
-Generator expressions may also report partial branch coverage. Example::
+Generator expressions may also report partial branch coverage. Consider the
+following example::
 
-    value = next(i for i in range(1))
+    value = next(i in range(1))
 
-The generator does not iterate until ``StopIteration`` is raised. This is
-another case where adding ``# pragma: no branch`` may be desirable.
+While we might expect this line of code to be reported as covered, the
+generator did not iterate until ``StopIteration`` is raised, the indication
+that the loop is complete. This is another case
+where adding ``# pragma: no branch`` may be desirable.
 
 Missing branches in branch coverage
 -----------------------------------
@@ -126,9 +140,9 @@ For example::
 
 Possible branches::
 
-    10 -> 11   (enter loop body)
-    12 -> 10   (repeat loop)
-    10 -> 13   (skip loop entirely)
+* ``10 -> 11``(enter loop body)
+* ``12 -> 10``(repeat loop)
+* ``10 -> 13``(skip loop entirely)
 
 Case 1 — ``items`` is empty::
 
@@ -158,7 +172,7 @@ Example::
     12: else:
     13:     do_false()
 
-If ``flag`` is always true, the false branch is never taken.
+If ``flag`` is always true, the false branch is never taken.This branch will be reported as missing.
 
 The report will show::
 
