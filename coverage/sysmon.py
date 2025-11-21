@@ -265,7 +265,7 @@ class SysMonitor(Tracer):
                         self.sysmon_branch_either,
                     )
                     register(
-                        events.BRANCH_LEFT,  # type:ignore[attr-defined]
+                        events.BRANCH_LEFT,
                         self.sysmon_branch_either,
                     )
             else:
@@ -389,7 +389,7 @@ class SysMonitor(Tracer):
                             assert env.PYBEHAVIOR.branch_right_left
                             local_events |= (
                                 events.BRANCH_RIGHT  # type:ignore[attr-defined]
-                                | events.BRANCH_LEFT  # type:ignore[attr-defined]
+                                | events.BRANCH_LEFT
                             )
                         sys_monitoring.set_local_events(self.myid, code, local_events)
 
