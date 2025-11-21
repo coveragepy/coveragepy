@@ -131,20 +131,18 @@ where adding ``# pragma: no branch`` may be desirable.
 Missing branches in branch coverage
 -----------------------------------
 
-For example::
+Example::
 
     10: for x in items:
     11:     print(x)
     12:     # end of loop body
     13: print("done")
 
-Possible branches::
+Possible branches:
 
-   .. code-block:: text
-
-       * 10 -> 11   (enter loop body)
-       * 12 -> 10   (repeat)
-       * 10 -> 13   (skip loop entirely)
+* ``10 -> 11`` (enter loop body)
+* ``12 -> 10`` (repeat)
+* ``10 -> 13`` (skip loop entirely)
 
 
 Case 1 — ``items`` is empty::
