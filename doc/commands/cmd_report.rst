@@ -108,7 +108,8 @@ line, like "55->50".
 Missing branches
 ----------------
 
-Missing branches are shown such as ``12->10``.Sometimes branches appear backward.
+Missing branches are shown such as ``12->10``.
+Sometimes branches appear backward.
 This means that execution never moved from line 12 back to line 10. Backward
 branches often come from loops: if a loop never repeats (or never runs),
 the backward branch is missing.

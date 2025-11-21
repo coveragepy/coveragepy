@@ -140,9 +140,11 @@ For example::
 
 Possible branches::
 
-* ``10 -> 11``(enter loop body)
-* ``12 -> 10``(repeat loop)
-* ``10 -> 13``(skip loop entirely)
+.. code-block:: text
+
+    * 10 -> 11   (enter loop body)
+    * 12 -> 10   (repeat)
+    * 10 -> 13   (skip loop entirely)
 
 Case 1 — ``items`` is empty::
 
@@ -163,7 +165,7 @@ Below are examples showing how common control-flow structures appear in the
 ``Missing`` column when branch coverage is enabled.
 
 ``if / else`` example
-^^^^^^^^^^^^^^^^^^^^^
+---------------------
 
 Example::
 
@@ -172,14 +174,15 @@ Example::
     12: else:
     13:     do_false()
 
-If ``flag`` is always true, the false branch is never taken.This branch will be reported as missing.
+If ``flag`` is always true, the false branch is never taken.
+This branch will be reported as missing.
 
 The report will show::
 
     10->13
 
 ``for`` loop example
-^^^^^^^^^^^^^^^^^^^^
+--------------------
 
 Example::
 
@@ -196,7 +199,7 @@ For a single-iteration loop you might see::
     21->20
 
 ``while`` loop example
-^^^^^^^^^^^^^^^^^^^^^^
+----------------------
 
 Example::
 
@@ -215,7 +218,7 @@ If the repeat never happens::
     31->30
 
 ``try / except`` example
-^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------
 
 Example::
 
