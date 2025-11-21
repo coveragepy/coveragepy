@@ -140,11 +140,12 @@ For example::
 
 Possible branches::
 
-.. code-block:: text
+   .. code-block:: text
 
-    * 10 -> 11   (enter loop body)
-    * 12 -> 10   (repeat)
-    * 10 -> 13   (skip loop entirely)
+       * 10 -> 11   (enter loop body)
+       * 12 -> 10   (repeat)
+       * 10 -> 13   (skip loop entirely)
+
 
 Case 1 — ``items`` is empty::
 
