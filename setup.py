@@ -6,7 +6,10 @@
 # Setuptools setup for coverage.py
 # This file is used unchanged under all versions of Python.
 
+import re
 import os
+import os.path
+import site
 import sys
 
 from setuptools import Extension, errors, setup
@@ -71,6 +74,24 @@ else:
     devstat = "5 - Production/Stable"
 classifier_list.append(f"Development Status :: {devstat}")
 
+
+def do_make_pth():
+    """Make the packaged .pth file used for measuring subprocess coverage."""
+
+    with open("coverage/pth_file.py", encoding="utf-8") as f:
+        code = f.read()
+
+    code = re.sub(r"\s*#.*\n", "\n", code)
+    code = code.replace("    ", " ")
+
+    # `import sys` is needed because .pth files are executed only if they start
+    # with `import `.
+    with open("zzz_coverage.pth", "w", encoding="utf-8") as pth_file:
+        pth_file.write(f"import sys; exec({code!r})\n")
+
+
+do_make_pth()
+
 # Create the keyword arguments for setup()
 
 setup_args = dict(
@@ -85,6 +106,9 @@ setup_args = dict(
             "py.typed",
         ],
     },
+    data_files=[
+        (os.path.relpath(site.getsitepackages()[0], sys.prefix), ["zzz_coverage.pth"]),
+    ],
     entry_points={
         # Install a script as "coverage", and as "coverage3", and as
         # "coverage-3.7" (or whatever).

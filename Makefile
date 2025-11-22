@@ -42,6 +42,7 @@ clean: debug_clean _clean_platform	## Remove artifacts of test execution, instal
 	@rm -f tests/covmain.zip tests/zipmods.zip tests/zip1.zip
 	@rm -rf doc/_build doc/_spell doc/sample_html_beta
 	@rm -rf tmp
+	@rm -rf zzz_coverage.pth
 	@rm -rf .*cache */.*cache */*/.*cache */*/*/.*cache .hypothesis
 	@rm -rf tests/actual
 	@-make -C tests/gold/html clean
@@ -213,7 +214,7 @@ relcommit2:				#: Commit the latest sample HTML report (see howto.txt).
 	git add doc/sample_html
 	git commit -am "docs: sample HTML for $$(python setup.py --version)"
 
-kit:					## Make the source distribution.
+kit:					## Make the source distribution and one wheel
 	python -m build
 
 pypi_upload:				## Upload the built distributions to PyPI.
@@ -233,7 +234,7 @@ kit_local:
 	# don't go crazy trying to figure out why our new code isn't installing.
 	find ~/Library/Caches/pip/wheels -name 'coverage-*' -delete
 
-build_kits:				## Trigger GitHub to build kits.
+build_kits:				## Trigger GitHub to build all the distributions.
 	python ci/trigger_action.py $(REPO_OWNER) build-kits
 
 tag:					#: Make a git tag with the version number (see howto.txt).
