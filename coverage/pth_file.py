@@ -7,7 +7,9 @@
 print("zzz_coverage.pth file loaded")
 try:
     import coverage
-except:  # pylint: disable=bare-except
-    pass
+except Exception as e:  # pylint: disable=bare-except
+    print(f"zzz_coverage.pth: coverage import failed: {e}")
+
 else:
-    coverage.process_startup()
+    # coverage.process_startup()
+    print("zzz_coverage.pth: coverage imported successfully")
