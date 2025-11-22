@@ -5,15 +5,12 @@
 
 from __future__ import annotations
 
-import atexit
 import contextlib
 import os
-import site
-from pathlib import Path
 from typing import TYPE_CHECKING, Any, NoReturn
 
 from coverage import env
-from coverage.debug import NoDebugging, DevNullDebug
+from coverage.debug import DevNullDebug
 from coverage.exceptions import ConfigError, CoverageException
 
 if TYPE_CHECKING:
@@ -26,8 +23,6 @@ def apply_patches(
     cov: Coverage,
     config: CoverageConfig,
     debug: TDebugCtl,
-    *,
-    make_pth_file: bool = True,
 ) -> None:
     """Apply invasive patches requested by `[run] patch=`."""
     debug = debug if debug.should("patch") else DevNullDebug()
@@ -43,7 +38,7 @@ def apply_patches(
                 _patch_fork(debug)
 
             case "subprocess":
-                _patch_subprocess(config, debug, make_pth_file)
+                _patch_subprocess(config, debug)
 
             case _:
                 raise ConfigError(f"Unknown patch {patch!r}")
@@ -116,55 +111,8 @@ def _patch_fork(debug: TDebugCtl) -> None:
     os.register_at_fork(after_in_child=_after_fork_in_child)
 
 
-def _patch_subprocess(config: CoverageConfig, debug: TDebugCtl, make_pth_file: bool) -> None:
+def _patch_subprocess(config: CoverageConfig, debug: TDebugCtl) -> None:
     """Write .pth files and set environment vars to measure subprocesses."""
     debug.write("Patching subprocess")
-
-    if make_pth_file:
-        pth_files = create_pth_files(debug)
-
-        def delete_pth_files() -> None:
-            for p in pth_files:
-                debug.write(f"Deleting subprocess .pth file: {str(p)!r}")
-                p.unlink(missing_ok=True)
-
-        atexit.register(delete_pth_files)
     assert config.config_file is not None
     os.environ["COVERAGE_PROCESS_CONFIG"] = config.serialize()
-
-
-# Writing .pth files is not obvious. On Windows, getsitepackages() returns two
-# directories.  A .pth file in the first will be run, but coverage isn't
-# importable yet.  We write into all the places we can, but with defensive
-# import code.
-
-PTH_CODE = """\
-try:
-    import coverage
-except:
-    pass
-else:
-    coverage.process_startup()
-"""
-
-PTH_TEXT = f"import sys; exec({PTH_CODE!r})\n"
-
-
-def create_pth_files(debug: TDebugCtl = NoDebugging()) -> list[Path]:
-    """Create .pth files for measuring subprocesses."""
-    pth_files = []
-    for pth_dir in site.getsitepackages():
-        pth_file = Path(pth_dir) / f"subcover_{os.getpid()}.pth"
-        try:
-            if debug.should("patch"):
-                debug.write(f"Writing subprocess .pth file: {str(pth_file)!r}")
-            pth_file.write_text(PTH_TEXT, encoding="utf-8")
-        except OSError as oserr:  # pragma: cant happen
-            if debug.should("patch"):
-                debug.write(f"Couldn't write subprocess .pth file: {oserr}")
-            continue
-        else:
-            pth_files.append(pth_file)
-    if debug.should("patch"):
-        debug.write(f"Subprocess .pth files created: {', '.join(map(str, pth_files)) or '-none-'}")
-    return pth_files

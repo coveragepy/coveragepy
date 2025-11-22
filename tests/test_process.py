@@ -1416,7 +1416,7 @@ class ProcessStartupTest(CoverageTest):
         assert line_counts(data)["main.py"] == 3
         assert line_counts(data)["sub.py"] == 3
 
-    def test_subprocess_with_pth_files(self, _create_pth_file: None) -> None:
+    def test_subprocess_with_pth_files(self) -> None:
         # An existing data file should not be read when a subprocess gets
         # measured automatically.  Create the data file here with bogus data in
         # it.
@@ -1444,7 +1444,7 @@ class ProcessStartupTest(CoverageTest):
         data.read()
         assert line_counts(data)["sub.py"] == 3
 
-    def test_subprocess_with_pth_files_and_parallel(self, _create_pth_file: None) -> None:
+    def test_subprocess_with_pth_files_and_parallel(self) -> None:
         # https://github.com/coveragepy/coveragepy/issues/492
         self.make_main_and_sub()
         self.make_file(
@@ -1461,6 +1461,7 @@ class ProcessStartupTest(CoverageTest):
         with open("out.txt", encoding="utf-8") as f:
             assert f.read() == "Hello, world!\n"
 
+        print(os.listdir("."))
         self.run_command("coverage combine")
 
         # assert that the combined .coverage data file is correct
@@ -1719,7 +1720,6 @@ class ProcessStartupWithSourceTest(CoverageTest):
         dashm: str,
         package: str,
         source: str,
-        _create_pth_file: None,
     ) -> None:
         """Run the test for a particular combination of factors.
 

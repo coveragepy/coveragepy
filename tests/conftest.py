@@ -18,7 +18,6 @@ from collections.abc import Iterable
 import pytest
 
 from coverage.files import set_relative_directory
-from coverage.patch import create_pth_files
 
 from tests import testenv
 
@@ -97,15 +96,3 @@ def force_local_pyc_files() -> None:
     # For some tests, we need .pyc files written in the current directory,
     # so override any local setting.
     sys.pycache_prefix = None
-
-
-# Give this an underscored name so pylint won't complain when we use the fixture.
-@pytest.fixture(name="_create_pth_file")
-def create_pth_file_fixture() -> Iterable[None]:
-    """Create and clean up a .pth file for tests that need it for subprocesses."""
-    pth_files = create_pth_files()
-    try:
-        yield
-    finally:
-        for p in pth_files:
-            p.unlink()

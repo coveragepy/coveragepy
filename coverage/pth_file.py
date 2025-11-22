@@ -4,10 +4,12 @@
 # pylint: disable=missing-module-docstring
 # This will become the .pth file for subprocesses.
 
-print("zzz_coverage.pth file loaded")
-try:
-    import coverage
-except:  # pylint: disable=bare-except
-    pass
-else:
-    coverage.process_startup()
+import os
+
+if os.getenv("COVERAGE_PROCESS_START") or os.getenv("COVERAGE_PROCESS_CONFIG"):
+    try:
+        import coverage
+    except:  # pylint: disable=bare-except
+        pass
+    else:
+        coverage.process_startup()
