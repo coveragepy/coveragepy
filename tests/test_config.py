@@ -1061,6 +1061,27 @@ class ConfigFileTest(UsingModulesMixin, CoverageTest):
         assert cov.config.data_file == ".toml-data.dat"
         assert cov.config.branch is True
 
+    def test_coveragerc_toml_unprefixed_syntax(self) -> None:
+        """Test that .coveragerc.toml supports unprefixed section syntax."""
+        self.make_file(
+            ".coveragerc.toml",
+            """\
+            [run]
+            timid = true
+            data_file = ".toml-data.dat"
+            branch = true
+            
+            [report]
+            precision = 2
+            """,
+        )
+        cov = coverage.Coverage()
+
+        assert cov.config.timid is True
+        assert cov.config.data_file == ".toml-data.dat"
+        assert cov.config.branch is True
+        assert cov.config.precision == 2
+
 
 class SerializeConfigTest(CoverageTest):
     """Tests of serializing the configuration for subprocesses."""
