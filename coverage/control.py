@@ -1215,6 +1215,7 @@ class Coverage(TConfigurable):
         contexts: list[str] | None = None,
         skip_empty: bool | None = None,
         precision: int | None = None,
+        omit_regions: bool | None = None,
     ) -> float:
         """Generate an HTML report.
 
@@ -1254,6 +1255,7 @@ class Coverage(TConfigurable):
             report_contexts=contexts,
             html_skip_empty=skip_empty,
             precision=precision,
+            omit_regions=omit_regions,
         ):
             reporter = HtmlReporter(self)
             return reporter.report(morfs)
@@ -1302,6 +1304,7 @@ class Coverage(TConfigurable):
         contexts: list[str] | None = None,
         pretty_print: bool | None = None,
         show_contexts: bool | None = None,
+        omit_regions: bool | None = None,
     ) -> float:
         """Generate a JSON report of coverage results.
 
@@ -1327,6 +1330,7 @@ class Coverage(TConfigurable):
             report_contexts=contexts,
             json_pretty_print=pretty_print,
             json_show_contexts=show_contexts,
+            omit_regions=omit_regions,
         ):
             return render_report(self.config.json_output, JsonReporter(self), morfs, self._message)
 
