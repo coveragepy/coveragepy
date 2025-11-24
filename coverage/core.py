@@ -26,7 +26,7 @@ try:
     # Use the C extension code when we can, for speed.
     import coverage.tracer
 
-    CTRACER_FILE: str | None = getattr(coverage.tracer, "__file__", "unknown")
+    CTRACER_FILE: str | None = getattr(coverage.tracer, "__file__", "unknown")  # cov-metacov
 except ImportError as imp_err:
     # Couldn't import the C extension, maybe it isn't built.
     # We still need to check the environment variable directly here,
@@ -61,7 +61,7 @@ class Core:
         debug: TDebugCtl | None,
         config: CoverageConfig,
         dynamic_contexts: bool,
-        metacov: bool,
+        is_metacov: bool,
     ) -> None:
         def _debug(msg: str) -> None:
             if debug:
@@ -115,14 +115,14 @@ class Core:
 
         if core_name == "sysmon":
             self.tracer_class = SysMonitor
-            self.tracer_kwargs["tool_id"] = 3 if metacov else 1
+            self.tracer_kwargs["tool_id"] = 3 if is_metacov else 1
             self.file_disposition_class = FileDisposition
             self.supports_plugins = False
             self.packed_arcs = False
             self.systrace = False
         elif core_name == "ctrace":
-            self.tracer_class = coverage.tracer.CTracer
-            self.file_disposition_class = coverage.tracer.CFileDisposition
+            self.tracer_class = coverage.tracer.CTracer  # cov-metacov
+            self.file_disposition_class = coverage.tracer.CFileDisposition  # cov-metacov
             self.supports_plugins = True
             self.packed_arcs = True
             self.systrace = True

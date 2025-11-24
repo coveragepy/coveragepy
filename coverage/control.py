@@ -599,7 +599,7 @@ class Coverage(TConfigurable):
             debug=(self._debug if self._debug.should("core") else None),
             config=self.config,
             dynamic_contexts=(should_start_context is not None),
-            metacov=self._metacov,
+            is_metacov=self._metacov,
         )
         self._collector = Collector(
             core=self._core,

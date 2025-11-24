@@ -10,6 +10,7 @@
 .metacov
 .metacov.*
 *.swp
+metacov_pkg
 
 # Data files we should ignore in the root, but need for gold files.
 /coverage.xml

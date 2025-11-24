@@ -140,6 +140,13 @@ def _patch_subprocess(config: CoverageConfig, debug: TDebugCtl, make_pth_file: b
 
 PTH_CODE = """\
 try:
+    import metacov
+except:
+    pass
+else:
+    metacov.process_startup()
+
+try:
     import coverage
 except:
     pass

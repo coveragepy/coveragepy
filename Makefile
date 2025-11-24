@@ -85,8 +85,30 @@ test:					## Run the test suite.
 
 .PHONY: metacov metahtml
 
-metacov:				## Run meta-coverage, measuring ourself.
-	COVERAGE_COVERAGE=yes tox -q $(ARGS)
+UNAME := $(shell uname)
+
+ifeq ($(UNAME), Darwin)
+    SED_INPLACE = sed -E -i ''
+else
+    SED_INPLACE = sed -E -i
+endif
+
+metacov_pkg:
+	mkdir -p metacov_pkg/metacov
+	cp -R coverage/ metacov_pkg/metacov
+	cp setup.py metacov_pkg/
+	echo "This is a clone of coverage for metacov" > metacov_pkg/README.rst
+	echo "No one" > metacov_pkg/CONTRIBUTORS.txt
+	$(SED_INPLACE) '/import/s/coverage/metacov/' metacov_pkg/metacov/*.py
+	$(SED_INPLACE) '/cov-metacov/s/coverage/metacov/g' metacov_pkg/metacov/*.py
+	$(SED_INPLACE) '/getenv|environ/s/COVERAGE_/METACOV_/g' metacov_pkg/metacov/*.py
+	$(SED_INPLACE) 's/coverage/metacov/g' metacov_pkg/setup.py
+	$(SED_INPLACE) '/m_name/s/coverage/metacov/' metacov_pkg/metacov/ctracer/module.c
+	$(SED_INPLACE) 's/Coverage.py/METACOV/g' metacov_pkg/metacov/cmdline.py
+
+
+metacov: metacov_pkg			## Run meta-coverage, measuring ourself.
+	COVERAGE_METACOV_DEPS=./metacov_pkg COVERAGE_COVERAGE=yes tox -q $(ARGS)
 
 metahtml:				## Produce meta-coverage HTML reports.
 	tox exec -q $(ARGS) -- python3 igor.py combine_html
