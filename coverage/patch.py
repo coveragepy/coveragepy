@@ -140,18 +140,11 @@ def _patch_subprocess(config: CoverageConfig, debug: TDebugCtl, make_pth_file: b
 
 PTH_CODE = """\
 try:
-    import metacov
+    import coverage  # s@cov@metacov@g
 except:
     pass
 else:
-    metacov.process_startup()
-
-try:
-    import coverage
-except:
-    pass
-else:
-    coverage.process_startup()
+    coverage.process_startup()  # s@cov@metacov@g
 """
 
 PTH_TEXT = f"import sys; exec({PTH_CODE!r})\n"
@@ -161,7 +154,8 @@ def create_pth_files(debug: TDebugCtl = NoDebugging()) -> list[Path]:
     """Create .pth files for measuring subprocesses."""
     pth_files = []
     for pth_dir in site.getsitepackages():
-        pth_file = Path(pth_dir) / f"subcover_{os.getpid()}.pth"
+        filename = "000_metacov" if env.COV_NAME == "METACOV" else "subcoverage"
+        pth_file = Path(pth_dir) / f"{filename}_{os.getpid()}.pth"  # sxxx@cov@metacov@g
         try:
             if debug.should("patch"):
                 debug.write(f"Writing subprocess .pth file: {str(pth_file)!r}")
