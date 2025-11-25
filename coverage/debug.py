@@ -507,7 +507,7 @@ class DebugOutputFile:
     # a process-wide singleton. So stash it in sys.modules instead of
     # on a class attribute. Yes, this is aggressively gross.
 
-    SYS_MOD_NAME: Final[str] = "$coverage.debug.DebugOutputFile.the_one"
+    SYS_MOD_NAME: Final[str] = "$coverage.debug.DebugOutputFile.the_one"  # s@cov@metacov@g
     SINGLETON_ATTR: Final[str] = "the_one_and_is_interim"
 
     @classmethod
