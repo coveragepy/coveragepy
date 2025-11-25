@@ -26,7 +26,7 @@ try:
     # Use the C extension code when we can, for speed.
     import coverage.tracer
 
-    CTRACER_FILE: str | None = getattr(coverage.tracer, "__file__", "unknown")  # cov-metacov
+    CTRACER_FILE: str | None = getattr(coverage.tracer, "__file__", "unknown")  # s@cov@metacov@g
 except ImportError as imp_err:
     # Couldn't import the C extension, maybe it isn't built.
     # We still need to check the environment variable directly here,
@@ -121,8 +121,8 @@ class Core:
             self.packed_arcs = False
             self.systrace = False
         elif core_name == "ctrace":
-            self.tracer_class = coverage.tracer.CTracer  # cov-metacov
-            self.file_disposition_class = coverage.tracer.CFileDisposition  # cov-metacov
+            self.tracer_class = coverage.tracer.CTracer  # s@cov@metacov@g
+            self.file_disposition_class = coverage.tracer.CFileDisposition  # s@cov@metacov@g
             self.supports_plugins = True
             self.packed_arcs = True
             self.systrace = True

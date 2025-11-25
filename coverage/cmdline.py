@@ -725,7 +725,7 @@ def show_help(
         if program_name.endswith(auto_suffix):
             program_name = program_name[: -len(auto_suffix)]
 
-    help_params = dict(coverage.__dict__)  # cov-metacov
+    help_params = dict(coverage.__dict__)  # s@cov@metacov@g
     help_params["__url__"] = __url__
     help_params["program_name"] = program_name
     if CTRACER_FILE:

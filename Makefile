@@ -100,7 +100,7 @@ metacov_pkg:
 	echo "This is a clone of coverage for metacov" > metacov_pkg/README.rst
 	echo "No one" > metacov_pkg/CONTRIBUTORS.txt
 	$(SED_INPLACE) '/import/s/coverage/metacov/' metacov_pkg/metacov/*.py
-	$(SED_INPLACE) '/cov-metacov/s/coverage/metacov/g' metacov_pkg/metacov/*.py
+	$(SED_INPLACE) '/s@cov@metacov@g/s/coverage/metacov/g' metacov_pkg/metacov/*.py metacov_pkg/metacov/ctracer/*
 	$(SED_INPLACE) '/getenv|environ/s/COVERAGE_/METACOV_/g' metacov_pkg/metacov/*.py
 	$(SED_INPLACE) 's/coverage/metacov/g' metacov_pkg/setup.py
 	$(SED_INPLACE) '/m_name/s/coverage/metacov/' metacov_pkg/metacov/ctracer/module.c
