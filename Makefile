@@ -105,6 +105,7 @@ metacov_pkg:
 	$(SED_INPLACE) 's/coverage/metacov/g' metacov_pkg/setup.py
 	$(SED_INPLACE) '/m_name/s/coverage/metacov/' metacov_pkg/metacov/ctracer/module.c
 	$(SED_INPLACE) 's/Coverage.py/METACOV/g' metacov_pkg/metacov/cmdline.py
+	$(SED_INPLACE) '/COV_NAME/s/COVERAGE/METACOV/' metacov_pkg/metacov/env.py
 
 
 metacov: metacov_pkg			## Run meta-coverage, measuring ourself.

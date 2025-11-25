@@ -113,6 +113,8 @@ class PYBEHAVIOR:
 
 # Coverage.py specifics, about testing scenarios. See tests/testenv.py also.
 
+COV_NAME = "COVERAGE"
+
 # Are we coverage-measuring ourselves?
 METACOV = os.getenv("COVERAGE_COVERAGE") is not None
 
