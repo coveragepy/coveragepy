@@ -1111,7 +1111,7 @@ CTracer_methods[] = {
 PyTypeObject
 CTracerType = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "coverage.CTracer",        /*tp_name*/
+    "coverage.CTracer",        /*tp_name*/ // s@cov@metacov@g
     sizeof(CTracer),           /*tp_basicsize*/
     0,                         /*tp_itemsize*/
     (destructor)CTracer_dealloc, /*tp_dealloc*/

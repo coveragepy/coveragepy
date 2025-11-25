@@ -66,7 +66,7 @@ static PyModuleDef_Slot tracer_slots[] = {
 
 static PyModuleDef moduledef = {
     .m_base = PyModuleDef_HEAD_INIT,
-    .m_name = "coverage.tracer",
+    .m_name = "coverage.tracer",  // s@cov@metacov@g
     .m_doc = MODULE_DOC,
     .m_size = 0,
     .m_slots = tracer_slots,

@@ -45,7 +45,7 @@ CFileDisposition_members[] = {
 PyTypeObject
 CFileDispositionType = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "coverage.CFileDispositionType",        /*tp_name*/
+    "coverage.CFileDispositionType",        /*tp_name*/ // s@cov@metacov@g
     sizeof(CFileDisposition),  /*tp_basicsize*/
     0,                         /*tp_itemsize*/
     (destructor)CFileDisposition_dealloc, /*tp_dealloc*/
