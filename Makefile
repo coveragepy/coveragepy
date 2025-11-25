@@ -106,6 +106,11 @@ metacov_pkg:
 	$(SED_INPLACE) 's/Coverage.py/METACOV/g' metacov_pkg/metacov/cmdline.py
 	$(SED_INPLACE) '/COV_NAME/s/COVERAGE/METACOV/' metacov_pkg/metacov/env.py
 
+xyz: metacov_pkg
+	rm -rf metacov_venv
+	python3 -m venv metacov_venv
+	metacov_venv/bin/pip install ./metacov_pkg
+	metacov_venv/bin/metacov debug sys
 
 metacov: metacov_pkg			## Run meta-coverage, measuring ourself.
 	COVERAGE_METACOV_DEPS=./metacov_pkg COVERAGE_COVERAGE=yes tox -q $(ARGS)

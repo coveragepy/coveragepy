@@ -36,6 +36,11 @@ from tests.helpers import change_dir, re_lines, re_lines_text
 class ProcessTest(CoverageTest):
     """Tests of the per-process behavior of coverage.py."""
 
+    # def test_do_we_have_the_right_coverage(self) -> None:
+    #     self.set_environ("COVERAGE_DEBUG_FILE", "debug.out")
+    #     self.run_command("coverage debug sys")
+    #     1/0
+    #
     def test_save_on_exit(self) -> None:
         self.make_file(
             "mycode.py",
