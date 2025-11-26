@@ -128,14 +128,17 @@ generator did not iterate until ``StopIteration`` is raised, the indication
 that the loop is complete. This is another case
 where adding ``# pragma: no branch`` may be desirable.
 
-Missing branches in branch coverage
------------------------------------
+Explanations and examples of missing branches
+---------------------------------------------
+
+This section shows common examples of missing branches in Python code and
+explains how coverage.py reports them.
 
 Example::
 
     10: for x in items:
     11:     print(x)
-    12:     # end of loop body
+    12:     print("loop done")
     13: print("done")
 
 Possible branches:
@@ -176,7 +179,7 @@ Example::
 If ``flag`` is always true, the false branch is never taken.
 This branch will be reported as missing.
 
-The report will show::
+The report will show the missing branch::
 
     10->13
 
