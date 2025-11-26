@@ -94,17 +94,18 @@ else
 endif
 
 metacov_pkg:
-	mkdir -p metacov_pkg/metacov
-	cp -R coverage/ metacov_pkg/metacov
-	cp setup.py metacov_pkg/
-	echo "This is a clone of coverage for metacov" > metacov_pkg/README.rst
-	echo "No one" > metacov_pkg/CONTRIBUTORS.txt
-	$(SED_INPLACE) '/import/s/coverage/metacov/' metacov_pkg/metacov/*.py
-	$(SED_INPLACE) '/s@cov@metacov@g/s/coverage/metacov/g' metacov_pkg/metacov/*.py metacov_pkg/metacov/ctracer/*
-	$(SED_INPLACE) '/getenv|environ/s/COVERAGE_/METACOV_/g' metacov_pkg/metacov/*.py
-	$(SED_INPLACE) 's/coverage/metacov/g' metacov_pkg/setup.py
-	$(SED_INPLACE) 's/Coverage.py/METACOV/g' metacov_pkg/metacov/cmdline.py
-	$(SED_INPLACE) '/COV_NAME/s/COVERAGE/METACOV/' metacov_pkg/metacov/env.py
+	@echo "Creating metacov_pkg..."
+	@mkdir -p metacov_pkg/metacov
+	@cp -R coverage/ metacov_pkg/metacov
+	@cp setup.py metacov_pkg/
+	@echo "This is a clone of coverage for metacov" > metacov_pkg/README.rst
+	@echo "No one" > metacov_pkg/CONTRIBUTORS.txt
+	@$(SED_INPLACE) '/import/s/coverage/metacov/' metacov_pkg/metacov/*.py
+	@$(SED_INPLACE) '/s@cov@metacov@g/s/coverage/metacov/g' metacov_pkg/metacov/*.py metacov_pkg/metacov/ctracer/*
+	@$(SED_INPLACE) '/getenv|environ/s/COVERAGE_/METACOV_/g' metacov_pkg/metacov/*.py
+	@$(SED_INPLACE) 's/coverage/metacov/g' metacov_pkg/setup.py
+	@$(SED_INPLACE) 's/Coverage.py/METACOV/g' metacov_pkg/metacov/cmdline.py
+	@$(SED_INPLACE) '/COV_NAME/s/COVERAGE/METACOV/' metacov_pkg/metacov/env.py
 
 xyz: metacov_pkg
 	rm -rf metacov_venv
