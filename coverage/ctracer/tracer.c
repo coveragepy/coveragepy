@@ -137,23 +137,25 @@ static void
 CTracer_showlog(CTracer * self, int lineno, PyObject * filename, const char * msg)
 {
     if (logging) {
+        FILE *flog = fopen("/tmp/debug_trace.txt", "a");
         int depth = self->pdata_stack->depth;
-        printf("%x: %s%3d ", (int)self, indent(depth), depth);
+        fprintf(flog, "%p: %s%3d ", self, indent(depth), depth);
         if (lineno) {
-            printf("%4d", lineno);
+            fprintf(flog, "%4d", lineno);
         }
         else {
-            printf("    ");
+            fprintf(flog, "    ");
         }
         if (filename) {
             PyObject *ascii = PyUnicode_AsASCIIString(filename);
-            printf(" %s", PyBytes_AS_STRING(ascii));
+            fprintf(flog, " %s", PyBytes_AS_STRING(ascii));
             Py_DECREF(ascii);
         }
         if (msg) {
-            printf(" %s", msg);
+            fprintf(flog, " %s", msg);
         }
-        printf("\n");
+        fprintf(flog, "\n");
+        fclose(flog);
     }
 }
 
