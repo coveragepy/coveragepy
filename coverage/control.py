@@ -354,6 +354,17 @@ class Coverage(TConfigurable):
         if not env.METACOV:
             _prevent_sub_process_measurement()
 
+    def __repr__(self) -> str:
+        assert self._core is not None
+        assert self._data is not None
+        return (
+            "<Coverage"
+            + f" @0x{id(self):x}"
+            + f" core={self._core.tracer_class.__name__}"
+            + f" data_file={self._data._filename!r}"
+            + ">"
+        )
+
     def _init(self) -> None:
         """Set all the initial state.
 
