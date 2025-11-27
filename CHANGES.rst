@@ -23,7 +23,9 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
-Nothing yet.
+- New feature: coverage.py now supports :file:`.coveragerc.toml` configuration
+  files. These files use TOML syntax and take priority over
+  :file:`pyproject.toml` but lower priority than :file:`.coveragerc` files.
 
 
 .. start-releases

@@ -145,7 +145,7 @@ all of them by adding a regex to the exclusion list:
             def __repr__
 
     .. code-tab:: toml
-        :caption: pyproject.toml
+        :caption: .coveragerc.toml or pyproject.toml
 
         [tool.coverage.report]
         exclude_also = [
@@ -159,7 +159,7 @@ all of them by adding a regex to the exclusion list:
         exclude_also =
             def __repr__
 
-.. [[[end]]] (sum: 8+cOvxKPvv)
+.. [[[end]]] (sum: QqurBI2O5i)
 
 For example, here's a list of exclusions I've used:
 
@@ -216,7 +216,7 @@ For example, here's a list of exclusions I've used:
             @(abc\.)?abstractmethod
 
     .. code-tab:: toml
-        :caption: pyproject.toml
+        :caption: .coveragerc.toml or pyproject.toml
 
         [tool.coverage.report]
         exclude_also = [
@@ -248,7 +248,7 @@ For example, here's a list of exclusions I've used:
             class .*\bProtocol\):
             @(abc\.)?abstractmethod
 
-.. [[[end]]] (sum: ZQsgnt0nES)
+.. [[[end]]] (sum: z5MhXz2dFm)
 
 The :ref:`config_report_exclude_also` option adds regexes to the built-in
 default list so that you can add your own exclusions.  The older
@@ -319,7 +319,7 @@ Here are some examples:
             \A(?s:.*# pragma: exclude file.*)\Z
 
     .. code-tab:: toml
-        :caption: pyproject.toml
+        :caption: .coveragerc.toml or pyproject.toml
 
         [tool.coverage.report]
         exclude_also = [
@@ -343,7 +343,7 @@ Here are some examples:
             ; 3. A pragma comment that excludes an entire file:
             \A(?s:.*# pragma: exclude file.*)\Z
 
-.. [[[end]]] (sum: xG6Bmtmh06)
+.. [[[end]]] (sum: 3EupeurnDP)
 
 The first regex matches a specific except line followed by a specific function
 call.  Both lines must be present for the exclusion to take effect. Note that

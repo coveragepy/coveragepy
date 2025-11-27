@@ -97,7 +97,7 @@ The ``[run] dynamic_context`` setting has only one option now.  Set it to
         dynamic_context = test_function
 
     .. code-tab:: toml
-        :caption: pyproject.toml
+        :caption: .coveragerc.toml or pyproject.toml
 
         [tool.coverage.run]
         dynamic_context = "test_function"
@@ -108,7 +108,7 @@ The ``[run] dynamic_context`` setting has only one option now.  Set it to
         [coverage:run]
         dynamic_context = test_function
 
-.. [[[end]]] (sum: dZTDYjHw71)
+.. [[[end]]] (sum: Hn9VZdxp00)
 
 Each test function you run will be considered a separate dynamic context, and
 coverage data will be segregated for each.  A test function is any function
