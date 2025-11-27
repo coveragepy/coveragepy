@@ -315,6 +315,16 @@ class PyTracer(Tracer):
         Return a Python function suitable for use with sys.settrace().
 
         """
+        import contextlib  # DELETE ME
+
+        with open("/tmp/foo.out", "a", encoding="utf-8") as f:
+            with contextlib.redirect_stdout(f):
+                import inspect
+
+                print(
+                    "\n".join("%30s : %s:%d" % (t[3], t[1], t[2]) for t in inspect.stack()[99:0:-1])
+                )
+                print(f"Starting tracer {self.id}")
         self.stopped = False
         if self.threading:
             if self.thread is None:
@@ -325,6 +335,16 @@ class PyTracer(Tracer):
 
     def stop(self) -> None:
         """Stop this Tracer."""
+        import contextlib  # DELETE ME
+
+        with open("/tmp/foo.out", "a", encoding="utf-8") as f:
+            with contextlib.redirect_stdout(f):
+                import inspect
+
+                print(
+                    "\n".join("%30s : %s:%d" % (t[3], t[1], t[2]) for t in inspect.stack()[99:0:-1])
+                )
+                print(f"Stopping tracer {self.id}")
         # Get the active tracer callback before setting the stop flag to be
         # able to detect if the tracer was changed prior to stopping it.
         tf = sys.gettrace()

@@ -148,7 +148,7 @@ jobs:
 
       - name: "Run tox coverage for ${{ matrix.python-version }}"
         env:
-          COVERAGE_COVERAGE: "yes"
+          COVERAGE_METACOV: "yes"
           COVERAGE_CONTEXT: "${{ env.MATRIX_ID }}"
         run: |
           set -xe

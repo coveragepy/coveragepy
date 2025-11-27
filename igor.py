@@ -171,6 +171,7 @@ def run_tests_with_coverage(core, *runner_args):
     # Need to define this early enough that the first import of env.py sees it.
     os.environ["COVERAGE_TESTING"] = "True"
     os.environ["METACOV_PROCESS_START"] = os.path.abspath("metacov.ini")
+    os.environ["METACOV_CORE"] = "pytrace"
     os.environ["COVERAGE_HOME"] = os.getcwd()
     context = os.getenv("METACOV_CONTEXT")
     if context:
@@ -235,7 +236,7 @@ def do_combine_html():
 
 def do_test_with_core(core, *runner_args):
     """Run tests with a particular core."""
-    metacov = os.getenv("COVERAGE_COVERAGE", "no") == "yes"
+    metacov = os.getenv("COVERAGE_METACOV", "no") == "yes"
 
     # If we should skip these tests, skip them.
     skip_msg = should_skip(core, metacov)

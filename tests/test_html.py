@@ -72,7 +72,17 @@ class HtmlTestHelpers(CoverageTest):
         """Run coverage.py on main_file.py, and create an HTML report."""
         self.clean_local_file_imports()
         cov = coverage.Coverage(**(covargs or {}))
+        import contextlib  # DELETE ME
+
+        with open("/tmp/foo.out", "a", encoding="utf-8") as f:
+            with contextlib.redirect_stdout(f):
+                print(f"== about to start")
         self.start_import_stop(cov, "main_file")
+        import contextlib  # DELETE ME
+
+        with open("/tmp/foo.out", "a", encoding="utf-8") as f:
+            with contextlib.redirect_stdout(f):
+                print(f"== just stopped")
         ret = cov.html_report(**(htmlargs or {}))
         self.assert_valid_hrefs()
         return ret
@@ -688,7 +698,7 @@ class HtmlTest(HtmlTestHelpers, CoverageTest):
         index = self.get_html_index_content()
         assert "1 file skipped due to complete coverage." in index
 
-    def test_report_skip_covered_branches(self) -> None:
+    def test_xxreport_skip_covered_branches(self) -> None:
         self.make_main_and_not_covered()
         self.run_coverage(covargs=dict(branch=True), htmlargs=dict(skip_covered=True))
         self.assert_exists("htmlcov/index.html")

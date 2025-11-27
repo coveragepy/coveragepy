@@ -358,8 +358,10 @@ class Coverage(TConfigurable):
         assert self._core is not None
         assert self._data is not None
         return (
-            "<Coverage"
-            + f" @0x{id(self):x}"
+            f"<"
+            + f"{self.__class__.__module__}."
+            + f"{self.__class__.__qualname__}"
+            + f" @{id(self):#x}"
             + f" core={self._core.tracer_class.__name__}"
             + f" data_file={self._data._filename!r}"
             + ">"

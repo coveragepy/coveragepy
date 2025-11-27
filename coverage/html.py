@@ -289,6 +289,17 @@ class HtmlReporter:
         self.skip_covered = self.config.html_skip_covered
         if self.skip_covered is None:
             self.skip_covered = self.config.skip_covered
+
+        import contextlib  # DELETE ME
+
+        if self.skip_covered:
+            with open("/tmp/foo.out", "a", encoding="utf-8") as f:
+                with contextlib.redirect_stdout(f):
+                    import metacov
+
+                    # import inspect;print("\n".join("%30s : %s:%d" % (t[3], t[1], t[2]) for t in inspect.stack()[99:0:-1]))
+                    print(repr(metacov.Coverage.current()))
+
         self.skip_empty = self.config.html_skip_empty
         if self.skip_empty is None:
             self.skip_empty = self.config.skip_empty

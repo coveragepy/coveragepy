@@ -114,7 +114,7 @@ xyz: metacov_pkg
 	metacov_venv/bin/metacov debug sys
 
 metacov: metacov_pkg			## Run meta-coverage, measuring ourself.
-	COVERAGE_METACOV_DEPS=./metacov_pkg COVERAGE_COVERAGE=yes tox -q $(ARGS)
+	COVERAGE_METACOV_DEPS=./metacov_pkg COVERAGE_METACOV=yes tox -q $(ARGS)
 
 metahtml:				## Produce meta-coverage HTML reports.
 	tox exec -q $(ARGS) -- python3 igor.py combine_html
