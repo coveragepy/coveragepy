@@ -20,8 +20,12 @@ upgrading your version of coverage.py.
     ..  Version 9.8.1 — 2027-07-27
     ..  --------------------------
 
-Unreleased
-----------
+.. start-releases
+
+.. _changes_7-12-1b1:
+
+Version 7.12.1b1 — 2025-11-30
+-----------------------------
 
 - Fix: coverage.py now includes a permanent .pth file in the distribution which
   is installed with the code. This fixes `issue 2084`_: failure to patch for
@@ -29,8 +33,6 @@ Unreleased
 
 .. _issue 2084: https://github.com/coveragepy/coveragepy/issues/2084
 
-
-.. start-releases
 
 .. _changes_7-12-0:
 

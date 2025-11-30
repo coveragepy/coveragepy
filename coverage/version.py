@@ -8,8 +8,8 @@ from __future__ import annotations
 
 # version_info: same semantics as sys.version_info.
 # _dev: the .devN suffix if any.
-version_info = (7, 12, 1, "alpha", 0)
-_dev = 1
+version_info = (7, 12, 1, "beta", 1)
+_dev = 0
 
 
 def _make_version(
