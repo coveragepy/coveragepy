@@ -13,13 +13,12 @@ import os.path
 import platform
 import re
 import signal
-import site
 import stat
 import sys
 import textwrap
 
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 import pytest
 
@@ -1413,7 +1412,7 @@ class ProcessStartupTest(CoverageTest):
         assert line_counts(data)["main.py"] == 3
         assert line_counts(data)["sub.py"] == 3
 
-    def test_subprocess_with_pth_files(self, _create_pth_file: None) -> None:
+    def test_subprocess_with_pth_files(self) -> None:
         # An existing data file should not be read when a subprocess gets
         # measured automatically.  Create the data file here with bogus data in
         # it.
@@ -1441,7 +1440,7 @@ class ProcessStartupTest(CoverageTest):
         data.read()
         assert line_counts(data)["sub.py"] == 3
 
-    def test_subprocess_with_pth_files_and_parallel(self, _create_pth_file: None) -> None:
+    def test_subprocess_with_pth_files_and_parallel(self) -> None:
         # https://github.com/coveragepy/coveragepy/issues/492
         self.make_main_and_sub()
         self.make_file(
@@ -1592,28 +1591,6 @@ class ProcessStartupTest(CoverageTest):
             assert line_counts(data) == {"main.py": 5, "sub.py": 2, "other.py": 1}
 
 
-@pytest.fixture
-def _clean_pth_files() -> Iterable[None]:
-    """A fixture to clean up any .pth files we created during the test."""
-    # The execv test needs to make .pth files so that subprocesses will get
-    # measured.  But there's no way for coverage to remove those files because
-    # they need to exist when the new program starts, and there's no
-    # information carried over to clean them automatically.
-    #
-    # So for these tests, we clean them as part of the test suite.
-    pth_files: set[Path] = set()
-    for d in site.getsitepackages():
-        pth_files.update(Path(d).glob("*.pth"))
-
-    try:
-        yield
-    finally:
-        for d in site.getsitepackages():
-            for pth in Path(d).glob("*.pth"):
-                if pth not in pth_files:
-                    pth.unlink()
-
-
 @pytest.mark.skipif(env.WINDOWS, reason="patch=execv isn't supported on Windows")
 @pytest.mark.xdist_group(name="needs_pth")
 class ExecvTest(CoverageTest):
@@ -1629,7 +1606,7 @@ class ExecvTest(CoverageTest):
             )
         ],
     )
-    def test_execv_patch(self, fname: str, _clean_pth_files: None) -> None:
+    def test_execv_patch(self, fname: str) -> None:
         self.make_file(
             ".coveragerc",
             """\
@@ -1716,7 +1693,6 @@ class ProcessStartupWithSourceTest(CoverageTest):
         dashm: str,
         package: str,
         source: str,
-        _create_pth_file: None,
     ) -> None:
         """Run the test for a particular combination of factors.
 

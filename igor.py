@@ -52,7 +52,7 @@ def do_show_env():
         print(f"  {env} = {os.environ[env]!r}")
 
 
-def remove_extension(core):
+def do_clean_for_core(core):
     """Remove the compiled C extension, no matter what its name."""
 
     if core == "ctrace":
@@ -159,7 +159,6 @@ def make_env_id(core):
 
 def run_tests(core, *runner_args):
     """The actual running of tests."""
-    remove_extension(core)
     if "COVERAGE_TESTING" not in os.environ:
         os.environ["COVERAGE_TESTING"] = "True"
     print_banner(label_for_core(core))
@@ -183,9 +182,9 @@ def run_tests_with_coverage(core, *runner_args):
     # or the sys.path entries aren't created right?
     # There's an entry in "make clean" to get rid of this file.
     pth_dir = sysconfig.get_path("purelib")
-    pth_path = os.path.join(pth_dir, "zzz_metacov.pth")
+    pth_path = os.path.join(pth_dir, "zzy_metacov.pth")
     with open(pth_path, "w", encoding="utf-8") as pth_file:
-        pth_file.write("import coverage; coverage.process_startup()\n")
+        pth_file.write("import coverage; coverage.process_startup(slug='meta')\n")
 
     suffix = f"{make_env_id(core)}_{platform.platform()}"
     os.environ["COVERAGE_METAFILE"] = os.path.abspath(".metacov." + suffix)
@@ -211,7 +210,6 @@ def run_tests_with_coverage(core, *runner_args):
                 if getattr(mod, "__file__", "??").startswith(covdir):
                     covmods[name] = mod
                     del sys.modules[name]
-        remove_extension(core)
 
         import coverage  # pylint: disable=reimported
 

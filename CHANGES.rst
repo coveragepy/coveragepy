@@ -23,7 +23,11 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
-Nothing yet.
+- Fix: coverage.py now includes a permanent .pth file in the distribution which
+  is placed in site-packages on installation. This fixes `issue 2084`_: failure
+  to patch for subprocess measurement when site-packages is not writable.
+
+.. _issue 2084: https://github.com/coveragepy/coveragepy/issues/2084
 
 
 .. start-releases

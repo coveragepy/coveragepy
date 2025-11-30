@@ -288,9 +288,6 @@ class Coverage(TConfigurable):
         self._no_warn_slugs: set[str] = set()
         self._messages = messages
 
-        # If we're invoked from a .pth file, we shouldn't try to make another one.
-        self._make_pth_file = True
-
         # A record of all the warnings that have been issued.
         self._warnings: list[str] = []
 
@@ -719,7 +716,7 @@ class Coverage(TConfigurable):
         if self._auto_load:
             self.load()
 
-        apply_patches(self, self.config, self._debug, make_pth_file=self._make_pth_file)
+        apply_patches(self, self.config, self._debug)
 
         self._collector.start()
         self._started = True
@@ -1429,12 +1426,21 @@ if int(os.getenv("COVERAGE_DEBUG_CALLS", 0)):  # pragma: debugging
     )(Coverage)
 
 
-def process_startup(*, force: bool = False) -> Coverage | None:
+def process_startup(
+    *,
+    force: bool = False,
+    slug: str = "default",  # pylint: disable=unused-argument
+) -> Coverage | None:
     """Call this at Python start-up to perhaps measure coverage.
 
-    If the environment variable COVERAGE_PROCESS_START is defined, coverage
-    measurement is started.  The value of the variable is the config file
-    to use.
+    Coverage is started if one of these environment variables is defined:
+
+    - COVERAGE_PROCESS_START: the config file to use.
+    - COVERAGE_PROCESS_CONFIG: the config data to use, a string produced by
+      CoverageConfig.serialize, prefixed by ":data:".
+
+    If one of these is defined, it's used to get the coverage configuration,
+    and coverage is started.
 
     For details, see https://coverage.readthedocs.io/en/latest/subprocess.html.
 
@@ -1472,7 +1478,6 @@ def process_startup(*, force: bool = False) -> Coverage | None:
     cov._warn_unimported_source = False
     cov._warn_preimported_source = False
     cov._auto_save = True
-    cov._make_pth_file = False
     cov.start()
 
     return cov
@@ -1482,7 +1487,7 @@ def _after_fork_in_child() -> None:
     """Used by patch=fork in the child process to restart coverage."""
     if cov := Coverage.current():
         cov.stop()
-    process_startup(force=True)
+    process_startup(force=True, slug="fork")
 
 
 def _prevent_sub_process_measurement() -> None:

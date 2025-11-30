@@ -63,7 +63,7 @@ jobs:
   coverage:
     name: "${{ matrix.python-version }} on ${{ matrix.os }}"
     runs-on: "${{ matrix.os }}-${{ matrix.os-version || 'latest' }}"
-    timeout-minutes: 10
+    timeout-minutes: 20
 
     # Only run coverage if Python files or this workflow changed.
     needs: changed
@@ -150,6 +150,7 @@ jobs:
         env:
           COVERAGE_COVERAGE: "yes"
           COVERAGE_CONTEXT: "${{ env.MATRIX_ID }}"
+          PYTEST_ADDOPTS: "-n0"
         run: |
           set -xe
           python -m tox
