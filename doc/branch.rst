@@ -26,11 +26,10 @@ For example::
 
 In this code, line 2 is an ``if`` statement which can go next to either line 3
 or line 4. Statement coverage would show all lines of the function as executed.
-But the if was never evaluated as false, so line 2 never jumps to line 4.
+But the ``if`` was never evaluated as false, so line 2 never jumps to line 4.
 
 Branch coverage will flag this code as not fully covered because of the missing
-jump from line 2 to line 4.  This is known as a partial branch.
-
+jump from line 2 to line 4. This is known as a partial branch.
 
 How to measure branch coverage
 ------------------------------
@@ -49,6 +48,7 @@ The HTML report gives information about which lines had missing branches. Lines
 that were missing some branches are shown in yellow, with an annotation at the
 far right showing branch destination line numbers that were not exercised.
 
+
 The XML and JSON reports produced by ``coverage xml`` and ``coverage json``
 also include branch information, including separate statement and branch
 coverage percentages.
@@ -57,16 +57,15 @@ coverage percentages.
 How it works
 ------------
 
-When measuring branches, coverage.py collects pairs of line numbers, a source
-and destination for each transition from one line to another.  Static analysis
-of the source provides a list of possible transitions.  Comparing the measured
+When measuring branches, coverage.py collects pairs of line numbers: a source
+and destination for each transition from one line to another. Static analysis
+of the source provides a list of possible transitions. Comparing the measured
 to the possible indicates missing branches.
 
 The idea of tracking how lines follow each other was from `Titus Brown`__.
 Thanks, Titus!
 
 __ http://ivory.idyll.org/blog
-
 
 Excluding code
 --------------
@@ -84,7 +83,6 @@ as a branch if one of its choices is excluded::
 
 Because the ``else`` clause is excluded, the ``if`` only has one possible next
 line, so it isn't considered a branch at all.
-
 
 Structurally partial branches
 -----------------------------
@@ -129,3 +127,112 @@ While we might expect this line of code to be reported as covered, the
 generator did not iterate until ``StopIteration`` is raised, the indication
 that the loop is complete. This is another case
 where adding ``# pragma: no branch`` may be desirable.
+
+Explanations and examples of missing branches
+---------------------------------------------
+
+This section shows common examples of missing branches in Python code and
+explains how coverage.py reports them.
+
+Example::
+
+    10: for x in items:
+    11:     print(x)
+    12:     print("loop done")
+    13: print("done")
+
+Possible branches:
+
+* ``10 -> 11`` (enter loop body)
+* ``12 -> 10`` (repeat)
+* ``10 -> 13`` (skip loop entirely)
+
+
+Case 1 — ``items`` is empty::
+
+    Missing:
+        10 -> 11
+        12 -> 10
+
+Case 2 — ``items = [1]``::
+
+    Missing:
+        12 -> 10
+
+Coverage.py will report::
+
+    12->10
+
+Below are examples showing how common control-flow structures appear in the
+``Missing`` column when branch coverage is enabled.
+
+``if / else`` example
+---------------------
+
+Example::
+
+    10: if flag:
+    11:     do_true()
+    12: else:
+    13:     do_false()
+
+If ``flag`` is always true, the false branch is never taken.
+This branch will be reported as missing.
+
+The report will show the missing branch::
+
+    10->13
+
+``for`` loop example
+--------------------
+
+Example::
+
+    20: for x in items:
+    21:     print(x)
+
+A ``for`` loop has:
+
+* ``20->21`` (enter body)
+* ``21->20`` (repeat)
+
+For a single-iteration loop you might see::
+
+    21->20
+
+``while`` loop example
+----------------------
+
+Example::
+
+    30: while condition:
+    31:     blah()
+    32: # exit
+
+A ``while`` loop has:
+
+* ``30->31`` (enter)
+* ``31->30`` (repeat)
+* ``30->32`` (exit)
+
+If the repeat never happens::
+
+    31->30
+
+``try / except`` example
+------------------------
+
+Example::
+
+    40: try:
+    41:     blah()
+    42: except ValueError:
+    43:     handler()
+    44: print(a)
+
+* ``41->42`` when ``ValueError`` is raised
+* ``41->44`` on normal execution
+
+If ``blah()`` never raises ``ValueError``, the report will show::
+
+    41->42
