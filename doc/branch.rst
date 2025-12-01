@@ -136,32 +136,33 @@ explains how coverage.py reports them.
 
 Example::
 
-    10: for x in items:
-    11:     print(x)
-    12:     print("loop done")
-    13: print("done")
+    1: items = [1]
+    2: for x in items:
+    3:     print(x)
+    4:     if x:
+    5:         print("x is true")
+    6: print("done")
+
 
 Possible branches:
 
-* ``10 -> 11`` (enter loop body)
-* ``12 -> 10`` (repeat)
-* ``10 -> 13`` (skip loop entirely)
+* ``2 -> 3`` (loop body executed)
+* ``2 -> 6`` (exit)
+* ``4 -> 5`` (if True)
+* ``4 -> 2`` (if False ,backward branch)
 
 
 Case 1 — ``items`` is empty::
 
     Missing:
-        10 -> 11
-        12 -> 10
+         2 -> 3
+         4 -> 2
 
 Case 2 — ``items = [1]``::
 
     Missing:
-        12 -> 10
+         4 -> 2
 
-Coverage.py will report::
-
-    12->10
 
 Below are examples showing how common control-flow structures appear in the
 ``Missing`` column when branch coverage is enabled.
