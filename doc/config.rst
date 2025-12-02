@@ -170,6 +170,36 @@ Here's a sample configuration file, in each syntax:
 
 .. tabs::
 
+    .. code-tab:: toml
+        :caption: pyproject.toml
+
+        [tool.coverage.run]
+        branch = true
+
+        [tool.coverage.report]
+        # Regexes for lines to exclude from consideration
+        exclude_also = [
+            # Don't complain about missing debug-only code:
+            "def __repr__",
+            "if self\\.debug",
+
+            # Don't complain if tests don't hit defensive assertion code:
+            "raise AssertionError",
+            "raise NotImplementedError",
+
+            # Don't complain if non-runnable code isn't run:
+            "if 0:",
+            "if __name__ == .__main__.:",
+
+            # Don't complain about abstract methods, they aren't run:
+            "@(abc\\.)?abstractmethod",
+            ]
+
+        ignore_errors = true
+
+        [tool.coverage.html]
+        directory = "coverage_html_report"
+
     .. code-tab:: ini
         :caption: .coveragerc
 
@@ -200,12 +230,13 @@ Here's a sample configuration file, in each syntax:
         directory = coverage_html_report
 
     .. code-tab:: toml
-        :caption: .coveragerc.toml or pyproject.toml
+        :caption: .coveragerc.toml
 
-        [tool.coverage.run]
+        # You can also use sections like [tool.coverage.run]
+        [run]
         branch = true
 
-        [tool.coverage.report]
+        [report]
         # Regexes for lines to exclude from consideration
         exclude_also = [
             # Don't complain about missing debug-only code:
@@ -226,7 +257,7 @@ Here's a sample configuration file, in each syntax:
 
         ignore_errors = true
 
-        [tool.coverage.html]
+        [html]
         directory = "coverage_html_report"
 
     .. code-tab:: ini
@@ -258,7 +289,7 @@ Here's a sample configuration file, in each syntax:
         [coverage:html]
         directory = coverage_html_report
 
-.. [[[end]]] (sum: FvgoIIyfXR)
+.. [[[end]]] (sum: qYCtIxMe+3)
 
 
 The specific configuration settings are described below.  Many sections and
@@ -597,6 +628,16 @@ equivalent when combining data from different machines:
 
 .. tabs::
 
+    .. code-tab:: toml
+        :caption: pyproject.toml
+
+        [tool.coverage.paths]
+        source = [
+            "src/",
+            "/jenkins/build/*/src",
+            "c:\\myproj\\src",
+            ]
+
     .. code-tab:: ini
         :caption: .coveragerc
 
@@ -607,9 +648,10 @@ equivalent when combining data from different machines:
             c:\myproj\src
 
     .. code-tab:: toml
-        :caption: .coveragerc.toml or pyproject.toml
+        :caption: .coveragerc.toml
 
-        [tool.coverage.paths]
+        # You can also use sections like [tool.coverage.run]
+        [paths]
         source = [
             "src/",
             "/jenkins/build/*/src",
@@ -625,7 +667,7 @@ equivalent when combining data from different machines:
             /jenkins/build/*/src
             c:\myproj\src
 
-.. [[[end]]] (sum: bV+PjKu+HS)
+.. [[[end]]] (sum: Aq4877/XV0)
 
 
 The names of the entries ("source" in this example) are ignored, you may choose
