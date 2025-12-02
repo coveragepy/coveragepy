@@ -129,10 +129,13 @@ that the loop is complete. This is another case
 where adding ``# pragma: no branch`` may be desirable.
 
 Explanations and examples of missing branches
----------------------------------------------
+=============================================
 
 This section shows common examples of missing branches in Python code and
 explains how coverage.py reports them.
+
+``for`` loop example
+--------------------
 
 Example::
 
@@ -149,19 +152,19 @@ Possible branches:
 * ``2 -> 3`` (loop body executed)
 * ``2 -> 6`` (exit)
 * ``4 -> 5`` (if True)
-* ``4 -> 2`` (if False ,backward branch)
+* ``4 -> 2`` (if False, backward branch)
 
 
 Case 1 — ``items`` is empty::
 
     Missing:
-         2 -> 3
-         4 -> 2
+    2 -> 3
+    4 -> 2
 
 Case 2 — ``items = [1]``::
 
     Missing:
-         4 -> 2
+    4 -> 2
 
 
 Below are examples showing how common control-flow structures appear in the
@@ -184,41 +187,27 @@ The report will show the missing branch::
 
     10->13
 
-``for`` loop example
---------------------
-
-Example::
-
-    20: for x in items:
-    21:     print(x)
-
-A ``for`` loop has:
-
-* ``20->21`` (enter body)
-* ``21->20`` (repeat)
-
-For a single-iteration loop you might see::
-
-    21->20
-
 ``while`` loop example
 ----------------------
 
 Example::
 
     30: while condition:
-    31:     blah()
-    32: # exit
+    31:     do_something()
+    32:     if flag:
+    33:         condition = True
+    34: print("done")
 
 A ``while`` loop has:
 
 * ``30->31`` (enter)
-* ``31->30`` (repeat)
-* ``30->32`` (exit)
+* ``30->34`` (exit)
+* ``32->33`` (if True)
+* ``32->30`` (if False)
 
-If the repeat never happens::
+If ``flag`` is always true::
 
-    31->30
+    32->30
 
 ``try / except`` example
 ------------------------
