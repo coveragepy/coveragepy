@@ -9,73 +9,87 @@
 import re
 import os
 import os.path
+import platform
 import site
 import sys
+import textwrap
+
+from typing import Any
 
 from setuptools import Extension, errors, setup
 from setuptools.command.build_ext import build_ext  # pylint: disable=wrong-import-order
 
-# Get or massage our metadata.  We exec coverage/version.py so we can avoid
-# importing the product code into setup.py.
 
-# PYVERSIONS
-classifiers = """\
-Environment :: Console
-Intended Audience :: Developers
-Operating System :: OS Independent
-Programming Language :: Python
-Programming Language :: Python :: 3
-Programming Language :: Python :: 3.10
-Programming Language :: Python :: 3.11
-Programming Language :: Python :: 3.12
-Programming Language :: Python :: 3.13
-Programming Language :: Python :: 3.14
-Programming Language :: Python :: 3.15
-Programming Language :: Python :: Free Threading :: 3 - Stable
-Programming Language :: Python :: Implementation :: CPython
-Programming Language :: Python :: Implementation :: PyPy
-Topic :: Software Development :: Quality Assurance
-Topic :: Software Development :: Testing
-"""
-
-cov_ver_py = os.path.join(os.path.split(__file__)[0], "coverage/version.py")
-with open(cov_ver_py, encoding="utf-8") as version_file:
-    # __doc__ will be overwritten by version.py.
-    doc = __doc__
-    # Keep pylint happy.
-    __version__ = __url__ = version_info = ""
-    # Execute the code in version.py.
-    exec(compile(version_file.read(), cov_ver_py, "exec", dont_inherit=True))
-
-with open("README.rst", encoding="utf-8") as readme:
-    readme_text = readme.read()
-
-temp_url = __url__.replace("readthedocs", "@@")
-assert "@@" not in readme_text
-long_description = (
-    readme_text.replace("https://coverage.readthedocs.io/en/latest", temp_url)
-    .replace("https://coverage.readthedocs.io", temp_url)
-    .replace("@@", "readthedocs")
-)
-
-with open("CONTRIBUTORS.txt", "rb") as contributors:
-    paras = contributors.read().split(b"\n\n")
-    num_others = len(paras[-1].splitlines())
-    num_others += 1  # Count Gareth Rees, who is mentioned in the top paragraph.
-
-classifier_list = classifiers.splitlines()
-
-if version_info[3] == "alpha":
-    devstat = "3 - Alpha"
-elif version_info[3] in ["beta", "candidate"]:
-    devstat = "4 - Beta"
-else:
-    assert version_info[3] == "final"
-    devstat = "5 - Production/Stable"
-classifier_list.append(f"Development Status :: {devstat}")
+def get_version_data() -> dict[str, Any]:
+    """Get the globals from coverage/version.py."""
+    # We exec coverage/version.py so we can avoid importing the product code into setup.py.
+    module_globals: dict[str, Any] = {}
+    cov_ver_py = os.path.join(os.path.split(__file__)[0], "coverage/version.py")
+    with open(cov_ver_py, encoding="utf-8") as version_file:
+        # Execute the code in version.py.
+        exec(compile(version_file.read(), cov_ver_py, "exec", dont_inherit=True), module_globals)
+    return module_globals
 
 
-def do_make_pth():
+def get_long_description(url: str) -> str:
+    """Massage README.rst to get the long description."""
+    with open("README.rst", encoding="utf-8") as readme:
+        readme_text = readme.read()
+
+    url = url.replace("readthedocs", "@@")
+    assert "@@" not in readme_text
+    long_description = (
+        readme_text.replace("https://coverage.readthedocs.io/en/latest", url)
+        .replace("https://coverage.readthedocs.io", url)
+        .replace("@@", "readthedocs")
+    )
+    return long_description
+
+
+def count_contributors() -> int:
+    """Read CONTRIBUTORS.txt to count how many people have helped."""
+    with open("CONTRIBUTORS.txt", "rb") as contributors:
+        paras = contributors.read().split(b"\n\n")
+        num_others = len(paras[-1].splitlines())
+        num_others += 1  # Count Gareth Rees, who is mentioned in the top paragraph.
+    return num_others
+
+
+def get_classifiers(version_info: tuple[int, int, int, str, int]) -> list[str]:
+    """Build the list of classifiers"""
+    # PYVERSIONS
+    classifier_list = textwrap.dedent("""\
+        Environment :: Console
+        Intended Audience :: Developers
+        Operating System :: OS Independent
+        Programming Language :: Python
+        Programming Language :: Python :: 3
+        Programming Language :: Python :: 3.10
+        Programming Language :: Python :: 3.11
+        Programming Language :: Python :: 3.12
+        Programming Language :: Python :: 3.13
+        Programming Language :: Python :: 3.14
+        Programming Language :: Python :: 3.15
+        Programming Language :: Python :: Free Threading :: 3 - Stable
+        Programming Language :: Python :: Implementation :: CPython
+        Programming Language :: Python :: Implementation :: PyPy
+        Topic :: Software Development :: Quality Assurance
+        Topic :: Software Development :: Testing
+    """).splitlines()
+
+    if version_info[3] == "alpha":
+        devstat = "3 - Alpha"
+    elif version_info[3] in ["beta", "candidate"]:
+        devstat = "4 - Beta"
+    else:
+        assert version_info[3] == "final"
+        devstat = "5 - Production/Stable"
+    classifier_list.append(f"Development Status :: {devstat}")
+
+    return classifier_list
+
+
+def make_pth_file() -> None:
     """Make the packaged .pth file used for measuring subprocess coverage."""
 
     with open("coverage/pth_file.py", encoding="utf-8") as f:
@@ -90,13 +104,14 @@ def do_make_pth():
         pth_file.write(f"import sys; exec({code!r})\n")
 
 
-do_make_pth()
+version_data = get_version_data()
+make_pth_file()
 
 # Create the keyword arguments for setup()
 
 setup_args = dict(
     name="coverage",
-    version=__version__,
+    version=version_data["__version__"],
     packages=[
         "coverage",
     ],
@@ -130,18 +145,18 @@ setup_args = dict(
     },
     # We need to get HTML assets from our htmlfiles directory.
     zip_safe=False,
-    author=f"Ned Batchelder and {num_others} others",
+    author=f"Ned Batchelder and {count_contributors()} others",
     author_email="ned@nedbatchelder.com",
-    description=doc,
-    long_description=long_description,
+    description=__doc__,
+    long_description=get_long_description(url=version_data["__url__"]),
     long_description_content_type="text/x-rst",
     keywords="code coverage testing",
     license="Apache-2.0",
     license_files=["LICENSE.txt"],
-    classifiers=classifier_list,
+    classifiers=get_classifiers(version_data["version_info"]),
     url="https://github.com/coveragepy/coveragepy",
     project_urls={
-        "Documentation": __url__,
+        "Documentation": version_data["__url__"],
         "Funding": (
             "https://tidelift.com/subscription/pkg/pypi-coverage"
             + "?utm_source=pypi-coverage&utm_medium=referral&utm_campaign=pypi"
@@ -169,22 +184,22 @@ if sys.platform == "win32":
 class BuildFailed(Exception):
     """Raise this to indicate the C extension wouldn't build."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         Exception.__init__(self)
         self.cause = sys.exc_info()[1]  # work around py 2/3 different syntax
 
 
-class ve_build_ext(build_ext):
+class ve_build_ext(build_ext):  # type: ignore[misc]
     """Build C extensions, but fail with a straightforward exception."""
 
-    def run(self):
+    def run(self) -> None:
         """Wrap `run` with `BuildFailed`."""
         try:
             build_ext.run(self)
         except errors.PlatformError as exc:
             raise BuildFailed() from exc
 
-    def build_extension(self, ext):
+    def build_extension(self, ext: Any) -> None:
         """Wrap `build_extension` with `BuildFailed`."""
         if self.compiler.compiler_type == "msvc":
             ext.extra_compile_args = (ext.extra_compile_args or []) + [
@@ -211,7 +226,7 @@ class ve_build_ext(build_ext):
 
 compile_extension = os.getenv("COVERAGE_DISABLE_EXTENSION", None) is None
 
-if "__pypy__" in sys.builtin_module_names:
+if platform.python_implementation() == "PyPy":
     # Pypy can't compile C extensions
     compile_extension = False
 
@@ -236,7 +251,7 @@ if compile_extension:
     )
 
 
-def main():
+def main() -> None:
     """Actually invoke setup() with the arguments we built above."""
     # For a variety of reasons, it might not be possible to install the C
     # extension.  Try it with, and if it fails, try it without.
