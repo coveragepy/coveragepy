@@ -9,7 +9,6 @@
 import re
 import os
 import os.path
-import site
 import sys
 
 from setuptools import Extension, errors, setup
@@ -104,17 +103,9 @@ setup_args = dict(
         "coverage": [
             "htmlfiles/*.*",
             "py.typed",
+            "../zzz_coverage.pth",
         ],
     },
-    data_files=[
-        # Write the .pth file into all site-packages directories. Different
-        # platforms read different directories for .pth files, so put it
-        # everywhere.  The process_startup function called in the .pth file
-        # does nothing the second time it's called, so it's fine to have
-        # multiple .pth files.
-        (os.path.relpath(sp, sys.prefix), ["zzz_coverage.pth"])
-        for sp in site.getsitepackages()
-    ],
     entry_points={
         "console_scripts": [
             # Install a script as "coverage".
