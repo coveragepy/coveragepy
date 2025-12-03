@@ -20,6 +20,7 @@ from setuptools.command.build_ext import build_ext  # pylint: disable=wrong-impo
 
 # PYVERSIONS
 classifiers = """\
+Development Status :: 5 - Production/Stable
 Environment :: Console
 Intended Audience :: Developers
 Operating System :: OS Independent
@@ -64,15 +65,6 @@ with open("CONTRIBUTORS.txt", "rb") as contributors:
     num_others += 1  # Count Gareth Rees, who is mentioned in the top paragraph.
 
 classifier_list = classifiers.splitlines()
-
-if version_info[3] == "alpha":
-    devstat = "3 - Alpha"
-elif version_info[3] in ["beta", "candidate"]:
-    devstat = "4 - Beta"
-else:
-    assert version_info[3] == "final"
-    devstat = "5 - Production/Stable"
-classifier_list.append(f"Development Status :: {devstat}")
 
 
 def do_make_pth():
