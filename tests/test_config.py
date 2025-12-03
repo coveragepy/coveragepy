@@ -1082,6 +1082,26 @@ class ConfigFileTest(UsingModulesMixin, CoverageTest):
         assert cov.config.branch is True
         assert cov.config.precision == 2
 
+    def test_pyproject_toml_ignores_unprefixed_sections(self) -> None:
+        """Test that pyproject.toml ignores unprefixed sections."""
+        self.make_file(
+            "pyproject.toml",
+            """\
+            [run]
+            timid = true
+            data_file = "should-be-ignored.dat"
+            branch = true
+            
+            [tool.coverage.run]
+            data_file = "correct-data.dat"
+            """,
+        )
+        cov = coverage.Coverage()
+
+        assert cov.config.timid is False
+        assert cov.config.data_file == "correct-data.dat"
+        assert cov.config.branch is False
+
 
 class SerializeConfigTest(CoverageTest):
     """Tests of serializing the configuration for subprocesses."""
