@@ -554,7 +554,7 @@ class ConfigTest(CoverageTest):
             xyzzy = 17
             """,
         )
-        msg = f"Unrecognized option '\\[tool.coverage.run\\] xyzzy=' in config file {filename}"
+        msg = fr"Unrecognized option '\[tool.coverage.run\] xyzzy=' in config file {filename}"
         with pytest.warns(CoverageWarning, match=msg):
             _ = coverage.Coverage()
 
