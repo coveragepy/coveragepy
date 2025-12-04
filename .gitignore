@@ -49,7 +49,7 @@ doc/sample_html_beta
 
 # Build intermediaries.
 tmp
-zzz_coverage.pth
+a1_coverage.pth
 
 # OS junk
 .DS_Store

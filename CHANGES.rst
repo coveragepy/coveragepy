@@ -23,11 +23,16 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
+- The .pth file we install was done incorrectly and didn't work when using
+  the source wheel (`py3-none-any`).  This is now fixed. Thanks, `Henry
+  Schreiner <pull 2100_>`_.
+
 - Deprecated: when coverage.py is installed, it creates three command entry
   points: `coverage`, `coverage3`, and `coverage-3.10` (if installed for Python
   3.10). The second and third of these are not needed and will eventually be
   removed.
 
+.. _pull 2100: https://github.com/coveragepy/coveragepy/pull/2100
 
 .. start-releases
 

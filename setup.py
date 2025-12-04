@@ -10,14 +10,16 @@ import re
 import os
 import os.path
 import platform
-import site
 import sys
 import textwrap
+import zipfile
 
+from pathlib import Path
 from typing import Any
 
 from setuptools import Extension, errors, setup
-from setuptools.command.build_ext import build_ext  # pylint: disable=wrong-import-order
+from setuptools.command.build_ext import build_ext
+from setuptools.command.editable_wheel import editable_wheel
 
 
 def get_version_data() -> dict[str, Any]:
@@ -89,6 +91,14 @@ def get_classifiers(version_info: tuple[int, int, int, str, int]) -> list[str]:
     return classifier_list
 
 
+# The names of .pth files matter because they are read in lexicographic order.
+# Editable installs work because of `__editable__*.pth` files, so we need our
+# .pth files to come after those. But we want ours to be earlyish in the
+# sequence, so we start with `a`. The metacov .pth file should come before the
+# coverage .pth file, so we use `a0_metacov.pth` and `a1_coverage.pth`.
+PTH_NAME = "a1_coverage.pth"
+
+
 def make_pth_file() -> None:
     """Make the packaged .pth file used for measuring subprocess coverage."""
 
@@ -100,8 +110,18 @@ def make_pth_file() -> None:
 
     # `import sys` is needed because .pth files are executed only if they start
     # with `import `.
-    with open("zzz_coverage.pth", "w", encoding="utf-8") as pth_file:
+    with open(PTH_NAME, "w", encoding="utf-8") as pth_file:
         pth_file.write(f"import sys; exec({code!r})\n")
+
+
+class EditableWheelWithPth(editable_wheel):  # type: ignore[misc]
+    """Override the editable_wheel command to insert our .pth file into the wheel."""
+
+    def run(self) -> None:
+        super().run()
+        for whl in Path(self.dist_dir).glob("*editable*.whl"):
+            with zipfile.ZipFile(whl, "a") as zf:
+                zf.write(PTH_NAME, PTH_NAME)
 
 
 # A replacement for the build_ext command which raises a single exception
@@ -158,6 +178,7 @@ class ve_build_ext(build_ext):  # type: ignore[misc]
 version_data = get_version_data()
 make_pth_file()
 
+
 # Create the keyword arguments for setup()
 
 setup_args = dict(
@@ -170,17 +191,9 @@ setup_args = dict(
         "coverage": [
             "htmlfiles/*.*",
             "py.typed",
+            f"../{PTH_NAME}",
         ],
     },
-    data_files=[
-        # Write the .pth file into all site-packages directories. Different
-        # platforms read different directories for .pth files, so put it
-        # everywhere.  The process_startup function called in the .pth file
-        # does nothing the second time it's called, so it's fine to have
-        # multiple .pth files.
-        (os.path.relpath(sp, sys.prefix), ["zzz_coverage.pth"])
-        for sp in site.getsitepackages()
-    ],
     entry_points={
         "console_scripts": [
             # Install a script as "coverage".
@@ -196,6 +209,7 @@ setup_args = dict(
     },
     cmdclass={
         "build_ext": ve_build_ext,
+        "editable_wheel": EditableWheelWithPth,
     },
     # We need to get HTML assets from our htmlfiles directory.
     zip_safe=False,

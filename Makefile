@@ -37,12 +37,12 @@ clean: debug_clean _clean_platform	## Remove artifacts of test execution, instal
 	@rm -f MANIFEST
 	@rm -f .coverage .coverage.* .metacov*
 	@rm -f coverage.xml coverage.json
-	@rm -f .tox/*/lib/*/site-packages/zzz_metacov.pth
+	@rm -f .tox/*/lib/*/site-packages/a0_metacov.pth
 	@rm -f */.coverage */*/.coverage */*/*/.coverage */*/*/*/.coverage */*/*/*/*/.coverage */*/*/*/*/*/.coverage
 	@rm -f tests/covmain.zip tests/zipmods.zip tests/zip1.zip
 	@rm -rf doc/_build doc/_spell doc/sample_html_beta
 	@rm -rf tmp
-	@rm -rf zzz_coverage.pth
+	@rm -rf a1_coverage.pth
 	@rm -rf .*cache */.*cache */*/.*cache */*/*/.*cache .hypothesis
 	@rm -rf tests/actual
 	@-make -C tests/gold/html clean

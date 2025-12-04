@@ -182,7 +182,7 @@ def run_tests_with_coverage(core, *runner_args):
     # or the sys.path entries aren't created right?
     # There's an entry in "make clean" to get rid of this file.
     pth_dir = sysconfig.get_path("purelib")
-    pth_path = os.path.join(pth_dir, "zzy_metacov.pth")
+    pth_path = os.path.join(pth_dir, "a0_metacov.pth")
     with open(pth_path, "w", encoding="utf-8") as pth_file:
         pth_file.write("import coverage; coverage.process_startup(slug='meta')\n")
 
