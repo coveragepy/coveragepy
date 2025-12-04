@@ -184,6 +184,12 @@ file:
 
 .. tabs::
 
+    .. code-tab:: toml
+        :caption: pyproject.toml
+
+        [tool.coverage.run]
+        disable_warnings = ["no-data-collected"]
+
     .. code-tab:: ini
         :caption: .coveragerc
 
@@ -191,9 +197,10 @@ file:
         disable_warnings = no-data-collected
 
     .. code-tab:: toml
-        :caption: pyproject.toml
+        :caption: .coveragerc.toml
 
-        [tool.coverage.run]
+        # You can also use sections like [tool.coverage.run]
+        [run]
         disable_warnings = ["no-data-collected"]
 
     .. code-tab:: ini
@@ -202,4 +209,4 @@ file:
         [coverage:run]
         disable_warnings = no-data-collected
 
-.. [[[end]]] (sum: SJKFvPoXO2)
+.. [[[end]]] (sum: 29eQyqSCXt)

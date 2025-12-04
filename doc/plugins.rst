@@ -64,6 +64,12 @@ a coverage.py plug-in called ``something.plugin``.
 
    .. tabs::
 
+       .. code-tab:: toml
+           :caption: pyproject.toml
+
+           [tool.coverage.run]
+           plugins = [ "something.plugin" ]
+
        .. code-tab:: ini
            :caption: .coveragerc
 
@@ -72,9 +78,10 @@ a coverage.py plug-in called ``something.plugin``.
                something.plugin
 
        .. code-tab:: toml
-           :caption: pyproject.toml
+           :caption: .coveragerc.toml
 
-           [tool.coverage.run]
+           # You can also use sections like [tool.coverage.run]
+           [run]
            plugins = [ "something.plugin" ]
 
        .. code-tab:: ini
@@ -84,7 +91,7 @@ a coverage.py plug-in called ``something.plugin``.
            plugins =
                something.plugin
 
-   .. [[[end]]] (sum: boZjI9S8MZ)
+   .. [[[end]]] (sum: 7exEgyBxea)
 
 #. If the plug-in needs its own configuration, you can add those settings in
    the .coveragerc file in a section named for the plug-in:
@@ -106,6 +113,13 @@ a coverage.py plug-in called ``something.plugin``.
 
    .. tabs::
 
+       .. code-tab:: toml
+           :caption: pyproject.toml
+
+           [tool.coverage.something.plugin]
+           option1 = true
+           option2 = "abc.foo"
+
        .. code-tab:: ini
            :caption: .coveragerc
 
@@ -114,9 +128,10 @@ a coverage.py plug-in called ``something.plugin``.
            option2 = abc.foo
 
        .. code-tab:: toml
-           :caption: pyproject.toml
+           :caption: .coveragerc.toml
 
-           [tool.coverage.something.plugin]
+           # You can also use sections like [tool.coverage.run]
+           [something.plugin]
            option1 = true
            option2 = "abc.foo"
 
@@ -127,7 +142,7 @@ a coverage.py plug-in called ``something.plugin``.
            option1 = True
            option2 = abc.foo
 
-   .. [[[end]]] (sum: tpARXb5/bH)
+   .. [[[end]]] (sum: xPc0F1izoA)
 
    Check the documentation for the plug-in for details on the options it takes.
 

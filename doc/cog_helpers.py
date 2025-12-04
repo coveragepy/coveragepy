@@ -76,7 +76,7 @@ def show_configs(ini, toml):
     The equivalence is checked for accuracy, and the process fails if there's
     a mismatch.
 
-    A three-tabbed box will be produced.
+    A four-tabbed box will be produced.
     """
     ini, ini_vals = _read_config(ini, "covrc")
     toml, toml_vals = _read_config(toml, "covrc.toml")
@@ -89,11 +89,15 @@ def show_configs(ini, toml):
             )
 
     ini2 = re.sub(r"(?m)^\[", "[coverage:", ini)
+    toml2 = "# You can also use sections like [tool.coverage.run]\n"
+    toml2 += toml.replace("[tool.coverage.", "[")
+
     print()
     print(".. tabs::\n")
     for name, syntax, text in [
-        (".coveragerc", "ini", ini),
         ("pyproject.toml", "toml", toml),
+        (".coveragerc", "ini", ini),
+        (".coveragerc.toml", "toml", toml2),
         ("setup.cfg or tox.ini", "ini", ini2),
     ]:
         print(f"    .. code-tab:: {syntax}")

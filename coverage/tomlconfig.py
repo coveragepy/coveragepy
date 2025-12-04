@@ -84,6 +84,8 @@ class TomlConfigParser:
 
         """
         prefixes = ["tool.coverage."]
+        if self.our_file:
+            prefixes.append("")
         for prefix in prefixes:
             real_section = prefix + section
             parts = real_section.split(".")
