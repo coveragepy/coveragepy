@@ -15,6 +15,7 @@ REQUESTED_TRACER_CLASS = {
     "ctrace": "CTracer",
     "pytrace": "PyTracer",
     "sysmon": "SysMonitor",
+    "csysmon": "CSysMonitor",
 }[REQUESTED_CORE]
 
 # Are we testing the C-implemented trace function?
@@ -24,7 +25,10 @@ C_TRACER = REQUESTED_CORE == "ctrace"
 PY_TRACER = REQUESTED_CORE == "pytrace"
 
 # Are we testing the sys.monitoring implementation?
-SYS_MON = REQUESTED_CORE == "sysmon"
+SYS_MON = REQUESTED_CORE in ("sysmon", "csysmon")
+
+# Are we testing the C sys.monitoring implementation?
+C_SYS_MON = REQUESTED_CORE == "csysmon"
 
 # Are we using a settrace function as a core?
 SETTRACE_CORE = C_TRACER or PY_TRACER

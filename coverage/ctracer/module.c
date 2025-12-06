@@ -4,6 +4,7 @@
 #include "util.h"
 #include "tracer.h"
 #include "filedisp.h"
+#include "sysmon.h"
 
 /* Module definition */
 
@@ -19,6 +20,10 @@ tracer_exec(PyObject *mod)
     }
 
     if (CTracer_intern_strings() < 0) {
+        return -1;
+    }
+
+    if (CSysMonitor_intern_strings() < 0) {
         return -1;
     }
 
@@ -45,6 +50,22 @@ tracer_exec(PyObject *mod)
     if (PyModule_AddObject(mod, "CFileDisposition", (PyObject *)&CFileDispositionType) < 0) {
         Py_DECREF(&CTracerType);
         Py_DECREF(&CFileDispositionType);
+        return -1;
+    }
+
+    /* Initialize CSysMonitor */
+    CSysMonitorType.tp_new = PyType_GenericNew;
+    if (PyType_Ready(&CSysMonitorType) < 0) {
+        Py_DECREF(&CTracerType);
+        Py_DECREF(&CFileDispositionType);
+        return -1;
+    }
+
+    Py_INCREF(&CSysMonitorType);
+    if (PyModule_AddObject(mod, "CSysMonitor", (PyObject *)&CSysMonitorType) < 0) {
+        Py_DECREF(&CTracerType);
+        Py_DECREF(&CFileDispositionType);
+        Py_DECREF(&CSysMonitorType);
         return -1;
     }
 

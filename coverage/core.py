@@ -70,6 +70,7 @@ class Core:
         _debug("in core.py")
 
         # Check the conditions that preclude us from using sys.monitoring.
+        # This applies to both sysmon and csysmon.
         reason_no_sysmon = ""
         if not env.PYBEHAVIOR.pep669:
             reason_no_sysmon = "sys.monitoring isn't available in this version"
@@ -89,9 +90,12 @@ class Core:
             core_name = config.core
             _debug(f"core.py: core from config is {core_name!r}")
 
-        if core_name == "sysmon" and reason_no_sysmon:
-            _debug(f"core.py: defaulting because sysmon not usable: {reason_no_sysmon}")
-            warn(f"Can't use core=sysmon: {reason_no_sysmon}, using default core", slug="no-sysmon")
+        if core_name in ("sysmon", "csysmon") and reason_no_sysmon:
+            _debug(f"core.py: defaulting because {core_name} not usable: {reason_no_sysmon}")
+            warn(
+                f"Can't use core={core_name}: {reason_no_sysmon}, using default core",
+                slug="no-sysmon",
+            )
             core_name = None
 
         if core_name is None:
@@ -108,6 +112,12 @@ class Core:
                     warn(f"Couldn't import C tracer: {IMPORT_ERROR}", slug="no-ctracer", once=True)
                 core_name = "pytrace"
                 _debug("core.py: Falling back to pytrace because C tracer not available")
+        elif core_name == "csysmon":
+            if not CTRACER_FILE:
+                if IMPORT_ERROR and env.SHIPPING_WHEELS:
+                    warn(f"Couldn't import C tracer: {IMPORT_ERROR}", slug="no-csysmon", once=True)
+                core_name = "sysmon"
+                _debug("core.py: Falling back to sysmon because C tracer not available")
 
         _debug(f"core.py: Using core={core_name}")
 
@@ -115,6 +125,13 @@ class Core:
 
         if core_name == "sysmon":
             self.tracer_class = SysMonitor
+            self.tracer_kwargs["tool_id"] = 3 if metacov else 1
+            self.file_disposition_class = FileDisposition
+            self.supports_plugins = False
+            self.packed_arcs = False
+            self.systrace = False
+        elif core_name == "csysmon":
+            self.tracer_class = coverage.tracer.CSysMonitor
             self.tracer_kwargs["tool_id"] = 3 if metacov else 1
             self.file_disposition_class = FileDisposition
             self.supports_plugins = False

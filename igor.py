@@ -55,7 +55,7 @@ def do_show_env():
 def do_clean_for_core(core):
     """Remove the compiled C extension, no matter what its name."""
 
-    if core == "ctrace":
+    if core in ("ctrace", "csysmon"):
         return
 
     so_patterns = """
@@ -106,6 +106,8 @@ def label_for_core(core):
         return "with C tracer"
     elif core == "sysmon":
         return "with sys.monitoring"
+    elif core == "csysmon":
+        return "with C sys.monitoring"
     else:
         raise ValueError(f"Bad core: {core!r}")
 
@@ -121,7 +123,10 @@ def should_skip(core, metacov):
     if metacov and core == "sysmon" and ((3, 12) <= sys.version_info < (3, 14)):
         skipper = "sysmon can't measure branches in Python 3.12-3.13"
 
-    # $set_env.py: COVERAGE_TEST_CORES - List of cores to run: ctrace, pytrace, sysmon
+    if core == "csysmon" and sys.version_info < (3, 14):
+        skipper = "csysmon requires Python 3.14+"
+
+    # $set_env.py: COVERAGE_TEST_CORES - List of cores to run: ctrace, pytrace, sysmon, csysmon
     test_cores = os.getenv("COVERAGE_TEST_CORES")
     if test_cores:
         if core not in test_cores:
@@ -131,7 +136,10 @@ def should_skip(core, metacov):
         only_one = os.getenv("COVERAGE_ONE_CORE")
         if only_one:
             if CPYTHON:
-                if sys.version_info >= (3, 12):
+                if sys.version_info >= (3, 14):
+                    if core != "csysmon":
+                        skipper = f"Only one core: not running {core}"
+                elif sys.version_info >= (3, 12):
                     if core != "sysmon":
                         skipper = f"Only one core: not running {core}"
                 elif core != "ctrace":

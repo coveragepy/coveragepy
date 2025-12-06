@@ -245,6 +245,7 @@ if compile_extension:
                         "coverage/ctracer/datastack.c",
                         "coverage/ctracer/filedisp.c",
                         "coverage/ctracer/module.c",
+                        "coverage/ctracer/sysmon.c",
                         "coverage/ctracer/tracer.c",
                     ],
                 ),
