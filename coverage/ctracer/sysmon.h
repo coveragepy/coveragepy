@@ -39,6 +39,7 @@ typedef struct CSysMonitor {
 } CSysMonitor;
 
 int CSysMonitor_intern_strings(void);
+int CSysMonitor_cache_constants(void);
 
 extern PyTypeObject CSysMonitorType;
 

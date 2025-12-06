@@ -26,6 +26,9 @@ static PyObject *str_BRANCH_RIGHT;
 static PyObject *str_BRANCH_LEFT;
 static PyObject *str_monitoring;
 
+/* Cached constant from sys.monitoring */
+static PyObject *cached_disable = NULL;
+
 int
 CSysMonitor_intern_strings(void)
 {
@@ -59,6 +62,30 @@ CSysMonitor_intern_strings(void)
 
 error:
     return ret;
+}
+
+int
+CSysMonitor_cache_constants(void)
+{
+    /* Cache sys.monitoring.DISABLE to avoid importing sys in callbacks */
+    PyObject *sys_module = PyImport_ImportModule("sys");
+    if (sys_module == NULL) {
+        return RET_ERROR;
+    }
+
+    PyObject *monitoring = PyObject_GetAttr(sys_module, str_monitoring);
+    Py_DECREF(sys_module);
+    if (monitoring == NULL) {
+        return RET_ERROR;
+    }
+
+    cached_disable = PyObject_GetAttr(monitoring, str_DISABLE);
+    Py_DECREF(monitoring);
+    if (cached_disable == NULL) {
+        return RET_ERROR;
+    }
+
+    return RET_OK;
 }
 
 /* Helper to get sys.monitoring module */
@@ -457,13 +484,8 @@ CSysMonitor_py_start(CSysMonitor *self, PyObject *args)
 
     /* Skip __annotate__ functions */
     if (strcmp(PyUnicode_AsUTF8(code->co_name), "__annotate__") == 0) {
-        PyObject *monitoring = get_monitoring_module();
-        if (monitoring == NULL) {
-            return NULL;
-        }
-        PyObject *disable = PyObject_GetAttr(monitoring, str_DISABLE);
-        Py_DECREF(monitoring);
-        return disable;
+        Py_INCREF(cached_disable);
+        return cached_disable;
     }
 
     /* Check if we already have info for this code object */
@@ -689,13 +711,8 @@ CSysMonitor_py_start(CSysMonitor *self, PyObject *args)
     Py_DECREF(code_id);
 
     /* Return DISABLE */
-    PyObject *monitoring = get_monitoring_module();
-    if (monitoring == NULL) {
-        return NULL;
-    }
-    PyObject *disable = PyObject_GetAttr(monitoring, str_DISABLE);
-    Py_DECREF(monitoring);
-    return disable;
+    Py_INCREF(cached_disable);
+    return cached_disable;
 }
 
 /* LINE event handler for line coverage */
@@ -728,13 +745,8 @@ CSysMonitor_line_lines(CSysMonitor *self, PyObject *args)
         }
     }
 
-    PyObject *monitoring = get_monitoring_module();
-    if (monitoring == NULL) {
-        return NULL;
-    }
-    PyObject *disable = PyObject_GetAttr(monitoring, str_DISABLE);
-    Py_DECREF(monitoring);
-    return disable;
+    Py_INCREF(cached_disable);
+    return cached_disable;
 }
 
 /* LINE event handler for arc coverage */
@@ -768,13 +780,8 @@ CSysMonitor_line_arcs(CSysMonitor *self, PyObject *args)
         }
     }
 
-    PyObject *monitoring = get_monitoring_module();
-    if (monitoring == NULL) {
-        return NULL;
-    }
-    PyObject *disable = PyObject_GetAttr(monitoring, str_DISABLE);
-    Py_DECREF(monitoring);
-    return disable;
+    Py_INCREF(cached_disable);
+    return cached_disable;
 }
 
 /* PY_RETURN event handler */
@@ -822,13 +829,8 @@ CSysMonitor_py_return(CSysMonitor *self, PyObject *args)
         }
     }
 
-    PyObject *monitoring = get_monitoring_module();
-    if (monitoring == NULL) {
-        return NULL;
-    }
-    PyObject *disable = PyObject_GetAttr(monitoring, str_DISABLE);
-    Py_DECREF(monitoring);
-    return disable;
+    Py_INCREF(cached_disable);
+    return cached_disable;
 }
 
 /* BRANCH event handler (both BRANCH_RIGHT and BRANCH_LEFT) */
@@ -964,13 +966,8 @@ CSysMonitor_branch_either(CSysMonitor *self, PyObject *args)
         }
     }
 
-    PyObject *monitoring = get_monitoring_module();
-    if (monitoring == NULL) {
-        return NULL;
-    }
-    PyObject *disable = PyObject_GetAttr(monitoring, str_DISABLE);
-    Py_DECREF(monitoring);
-    return disable;
+    Py_INCREF(cached_disable);
+    return cached_disable;
 }
 
 /*
@@ -993,19 +990,9 @@ CSysMonitor_start(CSysMonitor *self, PyObject *args_unused)
     }
 
     /* use_tool_id(myid, "coverage.py") */
-    PyObject *myid_obj = PyLong_FromLong(self->myid);
-    if (myid_obj == NULL) {
-        Py_DECREF(monitoring);
-        PyObject_CallMethod(self->lock, "__exit__", "OOO", Py_None, Py_None, Py_None);
-        return NULL;
-    }
-
-    PyObject *name = PyUnicode_FromString("coverage.py");
-    PyObject *result = PyObject_CallMethod(monitoring, "use_tool_id", "OO", myid_obj, name);
-    Py_DECREF(name);
+    PyObject *result = PyObject_CallMethod(monitoring, "use_tool_id", "is", self->myid, "coverage.py");
 
     if (result == NULL) {
-        Py_DECREF(myid_obj);
         Py_DECREF(monitoring);
         PyObject_CallMethod(self->lock, "__exit__", "OOO", Py_None, Py_None, Py_None);
         return NULL;
@@ -1015,7 +1002,6 @@ CSysMonitor_start(CSysMonitor *self, PyObject *args_unused)
     /* Get events object */
     PyObject *events_obj = PyObject_GetAttr(monitoring, str_events);
     if (events_obj == NULL) {
-        Py_DECREF(myid_obj);
         Py_DECREF(monitoring);
         PyObject_CallMethod(self->lock, "__exit__", "OOO", Py_None, Py_None, Py_None);
         return NULL;
@@ -1025,19 +1011,18 @@ CSysMonitor_start(CSysMonitor *self, PyObject *args_unused)
     PyObject *py_start_event = PyObject_GetAttr(events_obj, str_PY_START);
     if (py_start_event == NULL) {
         Py_DECREF(events_obj);
-        Py_DECREF(myid_obj);
         Py_DECREF(monitoring);
         PyObject_CallMethod(self->lock, "__exit__", "OOO", Py_None, Py_None, Py_None);
         return NULL;
     }
 
     /* Set initial events to PY_START */
-    result = PyObject_CallMethod(monitoring, "set_events", "OO", myid_obj, py_start_event);
+    long py_start_value = PyLong_AsLong(py_start_event);
+    result = PyObject_CallMethod(monitoring, "set_events", "ii", self->myid, (int)py_start_value);
 
     if (result == NULL) {
         Py_DECREF(py_start_event);
         Py_DECREF(events_obj);
-        Py_DECREF(myid_obj);
         Py_DECREF(monitoring);
         PyObject_CallMethod(self->lock, "__exit__", "OOO", Py_None, Py_None, Py_None);
         return NULL;
@@ -1046,13 +1031,12 @@ CSysMonitor_start(CSysMonitor *self, PyObject *args_unused)
 
     /* Register PY_START callback */
     PyObject *callback = PyObject_GetAttrString((PyObject *)self, "sysmon_py_start");
-    result = PyObject_CallMethod(monitoring, "register_callback", "OOO", myid_obj, py_start_event, callback);
+    result = PyObject_CallMethod(monitoring, "register_callback", "iiO", self->myid, (int)py_start_value, callback);
     Py_DECREF(py_start_event);
     Py_DECREF(callback);
 
     if (result == NULL) {
         Py_DECREF(events_obj);
-        Py_DECREF(myid_obj);
         Py_DECREF(monitoring);
         PyObject_CallMethod(self->lock, "__exit__", "OOO", Py_None, Py_None, Py_None);
         return NULL;
@@ -1066,7 +1050,8 @@ CSysMonitor_start(CSysMonitor *self, PyObject *args_unused)
     if (line_event != NULL) {
         const char *line_callback_name = self->tracing_arcs ? "sysmon_line_arcs" : "sysmon_line_lines";
         callback = PyObject_GetAttrString((PyObject *)self, line_callback_name);
-        result = PyObject_CallMethod(monitoring, "register_callback", "OOO", myid_obj, line_event, callback);
+        long line_value = PyLong_AsLong(line_event);
+        result = PyObject_CallMethod(monitoring, "register_callback", "iiO", self->myid, (int)line_value, callback);
         Py_DECREF(callback);
         Py_XDECREF(result);
         Py_DECREF(line_event);
@@ -1077,7 +1062,8 @@ CSysMonitor_start(CSysMonitor *self, PyObject *args_unused)
         PyObject *py_return_event = PyObject_GetAttr(events_obj, str_PY_RETURN);
         if (py_return_event != NULL) {
             callback = PyObject_GetAttrString((PyObject *)self, "sysmon_py_return");
-            result = PyObject_CallMethod(monitoring, "register_callback", "OOO", myid_obj, py_return_event, callback);
+            long return_value = PyLong_AsLong(py_return_event);
+            result = PyObject_CallMethod(monitoring, "register_callback", "iiO", self->myid, (int)return_value, callback);
             Py_DECREF(callback);
             Py_XDECREF(result);
             Py_DECREF(py_return_event);
@@ -1090,10 +1076,12 @@ CSysMonitor_start(CSysMonitor *self, PyObject *args_unused)
         if (branch_right != NULL && branch_left != NULL) {
             callback = PyObject_GetAttrString((PyObject *)self, "sysmon_branch_either");
 
-            result = PyObject_CallMethod(monitoring, "register_callback", "OOO", myid_obj, branch_right, callback);
+            long right_value = PyLong_AsLong(branch_right);
+            result = PyObject_CallMethod(monitoring, "register_callback", "iiO", self->myid, (int)right_value, callback);
             Py_XDECREF(result);
 
-            result = PyObject_CallMethod(monitoring, "register_callback", "OOO", myid_obj, branch_left, callback);
+            long left_value = PyLong_AsLong(branch_left);
+            result = PyObject_CallMethod(monitoring, "register_callback", "iiO", self->myid, (int)left_value, callback);
             Py_XDECREF(result);
 
             Py_DECREF(callback);
@@ -1104,7 +1092,6 @@ CSysMonitor_start(CSysMonitor *self, PyObject *args_unused)
     }
 
     Py_DECREF(events_obj);
-    Py_DECREF(myid_obj);
 
     /* Call restart_events() */
     result = PyObject_CallMethod(monitoring, "restart_events", NULL);
@@ -1146,7 +1133,6 @@ CSysMonitor_stop(CSysMonitor *self, PyObject *args_unused)
     if (myid_obj != NULL) {
         PyObject *result = PyObject_CallMethod(monitoring, "set_events", "Oi", myid_obj, 0);
         Py_XDECREF(result);
-        Py_DECREF(myid_obj);
     }
 
     self->sysmon_on = FALSE;
@@ -1156,7 +1142,6 @@ CSysMonitor_stop(CSysMonitor *self, PyObject *args_unused)
     if (myid_obj != NULL) {
         PyObject *result = PyObject_CallMethod(monitoring, "free_tool_id", "O", myid_obj);
         Py_XDECREF(result);
-        Py_DECREF(myid_obj);
     }
 
     Py_DECREF(monitoring);

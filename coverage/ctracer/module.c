@@ -27,6 +27,10 @@ tracer_exec(PyObject *mod)
         return -1;
     }
 
+    if (CSysMonitor_cache_constants() < 0) {
+        return -1;
+    }
+
     /* Initialize CTracer */
     CTracerType.tp_new = PyType_GenericNew;
     if (PyType_Ready(&CTracerType) < 0) {
