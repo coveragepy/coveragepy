@@ -182,8 +182,10 @@ def cant_trace_msg(concurrency: str, the_module: ModuleType | None) -> str | Non
         parts.remove("multiprocessing")
         concurrency = ",".join(parts)
 
-    if testenv.SYS_MON and concurrency:
-        expected_out = f"Can't use core=sysmon: it doesn't support concurrency={concurrency}"
+    if testenv.SYSMON_CORE and concurrency:
+        expected_out = (
+            f"Can't use core={testenv.REQUESTED_CORE}: it doesn't support concurrency={concurrency}"
+        )
     elif the_module is None:
         # We don't even have the underlying module installed, we expect
         # coverage to alert us to this fact.
@@ -324,10 +326,10 @@ class ConcurrencyTest(CoverageTest):
         self.try_some_code(BUG_330, "eventlet", eventlet, "0\n")
 
     # Sometimes a test fails due to inherent randomness. Try more times.
+    @pytest.mark.flaky(max_runs=3)
     @pytest.mark.skipif(
         not testenv.CAN_MEASURE_THREADS, reason="Can't measure threads with this core."
     )
-    @pytest.mark.flaky(max_runs=3)
     def test_threads_with_gevent(self) -> None:
         self.make_file(
             "both.py",

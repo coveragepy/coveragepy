@@ -1372,7 +1372,7 @@ class CmdLineStdoutTest(BaseCmdLineTest):
         self.command_line("--version")
         out = self.stdout()
         assert "ersion " in out
-        if testenv.C_TRACER:
+        if testenv.C_TRACER or testenv.C_SYS_MON:
             assert "with C extension" in out
         else:
             assert "without C extension" in out
