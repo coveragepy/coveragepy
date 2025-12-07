@@ -76,7 +76,7 @@ class ConfigTest(CoverageTest):
 
     @pytest.mark.parametrize("filename", ["pyproject.toml", ".coveragerc.toml"])
     def test_toml_config_file(self, filename: str) -> None:
-        # A pyproject.toml and .coveragerc.toml file will be read into the configuration.
+        # A pyproject.toml or .coveragerc.toml file will be read into the configuration.
         self.make_file(
             filename,
             """\
