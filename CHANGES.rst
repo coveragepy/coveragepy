@@ -26,6 +26,7 @@ Unreleased
 - New feature: coverage.py now supports :file:`.coveragerc.toml` configuration
   files. These files use TOML syntax and take priority over
   :file:`pyproject.toml` but lower priority than :file:`.coveragerc` files.
+  Closes `issue 1643`_ thanks to `Olena Yefymenko <pull 1952_>`_.
 
 - The .pth file we install was done incorrectly and didn't work when using
   the source wheel (`py3-none-any`).  This is now fixed. Thanks, `Henry
@@ -36,6 +37,8 @@ Unreleased
   3.10). The second and third of these are not needed and will eventually be
   removed.
 
+.. _issue 1643: https://github.com/coveragepy/coveragepy/issues/1643
+.. _pull 1952: https://github.com/coveragepy/coveragepy/pull/1952
 .. _pull 2100: https://github.com/coveragepy/coveragepy/pull/2100
 
 .. start-releases
