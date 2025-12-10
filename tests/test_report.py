@@ -880,16 +880,17 @@ class SummaryTest(UsingModulesMixin, CoverageTest):
             print("Line One")
             os.chdir("subdir")
             print("Line Two")
-            print(open("something", encoding="utf-8").read())
+            with open("something", encoding="utf-8") as f:
+                print(f.read())
             """,
         )
         self.make_file("subdir/something", "hello")
         out = self.run_command("coverage run --source=. chdir.py")
         assert out == "Line One\nLine Two\nhello\n"
         report = self.report_from_command("coverage report")
-        assert self.last_line_squeezed(report) == "TOTAL 5 0 100%"
+        assert self.last_line_squeezed(report) == "TOTAL 6 0 100%"
         report = self.report_from_command("coverage report --format=markdown")
-        assert self.last_line_squeezed(report) == "| **TOTAL** | **5** | **0** | **100%** |"
+        assert self.last_line_squeezed(report) == "| **TOTAL** | **6** | **0** | **100%** |"
 
     def test_bug_156_file_not_run_should_be_zero(self) -> None:
         # https://github.com/coveragepy/coveragepy/issues/156

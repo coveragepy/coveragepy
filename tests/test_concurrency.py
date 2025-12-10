@@ -489,6 +489,9 @@ class MultiprocessingTest(CoverageTest):
             """,
         )
 
+        # Dev mode turns on deprecation warnings that some concurrency
+        # libraries issue. We don't need to see those.
+        self.del_environ("PYTHONDEVMODE")
         cmd = f"coverage run {args} multi.py {start_method}"
         _, out = self.run_command_status(cmd)
         expected_cant_trace = cant_trace_msg(concurrency, the_module)
