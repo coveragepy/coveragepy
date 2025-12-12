@@ -104,6 +104,20 @@ inclusive are missing coverage.  Missed branches are shown with an arrow:
 backwards in a file, so you might see a branch from a later line to an earlier
 line, like "55->50".
 
+
+Missing branches
+----------------
+
+Missing branches are shown such as ``12->10``.
+Sometimes branches appear backward.
+This means that execution never moved from line 12 back to line 10. Backward
+branches often come from loops: if a loop never repeats (or never runs),
+the backward branch is missing.
+
+For detailed examples of how branch coverage works in loops and other control
+flow constructs (``if/else``, ``for`` loops, ``while`` loops, ``try/except``),
+see :ref:`branch`.
+
 You can restrict the report to only certain files by naming them on the
 command line::
 
@@ -138,3 +152,4 @@ sign.
 Other common reporting options are described above in :ref:`cmd_reporting`.
 These options can also be set in your .coveragerc file. See
 :ref:`Configuration: [report] <config_report>`.
+
