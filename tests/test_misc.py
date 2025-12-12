@@ -61,6 +61,17 @@ class HasherTest(CoverageTest):
         h2.update({"a": 17, "b": {"c": 1}, "d": 2})
         assert h1.hexdigest() != h2.hexdigest()
 
+    def test_tap(self) -> None:
+        h1 = Hasher()
+        h2 = Hasher()
+        d1 = [1, 2, 3, ["hi", "what"], "hello"]
+        d2 = []
+        for v in h1.tap(d1):
+            h2.update(v)
+            d2.append(v)
+        assert d1 == d2
+        assert h1.hexdigest() == h2.hexdigest()
+
 
 class RemoveFileTest(CoverageTest):
     """Tests of misc.file_be_gone."""

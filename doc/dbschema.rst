@@ -71,6 +71,7 @@ This is the database schema:
         --  'sys_argv' text         -- The coverage command line that recorded the data.
         --  'version' text          -- The version of coverage.py that made the file.
         --  'when' text             -- Datetime when the file was created.
+        --  'hash' text             -- Hash of the data.
     );
 
     CREATE TABLE file (
@@ -116,7 +117,7 @@ This is the database schema:
         foreign key (file_id) references file (id)
     );
 
-.. [[[end]]] (sum: agTRSwfwj4)
+.. [[[end]]] (sum: 7dE2ATKbel)
 
 
 .. _numbits:

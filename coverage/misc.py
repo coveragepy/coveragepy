@@ -154,6 +154,9 @@ def ensure_dir_for_file(path: str) -> None:
     ensure_dir(os.path.dirname(path))
 
 
+T = TypeVar("T")
+
+
 class Hasher:
     """Hashes Python data for fingerprinting."""
 
@@ -190,6 +193,15 @@ class Hasher:
                     self.update(k)
                     self.update(a)
         self.hash.update(b".")
+
+    def tap(self, values: Iterable[T]) -> Iterator[T]:
+        """Hash values flowing through an iterable."""
+        for v in values:
+            self.update(v)
+            yield v
+
+    def digest(self) -> bytes:
+        return self.hash.digest()
 
     def hexdigest(self) -> str:
         """Retrieve the hex digest of the hash."""

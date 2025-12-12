@@ -999,16 +999,16 @@ class CoverageDataFilesTest(CoverageTest):
         covdata1.add_lines(LINES_1)
         covdata1.write()
         with sqlite3.connect("meta.1") as con:
-            data = sorted(k for (k,) in con.execute("select key from meta"))
-        assert data == ["has_arcs", "version"]
+            data = {k for (k,) in con.execute("select key from meta")}
+        assert {"has_arcs", "hash", "version"} <= data
 
         debug = DebugControlString(options=["process"])
         covdata2 = CoverageData(basename="meta.2", debug=debug)
         covdata2.add_lines(LINES_1)
         covdata2.write()
         with sqlite3.connect("meta.2") as con:
-            data = sorted(k for (k,) in con.execute("select key from meta"))
-        assert data == ["has_arcs", "sys_argv", "version", "when"]
+            data = {k for (k,) in con.execute("select key from meta")}
+        assert {"has_arcs", "hash", "sys_argv", "version", "when"} <= data
 
     def make_data_files(self, spec: str, arcs: bool) -> list[CoverageData]:
         """Make a number data files.

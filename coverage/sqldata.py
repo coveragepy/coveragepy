@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import base64
 import collections
 import datetime
 import functools
@@ -21,11 +22,12 @@ import threading
 import uuid
 import zlib
 from collections.abc import Callable, Collection, Mapping, Sequence
+from dataclasses import dataclass
 from typing import Any, cast
 
 from coverage.debug import NoDebugging, auto_repr, file_summary
 from coverage.exceptions import CoverageException, DataError
-from coverage.misc import file_be_gone, isolate_module
+from coverage.misc import Hasher, file_be_gone, isolate_module
 from coverage.numbits import numbits_to_nums, numbits_union, nums_to_numbits
 from coverage.sqlitedb import SqliteDb
 from coverage.types import AnyCallable, FilePath, TArc, TDebugCtl, TLineNo, TWarnFn
@@ -63,6 +65,7 @@ CREATE TABLE meta (
     --  'sys_argv' text         -- The coverage command line that recorded the data.
     --  'version' text          -- The version of coverage.py that made the file.
     --  'when' text             -- Datetime when the file was created.
+    --  'hash' text             -- Hash of the data.
 );
 
 CREATE TABLE file (
@@ -262,6 +265,9 @@ class CoverageData:
         # Synchronize the operations used during collection.
         self._lock = threading.RLock()
 
+        self._wrote_data = False
+        self._hasher = Hasher()
+
         # Are we in sync with the data file?
         self._have_used = False
 
@@ -357,6 +363,8 @@ class CoverageData:
         # the hash of the data file, unless we're debugging processes.
         meta_data = [
             ("version", __version__),
+            ("sys_argv", str(getattr(sys, "argv", None))),
+            ("pytest_test", os.getenv("PYTEST_CURRENT_TEST", "unknown")),
         ]
         if self._debug.should("process"):
             meta_data.extend(
@@ -529,7 +537,9 @@ class CoverageData:
         with self._connect() as con:
             self._set_context_id()
             for filename, linenos in line_data.items():
+                # self._hasher.update(filename)
                 line_bits = nums_to_numbits(linenos)
+                # line_bits = nums_to_numbits(self._hasher.tap(linenos))
                 file_id = self._file_id(filename, add=True)
                 query = "SELECT numbits FROM line_bits WHERE file_id = ? AND context_id = ?"
                 with con.execute(query, (file_id, self._current_context_id)) as cur:
@@ -544,6 +554,7 @@ class CoverageData:
                     """,
                     (file_id, self._current_context_id, line_bits),
                 )
+        self._wrote_data = True
 
     @_locked
     def add_arcs(self, arc_data: Mapping[str, Collection[TArc]]) -> None:
@@ -573,6 +584,8 @@ class CoverageData:
         with self._connect() as con:
             self._set_context_id()
             for filename, arcs in arc_data.items():
+                self._hasher.update(filename)
+                self._hasher.update(arcs)
                 if not arcs:
                     continue
                 file_id = self._file_id(filename, add=True)
@@ -584,6 +597,7 @@ class CoverageData:
                     """,
                     data,
                 )
+        self._wrote_data = True
 
     def _choose_lines_or_arcs(self, lines: bool = False, arcs: bool = False) -> None:
         """Force the data file to choose between lines and arcs."""
@@ -636,6 +650,7 @@ class CoverageData:
                         "INSERT INTO TRACER (file_id, tracer) VALUES (?, ?)",
                         (file_id, plugin_name),
                     )
+        self._wrote_data = True
 
     def touch_file(self, filename: str, plugin_name: str = "") -> None:
         """Ensure that `filename` appears in the data, empty if needed.
@@ -897,7 +912,20 @@ class CoverageData:
 
     def write(self) -> None:
         """Ensure the data is written to the data file."""
-        self._debug_dataio("Writing (no-op) data file", self._filename)
+        if self._wrote_data and (self._suffix is True):
+            self._debug_dataio("Finishing data file", self._filename)
+            with self._connect() as con:
+                con.execute_void(
+                    "INSERT OR IGNORE INTO meta (key, value) VALUES ('hash', ?)",
+                    (self._hasher.hexdigest(),),
+                )
+            hash = base64.b64encode(self._hasher.digest(), altchars=b"01").decode()
+            current_filename = self._filename
+            self._filename += f".H{hash[:10]}h"
+            self._debug_dataio("Renaming data file to", self._filename)
+            os.rename(current_filename, self._filename)
+        else:
+            self._debug_dataio("Writing (no-op) data file", self._filename)
 
     def _start_using(self) -> None:
         """Call this before using the database at all."""
@@ -1129,6 +1157,9 @@ class CoverageData:
         ]
 
 
+ASCII = string.ascii_uppercase + string.ascii_lowercase + string.digits
+
+
 def filename_suffix(suffix: str | bool | None) -> str | None:
     """Compute a filename suffix for a data file.
 
@@ -1145,9 +1176,13 @@ def filename_suffix(suffix: str | bool | None) -> str | None:
         # `save()` at the last minute so that the pid will be correct even
         # if the process forks.
         die = random.Random(os.urandom(8))
-        letters = string.ascii_uppercase + string.ascii_lowercase
-        rolls = "".join(die.choice(letters) for _ in range(6))
+        rolls = "".join(die.choice(ASCII) for _ in range(6))
         suffix = f"{socket.gethostname()}.{os.getpid()}.X{rolls}x"
     elif suffix is False:
         suffix = None
     return suffix
+
+
+@dataclass
+class FilenameParts:
+    pass
