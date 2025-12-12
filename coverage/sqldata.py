@@ -720,9 +720,23 @@ class CoverageData:
         self._start_using()
         other_data.read()
 
-        # Ensure other_data has a properly initialized database
-        with other_data._connect():
-            pass
+        # Check if the coverage data contains any actual measurements
+        should_skip = False
+        with other_data._connect() as other_con:
+            try:
+                with other_con.execute("SELECT COUNT(*) FROM tracer") as cur:
+                    tracer_count = cur.fetchone()[0]
+                with other_con.execute("SELECT COUNT(*) FROM arc") as cur:
+                    arc_count = cur.fetchone()[0]
+                with other_con.execute("SELECT COUNT(*) FROM line_bits") as cur:
+                    line_bits_count = cur.fetchone()[0]
+                if tracer_count == 0 and arc_count == 0 and line_bits_count == 0:
+                    should_skip = True
+            except Exception:
+                should_skip = False
+        # Only perform update if there's actual coverage data
+        if should_skip:
+            return
 
         with self._connect() as con:
             assert con.con is not None
