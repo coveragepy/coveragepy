@@ -23,7 +23,7 @@ import pytest
 import coverage
 from coverage import Coverage, env
 from coverage.data import line_counts, sorted_lines
-from coverage.exceptions import ConfigError, CoverageException, DataError, NoDataError, NoSource
+from coverage.exceptions import ConfigError, CoverageException, NoDataError, NoSource
 from coverage.files import abs_file, relative_filename
 from coverage.misc import import_local_file
 from coverage.types import FilePathClasses, FilePathType, TCovKwargs
@@ -354,17 +354,6 @@ class ApiTest(CoverageTest):
 
         last = self.last_line_squeezed(self.stdout())
         assert "TOTAL 1 1 0%" == last
-
-    def test_cov4_data_file(self) -> None:
-        cov4_data = (
-            "!coverage.py: This is a private format, don't read it directly!"
-            + '{"lines":{"/somewhere/not/really.py":[1,5,2,3]}}'
-        )
-        self.make_file(".coverage", cov4_data)
-        cov = coverage.Coverage()
-        with pytest.raises(DataError, match="Looks like a coverage 4.x data file"):
-            cov.load()
-        cov.erase()
 
     def make_code1_code2(self) -> None:
         """Create the code1.py and code2.py files."""

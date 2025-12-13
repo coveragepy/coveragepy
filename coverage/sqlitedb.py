@@ -127,19 +127,6 @@ class SqliteDb:
                 return self.con.execute(sql, parameters)  # type: ignore[arg-type]
         except sqlite3.Error as exc:
             msg = str(exc)
-            if not self.no_disk:
-                try:
-                    # `execute` is the first thing we do with the database, so try
-                    # hard to provide useful hints if something goes wrong now.
-                    with open(self.filename, "rb") as bad_file:
-                        cov4_sig = b"!coverage.py: This is a private format"
-                        if bad_file.read(len(cov4_sig)) == cov4_sig:
-                            msg = (
-                                "Looks like a coverage 4.x data file. "
-                                + "Are you mixing versions of coverage?"
-                            )
-                except Exception:
-                    pass
             if self.debug.should("sql"):
                 self.debug.write(f"EXCEPTION from execute: {exc_one_line(exc)}")
             raise DataError(f"Couldn't use data file {self.filename!r}: {msg}") from exc
