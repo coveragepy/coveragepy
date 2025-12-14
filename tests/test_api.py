@@ -1141,7 +1141,8 @@ class TestRunnerPluginTest(CoverageTest):
 
     """
 
-    def pretend_to_be_nose_with_cover(self, erase: bool = False, cd: bool = False) -> None:
+    @pytest.mark.parametrize("erase, cd", [(False, False), (True, False), (False, True)])
+    def test_pretend_to_be_nose_with_cover(self, erase: bool, cd: bool) -> None:
         """This is what the nose --with-cover plugin does."""
         self.make_file(
             "no_biggie.py",
@@ -1175,17 +1176,8 @@ class TestRunnerPluginTest(CoverageTest):
         if cd:
             os.chdir("..")
 
-    def test_nose_plugin(self) -> None:
-        self.pretend_to_be_nose_with_cover()
-
-    def test_nose_plugin_with_erase(self) -> None:
-        self.pretend_to_be_nose_with_cover(erase=True)
-
-    def test_nose_plugin_with_cd(self) -> None:
-        # https://github.com/coveragepy/coveragepy/issues/916
-        self.pretend_to_be_nose_with_cover(cd=True)
-
-    def pretend_to_be_pytestcov(self, append: bool) -> None:
+    @pytest.mark.parametrize("append", [False, True])
+    def test_pretend_to_be_pytestcov(self, append: bool) -> None:
         """Act like pytest-cov."""
         self.make_file(
             "prog.py",
@@ -1226,12 +1218,6 @@ class TestRunnerPluginTest(CoverageTest):
             """)
         self.assert_file_count(".coverage", 0)
         self.assert_file_count(".coverage.*", 1)
-
-    def test_pytestcov_parallel(self) -> None:
-        self.pretend_to_be_pytestcov(append=False)
-
-    def test_pytestcov_parallel_append(self) -> None:
-        self.pretend_to_be_pytestcov(append=True)
 
 
 class ImmutableConfigTest(CoverageTest):
