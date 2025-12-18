@@ -158,8 +158,11 @@ Possible branches:
 Case 1 — ``items`` is empty::
 
     Missing:
-    2 -> 3
-    4 -> 2
+    3-5
+
+In this case, the loop body is never executed. Coverage reports the
+loop body lines as missing, but does not report missing branches,
+because the branching lines inside the loop are never executed.
 
 Case 2 — ``items = [1]``::
 
@@ -192,10 +195,12 @@ The report will show the missing branch::
 
 Example::
 
+    28:condition = True
+    29:flag = True
     30: while condition:
-    31:     do_something()
+    31:     do_something = True
     32:     if flag:
-    33:         condition = True
+    33:         condition = False
     34: print("done")
 
 A ``while`` loop has:
@@ -205,7 +210,8 @@ A ``while`` loop has:
 * ``32->33`` (if True)
 * ``32->30`` (if False)
 
-If ``flag`` is always true::
+The false branch of the ``if`` statement is
+never taken, so coverage reports the missing branch::
 
     32->30
 

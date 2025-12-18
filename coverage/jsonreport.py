@@ -115,7 +115,7 @@ class JsonReporter:
         self.total += nums
         summary = self.make_summary(nums)
         reported_file: JsonObj = {
-            "executed_lines": sorted(analysis.executed),
+            "executed_lines": sorted(analysis.executed & analysis.statements),
             "summary": summary,
             "missing_lines": sorted(analysis.missing),
             "excluded_lines": sorted(analysis.excluded),
@@ -164,7 +164,8 @@ class JsonReporter:
         narrowed_nums = narrowed_analysis.numbers
         narrowed_summary = self.make_summary(narrowed_nums)
         this_region = {
-            "executed_lines": sorted(narrowed_analysis.executed),
+            "executed_lines": sorted(
+             narrowed_analysis.executed & narrowed_analysis.statements),
             "summary": narrowed_summary,
             "missing_lines": sorted(narrowed_analysis.missing),
             "excluded_lines": sorted(narrowed_analysis.excluded),
