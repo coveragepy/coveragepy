@@ -167,7 +167,7 @@ because the branching lines inside the loop are never executed.
 Case 2 — ``items = [1]``::
 
     Missing:
-    4 -> 2
+    4->2
 
 
 Below are examples showing how common control-flow structures appear in the
@@ -195,8 +195,8 @@ The report will show the missing branch::
 
 Example::
 
-    28:condition = True
-    29:flag = True
+    28: condition = True
+    29: flag = True
     30: while condition:
     31:     do_something = True
     32:     if flag:
