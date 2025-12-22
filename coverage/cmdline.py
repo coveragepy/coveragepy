@@ -557,7 +557,7 @@ COMMANDS = {
             Display information about the internals of coverage.py,
             for diagnosing problems.
             Topics are:
-                'data' to show a summary of the collected data;
+                'data [filenames]' to summarize data files;
                 'sys' to show installation information;
                 'config' to show the configuration;
                 'premain' to show what is calling coverage;
@@ -1041,31 +1041,35 @@ class CoverageScript:
                 + "config, data, sys, premain, pybehave, sqlite?"
             )
             return ERR
-        if args[1:]:
-            show_help("Only one topic at a time, please")
-            return ERR
 
-        if args[0] == "sys":
-            write_formatted_info(print, "sys", self.coverage.sys_info())
-        elif args[0] == "data":
-            print(info_header("data"))
-            data_file = self.coverage.config.data_file
-            debug_data_file(data_file)
-            for filename in combinable_files(data_file):
-                print("-----")
-                debug_data_file(filename)
-        elif args[0] == "config":
-            write_formatted_info(print, "config", self.coverage.config.debug_info())
-        elif args[0] == "premain":
-            print(info_header("premain"))
-            print(short_stack(full=True))
-        elif args[0] == "pybehave":
-            write_formatted_info(print, "pybehave", env.debug_info())
-        elif args[0] == "sqlite":
-            write_formatted_info(print, "sqlite", CoverageData.sys_info())
+        if args[0] == "data":
+            file_names = args[1:]
+            if not file_names:
+                file_names = [self.coverage.config.data_file]
+            for data_file in file_names:
+                print(info_header("data"))
+                debug_data_file(data_file)
+                for filename in combinable_files(data_file):
+                    print("-----")
+                    debug_data_file(filename)
         else:
-            show_help(f"Don't know what you mean by {args[0]!r}")
-            return ERR
+            if args[1:]:
+                show_help(f"'debug {args[0]}' takes no additional arguments")
+                return ERR
+            if args[0] == "sys":
+                write_formatted_info(print, "sys", self.coverage.sys_info())
+            elif args[0] == "config":
+                write_formatted_info(print, "config", self.coverage.config.debug_info())
+            elif args[0] == "premain":
+                print(info_header("premain"))
+                print(short_stack(full=True))
+            elif args[0] == "pybehave":
+                write_formatted_info(print, "pybehave", env.debug_info())
+            elif args[0] == "sqlite":
+                write_formatted_info(print, "sqlite", CoverageData.sys_info())
+            else:
+                show_help(f"Don't know what you mean by {args[0]!r}")
+                return ERR
 
         return OK
 

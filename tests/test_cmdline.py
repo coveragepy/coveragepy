@@ -395,7 +395,7 @@ class CmdLineTest(BaseCmdLineTest):
                 "What information would you like: config, data, sys, premain, pybehave, sqlite?",
             ),
             ("debug foo", "Don't know what you mean by 'foo'"),
-            ("debug sys config", "Only one topic at a time, please"),
+            ("debug sys config", "'debug sys' takes no additional arguments"),
         ],
     )
     def test_debug(self, cmd: str, output: str) -> None:
@@ -1307,13 +1307,21 @@ class CmdLineTest(BaseCmdLineTest):
         )
 
 
-class CmdLineWithFilesTest(BaseCmdLineTest):
-    """Test the command line in ways that need temp files."""
+class CmdLineDebugDataTest(BaseCmdLineTest):
+    """Test the `debug data` command line."""
 
     run_in_temp_dir = True
 
-    def test_debug_data(self) -> None:
+    @pytest.mark.parametrize(
+        "filename, ddarg",
+        [
+            (None, ""),
+            ("mydata.dat", "mydata.dat"),
+        ],
+    )
+    def test_debug_data(self, filename: str | None, ddarg: str) -> None:
         data = self.make_data_file(
+            basename=filename,
             lines={
                 "file1.py": range(1, 18),
                 "file2.py": range(1, 24),
@@ -1321,7 +1329,7 @@ class CmdLineWithFilesTest(BaseCmdLineTest):
             file_tracers={"file1.py": "a_plugin"},
         )
 
-        self.command_line("debug data")
+        self.command_line(f"debug data {ddarg}")
         assert self.stdout() == textwrap.dedent(f"""\
             -- data ------------------------------------------------------
             path: {data.data_filename()}
@@ -1331,11 +1339,18 @@ class CmdLineWithFilesTest(BaseCmdLineTest):
             file2.py: 23 lines
             """)
 
-    def test_debug_data_with_no_data_file(self) -> None:
-        self.command_line("debug data")
+    @pytest.mark.parametrize(
+        "filename, ddarg",
+        [
+            (".coverage", ""),
+            ("mydata.dat", "mydata.dat"),
+        ],
+    )
+    def test_debug_data_with_no_data_file(self, filename: str, ddarg: str) -> None:
+        self.command_line(f"debug data {ddarg}")
         assert self.stdout() == textwrap.dedent(f"""\
             -- data ------------------------------------------------------
-            path: {Path(".").resolve() / ".coverage"}
+            path: {Path(".").resolve() / filename}
             No data collected: file doesn't exist
             """)
 
@@ -1353,6 +1368,42 @@ class CmdLineWithFilesTest(BaseCmdLineTest):
             file2.py: 1 line
             -----
             path: {data2.data_filename()}
+            has_arcs: False
+            1 file:
+            file2.py: 9 lines
+            """)
+
+    def test_debug_multiple_files(self) -> None:
+        data1 = self.make_data_file(
+            basename="data1.dat",
+            lines={"file11.py": range(1, 38), "file12.py": [1, 2]},
+        )
+        data2 = self.make_data_file(
+            basename="data2.dat",
+            lines={"file1.py": range(1, 18), "file2.py": [1]},
+        )
+        data3 = self.make_data_file(
+            basename="data2.dat",
+            suffix="123",
+            lines={"file2.py": range(1, 10)},
+        )
+
+        self.command_line("debug data data1.dat data2.dat")
+        assert self.stdout() == textwrap.dedent(f"""\
+            -- data ------------------------------------------------------
+            path: {data1.data_filename()}
+            has_arcs: False
+            2 files:
+            file11.py: 37 lines
+            file12.py: 2 lines
+            -- data ------------------------------------------------------
+            path: {data2.data_filename()}
+            has_arcs: False
+            2 files:
+            file1.py: 17 lines
+            file2.py: 1 line
+            -----
+            path: {data3.data_filename()}
             has_arcs: False
             1 file:
             file2.py: 9 lines
