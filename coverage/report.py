@@ -187,6 +187,8 @@ class SummaryReporter:
         for end_line in end_lines:
             self.write(end_line)
 
+        self.write("")
+
     def report(self, morfs: Iterable[TMorf] | None, outfile: IO[str] | None = None) -> float:
         """Writes a report summarizing coverage statistics per module.
 
