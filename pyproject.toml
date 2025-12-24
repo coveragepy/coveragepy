@@ -140,9 +140,6 @@ filterwarnings = [
 
     ## Pytest warns if it can't collect things that seem to be tests. This should be an error.
     "error::pytest.PytestCollectionWarning",
-
-    # For when our own tests can't use sysmon though it was requested.
-    #"ignore:.*no-sysmon",
 ]
 
 verbosity_assertions = "5"
