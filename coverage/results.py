@@ -29,7 +29,7 @@ def analysis_from_file_reporter(
     has_arcs = data.has_arcs()
     statements = file_reporter.lines()
     excluded = file_reporter.excluded_lines()
-    executed = file_reporter.translate_lines(data.lines(filename) or [])
+    executed = file_reporter.translate_lines(data.lines(filename) or []) & statements
 
     if has_arcs:
         arc_possibilities_set = file_reporter.arcs()

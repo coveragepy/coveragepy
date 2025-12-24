@@ -278,9 +278,7 @@ class ReportWithJinjaTest(CoverageTest):
         cov.json_report()
         contains(
             "coverage.json",
-            # Notice the .json report claims lines in good.j2 executed that
-            # don't even exist in good.j2...
-            '"files": {"good.j2": {"executed_lines": [1, 3, 5, 7, 9], '
+            '"files": {"good.j2": {"executed_lines": [1, 3], '
             + '"summary": {"covered_lines": 2, "num_statements": 3',
         )
         doesnt_contain("coverage.json", "bad.j2")

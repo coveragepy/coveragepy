@@ -23,9 +23,9 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
-- The ``debug data`` command now takes file names as arguments on the command
-  line, so you can inspect specific data files without needing to set
-  ``COVERAGE_FILE``.
+- Fix: the JSON report used to report module docstrings as executed lines,
+  which no other report did, as reported in `issue 2105`_. This is now fixed,
+  thanks to Jianrong Zhao.
 
 - Fix: coverage.py uses a more disciplined approach to detecting where
   third-party code is installed, and avoids measuring it. This shouldn't change
@@ -34,6 +34,10 @@ Unreleased
 - Perf: data files that will be combined now record their hash as part of the
   file name. This lets us skip duplicate data more quickly, speeding the
   combining step.
+
+- The ``debug data`` command now takes file names as arguments on the command
+  line, so you can inspect specific data files without needing to set
+  ``COVERAGE_FILE``.
 
 - Docs: added a section explaining more about what is considered a missing
   branch and how it is reported: :ref:`branch_explain`, as requested in `issue
@@ -45,6 +49,7 @@ Unreleased
 
 .. _issue 1597: https://github.com/coveragepy/coveragepy/issues/1597
 .. _pull 2092: https://github.com/coveragepy/coveragepy/pull/2092
+.. _issue 2105: https://github.com/coveragepy/coveragepy/issues/2105
 .. _issue 2109: https://github.com/coveragepy/coveragepy/issues/2109
 
 .. start-releases
