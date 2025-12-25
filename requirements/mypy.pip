@@ -4,7 +4,7 @@ colorama==0.4.6
     # via
     #   -r requirements/pytest.in
     #   pytest
-exceptiongroup==1.3.0 ; python_full_version < '3.11'
+exceptiongroup==1.3.1 ; python_full_version < '3.11'
     # via
     #   hypothesis
     #   pytest
@@ -12,11 +12,13 @@ execnet==2.1.2
     # via pytest-xdist
 flaky==3.8.1
     # via -r requirements/pytest.in
-hypothesis==6.148.1
+hypothesis==6.148.7
     # via -r requirements/pytest.in
 iniconfig==2.3.0
     # via pytest
-mypy==1.18.2
+librt==0.7.4 ; platform_python_implementation != 'PyPy'
+    # via mypy
+mypy==1.19.1
     # via -r requirements/mypy.in
 mypy-extensions==1.1.0
     # via mypy
@@ -30,7 +32,7 @@ pygments==2.19.2
     # via
     #   -r requirements/pytest.in
     #   pytest
-pytest==9.0.1
+pytest==9.0.2
     # via
     #   -r requirements/pytest.in
     #   pytest-xdist
@@ -48,5 +50,5 @@ typing-extensions==4.15.0
     # via
     #   exceptiongroup
     #   mypy
-urllib3==2.5.0
+urllib3==2.6.2
     # via types-requests

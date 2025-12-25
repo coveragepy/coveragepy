@@ -8,7 +8,7 @@ backports-tarfile==1.2.0 ; python_full_version < '3.12' and platform_machine != 
     # via jaraco-context
 build==1.3.0
     # via check-manifest
-cachetools==6.2.2
+cachetools==6.2.4
     # via tox
 certifi==2025.11.12
     # via requests
@@ -45,21 +45,21 @@ distlib==0.4.0
     # via virtualenv
 docutils==0.22.3
     # via readme-renderer
-exceptiongroup==1.3.0 ; python_full_version < '3.11'
+exceptiongroup==1.3.1 ; python_full_version < '3.11'
     # via
     #   hypothesis
     #   pytest
 execnet==2.1.2
     # via pytest-xdist
-filelock==3.20.0
+filelock==3.20.1
     # via
     #   tox
     #   virtualenv
 flaky==3.8.1
     # via -r requirements/pytest.in
-greenlet==3.2.4
+greenlet==3.3.0
     # via -r requirements/dev.in
-hypothesis==6.148.1
+hypothesis==6.148.7
     # via -r requirements/pytest.in
 id==1.5.0
     # via twine
@@ -87,7 +87,7 @@ jeepney==0.9.0 ; platform_machine != 'ppc64le' and platform_machine != 's390x' a
     #   secretstorage
 jinja2==3.1.6
     # via scriv
-keyring==25.6.0 ; platform_machine != 'ppc64le' and platform_machine != 's390x'
+keyring==25.7.0 ; platform_machine != 'ppc64le' and platform_machine != 's390x'
     # via twine
 libsass==0.23.0
     # via -r requirements/dev.in
@@ -119,7 +119,7 @@ parso==0.8.5
     # via jedi
 pip==25.3
     # via -r requirements/pip.in
-platformdirs==4.5.0
+platformdirs==4.5.1
     # via
     #   pylint
     #   tox
@@ -128,7 +128,7 @@ pluggy==1.6.0
     # via
     #   pytest
     #   tox
-pudb==2025.1.3
+pudb==2025.1.5
     # via -r requirements/dev.in
 pycparser==2.23 ; implementation_name != 'PyPy' and platform_machine != 'ppc64le' and platform_machine != 's390x' and platform_python_implementation != 'PyPy' and sys_platform == 'linux'
     # via cffi
@@ -139,13 +139,13 @@ pygments==2.19.2
     #   pytest
     #   readme-renderer
     #   rich
-pylint==4.0.3
+pylint==4.0.4
     # via -r requirements/dev.in
 pyproject-api==1.10.0
     # via tox
 pyproject-hooks==1.2.0
     # via build
-pytest==9.0.1
+pytest==9.0.2
     # via
     #   -r requirements/pytest.in
     #   pytest-xdist
@@ -170,11 +170,11 @@ rfc3986==2.0.0
     # via twine
 rich==14.2.0
     # via twine
-ruff==0.14.5
+ruff==0.14.9
     # via -r requirements/dev.in
 scriv==1.7.0
     # via -r requirements/dev.in
-secretstorage==3.4.1 ; platform_machine != 'ppc64le' and platform_machine != 's390x' and sys_platform == 'linux'
+secretstorage==3.5.0 ; platform_machine != 'ppc64le' and platform_machine != 's390x' and sys_platform == 'linux'
     # via keyring
 setuptools==80.9.0
     # via
@@ -196,7 +196,7 @@ tox==4.32.0
     # via
     #   -r requirements/tox.in
     #   tox-gh
-tox-gh==1.6.0
+tox-gh==1.6.1
     # via -r requirements/tox.in
 twine==6.2.0
     # via -r requirements/dev.in
@@ -208,7 +208,7 @@ typing-extensions==4.15.0
     #   pudb
     #   tox
     #   virtualenv
-urllib3==2.5.0
+urllib3==2.6.2
     # via
     #   requests
     #   twine

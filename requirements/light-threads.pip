@@ -6,11 +6,11 @@ cffi==2.0.0
     #   gevent
 dnspython==2.8.0
     # via eventlet
-eventlet==0.40.3
+eventlet==0.40.4
     # via -r requirements/light-threads.in
 gevent==25.9.1
     # via -r requirements/light-threads.in
-greenlet==3.2.4
+greenlet==3.3.0
     # via
     #   -r requirements/light-threads.in
     #   eventlet
