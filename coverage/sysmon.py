@@ -261,14 +261,8 @@ class SysMonitor(Tracer):
                 register(events.PY_RETURN, self.sysmon_py_return)
                 register(events.LINE, self.sysmon_line_arcs)
                 if env.PYBEHAVIOR.branch_right_left:
-                    register(
-                        events.BRANCH_RIGHT,
-                        self.sysmon_branch_either,
-                    )
-                    register(
-                        events.BRANCH_LEFT,
-                        self.sysmon_branch_either,
-                    )
+                    register(events.BRANCH_RIGHT, self.sysmon_branch_either)
+                    register(events.BRANCH_LEFT, self.sysmon_branch_either)
             else:
                 register(events.LINE, self.sysmon_line_lines)
             sys_monitoring.restart_events()
