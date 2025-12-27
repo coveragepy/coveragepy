@@ -329,20 +329,14 @@ class CoverageData:
                     self._init_db(db)
                 else:
                     raise DataError(
-                        "Data file {!r} doesn't seem to be a coverage data file: {}".format(
-                            self._filename,
-                            exc,
-                        ),
+                        f"Data file {self._filename!r} isn't a coverage data file: {exc}"
                     ) from exc
             else:
                 schema_version = row[0]
                 if schema_version != SCHEMA_VERSION:
                     raise DataError(
-                        "Couldn't use data file {!r}: wrong schema: {} instead of {}".format(
-                            self._filename,
-                            schema_version,
-                            SCHEMA_VERSION,
-                        ),
+                        f"Couldn't use data file {self._filename!r}: "
+                        + f"wrong schema: {schema_version} instead of {SCHEMA_VERSION}"
                     )
 
             row = db.execute_one("select value from meta where key = 'has_arcs'")
@@ -523,13 +517,8 @@ class CoverageData:
 
         """
         if self._debug.should("dataop"):
-            self._debug.write(
-                "Adding lines: %d files, %d lines total"
-                % (
-                    len(line_data),
-                    sum(len(lines) for lines in line_data.values()),
-                )
-            )
+            nlines = sum(len(lines) for lines in line_data.values())
+            self._debug.write(f"Adding lines: {len(line_data)} files, {nlines} lines total")
             if self._debug.should("dataop2"):
                 for filename, linenos in sorted(line_data.items()):
                     self._debug.write(f"  {filename}: {linenos}")
@@ -569,13 +558,8 @@ class CoverageData:
 
         """
         if self._debug.should("dataop"):
-            self._debug.write(
-                "Adding arcs: %d files, %d arcs total"
-                % (
-                    len(arc_data),
-                    sum(len(arcs) for arcs in arc_data.values()),
-                )
-            )
+            narcs = sum(len(arcs) for arcs in arc_data.values())
+            self._debug.write(f"Adding arcs: {len(arc_data)} files, {narcs} arcs total")
             if self._debug.should("dataop2"):
                 for filename, arcs in sorted(arc_data.items()):
                     self._debug.write(f"  {filename}: {arcs}")
@@ -642,11 +626,8 @@ class CoverageData:
                 if existing_plugin:
                     if existing_plugin != plugin_name:
                         raise DataError(
-                            "Conflicting file tracer name for '{}': {!r} vs {!r}".format(
-                                filename,
-                                existing_plugin,
-                                plugin_name,
-                            ),
+                            f"Conflicting file tracer name for {filename!r}: "
+                            + f"{existing_plugin!r} vs {plugin_name!r}"
                         )
                 elif plugin_name:
                     con.execute_void(
@@ -717,11 +698,8 @@ class CoverageData:
 
         """
         if self._debug.should("dataop"):
-            self._debug.write(
-                "Updating with data from {!r}".format(
-                    getattr(other_data, "_filename", "???"),
-                )
-            )
+            other_filename = getattr(other_data, "_filename", "???")
+            self._debug.write(f"Updating with data from {other_filename!r}")
         if self._has_lines and other_data._has_arcs:
             raise DataError(
                 "Can't combine branch coverage data with statement data", slug="cant-combine"
@@ -781,11 +759,8 @@ class CoverageData:
                 if conflicts:
                     path, this_tracer, other_tracer = conflicts[0]
                     raise DataError(
-                        "Conflicting file tracer name for '{}': {!r} vs {!r}".format(
-                            path,
-                            this_tracer,
-                            other_tracer,
-                        ),
+                        f"Conflicting file tracer name for {path!r}: "
+                        + f"{this_tracer!r} vs {other_tracer!r}"
                     )
 
             # Insert missing files from other_db (with map_path applied)

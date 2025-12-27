@@ -704,7 +704,7 @@ class CoverageDataInTempDirTest(CoverageTest):
         with sqlite3.connect("wrong_schema_schema.db") as con:
             con.execute("create table coverage_schema (xyzzy integer)")
             con.execute("insert into coverage_schema (xyzzy) values (99)")
-        msg = r"Data file .* doesn't seem to be a coverage data file: .* no such column"
+        msg = r"Data file .* isn't a coverage data file: .* no such column"
         with pytest.raises(DataError, match=msg):
             covdata = DebugCoverageData("wrong_schema_schema.db")
             covdata.read()
