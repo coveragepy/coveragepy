@@ -16,7 +16,7 @@ from coverage.exceptions import ConfigError
 from coverage.misc import isolate_module
 from coverage.pytracer import PyTracer
 from coverage.sysmon import SysMonitor
-from coverage.types import TDebugCtl, TFileDisposition, Tracer, TWarnFn
+from coverage.types import DataStyle, TDebugCtl, TFileDisposition, Tracer, TWarnFn
 
 os = isolate_module(os)
 
@@ -47,12 +47,24 @@ except ImportError as imp_err:
 class Core:
     """Information about the central technology enabling execution measurement."""
 
+    # The tracer class to create, and the arguments to give it.
     tracer_class: type[Tracer]
     tracer_kwargs: dict[str, Any]
+
+    # What class should we use for file dispositions?
     file_disposition_class: type[TFileDisposition]
+
+    # Does this core support plugins?
     supports_plugins: bool
+
+    # Does this core report arcs in packed format?
     packed_arcs: bool
+
+    # Does this core use sys.settrace?
     systrace: bool
+
+    # What style of data does this core report?
+    data_style: DataStyle = DataStyle.FILE_LINE
 
     def __init__(
         self,
@@ -112,6 +124,7 @@ class Core:
         _debug(f"core.py: Using core={core_name}")
 
         self.tracer_kwargs = {}
+        self.data_style = DataStyle.FILE_ARC if config.branch else DataStyle.FILE_LINE
 
         if core_name == "sysmon":
             self.tracer_class = SysMonitor

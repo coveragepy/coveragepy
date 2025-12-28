@@ -1001,7 +1001,7 @@ class CoverageDataFilesTest(CoverageTest):
         covdata1.write()
         with sqlite3.connect("meta.1") as con:
             data = {k for (k,) in con.execute("select key from meta")}
-        assert {"has_arcs", "version"} <= data
+        assert {"data_style", "version"} <= data
 
         debug = DebugControlString(options=["process"])
         covdata2 = CoverageData(basename="meta.2", debug=debug)
@@ -1009,7 +1009,7 @@ class CoverageDataFilesTest(CoverageTest):
         covdata2.write()
         with sqlite3.connect("meta.2") as con:
             data = {k for (k,) in con.execute("select key from meta")}
-        assert {"has_arcs", "sys_argv", "version", "when"} <= data
+        assert {"data_style", "sys_argv", "version", "when"} <= data
 
     def make_data_files(self, spec: str, arcs: bool) -> list[CoverageData]:
         """Make a number data files.

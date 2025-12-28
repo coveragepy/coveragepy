@@ -32,9 +32,9 @@ to:
 .. ]]]
 .. code::
 
-    SCHEMA_VERSION = 7
+    SCHEMA_VERSION = 8
 
-.. [[[end]]] (sum: ladTQN8zI3)
+.. [[[end]]] (sum: Z+nc95uiOU)
 
 You can use SQLite tools such as the :mod:`sqlite3 <python:sqlite3>` module in
 the Python standard library to access the data.  Some data is stored in a
@@ -67,7 +67,7 @@ This is the database schema:
         value text,
         unique (key)
         -- Possible keys:
-        --  'has_arcs' boolean      -- Is this data recording branches?
+        --  'data_style' text       -- One of 'file_line' or 'file_arc'.
         --  'sys_argv' text         -- The coverage command line that recorded the data.
         --  'version' text          -- The version of coverage.py that made the file.
         --  'when' text             -- Datetime when the file was created.
@@ -117,7 +117,7 @@ This is the database schema:
         foreign key (file_id) references file (id)
     );
 
-.. [[[end]]] (sum: 7dE2ATKbel)
+.. [[[end]]] (sum: Jj/GJ9+OsO)
 
 
 .. _numbits:

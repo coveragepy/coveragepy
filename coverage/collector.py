@@ -21,6 +21,7 @@ from coverage.exceptions import ConfigError
 from coverage.misc import human_sorted_items, isolate_module
 from coverage.plugin import CoveragePlugin
 from coverage.types import (
+    DataStyle,
     TArc,
     TCheckIncludeFn,
     TFileDisposition,
@@ -66,7 +67,6 @@ class Collector:
         check_include: TCheckIncludeFn,
         should_start_context: TShouldStartContextFn | None,
         file_mapper: Callable[[str], str],
-        branch: bool,
         warn: TWarnFn,
         concurrency: list[str],
     ) -> None:
@@ -87,10 +87,6 @@ class Collector:
         filename.  The result is the name that will be recorded in the data
         file.
 
-        If `branch` is true, then branches will be measured.  This involves
-        collecting data on which statements followed each other (arcs).  Use
-        `get_arc_data` to get the arc data.
-
         `warn` is a warning function, taking a single string message argument
         and an optional slug argument which will be a string or None, to be
         used if a warning needs to be issued.
@@ -106,7 +102,6 @@ class Collector:
         self.check_include = check_include
         self.should_start_context = should_start_context
         self.file_mapper = file_mapper
-        self.branch = branch
         self.warn = warn
         assert isinstance(concurrency, list), f"Expected a list: {concurrency!r}"
 
@@ -252,7 +247,7 @@ class Collector:
         tracer.data = self.data
         tracer.lock_data = self.lock_data
         tracer.unlock_data = self.unlock_data
-        tracer.trace_arcs = self.branch
+        tracer.trace_arcs = self.core.data_style == DataStyle.FILE_ARC
         tracer.should_trace = self.should_trace
         tracer.should_trace_cache = self.should_trace_cache
         tracer.warn = self.warn
@@ -450,7 +445,7 @@ class Collector:
         if not self._activity():
             return False
 
-        if self.branch:
+        if self.core.data_style == DataStyle.FILE_ARC:
             if self.core.packed_arcs:
                 # Unpack the line number pairs packed into integers.  See
                 # tracer.c:CTracer_record_pair for the C code that creates

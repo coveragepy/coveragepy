@@ -604,7 +604,6 @@ class Coverage(TConfigurable):
             check_include=self._check_include_omit_etc,
             should_start_context=should_start_context,
             file_mapper=self._file_mapper,
-            branch=self.config.branch,
             warn=self._warn,
             concurrency=concurrency,
         )

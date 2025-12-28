@@ -7,10 +7,13 @@ Types for use throughout coverage.py.
 
 from __future__ import annotations
 
+import dis
+import enum
 import os
 import pathlib
 from collections.abc import Callable, Iterable, Mapping
-from types import FrameType, ModuleType
+from dataclasses import dataclass
+from types import CodeType, FrameType, ModuleType
 from typing import TYPE_CHECKING, Any, Optional, Protocol
 
 if TYPE_CHECKING:
@@ -52,6 +55,9 @@ TOffset = int
 
 TArc = tuple[TLineNo, TLineNo]
 
+TByteOffset = int
+TByteOffsetArc = tuple[TByteOffset, TByteOffset]
+
 
 class TFileDisposition(Protocol):
     """A simple value type for recording what to do with a file."""
@@ -80,9 +86,40 @@ class TMatcher(Protocol):
 # - If measuring arcs in the C tracer, the values are sets of packed arcs (two
 #   line numbers combined into one integer).
 
+
+@dataclass(frozen=True)
+class CodeKey:
+    """A key to uniquely identify a code object."""
+
+    filename: str
+    firstlineno: int
+    firstcolno: int
+    name: str
+
+    @classmethod
+    def from_code(cls, code: CodeType) -> CodeKey:
+        """Create a CodeKey from a code object."""
+        col: int | None = None
+        for inst in dis.get_instructions(code):
+            assert inst.positions is not None
+            if col := inst.positions.col_offset:
+                break
+        assert isinstance(col, int)
+        return cls(code.co_filename, code.co_firstlineno, col, code.co_name)
+
+
+class DataStyle(enum.Enum):
+    """The style of data stored in a CoverageData file."""
+
+    FILE_LINE = "file_line"
+    FILE_ARC = "file_arc"
+
+
 TTraceFileData = set[TLineNo] | set[TArc] | set[int]
 
 TTraceData = dict[str, TTraceFileData]
+
+TTraceCodeData = dict[CodeKey, set[TByteOffsetArc]]
 
 # Functions passed into collectors.
 TShouldTraceFn = Callable[[str, FrameType], TFileDisposition]

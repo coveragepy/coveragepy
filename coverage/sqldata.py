@@ -30,7 +30,7 @@ from coverage.exceptions import CoverageException, DataError
 from coverage.misc import Hasher, file_be_gone, isolate_module
 from coverage.numbits import numbits_to_nums, numbits_union, nums_to_numbits
 from coverage.sqlitedb import SqliteDb
-from coverage.types import AnyCallable, FilePath, TArc, TDebugCtl, TLineNo, TWarnFn
+from coverage.types import AnyCallable, DataStyle, FilePath, TArc, TDebugCtl, TLineNo, TWarnFn
 from coverage.version import __version__
 
 os = isolate_module(os)
@@ -38,7 +38,7 @@ os = isolate_module(os)
 # If you change the schema: increment the SCHEMA_VERSION and update the
 # docs in docs/dbschema.rst by running "make cogdoc".
 
-SCHEMA_VERSION = 7
+SCHEMA_VERSION = 8
 
 # Schema versions:
 # 1: Released in 5.0a2
@@ -48,6 +48,8 @@ SCHEMA_VERSION = 7
 # 5: Added foreign key declarations.
 # 6: Key-value in meta.
 # 7: line_map -> line_bits
+# 8: has_arcs -> data_style
+
 
 SCHEMA = textwrap.dedent("""\
     CREATE TABLE coverage_schema (
@@ -61,7 +63,7 @@ SCHEMA = textwrap.dedent("""\
         value text,
         unique (key)
         -- Possible keys:
-        --  'has_arcs' boolean      -- Is this data recording branches?
+        --  'data_style' text       -- One of 'file_line' or 'file_arc'.
         --  'sys_argv' text         -- The coverage command line that recorded the data.
         --  'version' text          -- The version of coverage.py that made the file.
         --  'when' text             -- Datetime when the file was created.
@@ -156,8 +158,8 @@ class CoverageData:
 
         The data file is currently a SQLite database file, with a
         :ref:`documented schema <dbschema>`. The schema is subject to change
-        though, so be careful about querying it directly. Use this API if you
-        can to isolate yourself from changes.
+        though, so be careful about querying it directly. Use this API to
+        isolate yourself from changes.
 
     There are a number of kinds of data that can be collected:
 
@@ -272,8 +274,7 @@ class CoverageData:
         # Are we in sync with the data file?
         self._have_used = False
 
-        self._has_lines = False
-        self._has_arcs = False
+        self._data_style: DataStyle | None = None
 
         self._current_context: str | None = None
         self._current_context_id: int | None = None
@@ -339,10 +340,9 @@ class CoverageData:
                         + f"wrong schema: {schema_version} instead of {SCHEMA_VERSION}"
                     )
 
-            row = db.execute_one("select value from meta where key = 'has_arcs'")
+            row = db.execute_one("select value from meta where key = 'data_style'")
             if row is not None:
-                self._has_arcs = bool(int(row[0]))
-                self._has_lines = not self._has_arcs
+                self._data_style = DataStyle(row[0])
 
             with db.execute("select id, path from file") as cur:
                 for file_id, path in cur:
@@ -587,22 +587,22 @@ class CoverageData:
         """Force the data file to choose between lines and arcs."""
         assert lines or arcs
         assert not (lines and arcs)
-        if lines and self._has_arcs:
-            if self._debug.should("dataop"):
-                self._debug.write("Error: Can't add line measurements to existing branch data")
-            raise DataError("Can't add line measurements to existing branch data")
-        if arcs and self._has_lines:
-            if self._debug.should("dataop"):
-                self._debug.write("Error: Can't add branch measurements to existing line data")
-            raise DataError("Can't add branch measurements to existing line data")
-        if not self._has_arcs and not self._has_lines:
-            self._has_lines = lines
-            self._has_arcs = arcs
+        if self._data_style is None:
+            self._data_style = DataStyle.FILE_LINE if lines else DataStyle.FILE_ARC
             with self._connect() as con:
                 con.execute_void(
                     "INSERT OR IGNORE INTO meta (key, value) VALUES (?, ?)",
-                    ("has_arcs", str(int(arcs))),
+                    ("data_style", self._data_style.value),
                 )
+        else:
+            if lines and self.has_arcs():
+                if self._debug.should("dataop"):
+                    self._debug.write("Error: Can't add line measurements to existing branch data")
+                raise DataError("Can't add line measurements to existing branch data")
+            if arcs and not self.has_arcs():
+                if self._debug.should("dataop"):
+                    self._debug.write("Error: Can't add branch measurements to existing line data")
+                raise DataError("Can't add branch measurements to existing line data")
 
     @_locked
     def add_file_tracers(self, file_tracers: Mapping[str, str]) -> None:
@@ -652,7 +652,7 @@ class CoverageData:
             self._debug.write(f"Touching {filenames!r}")
         self._start_using()
         with self._connect():  # Use this to get one transaction.
-            if not self._has_arcs and not self._has_lines:
+            if self._data_style is None:
                 raise DataError("Can't touch files in an empty CoverageData")
 
             for filename in filenames:
@@ -671,12 +671,13 @@ class CoverageData:
             self._debug.write(f"Purging data for {filenames!r}")
         self._start_using()
         with self._connect() as con:
-            if self._has_lines:
-                sql = "DELETE FROM line_bits WHERE file_id=?"
-            elif self._has_arcs:
-                sql = "DELETE FROM arc WHERE file_id=?"
-            else:
-                raise DataError("Can't purge files in an empty CoverageData")
+            match self._data_style:
+                case None:
+                    raise DataError("Can't purge files in an empty CoverageData")
+                case DataStyle.FILE_LINE:
+                    sql = "DELETE FROM line_bits WHERE file_id=?"
+                case DataStyle.FILE_ARC:
+                    sql = "DELETE FROM arc WHERE file_id=?"
 
             for filename in filenames:
                 file_id = self._file_id(filename, add=False)
@@ -699,14 +700,15 @@ class CoverageData:
         if self._debug.should("dataop"):
             other_filename = getattr(other_data, "_filename", "???")
             self._debug.write(f"Updating with data from {other_filename!r}")
-        if self._has_lines and other_data._has_arcs:
-            raise DataError(
-                "Can't combine branch coverage data with statement data", slug="cant-combine"
-            )
-        if self._has_arcs and other_data._has_lines:
-            raise DataError(
-                "Can't combine statement coverage data with branch data", slug="cant-combine"
-            )
+        if self._data_style is not None and other_data._data_style is not None:
+            if not self.has_arcs() and other_data.has_arcs():
+                raise DataError(
+                    "Can't combine branch coverage data with statement data", slug="cant-combine"
+                )
+            if self.has_arcs() and not other_data.has_arcs():
+                raise DataError(
+                    "Can't combine statement coverage data with branch data", slug="cant-combine"
+                )
 
         map_path = map_path or (lambda p: p)
 
@@ -918,7 +920,7 @@ class CoverageData:
 
     def has_arcs(self) -> bool:
         """Does the database have arcs (True) or lines (False)."""
-        return bool(self._has_arcs)
+        return self._data_style == DataStyle.FILE_ARC
 
     def measured_files(self) -> set[str]:
         """A set of all files that have been measured.
