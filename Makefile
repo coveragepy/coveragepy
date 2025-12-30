@@ -10,7 +10,7 @@
 
 .PHONY: help _clean_platform debug_clean clean_platform clean sterile venv install
 
-help:					## Show this help.
+help:					#- Show this help.
 	@# Adapted from https://www.thapaliya.com/en/writings/well-documented-makefiles/
 	@# Markdown-inspired syntax is used in comments to print help.
 	@# Lines starting with '###' are section headers.
