@@ -463,11 +463,11 @@ class Collector:
                 for fname, packeds in list(packed_data.items()):
                     tuples = []
                     for packed in list(packeds):
-                        l1 = packed & 0xFFFFF
-                        l2 = (packed & (0xFFFFF << 20)) >> 20
-                        if packed & (1 << 40):
+                        l1 = packed & 0xFFFFFFF
+                        l2 = (packed & (0xFFFFFFF << 28)) >> 28
+                        if packed & (1 << 56):
                             l1 *= -1
-                        if packed & (1 << 41):
+                        if packed & (1 << 57):
                             l2 *= -1
                         tuples.append((l1, l2))
                     arc_data[fname] = tuples
