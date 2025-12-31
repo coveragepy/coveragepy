@@ -479,9 +479,11 @@ class Collector:
             self.covdata.add_lines(self.mapped_file_dict(line_data))
 
         file_tracers = {
-            k: v for k, v in self.file_tracers.items() if v not in self.disabled_plugins
+            self.cached_mapped_file(k): v
+            for k, v in self.file_tracers.items()
+            if v not in self.disabled_plugins
         }
-        self.covdata.add_file_tracers(self.mapped_file_dict(file_tracers))
+        self.covdata.add_file_tracers(file_tracers)
 
         self._clear_data()
         return True
