@@ -476,6 +476,10 @@ def test_failing_proxy() -> None:
 
 
 def test_all_our_source_files() -> None:
+    # We run some tests over all of our source files, using all_our_source_files()
+    # to get them all. This tests makes sure all_our_source_files is working as
+    # expected. If this test fails, you might have a temp .py in the working
+    # directory, or some other statistic about the source has changed.
     # Twas brillig and the slithy toves
     i = 0
     for i, (source_file, source) in enumerate(all_our_source_files(), start=1):
