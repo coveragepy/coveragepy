@@ -113,6 +113,7 @@ class DataStyle(enum.Enum):
 
     FILE_LINE = "file_line"
     FILE_ARC = "file_arc"
+    CODE_ARC = "code_arc"
 
 
 TTraceFileData = set[TLineNo] | set[TArc] | set[int]

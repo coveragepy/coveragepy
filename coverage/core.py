@@ -133,6 +133,7 @@ class Core:
             self.supports_plugins = False
             self.packed_arcs = False
             self.systrace = False
+            self.data_style = DataStyle.CODE_ARC if config.branch else DataStyle.FILE_LINE
         elif core_name == "ctrace":
             self.tracer_class = coverage.tracer.CTracer
             self.file_disposition_class = coverage.tracer.CFileDisposition

@@ -445,33 +445,38 @@ class Collector:
         if not self._activity():
             return False
 
-        if self.core.data_style == DataStyle.FILE_ARC:
-            if self.core.packed_arcs:
-                # Unpack the line number pairs packed into integers.  See
-                # tracer.c:CTracer_record_pair for the C code that creates
-                # these packed ints.
-                arc_data: dict[str, list[TArc]] = {}
-                packed_data = cast(dict[str, set[int]], self.data)
+        match self.core.data_style:
+            case DataStyle.FILE_ARC:
+                if self.core.packed_arcs:
+                    # Unpack the line number pairs packed into integers.  See
+                    # tracer.c:CTracer_record_pair for the C code that creates
+                    # these packed ints.
+                    arc_data: dict[str, list[TArc]] = {}
+                    packed_data = cast(dict[str, set[int]], self.data)
 
-                # The list() here and in the inner loop are to get a clean copy
-                # even as tracers are continuing to add data.
-                for fname, packeds in list(packed_data.items()):
-                    tuples = []
-                    for packed in list(packeds):
-                        l1 = packed & 0xFFFFFFF
-                        l2 = (packed & (0xFFFFFFF << 28)) >> 28
-                        if packed & (1 << 56):
-                            l1 *= -1
-                        if packed & (1 << 57):
-                            l2 *= -1
-                        tuples.append((l1, l2))
-                    arc_data[fname] = tuples
-            else:
-                arc_data = cast(dict[str, list[TArc]], self.data)
-            self.covdata.add_arcs(self.mapped_file_dict(arc_data))
-        else:
-            line_data = cast(dict[str, set[int]], self.data)
-            self.covdata.add_lines(self.mapped_file_dict(line_data))
+                    # The list() here and in the inner loop are to get a clean
+                    # copy even as tracers are continuing to add data.
+                    for fname, packeds in list(packed_data.items()):
+                        tuples = []
+                        for packed in list(packeds):
+                            l1 = packed & 0xFFFFFFF
+                            l2 = (packed & (0xFFFFFFF << 28)) >> 28
+                            if packed & (1 << 56):
+                                l1 *= -1
+                            if packed & (1 << 57):
+                                l2 *= -1
+                            tuples.append((l1, l2))
+                        arc_data[fname] = tuples
+                else:
+                    arc_data = cast(dict[str, list[TArc]], self.data)
+                self.covdata.add_arcs(self.mapped_file_dict(arc_data))
+
+            case DataStyle.FILE_LINE:
+                line_data = cast(dict[str, set[int]], self.data)
+                self.covdata.add_lines(self.mapped_file_dict(line_data))
+
+            case DataStyle.CODE_ARC:
+                1 / 0
 
         file_tracers = {
             self.cached_mapped_file(k): v
