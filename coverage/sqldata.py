@@ -482,14 +482,13 @@ class CoverageData:
         """Use the _current_context to set _current_context_id."""
         context = self._current_context or ""
         context_id = self._context_id(context)
-        if context_id is not None:
-            self._current_context_id = context_id
-        else:
+        if context_id is None:
             with self._connect() as con:
-                self._current_context_id = con.execute_for_rowid(
+                context_id = con.execute_for_rowid(
                     "INSERT INTO context (context) VALUES (?)",
                     (context,),
                 )
+        self._current_context_id = context_id
 
     def base_filename(self) -> str:
         """The base filename for storing data.
