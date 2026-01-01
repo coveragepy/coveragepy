@@ -75,9 +75,9 @@ requests==2.32.5
     #   sphinxcontrib-spelling
 restructuredtext-lint==2.0.2
     # via doc8
-roman-numerals==4.0.0
+roman-numerals==4.1.0
     # via roman-numerals-py
-roman-numerals-py==4.0.0
+roman-numerals-py==4.1.0
     # via sphinx
 scriv==1.7.0
     # via -r doc/requirements.in
@@ -133,7 +133,7 @@ typing-extensions==4.15.0 ; python_full_version < '3.13'
     #   starlette
 urllib3==2.6.2
     # via requests
-uvicorn==0.38.0
+uvicorn==0.40.0
     # via sphinx-autobuild
 watchfiles==1.1.1
     # via sphinx-autobuild
