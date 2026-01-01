@@ -237,12 +237,12 @@ class Collector:
         self._clear_data()
 
     def lock_data(self) -> None:
-        """Lock self.data_lock, for use by the C tracer."""
+        """Lock self.data_lock, for use by tracers."""
         if self.data_lock is not None:
             self.data_lock.acquire()
 
     def unlock_data(self) -> None:
-        """Unlock self.data_lock, for use by the C tracer."""
+        """Unlock self.data_lock, for use by tracers."""
         if self.data_lock is not None:
             self.data_lock.release()
 
