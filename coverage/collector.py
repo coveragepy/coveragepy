@@ -247,7 +247,7 @@ class Collector:
         tracer.data = self.data
         tracer.lock_data = self.lock_data
         tracer.unlock_data = self.unlock_data
-        tracer.trace_arcs = self.core.data_style == DataStyle.FILE_ARC
+        tracer.trace_arcs = self.core.data_style in [DataStyle.FILE_ARC, DataStyle.CODE_ARC]
         tracer.should_trace = self.should_trace
         tracer.should_trace_cache = self.should_trace_cache
         tracer.warn = self.warn
@@ -469,6 +469,14 @@ class Collector:
                         arc_data[fname] = tuples
                 else:
                     arc_data = cast(dict[str, list[TArc]], self.data)
+                import contextlib  # DELETE ME
+
+                with open("/tmp/foo.out", "a", encoding="utf-8") as f:
+                    with contextlib.redirect_stdout(f):
+                        import os
+
+                        print(os.getenv("PYTEST_CURRENT_TEST"))
+                        print(self.data)
                 self.covdata.add_arcs(self.mapped_file_dict(arc_data))
 
             case DataStyle.FILE_LINE:
@@ -476,7 +484,7 @@ class Collector:
                 self.covdata.add_lines(self.mapped_file_dict(line_data))
 
             case DataStyle.CODE_ARC:
-                1 / 0
+                self.covdata.add_code_arcs(self.mapped_file_dict(self.data))
 
         file_tracers = {
             self.cached_mapped_file(k): v

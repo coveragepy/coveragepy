@@ -26,6 +26,7 @@ from coverage.misc import isolate_module
 from coverage.parser import PythonParser
 from coverage.types import (
     AnyCallable,
+    CodeKey,
     TFileDisposition,
     TLineNo,
     TOffset,
@@ -171,8 +172,14 @@ else:
 class CodeInfo:
     """The information we want about each code object."""
 
+    # Are we tracing this code object?
     tracing: bool
+
     file_data: TTraceFileData | None
+
+    # A key to identify this code object.
+    key: CodeKey | None
+
     byte_to_line: dict[TOffset, TLineNo] | None
 
     # Keys are start instruction offsets for branches.
@@ -348,13 +355,16 @@ class SysMonitor(Tracer):
                     self.unlock_data()
                 file_data = self.data[tracename]
                 b2l = bytes_to_lines(code)
+                key = CodeKey.from_code(code)
             else:
                 file_data = None
                 b2l = None
+                key = None
 
             code_info = CodeInfo(
                 tracing=tracing_code,
                 file_data=file_data,
+                key=key,
                 byte_to_line=b2l,
                 branch_trails={},
                 always_jumps={},
@@ -396,6 +406,9 @@ class SysMonitor(Tracer):
         code_info = self.code_infos.get(id(code))
         # code_info is not None and code_info.file_data is not None, since we
         # wouldn't have enabled this event if they were.
+        code_info.file_data.add((code_info.key, "return", instruction_offset, 0))
+        return DISABLE
+
         last_line = code_info.byte_to_line.get(instruction_offset)  # type: ignore
         if last_line is not None:
             arc = (last_line, -code.co_firstlineno)
@@ -425,6 +438,9 @@ class SysMonitor(Tracer):
         code_info = self.code_infos[id(code)]
         # code_info is not None and code_info.file_data is not None, since we
         # wouldn't have enabled this event if they were.
+        code_info.file_data.add((code_info.key, "line", line_number, 0))
+        return DISABLE
+
         arc = (line_number, line_number)
         code_info.file_data.add(arc)  # type: ignore
         # log(f"adding {arc=}")
@@ -437,9 +453,13 @@ class SysMonitor(Tracer):
         """Handle BRANCH_RIGHT and BRANCH_LEFT events."""
         if self.stats is not None:
             self.stats["branches"] += 1
+
         code_info = self.code_infos[id(code)]
         # code_info is not None and code_info.file_data is not None, since we
         # wouldn't have enabled this event if they were.
+        code_info.file_data.add((code_info.key, "branch", instruction_offset, destination_offset))
+        return DISABLE
+
         if not code_info.branch_trails:
             if self.stats is not None:
                 self.stats["branch_trails"] += 1

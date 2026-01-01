@@ -48,7 +48,7 @@ SCHEMA_VERSION = 8
 # 5: Added foreign key declarations.
 # 6: Key-value in meta.
 # 7: line_map -> line_bits
-# 8: has_arcs -> data_style
+# 8: has_arcs -> data_style, code_object table added.
 
 
 SCHEMA = textwrap.dedent("""\
@@ -75,6 +75,17 @@ SCHEMA = textwrap.dedent("""\
         id integer primary key,
         path text,
         unique (path)
+    );
+
+    CREATE TABLE code_object (
+        -- A row per code object measured.
+        id integer primary key,
+        file_id integer,            -- foreign key to `file`.
+        name text,                  -- code object name.
+        firstlineno integer,        -- first line number of code object.
+        firstcolno integer,         -- first column number of code object.
+        foreign key (file_id) references file (id),
+        unique (file_id, name, firstlineno, firstcolno)
     );
 
     CREATE TABLE context (
@@ -105,6 +116,18 @@ SCHEMA = textwrap.dedent("""\
         foreign key (context_id) references context (id),
         unique (file_id, context_id, fromno, tono)
     );
+
+    CREATE TABLE code_object_trace (
+        -- TODO: describe.
+        code_object_id integer,     -- foreign key to `code_object`.
+        context_id integer,         -- foreign key to `context`.
+        kind text,                  -- 'line', 'arc', or 'return'.
+        val1 int,
+        val2 int,
+        foreign key (code_object_id) references code_object (id),
+        foreign key (context_id) references context (id),
+        unique (code_object_id, context_id, kind, val1, val2)
+    )
 
     CREATE TABLE tracer (
         -- A row per file indicating the tracer used for that file.
@@ -582,6 +605,20 @@ class CoverageData:
                     """,
                     data,
                 )
+
+    @_locked
+    def add_code_arcs(self, code_arcs):
+        self._start_using()
+        # TODO: self._choose_lines_or_arcs(arcs=True)
+        with self._connect() as con:
+            self._set_context_id()
+            for filename, code_arc in code_arcs.items():
+                # TODO: hashing
+                file_id = self._file_id(filename, add=True)
+            print(f"= {filename}")
+            for something in code_arc:
+                print(f"  - {something}")
+        17 / 0
 
     def _choose_lines_or_arcs(self, lines: bool = False, arcs: bool = False) -> None:
         """Force the data file to choose between lines and arcs."""

@@ -89,9 +89,8 @@ class TMatcher(Protocol):
 
 @dataclass(frozen=True)
 class CodeKey:
-    """A key to uniquely identify a code object."""
+    """A key to uniquely identify a code object within a file."""
 
-    filename: str
     firstlineno: int
     firstcolno: int
     name: str
@@ -105,7 +104,7 @@ class CodeKey:
             if col := inst.positions.col_offset:
                 break
         assert isinstance(col, int)
-        return cls(code.co_filename, code.co_firstlineno, col, code.co_name)
+        return cls(code.co_firstlineno, col, code.co_name)
 
 
 class DataStyle(enum.Enum):
