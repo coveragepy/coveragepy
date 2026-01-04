@@ -23,14 +23,23 @@ import threading
 import uuid
 import zlib
 from collections.abc import Callable, Collection, Mapping, Sequence
-from typing import Any, cast
+from typing import Any, Literal, cast, overload
 
 from coverage.debug import NoDebugging, auto_repr, file_summary
 from coverage.exceptions import CoverageException, DataError
 from coverage.misc import Hasher, file_be_gone, isolate_module
 from coverage.numbits import numbits_to_nums, numbits_union, nums_to_numbits
 from coverage.sqlitedb import SqliteDb
-from coverage.types import AnyCallable, DataStyle, FilePath, TArc, TDebugCtl, TLineNo, TWarnFn
+from coverage.types import (
+    AnyCallable,
+    CodeKey,
+    DataStyle,
+    FilePath,
+    TArc,
+    TDebugCtl,
+    TLineNo,
+    TWarnFn,
+)
 from coverage.version import __version__
 
 os = isolate_module(os)
@@ -286,7 +295,7 @@ class CoverageData:
         # Maps filenames to row ids.
         self._file_map: dict[str, int] = {}
         # Maps code objects to row ids.
-        self._code_object_map: dict[str, int] = {}
+        self._code_object_map: dict[CodeKey, int] = {}
         # Maps thread ids to SqliteDb objects.
         self._dbs: dict[int, SqliteDb] = {}
         self._pid = os.getpid()
@@ -464,6 +473,15 @@ class CoverageData:
         self._read_db()
         self._have_used = True
 
+    @overload
+    def _file_id(self, filename: str, add: Literal[True]) -> int: ...
+
+    @overload
+    def _file_id(self, filename: str, add: Literal[False]) -> int | None: ...
+
+    @overload
+    def _file_id(self, filename: str) -> int | None: ...
+
     def _file_id(self, filename: str, add: bool = False) -> int | None:
         """Get the file id for `filename`.
 
@@ -569,7 +587,7 @@ class CoverageData:
                 for filename, linenos in sorted(line_data.items()):
                     self._debug.write(f"  {filename}: {linenos}")
         self._start_using()
-        self._choose_lines_or_arcs(lines=True)
+        self._set_data_style(DataStyle.FILE_LINE)
         if not line_data:
             return
         with self._connect() as con:
@@ -610,7 +628,7 @@ class CoverageData:
                 for filename, arcs in sorted(arc_data.items()):
                     self._debug.write(f"  {filename}: {arcs}")
         self._start_using()
-        self._choose_lines_or_arcs(arcs=True)
+        self._set_data_style(DataStyle.FILE_ARC)
         if not arc_data:
             return
         with self._connect() as con:
@@ -633,7 +651,7 @@ class CoverageData:
     @_locked
     def add_code_arcs(self, code_arcs):
         self._start_using()
-        self._choose_lines_or_arcs(arcs=True)
+        self._set_data_style(DataStyle.CODE_ARC)
         with self._connect() as con:
             self._set_context_id()
             for filename, code_arc in code_arcs.items():
@@ -649,32 +667,22 @@ class CoverageData:
                         """,
                         (code_object_id, self._current_context_id, kind, val1, val2),
                     )
-        import contextlib  # DELETE ME
-
         with open("/tmp/foo.out", "a", encoding="utf-8") as f:
-            with contextlib.redirect_stdout(f):
+            with __import__("contextlib").redirect_stdout(f):
                 print(f"{len(self._code_object_map)}: {self._filename}")
 
-    def _choose_lines_or_arcs(self, lines: bool = False, arcs: bool = False) -> None:
-        """Force the data file to choose between lines and arcs."""
-        assert lines or arcs
-        assert not (lines and arcs)
+    def _set_data_style(self, data_style: DataStyle) -> None:
         if self._data_style is None:
-            self._data_style = DataStyle.FILE_LINE if lines else DataStyle.FILE_ARC
+            self._data_style = data_style
             with self._connect() as con:
                 con.execute_void(
-                    "INSERT OR IGNORE INTO meta (key, value) VALUES (?, ?)",
+                    "INSERT INTO meta (key, value) VALUES (?, ?)",
                     ("data_style", self._data_style.value),
                 )
-        else:
-            if lines and self.has_arcs():
-                if self._debug.should("dataop"):
-                    self._debug.write("Error: Can't add line measurements to existing branch data")
-                raise DataError("Can't add line measurements to existing branch data")
-            if arcs and not self.has_arcs():
-                if self._debug.should("dataop"):
-                    self._debug.write("Error: Can't add branch measurements to existing line data")
-                raise DataError("Can't add branch measurements to existing line data")
+        elif self._data_style != data_style:
+            raise DataError(
+                "Can't mix data styles: existing is {self._data_style!r}, new is {data_style!r}"
+            )
 
     @_locked
     def add_file_tracers(self, file_tracers: Mapping[str, str]) -> None:
@@ -861,7 +869,7 @@ class CoverageData:
 
             # Handle arcs if present in other_db
             if has_arcs:
-                self._choose_lines_or_arcs(arcs=True)
+                self._set_data_style(DataStyle.FILE_ARC)
 
                 # Create context mapping table for faster lookups
                 con.execute_void("""
@@ -888,7 +896,7 @@ class CoverageData:
 
             # Handle line_bits if present in other_db
             if has_lines:
-                self._choose_lines_or_arcs(lines=True)
+                self._set_data_style(DataStyle.FILE_LINE)
 
                 # Handle line_bits by aggregating other_db data by mapped target,
                 # then inserting/updating
