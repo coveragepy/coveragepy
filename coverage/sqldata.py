@@ -127,7 +127,7 @@ SCHEMA = textwrap.dedent("""\
         foreign key (code_object_id) references code_object (id),
         foreign key (context_id) references context (id),
         unique (code_object_id, context_id, kind, val1, val2)
-    )
+    );
 
     CREATE TABLE tracer (
         -- A row per file indicating the tracer used for that file.
@@ -285,6 +285,8 @@ class CoverageData:
         self._choose_filename()
         # Maps filenames to row ids.
         self._file_map: dict[str, int] = {}
+        # Maps code objects to row ids.
+        self._code_object_map: dict[str, int] = {}
         # Maps thread ids to SqliteDb objects.
         self._dbs: dict[int, SqliteDb] = {}
         self._pid = os.getpid()
@@ -325,6 +327,7 @@ class CoverageData:
         if not self._no_disk:
             self.close()
         self._file_map = {}
+        self._code_object_map = {}
         self._have_used = False
         self._current_context_id = None
 
@@ -370,6 +373,8 @@ class CoverageData:
             with db.execute("select id, path from file") as cur:
                 for file_id, path in cur:
                     self._file_map[path] = file_id
+
+            # TODO: read _code_object_map
 
     def _init_db(self, db: SqliteDb) -> None:
         """Write the initial contents of the database."""
@@ -484,6 +489,25 @@ class CoverageData:
                 return cast(int, row[0])
             else:
                 return None
+
+    def _code_object_id(self, file_id: int, code_key: CodeKey, add: bool = False) -> int | None:
+        if code_key not in self._code_object_map:
+            if add:
+                with self._connect() as con:
+                    self._code_object_map[code_key] = con.execute_for_rowid(
+                        """
+                        INSERT OR REPLACE INTO code_object
+                        (file_id, name, firstlineno, firstcolno)
+                        VALUES (?, ?, ?, ?)
+                        """,
+                        (
+                            file_id,
+                            code_key.name,
+                            code_key.firstlineno,
+                            code_key.firstcolno,
+                        ),
+                    )
+        return self._code_object_map.get(code_key)
 
     @_locked
     def set_context(self, context: str | None) -> None:
@@ -609,16 +633,27 @@ class CoverageData:
     @_locked
     def add_code_arcs(self, code_arcs):
         self._start_using()
-        # TODO: self._choose_lines_or_arcs(arcs=True)
+        self._choose_lines_or_arcs(arcs=True)
         with self._connect() as con:
             self._set_context_id()
             for filename, code_arc in code_arcs.items():
                 # TODO: hashing
                 file_id = self._file_id(filename, add=True)
-            print(f"= {filename}")
-            for something in code_arc:
-                print(f"  - {something}")
-        17 / 0
+                for code_key, kind, val1, val2 in code_arc:
+                    code_object_id = self._code_object_id(file_id, code_key, add=True)
+                    con.execute_void(
+                        """
+                        INSERT INTO code_object_trace
+                        (code_object_id, context_id, kind, val1, val2)
+                        VALUES (?, ?, ?, ?, ?)
+                        """,
+                        (code_object_id, self._current_context_id, kind, val1, val2),
+                    )
+        import contextlib  # DELETE ME
+
+        with open("/tmp/foo.out", "a", encoding="utf-8") as f:
+            with contextlib.redirect_stdout(f):
+                print(f"{len(self._code_object_map)}: {self._filename}")
 
     def _choose_lines_or_arcs(self, lines: bool = False, arcs: bool = False) -> None:
         """Force the data file to choose between lines and arcs."""

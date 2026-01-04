@@ -469,14 +469,6 @@ class Collector:
                         arc_data[fname] = tuples
                 else:
                     arc_data = cast(dict[str, list[TArc]], self.data)
-                import contextlib  # DELETE ME
-
-                with open("/tmp/foo.out", "a", encoding="utf-8") as f:
-                    with contextlib.redirect_stdout(f):
-                        import os
-
-                        print(os.getenv("PYTEST_CURRENT_TEST"))
-                        print(self.data)
                 self.covdata.add_arcs(self.mapped_file_dict(arc_data))
 
             case DataStyle.FILE_LINE:
