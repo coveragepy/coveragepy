@@ -650,6 +650,12 @@ class CoverageData:
 
     @_locked
     def add_code_arcs(self, code_arcs):
+        if self._debug.should("dataop"):
+            narcs = sum(len(arcs) for arcs in code_arcs.values())
+            self._debug.write(f"Adding code arcs: {len(code_arcs)} files, {narcs} arcs total")
+            if self._debug.should("dataop2"):
+                for filename, arcs in sorted(code_arcs.items()):
+                    self._debug.write(f"  {filename}: {arcs}")
         self._start_using()
         self._set_data_style(DataStyle.CODE_ARC)
         with self._connect() as con:
@@ -681,7 +687,7 @@ class CoverageData:
                 )
         elif self._data_style != data_style:
             raise DataError(
-                "Can't mix data styles: existing is {self._data_style!r}, new is {data_style!r}"
+                f"Can't mix data styles: {self._data_style.value!r} and {data_style.value!r}"
             )
 
     @_locked
@@ -1089,29 +1095,50 @@ class CoverageData:
 
         """
         self._start_using()
-        if self.has_arcs():
-            arcs = self.arcs(filename)
-            if arcs is not None:
-                all_lines = itertools.chain.from_iterable(arcs)
-                return list({l for l in all_lines if l > 0})
+        match self._data_style:
+            case DataStyle.FILE_LINE:
+                with self._connect() as con:
+                    file_id = self._file_id(filename)
+                    if file_id is None:
+                        return None
+                    else:
+                        query = "SELECT numbits FROM line_bits WHERE file_id = ?"
+                        data = [file_id]
+                        if self._query_context_ids is not None:
+                            ids_array = ", ".join("?" * len(self._query_context_ids))
+                            query += " AND context_id IN (" + ids_array + ")"
+                            data += self._query_context_ids
+                        with con.execute(query, data) as cur:
+                            bitmaps = list(cur)
+                        nums = set()
+                        for row in bitmaps:
+                            nums.update(numbits_to_nums(row[0]))
+                        return list(nums)
 
-        with self._connect() as con:
-            file_id = self._file_id(filename)
-            if file_id is None:
-                return None
-            else:
-                query = "SELECT numbits FROM line_bits WHERE file_id = ?"
-                data = [file_id]
-                if self._query_context_ids is not None:
-                    ids_array = ", ".join("?" * len(self._query_context_ids))
-                    query += " AND context_id IN (" + ids_array + ")"
-                    data += self._query_context_ids
-                with con.execute(query, data) as cur:
-                    bitmaps = list(cur)
-                nums = set()
-                for row in bitmaps:
-                    nums.update(numbits_to_nums(row[0]))
-                return list(nums)
+            case DataStyle.FILE_ARC:
+                arcs = self.arcs(filename)
+                if arcs is not None:
+                    all_lines = itertools.chain.from_iterable(arcs)
+                    return list({l for l in all_lines if l > 0})
+
+            case DataStyle.CODE_ARC:
+                with self._connect() as con:
+                    file_id = self._file_id(filename)
+                    if file_id is None:
+                        return None
+                    else:
+                        query = """
+                            SELECT t.val1 FROM code_object_trace t
+                            JOIN code_object o ON t.code_object_id = o.id
+                            WHERE o.file_id = ? AND t.kind = 'line'
+                        """
+                        data = [file_id]
+                        if self._query_context_ids is not None:
+                            ids_array = ", ".join("?" * len(self._query_context_ids))
+                            query += " AND t.context_id IN (" + ids_array + ")"
+                            data += self._query_context_ids
+                        with con.execute(query, data) as cur:
+                            return list(row[0] for row in cur)
 
     def arcs(self, filename: str) -> list[TArc] | None:
         """Get the list of arcs executed for a file.
@@ -1131,19 +1158,37 @@ class CoverageData:
 
         """
         self._start_using()
-        with self._connect() as con:
-            file_id = self._file_id(filename)
-            if file_id is None:
-                return None
-            else:
-                query = "SELECT DISTINCT fromno, tono FROM arc WHERE file_id = ?"
-                data = [file_id]
-                if self._query_context_ids is not None:
-                    ids_array = ", ".join("?" * len(self._query_context_ids))
-                    query += " AND context_id IN (" + ids_array + ")"
-                    data += self._query_context_ids
-                with con.execute(query, data) as cur:
-                    return list(cur)
+        match self._data_style:
+            case DataStyle.FILE_LINE:
+                raise DataError("No arc data in line-based coverage data")
+
+            case DataStyle.FILE_ARC:
+                import contextlib  # DELETE ME
+
+                with open("/tmp/foo.out", "a", encoding="utf-8") as f:
+                    with contextlib.redirect_stdout(f):
+                        print(f"FILE ARC?")
+                with self._connect() as con:
+                    file_id = self._file_id(filename)
+                    if file_id is None:
+                        return None
+                    else:
+                        query = "SELECT DISTINCT fromno, tono FROM arc WHERE file_id = ?"
+                        data = [file_id]
+                        if self._query_context_ids is not None:
+                            ids_array = ", ".join("?" * len(self._query_context_ids))
+                            query += " AND context_id IN (" + ids_array + ")"
+                            data += self._query_context_ids
+                        with con.execute(query, data) as cur:
+                            return list(cur)
+
+            case DataStyle.CODE_ARC:
+                import contextlib  # DELETE ME
+
+                with open("/tmp/foo.out", "a", encoding="utf-8") as f:
+                    with contextlib.redirect_stdout(f):
+                        print(f"NOT IMPLEMENTED")
+                raise NotImplementedError("arc() not done yet for code-arcs")
 
     def contexts_by_lineno(self, filename: str) -> dict[TLineNo, list[str]]:
         """Get the contexts for each line in a file.

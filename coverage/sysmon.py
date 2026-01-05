@@ -438,7 +438,7 @@ class SysMonitor(Tracer):
         code_info = self.code_infos[id(code)]
         # code_info is not None and code_info.file_data is not None, since we
         # wouldn't have enabled this event if they were.
-        code_info.file_data.add((code_info.key, "line", line_number, 0))
+        code_info.file_data.add((code_info.key, "line", line_number, line_number))
         return DISABLE
 
         arc = (line_number, line_number)

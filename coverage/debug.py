@@ -31,8 +31,8 @@ os = isolate_module(os)
 # When debugging, it can be helpful to force some options, especially when
 # debugging the configuration mechanisms you usually use to control debugging!
 # This is a list of forced debugging options.
-FORCED_DEBUG: list[str] = []
-FORCED_DEBUG_FILE = None
+FORCED_DEBUG: list[str] = ["dataio", "dataop"]
+FORCED_DEBUG_FILE = "/tmp/foo.out"
 
 
 class DebugControl:

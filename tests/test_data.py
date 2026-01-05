@@ -206,7 +206,7 @@ class CoverageDataTest(CoverageTest):
     def test_cant_add_arcs_with_lines(self, klass: TCoverageData) -> None:
         covdata = klass()
         covdata.add_lines(LINES_1)
-        msg = "Can't add branch measurements to existing line data"
+        msg = "Can't mix data styles: 'file_line' and 'file_arc'"
         with pytest.raises(DataError, match=msg):
             covdata.add_arcs(ARCS_3)
 
@@ -214,7 +214,7 @@ class CoverageDataTest(CoverageTest):
     def test_cant_add_lines_with_arcs(self, klass: TCoverageData) -> None:
         covdata = klass()
         covdata.add_arcs(ARCS_3)
-        msg = "Can't add line measurements to existing branch data"
+        msg = "Can't mix data styles: 'file_arc' and 'file_line'"
         with pytest.raises(DataError, match=msg):
             covdata.add_lines(LINES_1)
 
