@@ -25,6 +25,7 @@ import zlib
 from collections.abc import Callable, Collection, Mapping, Sequence
 from typing import Any, Literal, cast, overload
 
+from coverage.bytecode import ByteParser, bytes_to_lines
 from coverage.debug import NoDebugging, auto_repr, file_summary
 from coverage.exceptions import CoverageException, DataError
 from coverage.misc import Hasher, file_be_gone, isolate_module
@@ -1178,23 +1179,51 @@ class CoverageData:
                             return list(cur)
 
             case DataStyle.CODE_ARC:
+                with open(filename, "r", encoding="utf-8") as f:
+                    text = f.read()
+                byte_parser = ByteParser(text=text, filename=filename)
+                code_objs = {}
+                for code_obj in byte_parser.code_objects():
+                    code_objs[CodeKey.from_code(code_obj)] = code_obj
                 with self._connect() as con:
-                    file_id = self._file_id(filename)
-                    if file_id is None:
+                    if (file_id := self._file_id(filename)) is None:
                         return None
-                    else:
-                        query = """
-                            SELECT t.val1, t.val2 FROM code_object_trace t
-                            JOIN code_object o ON t.code_object_id = o.id
-                            WHERE o.file_id = ? AND t.kind = 'line'
-                        """
-                        data = [file_id]
-                        if self._query_context_ids is not None:
-                            ids_array = ", ".join("?" * len(self._query_context_ids))
-                            query += " AND t.context_id IN (" + ids_array + ")"
-                            data += self._query_context_ids
-                        with con.execute(query, data) as cur:
-                            return list(cur)
+
+                    arcs = []
+                    query = """
+                        SELECT o.name, o.firstlineno, o.firstcolno, t.kind, t.val1, t.val2
+                        FROM code_object_trace t
+                        JOIN code_object o ON t.code_object_id = o.id
+                        WHERE o.file_id = ? --AND t.kind = 'line'
+                    """
+                    data = [file_id]
+                    if self._query_context_ids is not None:
+                        ids_array = ", ".join("?" * len(self._query_context_ids))
+                        query += " AND t.context_id IN (" + ids_array + ")"
+                        data += self._query_context_ids
+                    with con.execute(query, data) as cur:
+                        for name, firstlineno, firstcolno, kind, val1, val2 in cur:
+                            print(
+                                f"{name = }, {firstlineno = }, {firstcolno = }, {kind = }, {val1 = }, {val2 = }"
+                            )
+                            if kind == "line":
+                                arcs.append((val1, val2))
+                            else:
+                                code_key = CodeKey(
+                                    name=name,
+                                    firstlineno=firstlineno,
+                                    firstcolno=firstcolno,
+                                )
+                                code_obj = code_objs.get(code_key)
+                                if code_obj is None:
+                                    raise Exception("Oh noes!")
+                                # TODO: save this work
+                                b2l = bytes_to_lines(code_obj)
+                                # print(f"{b2l = }")
+                                fromno = b2l[val1]
+                                tono = b2l[val2]
+                                arcs.append((fromno, tono))
+                    return arcs
 
     def contexts_by_lineno(self, filename: str) -> dict[TLineNo, list[str]]:
         """Get the contexts for each line in a file.
