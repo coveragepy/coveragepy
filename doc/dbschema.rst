@@ -81,6 +81,17 @@ This is the database schema:
         unique (path)
     );
 
+    CREATE TABLE code_object (
+        -- A row per code object measured.
+        id integer primary key,
+        file_id integer,            -- foreign key to `file`.
+        name text,                  -- code object name.
+        firstlineno integer,        -- first line number of code object.
+        firstcolno integer,         -- first column number of code object.
+        foreign key (file_id) references file (id),
+        unique (file_id, name, firstlineno, firstcolno)
+    );
+
     CREATE TABLE context (
         -- A row per context measured.
         id integer primary key,
@@ -110,6 +121,18 @@ This is the database schema:
         unique (file_id, context_id, fromno, tono)
     );
 
+    CREATE TABLE code_object_trace (
+        -- TODO: describe.
+        code_object_id integer,     -- foreign key to `code_object`.
+        context_id integer,         -- foreign key to `context`.
+        kind text,                  -- 'line', 'arc', or 'return'.
+        val1 int,
+        val2 int,
+        foreign key (code_object_id) references code_object (id),
+        foreign key (context_id) references context (id),
+        unique (code_object_id, context_id, kind, val1, val2)
+    );
+
     CREATE TABLE tracer (
         -- A row per file indicating the tracer used for that file.
         file_id integer primary key,
@@ -117,7 +140,7 @@ This is the database schema:
         foreign key (file_id) references file (id)
     );
 
-.. [[[end]]] (sum: Jj/GJ9+OsO)
+.. [[[end]]] (sum: 2YUCnFugNA)
 
 
 .. _numbits:

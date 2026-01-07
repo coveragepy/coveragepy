@@ -1006,7 +1006,7 @@ class CoverageData:
 
     def has_arcs(self) -> bool:
         """Does the database have arcs (True) or lines (False)."""
-        return self._data_style == DataStyle.FILE_ARC
+        return self._data_style in [DataStyle.FILE_ARC, DataStyle.CODE_ARC]
 
     def measured_files(self) -> set[str]:
         """A set of all files that have been measured.
@@ -1163,11 +1163,6 @@ class CoverageData:
                 raise DataError("No arc data in line-based coverage data")
 
             case DataStyle.FILE_ARC:
-                import contextlib  # DELETE ME
-
-                with open("/tmp/foo.out", "a", encoding="utf-8") as f:
-                    with contextlib.redirect_stdout(f):
-                        print(f"FILE ARC?")
                 with self._connect() as con:
                     file_id = self._file_id(filename)
                     if file_id is None:
@@ -1183,12 +1178,23 @@ class CoverageData:
                             return list(cur)
 
             case DataStyle.CODE_ARC:
-                import contextlib  # DELETE ME
-
-                with open("/tmp/foo.out", "a", encoding="utf-8") as f:
-                    with contextlib.redirect_stdout(f):
-                        print(f"NOT IMPLEMENTED")
-                raise NotImplementedError("arc() not done yet for code-arcs")
+                with self._connect() as con:
+                    file_id = self._file_id(filename)
+                    if file_id is None:
+                        return None
+                    else:
+                        query = """
+                            SELECT t.val1, t.val2 FROM code_object_trace t
+                            JOIN code_object o ON t.code_object_id = o.id
+                            WHERE o.file_id = ? AND t.kind = 'line'
+                        """
+                        data = [file_id]
+                        if self._query_context_ids is not None:
+                            ids_array = ", ".join("?" * len(self._query_context_ids))
+                            query += " AND t.context_id IN (" + ids_array + ")"
+                            data += self._query_context_ids
+                        with con.execute(query, data) as cur:
+                            return list(cur)
 
     def contexts_by_lineno(self, filename: str) -> dict[TLineNo, list[str]]:
         """Get the contexts for each line in a file.
