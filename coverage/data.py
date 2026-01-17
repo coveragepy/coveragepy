@@ -116,7 +116,12 @@ class DataFileClassifier:
 
     def classify(self, f: str) -> Literal["combine", "skip"]:
         """Determine whether to combine or skip this file."""
-        sha = hash_for_data_file(f)
+        try:
+            sha = hash_for_data_file(f)
+        except Exception:
+            # We can't hash it, but let's try to combine it. That code will
+            # handle the error.
+            return "combine"
         if sha in self.file_hashes:
             return "skip"
         else:
