@@ -39,7 +39,8 @@ from tests.helpers import (
     os_sep,
 )
 
-BAD_SQLITE_REGEX = r"file( is encrypted or)? is not a database"
+# Error messages can differ by version or implementation.
+BAD_SQLITE_REGEX = r"file is not a database"
 NO_OPEN_REGEX = r"unable to open database file|Could not open database"
 
 
