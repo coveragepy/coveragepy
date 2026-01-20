@@ -202,6 +202,10 @@ def coverage_command_fixture(request: pytest.FixtureRequest) -> str:
 
 
 @pytest.mark.xdist_group(name="virtualenv_test")
+@pytest.mark.skipif(
+    bool(os.getenv("COVERAGE_PIP_ARGS")),
+    reason="COVERAGE_PIP_ARGS setting means we shouldn't try pip",
+)
 class VirtualenvTest(CoverageTest):
     """Tests of virtualenv considerations."""
 
