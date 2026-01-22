@@ -499,12 +499,16 @@ class PathAliases:
             path = relative_filename(path)
 
         if self.relative and not isabs_anywhere(path):
-            # Auto-generate a pattern to implicitly match relative files
+            # Auto-generate a pattern to implicitly match relative files.
+            # Use an anchored pattern that matches from the start of the path,
+            # rather than a wildcard pattern that could match anywhere.
+            # This prevents "pkg/features/x.py" from incorrectly matching
+            # a pattern generated for "features/x.py". See issue #2072.
             parts = re.split(r"[/\\]", path)
             if len(parts) > 1:
                 dir1 = parts[0]
-                pattern = f"*/{dir1}"
-                regex_pat = rf"^(.*[\\/])?{re.escape(dir1)}[\\/]"
+                pattern = f"{dir1}/"
+                regex_pat = rf"^{re.escape(dir1)}[\\/]"
                 result = f"{dir1}{os.sep}"
                 # Only add a new pattern if we don't already have this pattern.
                 if not any(p == pattern for p, _, _ in self.aliases):
