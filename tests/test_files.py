@@ -20,6 +20,7 @@ from coverage import env, files
 from coverage.exceptions import ConfigError
 from coverage.files import (
     GlobMatcher,
+    Matcher,
     ModuleMatcher,
     PathAliases,
     TreeMatcher,
@@ -29,7 +30,6 @@ from coverage.files import (
     flat_rootname,
     globs_to_regex,
 )
-from coverage.types import TMatcher
 
 from tests.coveragetest import CoverageTest
 from tests.helpers import os_sep
@@ -369,7 +369,7 @@ class MatcherTest(CoverageTest):
         super().setUp()
         files.set_relative_directory()
 
-    def assertMatches(self, matcher: TMatcher, filepath: str, matches: bool) -> None:
+    def assertMatches(self, matcher: Matcher, filepath: str, matches: bool) -> None:
         """The `matcher` should agree with `matches` about `filepath`."""
         canonical = files.canonical_filename(filepath)
         msg = f"File {filepath} should have matched as {matches}"

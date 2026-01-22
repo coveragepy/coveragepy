@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import abc
 import hashlib
 import ntpath
 import os
@@ -16,8 +17,7 @@ from collections.abc import Callable, Iterable
 
 from coverage import env
 from coverage.exceptions import ConfigError
-from coverage.misc import human_sorted, isolate_module, join_regex
-from coverage.types import TMatcher
+from coverage.misc import human_sorted, isolate_module, join_regex, plural
 
 os = isolate_module(os)
 
@@ -215,26 +215,59 @@ def prep_patterns(patterns: Iterable[str]) -> list[str]:
     return prepped
 
 
-class TreeMatcher(TMatcher):
+DebugFn = Callable[[str], None] | None
+
+
+class Matcher(abc.ABC):
+    """Common behavior for matchers."""
+
+    def __init__(self, strs: list[str], name: str, caption: str, debug: DebugFn) -> None:
+        self.strs = strs
+        self.name = name
+        if debug:
+            debug(f"{caption} matching {self}")
+            for inf in self.info():
+                debug(f"    {inf}")
+
+    def __str__(self) -> str:
+        n = len(self.strs)
+        return f"{self.__class__.__name__} {self.name!r} {n} {plural(n, 'item')}"
+
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__} {self.name} {self.strs!r}>"
+
+    @abc.abstractmethod
+    def match(self, s: str) -> bool:
+        """Does this string match?"""
+
+    def info(self) -> list[str]:
+        """A list of strings for displaying when dumping state."""
+        return self.strs
+
+
+class TreeMatcher(Matcher):
     """A matcher for files in a tree.
 
     Construct with a list of paths, either files or directories. Paths match
     with the `match` method if they are one of the files, or if they are
     somewhere in a subtree rooted at one of the directories.
-
     """
 
-    def __init__(self, paths: Iterable[str], name: str = "unknown") -> None:
-        self.original_paths: list[str] = human_sorted(paths)
-        self.paths = [os.path.normcase(p) for p in paths]
-        self.name = name
-
-    def __repr__(self) -> str:
-        return f"<TreeMatcher {self.name} {self.original_paths!r}>"
-
-    def info(self) -> list[str]:
-        """A list of strings for displaying when dumping state."""
-        return self.original_paths
+    def __init__(
+        self,
+        paths: Iterable[str],
+        name: str = "unknown",
+        caption: str = "",
+        debug: DebugFn = None,
+    ) -> None:
+        self.original_paths = human_sorted(paths)
+        super().__init__(self.original_paths, name=name, caption=caption, debug=debug)
+        self.paths = []
+        for p in paths:
+            ap = os.path.normcase(p)
+            if ap != p and debug:
+                debug(f"        Normalized {p!r} to {ap!r}")
+            self.paths.append(ap)
 
     def match(self, fpath: str) -> bool:  # pylint: disable=arguments-renamed
         """Does `fpath` indicate a file in one of our trees?"""
@@ -250,19 +283,18 @@ class TreeMatcher(TMatcher):
         return False
 
 
-class ModuleMatcher(TMatcher):
+class ModuleMatcher(Matcher):
     """A matcher for modules in a tree."""
 
-    def __init__(self, module_names: Iterable[str], name: str = "unknown") -> None:
+    def __init__(
+        self,
+        module_names: Iterable[str],
+        name: str = "unknown",
+        caption: str = "",
+        debug: DebugFn = None,
+    ) -> None:
         self.modules = list(module_names)
-        self.name = name
-
-    def __repr__(self) -> str:
-        return f"<ModuleMatcher {self.name} {self.modules!r}>"
-
-    def info(self) -> list[str]:
-        """A list of strings for displaying when dumping state."""
-        return self.modules
+        super().__init__(self.modules, name=name, caption=caption, debug=debug)
 
     def match(self, module_name: str) -> bool:  # pylint: disable=arguments-renamed
         """Does `module_name` indicate a module in one of our packages?"""
@@ -280,20 +312,19 @@ class ModuleMatcher(TMatcher):
         return False
 
 
-class GlobMatcher(TMatcher):
+class GlobMatcher(Matcher):
     """A matcher for files by file name pattern."""
 
-    def __init__(self, pats: Iterable[str], name: str = "unknown") -> None:
+    def __init__(
+        self,
+        pats: Iterable[str],
+        name: str = "unknown",
+        caption: str = "",
+        debug: DebugFn = None,
+    ) -> None:
         self.pats = list(pats)
+        super().__init__(self.pats, name=name, caption=caption, debug=debug)
         self.re = globs_to_regex(self.pats, case_insensitive=env.WINDOWS)
-        self.name = name
-
-    def __repr__(self) -> str:
-        return f"<GlobMatcher {self.name} {self.pats!r}>"
-
-    def info(self) -> list[str]:
-        """A list of strings for displaying when dumping state."""
-        return self.pats
 
     def match(self, fpath: str) -> bool:  # pylint: disable=arguments-renamed
         """Does `fpath` match one of our file name patterns?"""

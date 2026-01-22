@@ -65,13 +65,6 @@ class TFileDisposition(Protocol):
     has_dynamic_filename: bool
 
 
-class TMatcher(Protocol):
-    """The shape all Matchers have."""
-
-    def match(self, s: str) -> bool:
-        """Does this string match?"""
-
-
 # When collecting data, we use a dictionary with a few possible shapes. The
 # keys are always file names.
 # - If measuring line coverage, the values are sets of line numbers.
