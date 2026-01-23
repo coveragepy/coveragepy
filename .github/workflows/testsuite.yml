@@ -175,6 +175,7 @@ jobs:
 
     env:
       TOX_GH_MAJOR_MINOR: "${{ matrix.python-version }}"
+      PYTHON_VERSION: "${{ matrix.python-version }}"
 
     strategy:
       matrix:
@@ -202,22 +203,22 @@ jobs:
           sudo apt install software-properties-common gcc gfortran build-essential -y
           sudo add-apt-repository ppa:deadsnakes/ppa -y
           sudo apt update
-          sudo apt install python${{ matrix.python-version }} python${{ matrix.python-version }}-venv python${{ matrix.python-version }}-dev -y
+          sudo apt install python${PYTHON_VERSION} python${PYTHON_VERSION}-venv python${PYTHON_VERSION}-dev -y
 
       - name: "Install dependencies"
         run: |
           set -xe
-          python${{ matrix.python-version }} -m pip install -r requirements/tox.pip
+          python${PYTHON_VERSION} -m pip install -r requirements/tox.pip
 
       - name: "Run tox for ${{ matrix.python-version }}"
         run: |
-          python${{ matrix.python-version }} -m tox -- -rfsEX
+          python${PYTHON_VERSION} -m tox -- -rfsEX
 
       - name: "Retry tox for ${{ matrix.python-version }}"
         if: failure()
         run: |
           # `exit 1` makes sure that the job remains red with flaky runs
-          python${{ matrix.python-version }} -m tox -- -rfsEX --lf -vvvvv && exit 1
+          python${PYTHON_VERSION} -m tox -- -rfsEX --lf -vvvvv && exit 1
 
   # This job aggregates test results. It's the required check for branch protection.
   # https://github.com/marketplace/actions/alls-green#why
