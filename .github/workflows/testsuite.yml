@@ -161,6 +161,65 @@ jobs:
           # `exit 1` makes sure that the job remains red with flaky runs
           python -m tox -- -rfsEX --lf -vvvvv && exit 1
 
+  ppc64le-tests:
+    name: "${{ matrix.python-version }} on ${{ matrix.arch }}"
+    runs-on: ubuntu-24.04-ppc64le
+    timeout-minutes: 10
+
+    # Don't run tests if the branch name includes "-notests".
+    # Only run tests if files that affect tests have changed.
+    needs: changed
+    if:
+      needs.changed.outputs.run_tests == 'true'
+      && !contains(github.ref, '-notests')
+
+    env:
+      TOX_GH_MAJOR_MINOR: "${{ matrix.python-version }}"
+      PYTHON_VERSION: "${{ matrix.python-version }}"
+
+    strategy:
+      matrix:
+        arch:
+          - ppc64le
+        python-version:
+          - "3.10"
+          - "3.11"
+          - "3.12"
+          - "3.13"
+          - "3.14"
+          - "3.15"
+
+      fail-fast: false
+
+    steps:
+      - name: "Check out the repo"
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          persist-credentials: false
+
+      - name: "Set up Python"
+        run: |
+          sudo apt update
+          sudo apt install software-properties-common gcc gfortran build-essential -y
+          sudo add-apt-repository ppa:deadsnakes/ppa -y
+          sudo apt update
+          sudo apt install python${PYTHON_VERSION} python${PYTHON_VERSION}-venv python${PYTHON_VERSION}-dev -y
+
+      - name: "Install dependencies"
+        run: |
+          set -xe
+          python${PYTHON_VERSION} -m pip install -r requirements/tox.pip
+
+      - name: "Run tox for ${{ matrix.python-version }}"
+        run: |
+          python${PYTHON_VERSION} -m tox -- -rfsEX
+
+      - name: "Retry tox for ${{ matrix.python-version }}"
+        if: failure()
+        run: |
+          # `exit 1` makes sure that the job remains red with flaky runs
+          python${PYTHON_VERSION} -m tox -- -rfsEX --lf -vvvvv && exit 1
+
   # This job aggregates test results. It's the required check for branch protection.
   # https://github.com/marketplace/actions/alls-green#why
   # https://github.com/orgs/community/discussions/33579
@@ -168,6 +227,7 @@ jobs:
     name: Tests successful
     needs:
       - tests
+      - ppc64le-tests
     runs-on: ubuntu-latest
     steps:
       - name: Decide whether the needed jobs succeeded or failed

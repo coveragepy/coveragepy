@@ -36,7 +36,7 @@ env:
   PIP_DISABLE_PIP_VERSION_CHECK: 1
   # PYVERSIONS: changing the list of versions will change the number of
   # expected distributions. This must match the same number in publish.yml.
-  EXPECTED: 92
+  EXPECTED: 106
 
 permissions:
   contents: read
@@ -48,7 +48,7 @@ concurrency:
 jobs:
   wheels:
     name: "${{ matrix.py }} ${{ matrix.os }} ${{ matrix.arch }} wheels"
-    runs-on: "${{ matrix.os }}-${{ matrix.os-version || 'latest' }}"
+    runs-on: "${{ matrix.arch == 'ppc64le' && matrix.os || (format('{0}-{1}', matrix.os, matrix.os-version || 'latest'))}}"
     env:
       MATRIX_ID: "${{ matrix.py }}-${{ matrix.os }}-${{ matrix.arch }}"
     strategy:
@@ -73,7 +73,7 @@ jobs:
           #
           #   # For each OS, what arch to use with cibuildwheel:
           #   os_archs = {
-          #       "ubuntu": ["x86_64", "i686", "aarch64", "riscv64"],
+          #       "ubuntu": ["x86_64", "i686", "aarch64", "riscv64", "ppc64le"],
           #       "macos": ["arm64", "x86_64"],
           #       "windows": ["x86", "AMD64", "ARM64"],
           #   }
@@ -157,6 +157,11 @@ jobs:
           - {"os": "windows", "py": "cp312", "arch": "ARM64", "cipy": "3.11", "os-version": "11-arm"}
           - {"os": "windows", "py": "cp313", "arch": "ARM64", "cipy": "3.11", "os-version": "11-arm"}
           - {"os": "windows", "py": "cp314", "arch": "ARM64", "cipy": "3.11", "os-version": "11-arm"}
+          - {"os": "ubuntu-24.04-ppc64le", "py": "cp310", "arch": "ppc64le", "cipy": "3.11"}
+          - {"os": "ubuntu-24.04-ppc64le", "py": "cp311", "arch": "ppc64le", "cipy": "3.11"}
+          - {"os": "ubuntu-24.04-ppc64le", "py": "cp312", "arch": "ppc64le", "cipy": "3.11"}
+          - {"os": "ubuntu-24.04-ppc64le", "py": "cp313", "arch": "ppc64le", "cipy": "3.11"}
+          - {"os": "ubuntu-24.04-ppc64le", "py": "cp314", "arch": "ppc64le", "cipy": "3.11"}
         # [[[end]]] (sum: UDdYTxMoTi)
         #            ^^^^^^^^^^^^^^^
         # If a check fails and points to this checksum line, it means you edited
@@ -172,12 +177,21 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: "Install Python"
+      - if: ${{ matrix.arch != 'ppc64le' }}
+        name: "Install Python"
         uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
         with:
           python-version: "${{ matrix.cipy }}"
           cache: pip
           cache-dependency-path: 'requirements/*.pip'
+
+      - if: ${{ matrix.arch == 'ppc64le' }}
+        name: "Install Python"
+        run: |
+          sudo apt update -y
+          sudo apt install -y python3 python3-pip python3-dev
+          python3 -m pip install --upgrade pip
+          python3 -m pip install cibuildwheel
 
       # Rust toolchain is not currently installed on windows arm64 images.
       # We need it for nh3, needed by readme-renderer, needed by twine.
