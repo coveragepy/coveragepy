@@ -15,7 +15,7 @@ import threading
 import traceback
 from collections.abc import Callable
 from dataclasses import dataclass
-from types import CodeType
+from types import CodeType, FrameType
 from typing import Any, NewType, Optional, cast
 
 from coverage import env
@@ -231,6 +231,20 @@ class SysMonitor(Tracer):
 
         self._activity = False
 
+    def _get_caller_frame(self) -> Optional[FrameType]:
+        """Get the frame of the code that triggered this callback.
+
+        Returns the caller's frame, or None if not available.
+        Accounts for the extra frame added by @panopticon when LOG is enabled.
+        """
+        frame = inspect.currentframe()
+        # Skip frames: _get_caller_frame, callback method, (@panopticon wrapper if LOG)
+        for _ in range(3 if LOG else 2):  # pragma: debugging
+            if frame is None:
+                break
+            frame = frame.f_back
+        return frame
+
     def __repr__(self) -> str:
         points = sum(len(v) for v in self.data.values())
         files = len(self.data)
@@ -327,12 +341,7 @@ class SysMonitor(Tracer):
             filename = code.co_filename
             disp = self.should_trace_cache.get(filename)
             if disp is None:
-                frame = inspect.currentframe()
-                if frame is not None:
-                    frame = inspect.currentframe().f_back  # type: ignore[union-attr]
-                    if LOG:  # pragma: debugging
-                        # @panopticon adds a frame.
-                        frame = frame.f_back  # type: ignore[union-attr]
+                frame = self._get_caller_frame()
                 disp = self.should_trace(filename, frame)  # type: ignore[arg-type]
                 self.should_trace_cache[filename] = disp
 
