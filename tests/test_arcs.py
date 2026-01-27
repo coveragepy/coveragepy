@@ -304,6 +304,7 @@ class WithTest(CoverageTest):
 
     def test_nested_with_code_after(self) -> None:
         # Nested context managers followed by code outside the block.
+        # https://github.com/coveragepy/coveragepy/issues/1987
         self.check_coverage(
             """\
             from contextlib import contextmanager
