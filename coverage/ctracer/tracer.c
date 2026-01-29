@@ -660,6 +660,15 @@ CTracer_handle_line(CTracer *self, PyFrameObject *frame)
     int ret2;
 
     STATS( self->stats.lines++; )
+    
+    /* Ensure pdata_stack is set up. This is normally done in handle_call,
+     * but due to Python 3.11 bug where CALL events may be missing after
+     * catching CancelledError, we need to ensure it's set up here too.
+     */
+    if (CTracer_set_pdata_stack(self) < 0) {
+        goto error;
+    }
+    
     if (self->pdata_stack->depth >= 0) {
         SHOWLOG(PyFrame_GetLineNumber(frame), MyFrame_BorrowCode(frame)->co_filename, "line");
         if (self->pcur_entry->file_data) {
@@ -868,6 +877,17 @@ CTracer_trace(CTracer *self, PyFrameObject *frame, int what, PyObject *arg_unuse
         if (CTracer_handle_line(self, frame) < 0) {
             goto error;
         }
+        break;
+
+    case PyTrace_EXCEPTION:
+        /* Python 3.11 bug: after catching CancelledError from an awaited
+         * cancelled task, Python may not emit CALL/LINE events for subsequent
+         * lines. We can't fix Python's missing events, but we can ensure
+         * our frame state remains consistent. The exception event itself
+         * doesn't need special handling - we just need to ensure subsequent
+         * LINE events are properly tracked (handled in handle_line above).
+         */
+        STATS( self->stats.others++; )
         break;
 
     default:

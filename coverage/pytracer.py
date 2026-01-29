@@ -259,6 +259,40 @@ class PyTracer(Tracer):
 
         elif event == "line":
             # Record an executed line.
+            # Workaround for Python 3.11 bug (https://github.com/python/cpython/issues/106749):
+            # after catching CancelledError from an awaited cancelled task, Python may not
+            # emit CALL events for subsequent lines. Ensure the frame is properly set up
+            # for tracing if we detect this scenario.
+            filename = frame.f_code.co_filename
+            # If we're seeing a LINE event but cur_file_data is None and we should be
+            # tracing this file, set it up. This handles the case where a CALL event
+            # was missed due to the Python 3.11 bug.
+            if self.cur_file_data is None and filename == self.cur_file_name:
+                # Same file but no file_data - this shouldn't happen normally, but
+                # can occur due to the Python 3.11 bug. Re-setup tracing for this file.
+                disp = self.should_trace_cache.get(filename)
+                if disp is None:
+                    disp = self.should_trace(filename, frame)
+                    self.should_trace_cache[filename] = disp
+
+                if disp.trace:
+                    tracename = disp.source_filename
+                    assert tracename is not None
+                    self.lock_data()
+                    try:
+                        if tracename not in self.data:
+                            self.data[tracename] = set()
+                    finally:
+                        self.unlock_data()
+                    self.cur_file_data = self.data[tracename]
+                    # Re-enable line tracing which may have been disabled
+                    frame.f_trace_lines = True
+                else:
+                    frame.f_trace_lines = False
+            elif filename != self.cur_file_name:
+                # Different file - this is normal, will be handled by the next CALL event
+                pass
+
             if self.cur_file_data is not None:
                 flineno: TLineNo = frame.f_lineno
 
@@ -267,6 +301,15 @@ class PyTracer(Tracer):
                 else:
                     cast(set_TLineNo, self.cur_file_data).add(flineno)
                 self.last_line = flineno
+
+        elif event == "exception":
+            # Python 3.11 bug: after catching CancelledError from an awaited
+            # cancelled task, Python may not emit CALL/LINE events for subsequent
+            # lines. We can't fix Python's missing events, but we can ensure
+            # our frame state remains consistent. The exception event itself
+            # doesn't need special handling - we just need to ensure subsequent
+            # LINE events are properly tracked (handled in the "line" case above).
+            pass
 
         elif event == "return":
             if self.trace_arcs and self.cur_file_data:

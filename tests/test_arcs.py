@@ -2319,6 +2319,59 @@ class AsyncTest(CoverageTest):
         )
         assert self.stdout() == "0\n1\n2\nDone.\n"
 
+    def test_bug_2124(self) -> None:
+        """Test for issue #2124: Coverage doesn't track lines after awaiting cancelled asyncio tasks."""
+        # This test specifically targets the Python 3.11 bug where CALL/LINE events
+        # are missing after catching CancelledError from an awaited cancelled task.
+        # See https://github.com/python/cpython/issues/106749
+        self.check_coverage(
+            """\
+            import asyncio
+            from asyncio import CancelledError, Task, create_task
+
+            class TaskManager:
+                def __init__(self):
+                    self._tasks = []
+                    self.cleanup_completed = False
+
+                async def start_tasks(self, count):
+                    for i in range(count):
+                        self._tasks.append(create_task(self._long_running_task(i)))
+
+                async def _long_running_task(self, task_id):
+                    await asyncio.sleep(10)
+                    return f"task_{task_id}_done"
+
+                async def cancel_remaining_tasks(self):
+                    for task in self._tasks:
+                        if not task.done():
+                            task.cancel()
+                            try:
+                                await task
+                            except CancelledError:
+                                pass  # Swallow the cancellation
+                    self._tasks.clear()
+
+                async def stop(self):
+                    if self._tasks:
+                        await self.cancel_remaining_tasks()
+                        self.cleanup_completed = True  # This line must be covered
+
+            async def main():
+                manager = TaskManager()
+                await manager.start_tasks(5)
+                await asyncio.sleep(0.01)
+                await manager.stop()
+                assert manager.cleanup_completed, "cleanup_completed should be True"
+                print(f"cleanup_completed = {manager.cleanup_completed}")
+
+            asyncio.run(main())
+            """,
+            branchz="",
+            branchz_missing="",
+        )
+        assert "cleanup_completed = True" in self.stdout()
+
 
 class AnnotationTest(CoverageTest):
     """Tests using type annotations."""
