@@ -264,12 +264,14 @@ class PyTracer(Tracer):
             # emit CALL events for subsequent lines. Ensure the frame is properly set up
             # for tracing if we detect this scenario.
             filename = frame.f_code.co_filename
-            # If we're seeing a LINE event but cur_file_data is None and we should be
-            # tracing this file, set it up. This handles the case where a CALL event
-            # was missed due to the Python 3.11 bug.
+            # If we're seeing a LINE event but cur_file_data is None, we may have missed
+            # a CALL event due to the Python 3.11 bug. Set up tracing for this file.
+            # The bug specifically affects lines after exception handling in async code,
+            # so we should already be in a file (cur_file_name should be set).
             if self.cur_file_data is None and filename == self.cur_file_name:
                 # Same file but no file_data - this shouldn't happen normally, but
-                # can occur due to the Python 3.11 bug. Re-setup tracing for this file.
+                # can occur due to the Python 3.11 bug where CALL events are missing
+                # after catching CancelledError. Re-setup tracing for this file.
                 disp = self.should_trace_cache.get(filename)
                 if disp is None:
                     disp = self.should_trace(filename, frame)
@@ -287,11 +289,10 @@ class PyTracer(Tracer):
                     self.cur_file_data = self.data[tracename]
                     # Re-enable line tracing which may have been disabled
                     frame.f_trace_lines = True
+                    # Set last_line to current line since we missed the CALL event
+                    self.last_line = frame.f_lineno
                 else:
                     frame.f_trace_lines = False
-            elif filename != self.cur_file_name:
-                # Different file - this is normal, will be handled by the next CALL event
-                pass
 
             if self.cur_file_data is not None:
                 flineno: TLineNo = frame.f_lineno
