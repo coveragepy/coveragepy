@@ -268,6 +268,7 @@ class PyTracer(Tracer):
             # a CALL event due to the Python 3.11 bug. Set up tracing for this file.
             # The bug specifically affects lines after exception handling in async code,
             # so we should already be in a file (cur_file_name should be set).
+            restored_state = False
             if self.cur_file_data is None and filename == self.cur_file_name:
                 # Same file but no file_data - this shouldn't happen normally, but
                 # can occur due to the Python 3.11 bug where CALL events are missing
@@ -289,8 +290,15 @@ class PyTracer(Tracer):
                     self.cur_file_data = self.data[tracename]
                     # Re-enable line tracing which may have been disabled
                     frame.f_trace_lines = True
-                    # Set last_line to current line since we missed the CALL event
-                    self.last_line = frame.f_lineno
+                    # Try to restore last_line from data_stack if available
+                    if self.data_stack:
+                        _, _, saved_last_line, _ = self.data_stack[-1]
+                        self.last_line = saved_last_line
+                    else:
+                        # No stack info available, use current line as fallback
+                        # This will create a self-loop arc, but it's better than crashing
+                        self.last_line = frame.f_lineno
+                    restored_state = True
                 else:
                     frame.f_trace_lines = False
 
@@ -298,6 +306,9 @@ class PyTracer(Tracer):
                 flineno: TLineNo = frame.f_lineno
 
                 if self.trace_arcs:
+                    # Record the arc. If we restored state, last_line was restored from
+                    # the data_stack, so use it. This might create a self-loop if last_line
+                    # equals flineno, but that's acceptable in this edge case.
                     cast(set_TArc, self.cur_file_data).add((self.last_line, flineno))
                 else:
                     cast(set_TLineNo, self.cur_file_data).add(flineno)
