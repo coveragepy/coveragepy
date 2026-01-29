@@ -806,7 +806,11 @@ CTracer_handle_return(CTracer *self, PyFrameObject *frame)
         /* Pop the stack. */
         SHOWLOG(PyFrame_GetLineNumber(frame), MyFrame_BorrowCode(frame)->co_filename, "return");
         self->pdata_stack->depth--;
-        self->pcur_entry = &self->pdata_stack->stack[self->pdata_stack->depth];
+        /* Guard: Python 3.11 bug (cpython#106749) or trace being cleared during
+         * async can cause RETURN without matching CALL, leaving depth negative. */
+        if (self->pdata_stack->depth >= 0) {
+            self->pcur_entry = &self->pdata_stack->stack[self->pdata_stack->depth];
+        }
     }
 
     ret = RET_OK;

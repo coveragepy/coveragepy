@@ -352,6 +352,10 @@ class PyTracer(Tracer):
                     cast(set_TArc, self.cur_file_data).add((self.last_line, -first))
 
             # Leaving this function, pop the filename stack.
+            # Guard: Python 3.11 bug (cpython#106749) or trace being cleared during
+            # async can cause RETURN without matching CALL, leaving the stack empty.
+            if not self.data_stack:
+                return self._cached_bound_method_trace
             self.cur_file_data, self.cur_file_name, self.last_line, self.started_context = (
                 self.data_stack.pop()
             )
