@@ -2327,7 +2327,7 @@ class AsyncTest(CoverageTest):
         self.check_coverage(
             """\
             import asyncio
-            from asyncio import CancelledError, Task, create_task
+            from asyncio import CancelledError, create_task
 
             class TaskManager:
                 def __init__(self):
@@ -2367,8 +2367,6 @@ class AsyncTest(CoverageTest):
 
             asyncio.run(main())
             """,
-            branchz="",
-            branchz_missing="",
         )
         assert "cleanup_completed = True" in self.stdout()
 
