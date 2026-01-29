@@ -268,7 +268,6 @@ class PyTracer(Tracer):
             # a CALL event due to the Python 3.11 bug. Set up tracing for this file.
             # The bug specifically affects lines after exception handling in async code,
             # so we should already be in a file (cur_file_name should be set).
-            restored_state = False
             if self.cur_file_data is None and filename == self.cur_file_name:
                 # Same file but no file_data - this shouldn't happen normally, but
                 # can occur due to the Python 3.11 bug where CALL events are missing
@@ -298,7 +297,6 @@ class PyTracer(Tracer):
                         # No stack info available, use current line as fallback
                         # This will create a self-loop arc, but it's better than crashing
                         self.last_line = frame.f_lineno
-                    restored_state = True
                 else:
                     frame.f_trace_lines = False
 

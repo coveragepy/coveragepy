@@ -2320,7 +2320,7 @@ class AsyncTest(CoverageTest):
         assert self.stdout() == "0\n1\n2\nDone.\n"
 
     def test_bug_2124(self) -> None:
-        """Test for issue #2124: Coverage doesn't track lines after awaiting cancelled asyncio tasks."""
+        """Test #2124: Coverage doesn't track lines after awaiting cancelled asyncio tasks."""
         # This test specifically targets the Python 3.11 bug where CALL/LINE events
         # are missing after catching CancelledError from an awaited cancelled task.
         # See https://github.com/python/cpython/issues/106749
