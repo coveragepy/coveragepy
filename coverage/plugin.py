@@ -114,9 +114,9 @@ register your dynamic context switcher.
 
 from __future__ import annotations
 
-import dataclasses
 import functools
 from collections.abc import Iterable
+from dataclasses import dataclass
 from types import FrameType
 from typing import Any
 
@@ -346,7 +346,7 @@ class FileTracer(CoveragePluginBase):
         return lineno, lineno
 
 
-@dataclasses.dataclass
+@dataclass
 class CodeRegion:
     """Data for a region of code found by :meth:`FileReporter.code_regions`."""
 

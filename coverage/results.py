@@ -6,8 +6,8 @@
 from __future__ import annotations
 
 import collections
-import dataclasses
 from collections.abc import Iterable
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from coverage.exceptions import ConfigError
@@ -74,7 +74,7 @@ def analysis_from_file_reporter(
     )
 
 
-@dataclasses.dataclass
+@dataclass
 class Analysis:
     """The results of analyzing a FileReporter."""
 
@@ -295,7 +295,7 @@ class AnalysisNarrower:
         )
 
 
-@dataclasses.dataclass
+@dataclass
 class Numbers:
     """The numerical results of measuring coverage.
 
