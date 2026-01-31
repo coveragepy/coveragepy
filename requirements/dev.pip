@@ -79,8 +79,6 @@ jaraco-context==6.1.0 ; platform_machine != 'ppc64le' and platform_machine != 's
     # via keyring
 jaraco-functools==4.4.0 ; platform_machine != 'ppc64le' and platform_machine != 's390x'
     # via keyring
-jedi==0.19.2
-    # via pudb
 jeepney==0.9.0 ; platform_machine != 'ppc64le' and platform_machine != 's390x' and sys_platform == 'linux'
     # via
     #   keyring
@@ -110,13 +108,10 @@ nh3==0.3.2
 packaging==26.0
     # via
     #   build
-    #   pudb
     #   pyproject-api
     #   pytest
     #   tox
     #   twine
-parso==0.8.5
-    # via jedi
 pip==25.3
     # via -r requirements/pip.in
 platformdirs==4.5.1
@@ -128,14 +123,11 @@ pluggy==1.6.0
     # via
     #   pytest
     #   tox
-pudb==2025.1.5
-    # via -r requirements/dev.in
 pycparser==3.0 ; implementation_name != 'PyPy' and platform_machine != 'ppc64le' and platform_machine != 's390x' and platform_python_implementation != 'PyPy' and sys_platform == 'linux'
     # via cffi
 pygments==2.19.2
     # via
     #   -r requirements/pytest.in
-    #   pudb
     #   pytest
     #   readme-renderer
     #   rich
@@ -200,29 +192,20 @@ tox-gh==1.6.1
     # via -r requirements/tox.in
 twine==6.2.0
     # via -r requirements/dev.in
-typing-extensions==4.15.0
+typing-extensions==4.15.0 ; python_full_version < '3.11'
     # via
     #   astroid
     #   cryptography
     #   exceptiongroup
-    #   pudb
     #   tox
     #   virtualenv
 urllib3==2.6.3
     # via
     #   requests
     #   twine
-urwid==3.0.3
-    # via
-    #   pudb
-    #   urwid-readline
-urwid-readline==0.15.1
-    # via pudb
 virtualenv==20.36.1
     # via
     #   -r requirements/pip.in
     #   tox
-wcwidth==0.3.0
-    # via urwid
 zipp==3.23.0 ; (python_full_version < '3.10.2' and platform_machine == 'ppc64le') or (python_full_version < '3.10.2' and platform_machine == 's390x') or (python_full_version < '3.12' and platform_machine != 'ppc64le' and platform_machine != 's390x')
     # via importlib-metadata

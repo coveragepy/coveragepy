@@ -573,15 +573,13 @@ def decorate_methods(
     return _decorator
 
 
-def break_in_pudb(func: AnyCallable) -> AnyCallable:  # pragma: debugging
+def break_in_debugger(func: AnyCallable) -> AnyCallable:  # pragma: debugging
     """A function decorator to stop in the debugger for each call."""
 
     @functools.wraps(func)
     def _wrapper(*args: Any, **kwargs: Any) -> Any:
-        import pudb
-
         sys.stdout = sys.__stdout__
-        pudb.set_trace()
+        breakpoint()  # pylint: disable=forgotten-debug-statement
         return func(*args, **kwargs)
 
     return _wrapper
