@@ -302,6 +302,33 @@ class WithTest(CoverageTest):
             branchz_missing="",
         )
 
+    def test_nested_with_code_after(self) -> None:
+        # Nested context managers followed by code outside the block.
+        # https://github.com/coveragepy/coveragepy/issues/1987
+        self.check_coverage(
+            """\
+            from contextlib import contextmanager
+
+            @contextmanager
+            def dummy_context(name):
+                yield name
+
+            def nested_with():
+                result = []
+                with dummy_context("outer"):
+                    with dummy_context("middle"):
+                        with dummy_context("inner"):
+                            result.append("inside")
+                result.append("after")
+                return result
+
+            nested_with()
+            """,
+            # Line 11 (innermost with) has branches to 12 (inside block) and 13 (after block)
+            branchz="BC BD",
+            branchz_missing="",
+        )
+
     def test_break_through_with(self) -> None:
         self.check_coverage(
             """\
