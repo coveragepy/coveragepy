@@ -2367,6 +2367,7 @@ class AsyncTest(CoverageTest):
 
             asyncio.run(main())
             """,
+            missing="",
         )
         assert "cleanup_completed = True" in self.stdout()
 

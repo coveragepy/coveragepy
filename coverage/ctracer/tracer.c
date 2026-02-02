@@ -884,16 +884,7 @@ CTracer_trace(CTracer *self, PyFrameObject *frame, int what, PyObject *arg_unuse
         }
         break;
 
-    case PyTrace_EXCEPTION:
-        /* Python 3.11 bug: after catching CancelledError from an awaited
-         * cancelled task, Python may not emit CALL/LINE events for subsequent
-         * lines. We can't fix Python's missing events, but we can ensure
-         * our frame state remains consistent. The exception event itself
-         * doesn't need special handling - we just need to ensure subsequent
-         * LINE events are properly tracked (handled in handle_line above).
-         */
-        STATS( self->stats.others++; )
-        break;
+
 
     default:
         STATS( self->stats.others++; )
