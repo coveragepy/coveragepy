@@ -312,8 +312,6 @@ class PyTracer(Tracer):
                     cast(set_TLineNo, self.cur_file_data).add(flineno)
                 self.last_line = flineno
 
-
-
         elif event == "return":
             if self.trace_arcs and self.cur_file_data:
                 # Record an arc leaving the function, but beware that a

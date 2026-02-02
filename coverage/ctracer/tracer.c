@@ -884,8 +884,6 @@ CTracer_trace(CTracer *self, PyFrameObject *frame, int what, PyObject *arg_unuse
         }
         break;
 
-
-
     default:
         STATS( self->stats.others++; )
         break;
