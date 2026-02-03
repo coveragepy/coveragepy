@@ -19,7 +19,13 @@ from types import CodeType, FrameType
 from typing import Any, NewType, Optional, cast
 
 from coverage import env
-from coverage.bytecode import TBranchTrails, always_jumps, branch_trails, bytes_to_lines
+from coverage.bytecode import (
+    TBranchTrails,
+    always_jumps,
+    branch_trails,
+    bytes_to_lines,
+    multi_visit_lines,
+)
 from coverage.debug import short_filename, short_stack
 from coverage.exceptions import NoSource, NotPython
 from coverage.misc import isolate_module
@@ -186,6 +192,10 @@ class CodeInfo:
     # Always-jumps are bytecode offsets that do no work but move
     # to another offset.
     always_jumps: dict[TOffset, TOffset]
+
+    # Lines that can be visited multiple times per function call.
+    # We must not DISABLE LINE events for these.
+    multi_visit_lines: set[TLineNo]
 
 
 class SysMonitor(Tracer):
@@ -372,6 +382,9 @@ class SysMonitor(Tracer):
                 byte_to_line=b2l,
                 branch_trails={},
                 always_jumps={},
+                multi_visit_lines=(
+                    multi_visit_lines(code) if (tracing_code and self.trace_arcs) else set()
+                ),
             )
             self.code_infos[id(code)] = code_info
             self.code_objects.append(code)
@@ -450,8 +463,10 @@ class SysMonitor(Tracer):
         return DISABLE
 
     @panopticon("code", "line")
-    def sysmon_line_arcs(  # pylint: disable=useless-return
-        self, code: CodeType, line_number: TLineNo
+    def sysmon_line_arcs(
+        self,
+        code: CodeType,
+        line_number: TLineNo,
     ) -> MonitorReturn:
         """Handle sys.monitoring.events.LINE events for branch coverage."""
         if self.stats is not None:
@@ -469,11 +484,14 @@ class SysMonitor(Tracer):
         # Also add a self-arc to mark this line as executed.
         # code_info is not None and code_info.file_data is not None, since we
         # wouldn't have enabled this event if they were.
-        arc = (line_number, line_number)
-        code_info.file_data.add(arc)  # type: ignore
-        # log(f"adding {arc=}")
-        # Don't return DISABLE: keep getting LINE events for arc tracking.
-        return None
+        code_info.file_data.add((line_number, line_number))  # type: ignore
+
+        # Selectively DISABLE: lines that can be visited multiple times (like
+        # `with` statements) must keep receiving events to track all transitions.
+        # Single-visit lines can be disabled for better performance.
+        if line_number in code_info.multi_visit_lines:
+            return None
+        return DISABLE
 
     @panopticon("code", "@", "@")
     def sysmon_branch_either(
