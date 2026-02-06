@@ -6,13 +6,13 @@
 from __future__ import annotations
 
 import ast
-import dataclasses
 from typing import cast
+from dataclasses import dataclass
 
 from coverage.plugin import CodeRegion
 
 
-@dataclasses.dataclass
+@dataclass
 class Context:
     """The nested named context of a function or class."""
 

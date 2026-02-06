@@ -137,7 +137,7 @@ jobs:
 
       - if: ${{ matrix.os != 'ppc64le' }}
         name: "Set up Python"
-        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "${{ matrix.python-version }}"
           allow-prereleases: true
@@ -148,8 +148,8 @@ jobs:
           #cache-dependency-path: 'requirements/*.pip'
 
       - if: ${{ matrix.os == 'ppc64le' }}
-        name: Set up Python
-        uses: IBM/setup-python-pz@v6
+        name: Set up Python (ppc64le)
+        uses: IBM/setup-python-pz@4ca38bfac8eac147e9c7aad9ab246f68655afb36
         with:
           python-version: "${{ matrix.python-version }}"
           architecture: ppc64le

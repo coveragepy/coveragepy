@@ -104,7 +104,7 @@ jobs:
           #                   "cipy": cipy,
           #               }
           #               if the_arch == "ppc64le":
-          #                   them["os"] == "ubuntu-24.04-ppc64le"
+          #                   them["os"] = "ubuntu-24.04-ppc64le"
           #               if the_os == "macos":
           #                   them["os-version"] = "14"
           #               if the_os == "windows" and the_arch == "ARM64":
@@ -164,7 +164,7 @@ jobs:
           - {"os": "windows", "py": "cp312", "arch": "ARM64", "cipy": "3.11", "os-version": "11-arm"}
           - {"os": "windows", "py": "cp313", "arch": "ARM64", "cipy": "3.11", "os-version": "11-arm"}
           - {"os": "windows", "py": "cp314", "arch": "ARM64", "cipy": "3.11", "os-version": "11-arm"}
-        # [[[end]]] (sum: UDdYTxMoTi)
+        # [[[end]]] (sum: GLlE/BLyNS)
         #            ^^^^^^^^^^^^^^^
         # If a check fails and points to this checksum line, it means you edited
         # the matrix directly instead of editing the Python code in the comment
@@ -181,7 +181,7 @@ jobs:
 
       - if: ${{ matrix.arch != 'ppc64le' }}
         name: "Install Python"
-        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "${{ matrix.cipy }}"
           cache: pip
@@ -242,7 +242,7 @@ jobs:
           persist-credentials: false
 
       - name: "Install Python"
-        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.11" # PYVERSIONS: the kit-building version
           cache: pip

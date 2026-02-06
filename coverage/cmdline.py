@@ -1195,26 +1195,3 @@ def main_deprecated(argv: list[str] | None = None) -> int | None:
         """)
     )
     return main(argv)
-
-
-# Profiling using ox_profile.  Install it from GitHub:
-#   pip install git+https://github.com/emin63/ox_profile.git
-#
-# $set_env.py: COVERAGE_PROFILE - Set to use ox_profile.
-_profile = os.getenv("COVERAGE_PROFILE")
-if _profile:  # pragma: debugging
-    from ox_profile.core.launchers import SimpleLauncher  # pylint: disable=import-error
-
-    original_main = main
-
-    def main(  # pylint: disable=function-redefined
-        argv: list[str] | None = None,
-    ) -> int | None:
-        """A wrapper around main that profiles."""
-        profiler = SimpleLauncher.launch()
-        try:
-            return original_main(argv)
-        finally:
-            data, _ = profiler.query(re_filter="coverage", max_records=100)
-            print(profiler.show(query=data, limit=100, sep="", col=""))
-            profiler.cancel()

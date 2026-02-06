@@ -54,7 +54,7 @@ markupsafe==3.0.3
     # via jinja2
 mdurl==0.1.2
     # via markdown-it-py
-packaging==25.0
+packaging==26.0
     # via sphinx
 polib==1.2.0
     # via sphinx-lint
@@ -131,7 +131,7 @@ sphinxcontrib-spelling==8.0.2
     # via -r doc/requirements.in
 sphinxext-rediraffe==0.3.0
     # via -r doc/requirements.in
-starlette==0.51.0
+starlette==0.52.1
     # via sphinx-autobuild
 stevedore==5.6.0
     # via doc8

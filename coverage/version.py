@@ -8,7 +8,7 @@ from __future__ import annotations
 
 # version_info: same semantics as sys.version_info.
 # _dev: the .devN suffix if any.
-version_info = (7, 13, 3, "alpha", 0)
+version_info = (7, 13, 4, "alpha", 0)
 _dev = 1
 
 

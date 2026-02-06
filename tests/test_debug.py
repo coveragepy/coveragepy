@@ -265,7 +265,7 @@ def assert_good_debug_sys(out_text: str) -> None:
         coverage_version coverage_module coverage_paths stdlib_paths third_party_paths
         core configs_attempted config_file configs_read data_file
         python platform implementation executable
-        pid cwd path environment command_line cover_match pylib_match
+        pid cwd path environment command_line coverage_match pylib_match
         """.split()
     for label in labels:
         label_pat = rf"^\s*{label}: "

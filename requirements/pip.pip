@@ -8,7 +8,7 @@ pip==25.3
     # via -r requirements/pip.in
 platformdirs==4.5.1
     # via virtualenv
-setuptools==80.9.0
+setuptools==80.10.1
     # via -r requirements/pip.in
 typing-extensions==4.15.0 ; python_full_version < '3.11'
     # via virtualenv

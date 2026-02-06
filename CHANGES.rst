@@ -23,10 +23,29 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
-Nothing yet.
+- Fix: the third-party code fix in 7.13.3 required examining the parent
+  directories where coverage was run. In the unusual situation that one of the
+  parent directories is unreadable, a PermissionError would occur, as
+  described in `issue 2129`_. This is now fixed.
+
+.. _issue 2129: https://github.com/coveragepy/coveragepy/issues/2129
 
 
 .. start-releases
+
+.. _changes_7-13-3:
+
+Version 7.13.3 — 2026-02-03
+---------------------------
+
+- Fix: in some situations, third-party code was measured when it shouldn't have
+  been, slowing down test execution. This happened with layered virtual
+  environments such as uv sometimes makes. The problem is fixed, closing `issue
+  2082`_. Now any directory on sys.path that is inside a virtualenv is
+  considered third-party code.
+
+.. _issue 2082: https://github.com/coveragepy/coveragepy/issues/2082
+
 
 .. _changes_7-13-2:
 

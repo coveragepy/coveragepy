@@ -14,6 +14,7 @@ import sys
 import sysconfig
 import traceback
 from collections.abc import Iterable
+from dataclasses import dataclass
 from types import FrameType, ModuleType
 from typing import TYPE_CHECKING, Any, cast
 
@@ -122,7 +123,7 @@ def file_and_path_for_module(modulename: str) -> tuple[str | None, list[str]]:
     return filename, path
 
 
-def add_sysconfig_paths(paths: set[str], path_names: list[str]) -> None:
+def _add_sysconfig_paths(paths: set[str], path_names: list[str]) -> None:
     """Get paths from `sysconfig.get_paths`"""
     scheme_names = set(sysconfig.get_scheme_names())
 
@@ -133,23 +134,66 @@ def add_sysconfig_paths(paths: set[str], path_names: list[str]) -> None:
                 paths.add(config_paths[path_name])
 
 
-def add_stdlib_paths(paths: set[str]) -> None:
+def _add_stdlib_paths(paths: set[str]) -> None:
     """Add paths where the stdlib can be found to the set `paths`."""
-    add_sysconfig_paths(paths, ["stdlib", "platstdlib"])
+    _add_sysconfig_paths(paths, ["stdlib", "platstdlib"])
 
 
-def add_third_party_paths(paths: set[str]) -> None:
+def _add_third_party_paths(paths: set[str]) -> None:
     """Add locations for third-party packages to the set `paths`."""
-    add_sysconfig_paths(paths, ["platlib", "purelib", "scripts"])
+
+    # These sysconfig locations are where third-party packages are installed.
+    _add_sysconfig_paths(paths, ["platlib", "purelib", "scripts"])
+
+    # Any importable directory that is a venv is also a third-party location.
+    for d in sys.path:
+        detail = _analyze_directory(d)
+        if detail.exists and detail.venv is not None:
+            paths.add(d)
 
 
-def add_coverage_paths(paths: set[str]) -> None:
+def _add_coverage_paths(paths: set[str]) -> None:
     """Add paths where coverage.py code can be found to the set `paths`."""
     cover_path = canonical_path(__file__, directory=True)
     paths.add(cover_path)
     if env.TESTING:
         # Don't include our own test code.
         paths.add(os.path.join(cover_path, "tests"))
+
+
+@dataclass
+class DirectoryDetail:
+    """Details about a directory."""
+
+    exists: bool
+    venv: str | None
+
+
+def _analyze_directory(d: str) -> DirectoryDetail:
+    """Analyze the directory `d` for existence and venv status."""
+    detail = DirectoryDetail(exists=os.path.exists(d), venv=None)
+    if detail.exists:
+        while True:
+            d = os.path.dirname(d)
+            if d == os.path.dirname(d):
+                break
+            pyvenv = os.path.join(d, "pyvenv.cfg")
+            if os.path.exists(pyvenv):
+                detail.venv = d
+                break
+    return detail
+
+
+def _dir_detail(d: str) -> str:
+    """Get a string describing the directory `d` for debugging."""
+    detail = _analyze_directory(d)
+    if not detail.exists:
+        describe = "does not exist"
+    elif detail.venv is not None:
+        describe = f"venv at {detail.venv}"
+    else:
+        describe = "not a venv"
+    return f"{d!r} ({describe})"
 
 
 class InOrOut:
@@ -166,10 +210,11 @@ class InOrOut:
         self.debug = debug
         self.include_namespace_packages = include_namespace_packages
 
-        self.source_pkgs: list[str] = []
-        self.source_pkgs.extend(config.source_pkgs)
-        self.source_dirs: list[str] = []
-        self.source_dirs.extend(config.source_dirs)
+        self.plugins: Plugins
+        self.disp_class: type[TFileDisposition] = FileDisposition
+
+        self.source_pkgs: list[str] = list(config.source_pkgs)
+        self.source_dirs: list[str] = list(config.source_dirs)
         for src in config.source or []:
             if os.path.isdir(src):
                 self.source_dirs.append(src)
@@ -191,30 +236,24 @@ class InOrOut:
         # The directories for files considered "installed with the interpreter".
         self.pylib_paths: set[str] = set()
         if not config.cover_pylib:
-            add_stdlib_paths(self.pylib_paths)
+            _add_stdlib_paths(self.pylib_paths)
 
         # To avoid tracing the coverage.py code itself, we skip anything
         # located where we are.
         self.cover_paths: set[str] = set()
-        add_coverage_paths(self.cover_paths)
+        _add_coverage_paths(self.cover_paths)
 
         # Find where third-party packages are installed.
         self.third_paths: set[str] = set()
-        add_third_party_paths(self.third_paths)
-
-        def _debug(msg: str) -> None:
-            if self.debug:
-                self.debug.write(msg)
+        _add_third_party_paths(self.third_paths)
 
         # Generally useful information
-        _debug("sys.path:" + "".join(f"\n    {p!r}" for p in sys.path))
-
         if self.debug:
-            _debug("sysconfig paths:")
+            self._debug("sysconfig paths:")
             for scheme in sorted(sysconfig.get_scheme_names()):
-                _debug(f"    {scheme}:")
+                self._debug(f"    {scheme}:")
                 for k, v in sysconfig.get_paths(scheme).items():
-                    _debug(f"        {k}: {v!r}")
+                    self._debug(f"        {k}: {_dir_detail(v)}")
 
         # Create the matchers we need for should_trace
         self.source_match = None
@@ -226,23 +265,46 @@ class InOrOut:
         if self.source_dirs or self.source_pkgs:
             if self.source_dirs:
                 self.source_match = TreeMatcher(
-                    self.source_dirs, "source", "Source directory", _debug
+                    self.source_dirs, "source", "Source directory", self._debug
                 )
             if self.source_pkgs:
                 self.source_pkgs_match = ModuleMatcher(
-                    self.source_pkgs, "source_pkgs", "Source imports", _debug
+                    self.source_pkgs, "source_pkgs", "Source imports", self._debug
                 )
         else:
             if self.pylib_paths:
-                self.pylib_match = TreeMatcher(self.pylib_paths, "pylib", "Python stdlib", _debug)
+                self.pylib_match = TreeMatcher(
+                    self.pylib_paths, "pylib", "Python stdlib", self._debug
+                )
         if self.include:
-            self.include_match = GlobMatcher(self.include, "include", "Include", _debug)
+            self.include_match = GlobMatcher(self.include, "include", "Include", self._debug)
         if self.omit:
-            self.omit_match = GlobMatcher(self.omit, "omit", "Omit", _debug)
+            self.omit_match = GlobMatcher(self.omit, "omit", "Omit", self._debug)
 
-        self.cover_match = TreeMatcher(self.cover_paths, "coverage", "Coverage code", _debug)
+        self.coverage_match = TreeMatcher(
+            self.cover_paths, "coverage", "Coverage code", self._debug
+        )
 
-        self.third_match = TreeMatcher(self.third_paths, "third", "Third-party lib", _debug)
+        self.last_sys_path = list(sys.path)
+        self.set_matchers_depending_on_syspath()
+
+    def _debug(self, msg: str) -> None:
+        """A more convenient way to write debug messages."""
+        if self.debug:
+            self.debug.write(msg)
+
+    def set_matchers_depending_on_syspath(self) -> None:
+        """Set up matchers that depend on sys.path.
+
+        This is called at initialization time, and later if sys.path changes,
+        which can happen when test runners like pytest manipulate sys.path.
+
+        """
+        self._debug("sys.path:" + "".join(f"\n    {_dir_detail(d)}" for d in sys.path))
+
+        self.third_paths = set()
+        _add_third_party_paths(self.third_paths)
+        self.third_match = TreeMatcher(self.third_paths, "third", "Third-party lib", self._debug)
 
         # Check if the source we want to measure has been installed as a
         # third-party package.
@@ -252,34 +314,31 @@ class InOrOut:
             for pkg in self.source_pkgs:
                 try:
                     modfile, path = file_and_path_for_module(pkg)
-                    _debug(f"Imported source package {pkg!r} as {modfile!r}")
+                    self._debug(f"Imported source package {pkg!r} as {modfile!r}")
                 except CoverageException as exc:
-                    _debug(f"Couldn't import source package {pkg!r}: {exc}")
+                    self._debug(f"Couldn't import source package {pkg!r}: {exc}")
                     continue
                 if modfile:
                     if self.third_match.match(modfile):
-                        _debug(
+                        self._debug(
                             f"Source in third-party: source_pkg {pkg!r} at {modfile!r}",
                         )
                         self.source_in_third_paths.add(canonical_path(source_for_file(modfile)))
                 else:
                     for pathdir in path:
                         if self.third_match.match(pathdir):
-                            _debug(
+                            self._debug(
                                 f"Source in third-party: {pkg!r} path directory at {pathdir!r}",
                             )
                             self.source_in_third_paths.add(pathdir)
 
         for src in self.source_dirs:
             if self.third_match.match(src):
-                _debug(f"Source in third-party: source directory {src!r}")
+                self._debug(f"Source in third-party: source directory {src!r}")
                 self.source_in_third_paths.add(src)
         self.source_in_third_match = TreeMatcher(
-            self.source_in_third_paths, "source_in_third", "Source in third-party", _debug
+            self.source_in_third_paths, "source_in_third", "Source in third-party", self._debug
         )
-
-        self.plugins: Plugins
-        self.disp_class: type[TFileDisposition] = FileDisposition
 
     def should_trace(self, filename: str, frame: FrameType | None = None) -> TFileDisposition:
         """Decide whether to trace execution in `filename`, with a reason.
@@ -290,6 +349,10 @@ class InOrOut:
         Returns a FileDisposition object.
 
         """
+        if sys.path != self.last_sys_path:
+            self.set_matchers_depending_on_syspath()
+            self.last_sys_path = list(sys.path)
+
         original_filename = filename
         disp = disposition_init(self.disp_class, filename)
 
@@ -415,17 +478,20 @@ class InOrOut:
         else:
             # We exclude the coverage.py code itself, since a little of it
             # will be measured otherwise.
-            if self.cover_match.match(filename):
+            if self.coverage_match.match(filename):
                 return "is part of coverage.py"
 
-            # If we aren't supposed to trace installed code, then check if this
-            # is near the Python standard library and skip it if so.
-            if self.pylib_match and self.pylib_match.match(filename):
-                return "is in the stdlib"
-
-            # Exclude anything in the third-party installation areas.
+            # Exclude anything in the third-party installation areas. Check this before
+            # the stdlib, since site-packages is nested inside the stdlib area. If we
+            # do it the other way around, third-party code will be labeled as stdlib
+            # in the debug output.
             if self.third_match.match(filename):
                 return "is a third-party module"
+
+            # If we aren't supposed to trace installed code, then check if this
+            # is in the Python standard library and skip it if so.
+            if self.pylib_match and self.pylib_match.match(filename):
+                return "is in the stdlib"
 
         # Check the file against the omit pattern.
         if self.omit_match and self.omit_match.match(filename):
@@ -571,7 +637,7 @@ class InOrOut:
             "source_pkgs_match",
             "include_match",
             "omit_match",
-            "cover_match",
+            "coverage_match",
             "pylib_match",
             "third_match",
             "source_in_third_match",

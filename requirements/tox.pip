@@ -14,7 +14,7 @@ filelock==3.20.3
     # via
     #   tox
     #   virtualenv
-packaging==25.0
+packaging==26.0
     # via
     #   pyproject-api
     #   tox
