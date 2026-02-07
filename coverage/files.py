@@ -260,10 +260,11 @@ class TreeMatcher(Matcher):
         caption: str = "",
         debug: DebugFn = None,
     ) -> None:
-        self.original_paths = human_sorted(paths)
+        paths_list = list(paths)
+        self.original_paths = human_sorted(paths_list)
         super().__init__(self.original_paths, name=name, caption=caption, debug=debug)
         self.paths = []
-        for p in paths:
+        for p in paths_list:
             ap = abs_file(p)
             if ap != p and debug:
                 debug(f"        Normalized {p!r} to {ap!r}")
