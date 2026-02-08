@@ -36,7 +36,7 @@ env:
   PIP_DISABLE_PIP_VERSION_CHECK: 1
   # PYVERSIONS: changing the list of versions will change the number of
   # expected distributions. This must match the same number in publish.yml.
-  EXPECTED: 92
+  EXPECTED: 106
 
 permissions:
   contents: read
@@ -48,7 +48,7 @@ concurrency:
 jobs:
   wheels:
     name: "${{ matrix.py }} ${{ matrix.os }} ${{ matrix.arch }} wheels"
-    runs-on: "${{ matrix.os }}-${{ matrix.os-version || 'latest' }}"
+    runs-on: "${{ matrix.arch == 'ppc64le' && matrix.os || (format('{0}-{1}', matrix.os, matrix.os-version || 'latest'))}}"
     env:
       MATRIX_ID: "${{ matrix.py }}-${{ matrix.os }}-${{ matrix.arch }}"
     strategy:
@@ -73,7 +73,7 @@ jobs:
           #
           #   # For each OS, what arch to use with cibuildwheel:
           #   os_archs = {
-          #       "ubuntu": ["x86_64", "i686", "aarch64", "riscv64"],
+          #       "ubuntu": ["x86_64", "i686", "aarch64", "riscv64", "ppc64le"],
           #       "macos": ["arm64", "x86_64"],
           #       "windows": ["x86", "AMD64", "ARM64"],
           #   }
@@ -103,6 +103,8 @@ jobs:
           #                   "arch": the_arch,
           #                   "cipy": cipy,
           #               }
+          #               if the_arch == "ppc64le":
+          #                   them["os"] = "ubuntu-24.04-ppc64le"
           #               if the_os == "macos":
           #                   them["os-version"] = "14"
           #               if the_os == "windows" and the_arch == "ARM64":
@@ -133,6 +135,11 @@ jobs:
           - {"os": "ubuntu", "py": "cp312", "arch": "riscv64", "cipy": "3.11"}
           - {"os": "ubuntu", "py": "cp313", "arch": "riscv64", "cipy": "3.11"}
           - {"os": "ubuntu", "py": "cp314", "arch": "riscv64", "cipy": "3.11"}
+          - {"os": "ubuntu-24.04-ppc64le", "py": "cp310", "arch": "ppc64le", "cipy": "3.11"}
+          - {"os": "ubuntu-24.04-ppc64le", "py": "cp311", "arch": "ppc64le", "cipy": "3.11"}
+          - {"os": "ubuntu-24.04-ppc64le", "py": "cp312", "arch": "ppc64le", "cipy": "3.11"}
+          - {"os": "ubuntu-24.04-ppc64le", "py": "cp313", "arch": "ppc64le", "cipy": "3.11"}
+          - {"os": "ubuntu-24.04-ppc64le", "py": "cp314", "arch": "ppc64le", "cipy": "3.11"}
           - {"os": "macos", "py": "cp310", "arch": "arm64", "cipy": "3.11", "os-version": "14"}
           - {"os": "macos", "py": "cp311", "arch": "arm64", "cipy": "3.11", "os-version": "14"}
           - {"os": "macos", "py": "cp312", "arch": "arm64", "cipy": "3.11", "os-version": "14"}
@@ -157,7 +164,7 @@ jobs:
           - {"os": "windows", "py": "cp312", "arch": "ARM64", "cipy": "3.11", "os-version": "11-arm"}
           - {"os": "windows", "py": "cp313", "arch": "ARM64", "cipy": "3.11", "os-version": "11-arm"}
           - {"os": "windows", "py": "cp314", "arch": "ARM64", "cipy": "3.11", "os-version": "11-arm"}
-        # [[[end]]] (sum: UDdYTxMoTi)
+        # [[[end]]] (sum: GLlE/BLyNS)
         #            ^^^^^^^^^^^^^^^
         # If a check fails and points to this checksum line, it means you edited
         # the matrix directly instead of editing the Python code in the comment
@@ -172,7 +179,8 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: "Install Python"
+      - if: ${{ matrix.arch != 'ppc64le' }}
+        name: "Install Python"
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "${{ matrix.cipy }}"
