@@ -32,6 +32,9 @@ Unreleased
   "RuntimeError: Set changed size during iteration" as described and fixed in
   `pull 2130`_. Thanks, Noah Fatsi.
 
+- We now publish ppc64le wheels, thanks to `Pankhudi Jain <pull 2121_>`_.
+
+.. _pull 2121: https://github.com/coveragepy/coveragepy/pull/2121
 .. _issue 2129: https://github.com/coveragepy/coveragepy/issues/2129
 .. _pull 2130: https://github.com/coveragepy/coveragepy/pull/2130
 
@@ -107,6 +110,7 @@ Version 7.13.1 — 2025-12-28
 .. _issue 2105: https://github.com/coveragepy/coveragepy/issues/2105
 .. _issue 2109: https://github.com/coveragepy/coveragepy/issues/2109
 .. _issue 2110: https://github.com/coveragepy/coveragepy/issues/2110
+
 
 .. _changes_7-13-0:
 
