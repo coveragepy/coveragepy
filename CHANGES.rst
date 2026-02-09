@@ -238,7 +238,7 @@ Version 7.11.1 — 2025-11-07
 
 - Fix: some chanages to details of how the measurement core is chosen, and how
   conflicting settings are handled. The "sysmon" core cannot be used with some
-  conurrency settings, with dynamic context, and in Python 3.12/3.13, with
+  concurrency settings, with dynamic context, and in Python 3.12/3.13, with
   branch measurement.
 
   - If the core is not specified and defaults to "sysmon" (Python 3.14+), but
