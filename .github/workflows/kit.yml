@@ -68,9 +68,6 @@ jobs:
           # [[[cog
           #   #----- vvv Choices for the matrix vvv -----
           #
-          #   # Operating systems:
-          #   oss = ["ubuntu", "macos", "windows"]
-          #
           #   # For each OS, what arch to use with cibuildwheel:
           #   os_archs = {
           #       "ubuntu": ["x86_64", "i686", "aarch64", "riscv64", "ppc64le"],
@@ -94,8 +91,8 @@ jobs:
           #   #----- ^^^ ---------------------- ^^^ -----
           #
           #   import json
-          #   for the_os in oss:
-          #       for the_arch in os_archs[the_os]:
+          #   for the_os, archs in os_archs.items():
+          #       for the_arch in archs:
           #           for the_py in os_arch_pys.get((the_os, the_arch), pys):
           #               them = {
           #                   "os": the_os,
