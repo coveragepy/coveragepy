@@ -253,3 +253,30 @@ def always_jumps(code: CodeType) -> dict[TOffset, TOffset]:
         elif inst.opcode in NOPS:
             jumps[inst.offset] = inst.offset + 2
     return jumps
+
+
+def multi_visit_lines(code: CodeType) -> set[TLineNo]:
+    """Find lines that appear at non-contiguous bytecode ranges.
+
+    These are lines that can be executed multiple times in a single function
+    call, such as `with` statement lines (executed on entry and cleanup) or
+    lines duplicated for exception handling. We need to keep receiving LINE
+    events for these lines to track arc transitions correctly.
+    """
+    line_offsets: dict[TLineNo, list[TOffset]] = collections.defaultdict(list)
+    iwalker = InstructionWalker(code)
+    for inst in iwalker.walk(follow_jumps=False):
+        if inst.line_number:
+            line_offsets[inst.line_number].append(inst.offset)
+
+    result: set[TLineNo] = set()
+    for line, offsets in line_offsets.items():
+        # offsets are already in order from walk()
+        for i in range(1, len(offsets)):
+            # Bytecode instructions are 2 bytes apart; a larger gap means
+            # the line appears in multiple non-contiguous code sections.
+            if offsets[i] - offsets[i - 1] > 2:
+                result.add(line)
+                break
+
+    return result
