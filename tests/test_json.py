@@ -190,18 +190,31 @@ class JsonReportTest(UsingModulesMixin, CoverageTest):
         expected_result: dict[str, Any],
         mod_name: str,
         source_code: str,
+        omit_regions: bool = False,
     ) -> None:
         """
         Helper that creates a file and compares its JSON report to expected results.
         """
         self.make_file(f"{mod_name}.py", source_code)
-        self._compare_json_reports(cov, expected_result, mod_name)
+        self._compare_json_reports(cov, expected_result, mod_name, omit_regions)
+
+    @staticmethod
+    def _approx_floats(obj: Any) -> Any:
+        """Recursively wrap float values in pytest.approx() for tolerant comparison."""
+        if isinstance(obj, dict):
+            return {k: JsonReportTest._approx_floats(v) for k, v in obj.items()}
+        if isinstance(obj, list):
+            return [JsonReportTest._approx_floats(item) for item in obj]
+        if isinstance(obj, float):
+            return pytest.approx(obj)
+        return obj
 
     def _compare_json_reports(
         self,
         cov: Coverage,
         expected_result: dict[str, Any],
         mod_name: str,
+        omit_regions: bool = False,
     ) -> None:
         """
         Helper that handles common ceremonies, comparing JSON reports that
@@ -210,7 +223,7 @@ class JsonReportTest(UsingModulesMixin, CoverageTest):
         """
         mod = self.start_import_stop(cov, mod_name)
         output_path = os.path.join(self.temp_dir, f"{mod_name}.json")
-        cov.json_report(mod, outfile=output_path)
+        cov.json_report(mod, outfile=output_path, omit_regions=omit_regions)
         with open(output_path, encoding="utf-8") as result_file:
             parsed_result = json.load(result_file)
         self.assert_recent_datetime(
@@ -222,10 +235,11 @@ class JsonReportTest(UsingModulesMixin, CoverageTest):
                 "version": coverage.__version__,
             }
         )
-        assert parsed_result == expected_result
+        assert parsed_result == self._approx_floats(expected_result)
 
     @pytest.mark.parametrize("branch", [True, False])
-    def test_line_and_branch_coverage(self, branch: bool) -> None:
+    @pytest.mark.parametrize("omit_regions", [True, False])
+    def test_line_and_branch_coverage(self, branch: bool, omit_regions: bool) -> None:
         cov = coverage.Coverage(branch=branch)
 
         executed_lines = [1, 2, 4, 5, 8]
@@ -246,31 +260,32 @@ class JsonReportTest(UsingModulesMixin, CoverageTest):
             branches=branch_data,
         )
 
-        regions = {
-            "classes": {
-                "": self._make_region(
-                    executed=executed_lines,
-                    missing=missing_lines,
-                    excluded=[],
-                    start=1,
-                    branches=branch_data,
-                )
-            },
-            "functions": {
-                "": self._make_region(
-                    executed=executed_lines,
-                    missing=missing_lines,
-                    excluded=[],
-                    start=1,
-                    branches=branch_data,
-                )
-            },
-        }
-        if branch:
-            regions["classes"][""]["summary"]["percent_covered"] = 57.142857142857146
-            regions["functions"][""]["summary"]["percent_covered"] = 57.142857142857146
-            a_py_result["summary"]["percent_covered"] = 57.142857142857146
-        a_py_result.update(regions)
+        if not omit_regions:
+            regions = {
+                "classes": {
+                    "": self._make_region(
+                        executed=executed_lines,
+                        missing=missing_lines,
+                        excluded=[],
+                        start=1,
+                        branches=branch_data,
+                    )
+                },
+                "functions": {
+                    "": self._make_region(
+                        executed=executed_lines,
+                        missing=missing_lines,
+                        excluded=[],
+                        start=1,
+                        branches=branch_data,
+                    )
+                },
+            }
+            if branch:
+                regions["classes"][""]["summary"]["percent_covered"] = 57.142857142857146
+                regions["functions"][""]["summary"]["percent_covered"] = 57.142857142857146
+                a_py_result["summary"]["percent_covered"] = 57.142857142857146
+            a_py_result.update(regions)
 
         totals_branches = None
         if branch:
@@ -311,7 +326,7 @@ class JsonReportTest(UsingModulesMixin, CoverageTest):
                 b = 9
             """
 
-        self._assert_json_report(cov, expected_result, "a", a_py_source)
+        self._assert_json_report(cov, expected_result, "a", a_py_source, omit_regions=omit_regions)
 
     @pytest.mark.parametrize("branch", [True, False])
     def test_regions(self, branch: bool) -> None:

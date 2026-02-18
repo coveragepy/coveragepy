@@ -712,6 +712,27 @@ class HtmlTest(HtmlTestHelpers, CoverageTest):
         self.assert_doesnt_exist("htmlcov/function_index.html")
         self.assert_doesnt_exist("htmlcov/class_index.html")
 
+    def test_report_omit_regions(self) -> None:
+        self.make_file(
+            "main_file.py",
+            """\
+            def normal():
+                print("z")
+            def abnormal():
+                print("a")
+            normal()
+        """,
+        )
+        res = self.run_coverage(
+            covargs=dict(source="."), htmlargs=dict(skip_covered=True, omit_regions=True)
+        )
+        assert res == 80.0
+        self.assert_exists("htmlcov/main_file_py.html")
+        # We have a file to report, but do not break it down into function
+        # and class indices.
+        self.assert_doesnt_exist("htmlcov/function_index.html")
+        self.assert_doesnt_exist("htmlcov/class_index.html")
+
     def test_report_skip_covered_100_functions(self) -> None:
         self.make_file(
             "main_file.py",
