@@ -26,7 +26,7 @@ colorama==0.4.6
     # via
     #   -r requirements/kit.in
     #   build
-cryptography==46.0.3 ; platform_machine != 'ppc64le' and platform_machine != 's390x' and sys_platform == 'linux'
+cryptography==46.0.5 ; platform_machine != 'ppc64le' and platform_machine != 's390x' and sys_platform == 'linux'
     # via secretstorage
 dependency-groups==1.3.1
     # via cibuildwheel
@@ -36,7 +36,7 @@ filelock==3.20.3
     # via cibuildwheel
 humanize==4.15.0
     # via cibuildwheel
-id==1.5.0
+id==1.6.1
     # via twine
 idna==3.11
     # via requests
@@ -71,6 +71,7 @@ packaging==26.0
     #   cibuildwheel
     #   dependency-groups
     #   twine
+    #   wheel
 patchelf==0.17.2.4 ; (platform_machine == 'aarch64' and sys_platform == 'darwin') or (platform_machine == 'arm64' and sys_platform == 'darwin') or (platform_machine == 'x86_64' and sys_platform == 'darwin') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'arm64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux')
     # via cibuildwheel
 platformdirs==4.5.1
@@ -93,26 +94,26 @@ readme-renderer==44.0
     # via twine
 requests==2.32.5
     # via
-    #   id
     #   requests-toolbelt
     #   twine
 requests-toolbelt==1.0.0
     # via twine
 rfc3986==2.0.0
     # via twine
-rich==14.2.0
+rich==14.3.2
     # via twine
 secretstorage==3.5.0 ; platform_machine != 'ppc64le' and platform_machine != 's390x' and sys_platform == 'linux'
     # via keyring
-setuptools==80.10.1
+setuptools==82.0.0
     # via -r requirements/kit.in
 twine==6.2.0
     # via -r requirements/kit.in
 urllib3==2.6.3
     # via
+    #   id
     #   requests
     #   twine
-wheel==0.45.1
+wheel==0.46.3
     # via
     #   -r requirements/kit.in
     #   cibuildwheel
