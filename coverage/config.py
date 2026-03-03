@@ -218,6 +218,7 @@ class CoverageConfig(TConfigurable, TPluginConfig):
         self._crash: str | None = None
 
         # Defaults for [report]
+        self.omit_regions = False
         self.exclude_list = DEFAULT_EXCLUDE[:]
         self.exclude_also: list[str] = []
         self.fail_under = 0.0
@@ -428,6 +429,7 @@ class CoverageConfig(TConfigurable, TPluginConfig):
         ("_crash", "run:_crash"),
         #
         # [report]
+        ("omit_regions", "report:omit_regions", "boolean"),
         ("exclude_list", "report:exclude_lines", "regexlist"),
         ("exclude_also", "report:exclude_also", "regexlist"),
         ("fail_under", "report:fail_under", "float"),

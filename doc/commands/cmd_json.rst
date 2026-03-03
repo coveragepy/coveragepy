@@ -45,6 +45,7 @@ The **json** command writes coverage data to a "coverage.json" file.
       -o OUTFILE            Write the JSON report to this file. Defaults to
                             'coverage.json'
       --pretty-print        Format the JSON for human readers.
+      --omit-regions        Do not emit region-level data in the report.
       -q, --quiet           Don't print messages about what is happening.
       --show-contexts       Show contexts for covered lines.
       --debug=OPTS          Debug options, separated by commas. [env:
@@ -53,7 +54,7 @@ The **json** command writes coverage data to a "coverage.json" file.
       --rcfile=RCFILE       Specify configuration file. By default '.coveragerc',
                             'setup.cfg', 'tox.ini', and 'pyproject.toml' are
                             tried. [env: COVERAGE_RCFILE]
-.. [[[end]]] (sum: 5T5gy2XZcc)
+.. [[[end]]] (sum: Z1WF7akY2h)
 
 You can specify the name of the output file with the ``-o`` switch.  The JSON
 can be nicely formatted by specifying the ``--pretty-print`` switch.
