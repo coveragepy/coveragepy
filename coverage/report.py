@@ -126,8 +126,13 @@ class SummaryReporter:
         `end_lines` is a list of ending lines with information about skipped files.
 
         """
+
+        def escape_markdown(input_value: str) -> str:
+            """Crudely replace characters meaningful in markdown tables."""
+            return input_value.replace("_", "\\_").replace("|", "\\|")
+
         # Prepare the formatting strings, header, and column sorting.
-        max_name = max((len(line[0].replace("_", "\\_")) for line in lines_values), default=0)
+        max_name = max((len(escape_markdown(line[0])) for line in lines_values), default=0)
         max_name = max(max_name, len("**TOTAL**")) + 1
         formats = dict(
             Name="| {:{name_len}}|",
@@ -160,7 +165,7 @@ class SummaryReporter:
             self.write_items(
                 (
                     formats[item].format(
-                        str(value).replace("_", "\\_"), name_len=max_name, n=max_n - 1
+                        escape_markdown(str(value)), name_len=max_name, n=max_n - 1
                     )
                     for item, value in zip(header, values)
                 )

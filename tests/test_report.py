@@ -891,6 +891,18 @@ class SummaryTest(UsingModulesMixin, CoverageTest):
         report = self.report_from_command("coverage report --format=markdown")
         assert self.last_line_squeezed(report) == "| **TOTAL** | **5** | **0** | **100%** |"
 
+    @pytest.mark.skipif(env.WINDOWS, reason="No pipe characters in filenames on Windows")
+    def test_markdown_escape_filename(self) -> None:
+        self.make_file("subdir/so_me|file.py", "print(1)")
+        self.make_data_file(lines={"subdir/so_me|file.py": [1]})
+
+        cov = coverage.Coverage()
+        cov.load()
+        report = self.get_report(cov, ignore_errors=True, output_format="markdown")
+
+        squeezed = self.squeezed_lines(report)
+        assert squeezed[2] == "| subdir/so/_me/|file.py | 1 | 1 | 0% |"
+
     def test_bug_156_file_not_run_should_be_zero(self) -> None:
         # https://github.com/coveragepy/coveragepy/issues/156
         self.make_file(
