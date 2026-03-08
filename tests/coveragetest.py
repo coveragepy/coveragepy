@@ -125,12 +125,17 @@ class CoverageTest(
             cov.stop()
         return mod
 
-    def get_report(self, cov: Coverage, squeeze: bool = True, **kwargs: Any) -> str:
+    def get_report(
+        self, cov: Coverage, squeeze: bool = True, output_format: str | None = None, **kwargs: Any
+    ) -> str:
         """Get the report from `cov`, and canonicalize it."""
         repout = io.StringIO()
         kwargs.setdefault("show_missing", False)
-        cov.report(file=repout, **kwargs)
-        report = repout.getvalue().replace("\\", "/")
+        cov.report(file=repout, output_format=output_format, **kwargs)
+        if output_format == "markdown":
+            report = repout.getvalue().replace("\\\\", "/")
+        else:
+            report = repout.getvalue().replace("\\", "/")
         print(report)  # When tests fail, it's helpful to see the output
         if squeeze:
             report = re.sub(r" +", " ", report)

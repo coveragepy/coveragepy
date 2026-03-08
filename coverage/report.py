@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import sys
 from collections.abc import Iterable
+from string import punctuation
 from typing import IO, TYPE_CHECKING, Any
 
 from coverage.exceptions import ConfigError, NoDataError
@@ -18,6 +19,15 @@ from coverage.types import TMorfs
 
 if TYPE_CHECKING:
     from coverage import Coverage
+
+ESCAPE_PUNCTUATION_TABLE = "".maketrans(
+    {char: f"\\{char}" for char in punctuation if char not in ".,/-"}
+)
+
+
+def escape_markdown(text: str) -> str:
+    """Prefix all characters meaningful in markdown tables with backslashes."""
+    return text.translate(ESCAPE_PUNCTUATION_TABLE)
 
 
 class SummaryReporter:
@@ -126,8 +136,9 @@ class SummaryReporter:
         `end_lines` is a list of ending lines with information about skipped files.
 
         """
+
         # Prepare the formatting strings, header, and column sorting.
-        max_name = max((len(line[0].replace("_", "\\_")) for line in lines_values), default=0)
+        max_name = max((len(escape_markdown(line[0])) for line in lines_values), default=0)
         max_name = max(max_name, len("**TOTAL**")) + 1
         formats = dict(
             Name="| {:{name_len}}|",
@@ -160,7 +171,7 @@ class SummaryReporter:
             self.write_items(
                 (
                     formats[item].format(
-                        str(value).replace("_", "\\_"), name_len=max_name, n=max_n - 1
+                        escape_markdown(str(value)), name_len=max_name, n=max_n - 1
                     )
                     for item, value in zip(header, values)
                 )
