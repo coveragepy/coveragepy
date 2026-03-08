@@ -1028,11 +1028,9 @@ class SummaryTest(UsingModulesMixin, CoverageTest):
         assert "tests/modules/pkg1/__init__.py 1 0 0 0 100%" in report
         assert "tests/modules/pkg2/__init__.py 0 0 0 0 100%" in report
         report = self.get_report(cov, squeeze=False, output_format="markdown")
-        # get_report() escapes backslash so we expect forward slash escaped
-        # underscore
-        assert "tests/modules/pkg1//_/_init/_/_.py " in report
+        assert r"tests/modules/pkg1/\_\_init\_\_.py " in report
         assert "|        1 |        0 |        0 |        0 |     100% |" in report
-        assert "tests/modules/pkg2//_/_init/_/_.py " in report
+        assert r"tests/modules/pkg2/\_\_init\_\_.py " in report
         assert "|        0 |        0 |        0 |        0 |     100% |" in report
 
     def test_markdown_with_missing(self) -> None:
