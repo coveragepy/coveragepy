@@ -12,6 +12,7 @@ import os
 import os.path
 import py_compile
 import re
+import string
 
 
 import pytest
@@ -891,17 +892,57 @@ class SummaryTest(UsingModulesMixin, CoverageTest):
         report = self.report_from_command("coverage report --format=markdown")
         assert self.last_line_squeezed(report) == "| **TOTAL** | **5** | **0** | **100%** |"
 
-    @pytest.mark.skipif(env.WINDOWS, reason="No pipe characters in filenames on Windows")
-    def test_markdown_escape_filename(self) -> None:
-        self.make_file("subdir/so_me|file.py", "print(1)")
-        self.make_data_file(lines={"subdir/so_me|file.py": [1]})
+    DISALLOWED_WINDOWS_FILENAME_CHARACTERS = r'\/:*?"<>|'
+
+    @pytest.mark.parametrize(
+        ("punctuation", "expected_characters", "escaped_punctuation"),
+        [
+            pytest.param(
+                # everything that's not covered by the other items
+                "!#$%&'()+,-.;=@[]^_`{}~",
+                set(string.punctuation) - set(DISALLOWED_WINDOWS_FILENAME_CHARACTERS),
+                r"\!\#\$\%\&\'\(\)\+,-.\;\=\@\[\]\^\_\`\{\}\~",
+                id="cross-platform-punctuation",
+            ),
+            pytest.param(
+                "\\",  # seperate only to make test failure messages easy to read
+                set("\\"),
+                r"\/",
+                id="backslash-escaped",
+            ),
+            pytest.param(
+                "/",
+                set("/"),
+                "/",
+                id="forwardslash-untouched-posix-only",
+                marks=pytest.mark.skipif(env.WINDOWS, reason="Disallowed in Windows filenames."),
+            ),
+            pytest.param(
+                ':*?"<>|',
+                set(DISALLOWED_WINDOWS_FILENAME_CHARACTERS) - set("\\/"),
+                r"\:\*\?\"\<\>\|",
+                id="posix-only-punctuation",
+                marks=pytest.mark.skipif(env.WINDOWS, reason="Disallowed in Windows filenames."),
+            ),
+        ],
+    )
+    def test_markdown_escape_filename(
+        self, punctuation: str, expected_characters: set[str], escaped_punctuation: str
+    ) -> None:
+        """Make a horrible filename of punctuation, and ensure coverage report is escaped."""
+        self.make_file(f"horrible-{punctuation}-filename.py", "print(1)")
+        self.make_data_file(lines={f"horrible-{punctuation}-filename.py": [1]})
+
+        # make sure everything in the expected set of punctuation is here,
+        # and none have been dropped. Full diff on mismatch is readable.
+        assert expected_characters == set(punctuation)
 
         cov = coverage.Coverage()
         cov.load()
-        report = self.get_report(cov, ignore_errors=True, output_format="markdown")
+        report = self.get_report(cov, output_format="markdown")
 
         squeezed = self.squeezed_lines(report)
-        assert squeezed[2] == "| subdir/so/_me/|file.py | 1 | 1 | 0% |"
+        assert squeezed[2] == f"| horrible-{escaped_punctuation}-filename.py | 1 | 1 | 0% |"
 
     def test_bug_156_file_not_run_should_be_zero(self) -> None:
         # https://github.com/coveragepy/coveragepy/issues/156
