@@ -25,9 +25,9 @@ ESCAPE_PUNCTUATION_TABLE = "".maketrans(
 )
 
 
-def escape_markdown(input_value: str) -> str:
+def escape_markdown(text: str) -> str:
     """Prefix all characters meaningful in markdown tables with backslashes."""
-    return input_value.translate(ESCAPE_PUNCTUATION_TABLE)
+    return text.translate(ESCAPE_PUNCTUATION_TABLE)
 
 
 class SummaryReporter:
