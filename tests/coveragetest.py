@@ -133,7 +133,7 @@ class CoverageTest(
         kwargs.setdefault("show_missing", False)
         cov.report(file=repout, output_format=output_format, **kwargs)
         if output_format == "markdown":
-            report = repout.getvalue().replace("\\\\", r"\/")
+            report = repout.getvalue().replace("\\\\", "/")
         else:
             report = repout.getvalue().replace("\\", "/")
         print(report)  # When tests fail, it's helpful to see the output

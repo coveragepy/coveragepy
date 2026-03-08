@@ -907,8 +907,8 @@ class SummaryTest(UsingModulesMixin, CoverageTest):
             pytest.param(
                 "\\",  # seperate only to make test failure messages easy to read
                 set("\\"),
-                r"\/",
-                id="backslash-escaped",
+                "/",  # munged to forward slash by get_report
+                id="backslash-untouched",
             ),
             pytest.param(
                 "/",
