@@ -1,0 +1,238 @@
+{
+  "python_version": [
+    3,
+    14,
+    3,
+    "final",
+    0
+  ],
+  "source_code": "total = 0\nfor i in range(5):\n    total += i\nresult = total\n",
+  "filename": "for_loop.py",
+  "events": [
+    {
+      "type": "PY_START",
+      "code_name": "<module>",
+      "code_filename": "for_loop.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "for_loop.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 1,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "for_loop.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 2,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_LEFT",
+      "code_name": "<module>",
+      "code_filename": "for_loop.py",
+      "code_firstlineno": 1,
+      "offset": 22,
+      "line": null,
+      "dest": 26
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "for_loop.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 3,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "for_loop.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 2,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_LEFT",
+      "code_name": "<module>",
+      "code_filename": "for_loop.py",
+      "code_firstlineno": 1,
+      "offset": 22,
+      "line": null,
+      "dest": 26
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "for_loop.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 3,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "for_loop.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 2,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_LEFT",
+      "code_name": "<module>",
+      "code_filename": "for_loop.py",
+      "code_firstlineno": 1,
+      "offset": 22,
+      "line": null,
+      "dest": 26
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "for_loop.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 3,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "for_loop.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 2,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_LEFT",
+      "code_name": "<module>",
+      "code_filename": "for_loop.py",
+      "code_firstlineno": 1,
+      "offset": 22,
+      "line": null,
+      "dest": 26
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "for_loop.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 3,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "for_loop.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 2,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_LEFT",
+      "code_name": "<module>",
+      "code_filename": "for_loop.py",
+      "code_firstlineno": 1,
+      "offset": 22,
+      "line": null,
+      "dest": 26
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "for_loop.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 3,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "for_loop.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 2,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_RIGHT",
+      "code_name": "<module>",
+      "code_filename": "for_loop.py",
+      "code_firstlineno": 1,
+      "offset": 22,
+      "line": null,
+      "dest": 54
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "for_loop.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 4,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "<module>",
+      "code_filename": "for_loop.py",
+      "code_firstlineno": 1,
+      "offset": 60,
+      "line": null,
+      "dest": null
+    }
+  ],
+  "expected_lines": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "expected_arcs": [
+    [
+      1,
+      1
+    ],
+    [
+      2,
+      2
+    ],
+    [
+      2,
+      3
+    ],
+    [
+      2,
+      4
+    ],
+    [
+      3,
+      3
+    ],
+    [
+      4,
+      -1
+    ],
+    [
+      4,
+      4
+    ]
+  ]
+}

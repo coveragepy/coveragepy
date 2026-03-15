@@ -1,0 +1,226 @@
+{
+  "python_version": [
+    3,
+    13,
+    7,
+    "final",
+    0
+  ],
+  "source_code": "def inner():\n    yield 1\n    yield 2\n\ndef outer():\n    yield from inner()\n    yield 3\n\nresult = list(outer())\n",
+  "filename": "generator_yield_from.py",
+  "events": [
+    {
+      "type": "PY_START",
+      "code_name": "<module>",
+      "code_filename": "generator_yield_from.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "generator_yield_from.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 1,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "generator_yield_from.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 5,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "generator_yield_from.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 9,
+      "dest": null
+    },
+    {
+      "type": "PY_START",
+      "code_name": "outer",
+      "code_filename": "generator_yield_from.py",
+      "code_firstlineno": 5,
+      "offset": 4,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "outer",
+      "code_filename": "generator_yield_from.py",
+      "code_firstlineno": 5,
+      "offset": 0,
+      "line": 6,
+      "dest": null
+    },
+    {
+      "type": "PY_START",
+      "code_name": "inner",
+      "code_filename": "generator_yield_from.py",
+      "code_firstlineno": 1,
+      "offset": 4,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "inner",
+      "code_filename": "generator_yield_from.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 2,
+      "dest": null
+    },
+    {
+      "type": "PY_RESUME",
+      "code_name": "outer",
+      "code_filename": "generator_yield_from.py",
+      "code_firstlineno": 5,
+      "offset": 34,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "PY_RESUME",
+      "code_name": "inner",
+      "code_filename": "generator_yield_from.py",
+      "code_firstlineno": 1,
+      "offset": 10,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "inner",
+      "code_filename": "generator_yield_from.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 3,
+      "dest": null
+    },
+    {
+      "type": "PY_RESUME",
+      "code_name": "outer",
+      "code_filename": "generator_yield_from.py",
+      "code_firstlineno": 5,
+      "offset": 34,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "PY_RESUME",
+      "code_name": "inner",
+      "code_filename": "generator_yield_from.py",
+      "code_firstlineno": 1,
+      "offset": 18,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "inner",
+      "code_filename": "generator_yield_from.py",
+      "code_firstlineno": 1,
+      "offset": 22,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "outer",
+      "code_filename": "generator_yield_from.py",
+      "code_firstlineno": 5,
+      "offset": 0,
+      "line": 7,
+      "dest": null
+    },
+    {
+      "type": "PY_RESUME",
+      "code_name": "outer",
+      "code_filename": "generator_yield_from.py",
+      "code_firstlineno": 5,
+      "offset": 46,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "outer",
+      "code_filename": "generator_yield_from.py",
+      "code_firstlineno": 5,
+      "offset": 50,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "<module>",
+      "code_filename": "generator_yield_from.py",
+      "code_firstlineno": 1,
+      "offset": 40,
+      "line": null,
+      "dest": null
+    }
+  ],
+  "expected_lines": [
+    1,
+    2,
+    3,
+    5,
+    6,
+    7,
+    9
+  ],
+  "expected_arcs": [
+    [
+      1,
+      1
+    ],
+    [
+      2,
+      2
+    ],
+    [
+      3,
+      -1
+    ],
+    [
+      3,
+      3
+    ],
+    [
+      5,
+      5
+    ],
+    [
+      6,
+      6
+    ],
+    [
+      7,
+      -5
+    ],
+    [
+      7,
+      7
+    ],
+    [
+      9,
+      -1
+    ],
+    [
+      9,
+      9
+    ]
+  ]
+}

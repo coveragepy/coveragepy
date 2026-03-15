@@ -1,0 +1,409 @@
+{
+  "python_version": [
+    3,
+    14,
+    3,
+    "final",
+    0
+  ],
+  "source_code": "def accumulator():\n    total = 0\n    while True:\n        value = yield total\n        if value is None:\n            break\n        total += value\n\ngen = accumulator()\nnext(gen)\ngen.send(10)\ngen.send(20)\ntry:\n    gen.send(None)\nexcept StopIteration:\n    pass\n",
+  "filename": "generator_send.py",
+  "events": [
+    {
+      "type": "PY_START",
+      "code_name": "<module>",
+      "code_filename": "generator_send.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "generator_send.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 1,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "generator_send.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 9,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "generator_send.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 10,
+      "dest": null
+    },
+    {
+      "type": "PY_START",
+      "code_name": "accumulator",
+      "code_filename": "generator_send.py",
+      "code_firstlineno": 1,
+      "offset": 4,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "accumulator",
+      "code_filename": "generator_send.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 2,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "accumulator",
+      "code_filename": "generator_send.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 3,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "accumulator",
+      "code_filename": "generator_send.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 4,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "generator_send.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 11,
+      "dest": null
+    },
+    {
+      "type": "PY_RESUME",
+      "code_name": "accumulator",
+      "code_filename": "generator_send.py",
+      "code_firstlineno": 1,
+      "offset": 16,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "accumulator",
+      "code_filename": "generator_send.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 5,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_RIGHT",
+      "code_name": "accumulator",
+      "code_filename": "generator_send.py",
+      "code_firstlineno": 1,
+      "offset": 22,
+      "line": null,
+      "dest": 32
+    },
+    {
+      "type": "LINE",
+      "code_name": "accumulator",
+      "code_filename": "generator_send.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 7,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "accumulator",
+      "code_filename": "generator_send.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 3,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "accumulator",
+      "code_filename": "generator_send.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 4,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "generator_send.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 12,
+      "dest": null
+    },
+    {
+      "type": "PY_RESUME",
+      "code_name": "accumulator",
+      "code_filename": "generator_send.py",
+      "code_firstlineno": 1,
+      "offset": 16,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "accumulator",
+      "code_filename": "generator_send.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 5,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_RIGHT",
+      "code_name": "accumulator",
+      "code_filename": "generator_send.py",
+      "code_firstlineno": 1,
+      "offset": 22,
+      "line": null,
+      "dest": 32
+    },
+    {
+      "type": "LINE",
+      "code_name": "accumulator",
+      "code_filename": "generator_send.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 7,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "accumulator",
+      "code_filename": "generator_send.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 3,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "accumulator",
+      "code_filename": "generator_send.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 4,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "generator_send.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 13,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "generator_send.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 14,
+      "dest": null
+    },
+    {
+      "type": "PY_RESUME",
+      "code_name": "accumulator",
+      "code_filename": "generator_send.py",
+      "code_firstlineno": 1,
+      "offset": 16,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "accumulator",
+      "code_filename": "generator_send.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 5,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_LEFT",
+      "code_name": "accumulator",
+      "code_filename": "generator_send.py",
+      "code_firstlineno": 1,
+      "offset": 22,
+      "line": null,
+      "dest": 28
+    },
+    {
+      "type": "LINE",
+      "code_name": "accumulator",
+      "code_filename": "generator_send.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 6,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "accumulator",
+      "code_filename": "generator_send.py",
+      "code_firstlineno": 1,
+      "offset": 30,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "generator_send.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 15,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_LEFT",
+      "code_name": "<module>",
+      "code_filename": "generator_send.py",
+      "code_firstlineno": 1,
+      "offset": 152,
+      "line": null,
+      "dest": 158
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "generator_send.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 16,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "<module>",
+      "code_filename": "generator_send.py",
+      "code_firstlineno": 1,
+      "offset": 164,
+      "line": null,
+      "dest": null
+    }
+  ],
+  "expected_lines": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16
+  ],
+  "expected_arcs": [
+    [
+      1,
+      1
+    ],
+    [
+      2,
+      2
+    ],
+    [
+      3,
+      3
+    ],
+    [
+      4,
+      4
+    ],
+    [
+      5,
+      5
+    ],
+    [
+      5,
+      6
+    ],
+    [
+      5,
+      7
+    ],
+    [
+      6,
+      -1
+    ],
+    [
+      6,
+      6
+    ],
+    [
+      7,
+      7
+    ],
+    [
+      9,
+      9
+    ],
+    [
+      10,
+      10
+    ],
+    [
+      11,
+      11
+    ],
+    [
+      12,
+      12
+    ],
+    [
+      13,
+      13
+    ],
+    [
+      14,
+      14
+    ],
+    [
+      15,
+      15
+    ],
+    [
+      15,
+      16
+    ],
+    [
+      16,
+      -1
+    ],
+    [
+      16,
+      16
+    ]
+  ]
+}

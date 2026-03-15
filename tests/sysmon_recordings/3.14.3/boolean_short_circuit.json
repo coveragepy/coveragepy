@@ -1,0 +1,486 @@
+{
+  "python_version": [
+    3,
+    14,
+    3,
+    "final",
+    0
+  ],
+  "source_code": "def truthy():\n    return True\n\ndef falsy():\n    return False\n\na = truthy() and truthy()\nb = falsy() and truthy()\nc = truthy() or falsy()\nd = falsy() or truthy()\ne = falsy() or falsy() or truthy()\nresult = (a, b, c, d, e)\n",
+  "filename": "boolean_short_circuit.py",
+  "events": [
+    {
+      "type": "PY_START",
+      "code_name": "<module>",
+      "code_filename": "boolean_short_circuit.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "boolean_short_circuit.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 1,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "boolean_short_circuit.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 4,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "boolean_short_circuit.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 7,
+      "dest": null
+    },
+    {
+      "type": "PY_START",
+      "code_name": "truthy",
+      "code_filename": "boolean_short_circuit.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "truthy",
+      "code_filename": "boolean_short_circuit.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 2,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "truthy",
+      "code_filename": "boolean_short_circuit.py",
+      "code_firstlineno": 1,
+      "offset": 4,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_LEFT",
+      "code_name": "<module>",
+      "code_filename": "boolean_short_circuit.py",
+      "code_firstlineno": 1,
+      "offset": 36,
+      "line": null,
+      "dest": 42
+    },
+    {
+      "type": "PY_START",
+      "code_name": "truthy",
+      "code_filename": "boolean_short_circuit.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "truthy",
+      "code_filename": "boolean_short_circuit.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 2,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "truthy",
+      "code_filename": "boolean_short_circuit.py",
+      "code_firstlineno": 1,
+      "offset": 4,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "boolean_short_circuit.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 8,
+      "dest": null
+    },
+    {
+      "type": "PY_START",
+      "code_name": "falsy",
+      "code_filename": "boolean_short_circuit.py",
+      "code_firstlineno": 4,
+      "offset": 0,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "falsy",
+      "code_filename": "boolean_short_circuit.py",
+      "code_firstlineno": 4,
+      "offset": 0,
+      "line": 5,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "falsy",
+      "code_filename": "boolean_short_circuit.py",
+      "code_firstlineno": 4,
+      "offset": 4,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_RIGHT",
+      "code_name": "<module>",
+      "code_filename": "boolean_short_circuit.py",
+      "code_firstlineno": 1,
+      "offset": 80,
+      "line": null,
+      "dest": 100
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "boolean_short_circuit.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 9,
+      "dest": null
+    },
+    {
+      "type": "PY_START",
+      "code_name": "truthy",
+      "code_filename": "boolean_short_circuit.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "truthy",
+      "code_filename": "boolean_short_circuit.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 2,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "truthy",
+      "code_filename": "boolean_short_circuit.py",
+      "code_firstlineno": 1,
+      "offset": 4,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_RIGHT",
+      "code_name": "<module>",
+      "code_filename": "boolean_short_circuit.py",
+      "code_firstlineno": 1,
+      "offset": 124,
+      "line": null,
+      "dest": 144
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "boolean_short_circuit.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 10,
+      "dest": null
+    },
+    {
+      "type": "PY_START",
+      "code_name": "falsy",
+      "code_filename": "boolean_short_circuit.py",
+      "code_firstlineno": 4,
+      "offset": 0,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "falsy",
+      "code_filename": "boolean_short_circuit.py",
+      "code_firstlineno": 4,
+      "offset": 0,
+      "line": 5,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "falsy",
+      "code_filename": "boolean_short_circuit.py",
+      "code_firstlineno": 4,
+      "offset": 4,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_LEFT",
+      "code_name": "<module>",
+      "code_filename": "boolean_short_circuit.py",
+      "code_firstlineno": 1,
+      "offset": 168,
+      "line": null,
+      "dest": 174
+    },
+    {
+      "type": "PY_START",
+      "code_name": "truthy",
+      "code_filename": "boolean_short_circuit.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "truthy",
+      "code_filename": "boolean_short_circuit.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 2,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "truthy",
+      "code_filename": "boolean_short_circuit.py",
+      "code_firstlineno": 1,
+      "offset": 4,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "boolean_short_circuit.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 11,
+      "dest": null
+    },
+    {
+      "type": "PY_START",
+      "code_name": "falsy",
+      "code_filename": "boolean_short_circuit.py",
+      "code_firstlineno": 4,
+      "offset": 0,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "falsy",
+      "code_filename": "boolean_short_circuit.py",
+      "code_firstlineno": 4,
+      "offset": 0,
+      "line": 5,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "falsy",
+      "code_filename": "boolean_short_circuit.py",
+      "code_firstlineno": 4,
+      "offset": 4,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_LEFT",
+      "code_name": "<module>",
+      "code_filename": "boolean_short_circuit.py",
+      "code_firstlineno": 1,
+      "offset": 212,
+      "line": null,
+      "dest": 218
+    },
+    {
+      "type": "PY_START",
+      "code_name": "falsy",
+      "code_filename": "boolean_short_circuit.py",
+      "code_firstlineno": 4,
+      "offset": 0,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "falsy",
+      "code_filename": "boolean_short_circuit.py",
+      "code_firstlineno": 4,
+      "offset": 0,
+      "line": 5,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "falsy",
+      "code_filename": "boolean_short_circuit.py",
+      "code_firstlineno": 4,
+      "offset": 4,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_LEFT",
+      "code_name": "<module>",
+      "code_filename": "boolean_short_circuit.py",
+      "code_firstlineno": 1,
+      "offset": 242,
+      "line": null,
+      "dest": 248
+    },
+    {
+      "type": "PY_START",
+      "code_name": "truthy",
+      "code_filename": "boolean_short_circuit.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "truthy",
+      "code_filename": "boolean_short_circuit.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 2,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "truthy",
+      "code_filename": "boolean_short_circuit.py",
+      "code_firstlineno": 1,
+      "offset": 4,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "boolean_short_circuit.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 12,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "<module>",
+      "code_filename": "boolean_short_circuit.py",
+      "code_firstlineno": 1,
+      "offset": 280,
+      "line": null,
+      "dest": null
+    }
+  ],
+  "expected_lines": [
+    1,
+    2,
+    4,
+    5,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+  ],
+  "expected_arcs": [
+    [
+      1,
+      1
+    ],
+    [
+      2,
+      -1
+    ],
+    [
+      2,
+      2
+    ],
+    [
+      4,
+      4
+    ],
+    [
+      5,
+      -4
+    ],
+    [
+      5,
+      5
+    ],
+    [
+      7,
+      7
+    ],
+    [
+      7,
+      8
+    ],
+    [
+      8,
+      8
+    ],
+    [
+      8,
+      9
+    ],
+    [
+      9,
+      9
+    ],
+    [
+      9,
+      10
+    ],
+    [
+      10,
+      10
+    ],
+    [
+      10,
+      11
+    ],
+    [
+      11,
+      11
+    ],
+    [
+      11,
+      12
+    ],
+    [
+      12,
+      -1
+    ],
+    [
+      12,
+      12
+    ]
+  ]
+}

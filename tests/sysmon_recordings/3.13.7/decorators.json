@@ -1,0 +1,358 @@
+{
+  "python_version": [
+    3,
+    13,
+    7,
+    "final",
+    0
+  ],
+  "source_code": "def trace(func):\n    def wrapper(*args):\n        return func(*args)\n    return wrapper\n\ndef bold(func):\n    def wrapper(*args):\n        return f\"**{func(*args)}**\"\n    return wrapper\n\n@bold\n@trace\ndef greet(name):\n    return f\"hello {name}\"\n\nresult = greet(\"world\")\n",
+  "filename": "decorators.py",
+  "events": [
+    {
+      "type": "PY_START",
+      "code_name": "<module>",
+      "code_filename": "decorators.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "decorators.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 1,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "decorators.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 6,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "decorators.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 11,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "decorators.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 12,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "decorators.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 13,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "decorators.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 12,
+      "dest": null
+    },
+    {
+      "type": "PY_START",
+      "code_name": "trace",
+      "code_filename": "decorators.py",
+      "code_firstlineno": 1,
+      "offset": 2,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "trace",
+      "code_filename": "decorators.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 2,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "trace",
+      "code_filename": "decorators.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 4,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "trace",
+      "code_filename": "decorators.py",
+      "code_firstlineno": 1,
+      "offset": 18,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "decorators.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 11,
+      "dest": null
+    },
+    {
+      "type": "PY_START",
+      "code_name": "bold",
+      "code_filename": "decorators.py",
+      "code_firstlineno": 6,
+      "offset": 2,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "bold",
+      "code_filename": "decorators.py",
+      "code_firstlineno": 6,
+      "offset": 0,
+      "line": 7,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "bold",
+      "code_filename": "decorators.py",
+      "code_firstlineno": 6,
+      "offset": 0,
+      "line": 9,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "bold",
+      "code_filename": "decorators.py",
+      "code_firstlineno": 6,
+      "offset": 18,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "decorators.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 13,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "decorators.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 16,
+      "dest": null
+    },
+    {
+      "type": "PY_START",
+      "code_name": "wrapper",
+      "code_filename": "decorators.py",
+      "code_firstlineno": 7,
+      "offset": 2,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "wrapper",
+      "code_filename": "decorators.py",
+      "code_firstlineno": 7,
+      "offset": 0,
+      "line": 8,
+      "dest": null
+    },
+    {
+      "type": "PY_START",
+      "code_name": "wrapper",
+      "code_filename": "decorators.py",
+      "code_firstlineno": 2,
+      "offset": 2,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "wrapper",
+      "code_filename": "decorators.py",
+      "code_firstlineno": 2,
+      "offset": 0,
+      "line": 3,
+      "dest": null
+    },
+    {
+      "type": "PY_START",
+      "code_name": "greet",
+      "code_filename": "decorators.py",
+      "code_firstlineno": 11,
+      "offset": 0,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "greet",
+      "code_filename": "decorators.py",
+      "code_firstlineno": 11,
+      "offset": 0,
+      "line": 14,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "greet",
+      "code_filename": "decorators.py",
+      "code_firstlineno": 11,
+      "offset": 10,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "wrapper",
+      "code_filename": "decorators.py",
+      "code_firstlineno": 2,
+      "offset": 12,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "wrapper",
+      "code_filename": "decorators.py",
+      "code_firstlineno": 7,
+      "offset": 20,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "<module>",
+      "code_filename": "decorators.py",
+      "code_firstlineno": 1,
+      "offset": 56,
+      "line": null,
+      "dest": null
+    }
+  ],
+  "expected_lines": [
+    1,
+    2,
+    3,
+    4,
+    6,
+    7,
+    8,
+    9,
+    11,
+    12,
+    13,
+    14,
+    16
+  ],
+  "expected_arcs": [
+    [
+      1,
+      1
+    ],
+    [
+      2,
+      2
+    ],
+    [
+      3,
+      -2
+    ],
+    [
+      3,
+      3
+    ],
+    [
+      4,
+      -1
+    ],
+    [
+      4,
+      4
+    ],
+    [
+      6,
+      6
+    ],
+    [
+      7,
+      7
+    ],
+    [
+      8,
+      -7
+    ],
+    [
+      8,
+      8
+    ],
+    [
+      9,
+      -6
+    ],
+    [
+      9,
+      9
+    ],
+    [
+      11,
+      11
+    ],
+    [
+      12,
+      12
+    ],
+    [
+      13,
+      13
+    ],
+    [
+      14,
+      -11
+    ],
+    [
+      14,
+      14
+    ],
+    [
+      16,
+      -1
+    ],
+    [
+      16,
+      16
+    ]
+  ]
+}

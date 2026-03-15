@@ -1,0 +1,132 @@
+{
+  "python_version": [
+    3,
+    13,
+    7,
+    "final",
+    0
+  ],
+  "source_code": "import io\n\nwith io.StringIO() as f1, io.StringIO() as f2:\n    f1.write(\"hello\")\n    f2.write(\"world\")\n    result = f1.getvalue() + f2.getvalue()\ndone = True\n",
+  "filename": "with_multiple.py",
+  "events": [
+    {
+      "type": "PY_START",
+      "code_name": "<module>",
+      "code_filename": "with_multiple.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "with_multiple.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 1,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "with_multiple.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 3,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "with_multiple.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 4,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "with_multiple.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 5,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "with_multiple.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 6,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "with_multiple.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 3,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "with_multiple.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 7,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "<module>",
+      "code_filename": "with_multiple.py",
+      "code_firstlineno": 1,
+      "offset": 252,
+      "line": null,
+      "dest": null
+    }
+  ],
+  "expected_lines": [
+    1,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "expected_arcs": [
+    [
+      1,
+      1
+    ],
+    [
+      3,
+      3
+    ],
+    [
+      4,
+      4
+    ],
+    [
+      5,
+      5
+    ],
+    [
+      6,
+      6
+    ],
+    [
+      7,
+      -1
+    ],
+    [
+      7,
+      7
+    ]
+  ]
+}

@@ -1,0 +1,622 @@
+{
+  "python_version": [
+    3,
+    14,
+    3,
+    "final",
+    0
+  ],
+  "source_code": "i = 0\ntotal = 0\nwhile i < 10:\n    i += 1\n    if i == 3:\n        continue\n    if i == 7:\n        break\n    total += i\nresult = total\n",
+  "filename": "while_break_continue.py",
+  "events": [
+    {
+      "type": "PY_START",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 1,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 2,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 3,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_LEFT",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 18,
+      "line": null,
+      "dest": 24
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 4,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 5,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_RIGHT",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 50,
+      "line": null,
+      "dest": 60
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 7,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_RIGHT",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 68,
+      "line": null,
+      "dest": 84
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 9,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 3,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_LEFT",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 18,
+      "line": null,
+      "dest": 24
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 4,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 5,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_RIGHT",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 50,
+      "line": null,
+      "dest": 60
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 7,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_RIGHT",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 68,
+      "line": null,
+      "dest": 84
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 9,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 3,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_LEFT",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 18,
+      "line": null,
+      "dest": 24
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 4,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 5,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_LEFT",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 50,
+      "line": null,
+      "dest": 56
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 6,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 3,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_LEFT",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 18,
+      "line": null,
+      "dest": 24
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 4,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 5,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_RIGHT",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 50,
+      "line": null,
+      "dest": 60
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 7,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_RIGHT",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 68,
+      "line": null,
+      "dest": 84
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 9,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 3,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_LEFT",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 18,
+      "line": null,
+      "dest": 24
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 4,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 5,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_RIGHT",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 50,
+      "line": null,
+      "dest": 60
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 7,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_RIGHT",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 68,
+      "line": null,
+      "dest": 84
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 9,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 3,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_LEFT",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 18,
+      "line": null,
+      "dest": 24
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 4,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 5,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_RIGHT",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 50,
+      "line": null,
+      "dest": 60
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 7,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_RIGHT",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 68,
+      "line": null,
+      "dest": 84
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 9,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 3,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_LEFT",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 18,
+      "line": null,
+      "dest": 24
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 4,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 5,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_RIGHT",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 50,
+      "line": null,
+      "dest": 60
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 7,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_LEFT",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 68,
+      "line": null,
+      "dest": 74
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 8,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 10,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "<module>",
+      "code_filename": "while_break_continue.py",
+      "code_firstlineno": 1,
+      "offset": 82,
+      "line": null,
+      "dest": null
+    }
+  ],
+  "expected_lines": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+  ],
+  "expected_arcs": [
+    [
+      1,
+      1
+    ],
+    [
+      2,
+      2
+    ],
+    [
+      3,
+      3
+    ],
+    [
+      3,
+      4
+    ],
+    [
+      4,
+      4
+    ],
+    [
+      5,
+      5
+    ],
+    [
+      5,
+      6
+    ],
+    [
+      5,
+      7
+    ],
+    [
+      6,
+      6
+    ],
+    [
+      7,
+      7
+    ],
+    [
+      7,
+      8
+    ],
+    [
+      7,
+      9
+    ],
+    [
+      8,
+      8
+    ],
+    [
+      9,
+      9
+    ],
+    [
+      10,
+      -1
+    ],
+    [
+      10,
+      10
+    ]
+  ]
+}

@@ -1,0 +1,123 @@
+{
+  "python_version": [
+    3,
+    13,
+    7,
+    "final",
+    0
+  ],
+  "source_code": "x = (\n    1 +\n    2 +\n    3\n)\nif (\n    x > 0 and\n    x < 100\n):\n    result = \"yes\"\nelse:\n    result = \"no\"\ndone = True\n",
+  "filename": "multiline_statements.py",
+  "events": [
+    {
+      "type": "PY_START",
+      "code_name": "<module>",
+      "code_filename": "multiline_statements.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "multiline_statements.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 2,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "multiline_statements.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 1,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "multiline_statements.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 7,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "multiline_statements.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 8,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "multiline_statements.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 10,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "multiline_statements.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 13,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "<module>",
+      "code_filename": "multiline_statements.py",
+      "code_firstlineno": 1,
+      "offset": 38,
+      "line": null,
+      "dest": null
+    }
+  ],
+  "expected_lines": [
+    1,
+    2,
+    7,
+    8,
+    10,
+    13
+  ],
+  "expected_arcs": [
+    [
+      1,
+      1
+    ],
+    [
+      2,
+      2
+    ],
+    [
+      7,
+      7
+    ],
+    [
+      8,
+      8
+    ],
+    [
+      10,
+      10
+    ],
+    [
+      13,
+      -1
+    ],
+    [
+      13,
+      13
+    ]
+  ]
+}

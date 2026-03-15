@@ -1,0 +1,162 @@
+{
+  "python_version": [
+    3,
+    15,
+    0,
+    "alpha",
+    6
+  ],
+  "source_code": "x = 3\nif x == 1:\n    y = \"one\"\nelif x == 2:\n    y = \"two\"\nelif x == 3:\n    y = \"three\"\nelse:\n    y = \"other\"\nz = y\n",
+  "filename": "if_elif_else.py",
+  "events": [
+    {
+      "type": "PY_START",
+      "code_name": "<module>",
+      "code_filename": "if_elif_else.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "if_elif_else.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 1,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "if_elif_else.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 2,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_RIGHT",
+      "code_name": "<module>",
+      "code_filename": "if_elif_else.py",
+      "code_firstlineno": 1,
+      "offset": 14,
+      "line": null,
+      "dest": 32
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "if_elif_else.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 4,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_RIGHT",
+      "code_name": "<module>",
+      "code_filename": "if_elif_else.py",
+      "code_firstlineno": 1,
+      "offset": 40,
+      "line": null,
+      "dest": 58
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "if_elif_else.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 6,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_LEFT",
+      "code_name": "<module>",
+      "code_filename": "if_elif_else.py",
+      "code_firstlineno": 1,
+      "offset": 66,
+      "line": null,
+      "dest": 72
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "if_elif_else.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 7,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "if_elif_else.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 10,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "<module>",
+      "code_filename": "if_elif_else.py",
+      "code_firstlineno": 1,
+      "offset": 82,
+      "line": null,
+      "dest": null
+    }
+  ],
+  "expected_lines": [
+    1,
+    2,
+    4,
+    6,
+    7,
+    10
+  ],
+  "expected_arcs": [
+    [
+      1,
+      1
+    ],
+    [
+      2,
+      2
+    ],
+    [
+      2,
+      4
+    ],
+    [
+      4,
+      4
+    ],
+    [
+      4,
+      6
+    ],
+    [
+      6,
+      6
+    ],
+    [
+      6,
+      7
+    ],
+    [
+      7,
+      7
+    ],
+    [
+      10,
+      -1
+    ],
+    [
+      10,
+      10
+    ]
+  ]
+}

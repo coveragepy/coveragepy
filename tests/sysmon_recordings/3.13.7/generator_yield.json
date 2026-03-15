@@ -1,0 +1,189 @@
+{
+  "python_version": [
+    3,
+    13,
+    7,
+    "final",
+    0
+  ],
+  "source_code": "def gen(n):\n    for i in range(n):\n        yield i * 2\n\nresult = list(gen(3))\n",
+  "filename": "generator_yield.py",
+  "events": [
+    {
+      "type": "PY_START",
+      "code_name": "<module>",
+      "code_filename": "generator_yield.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "generator_yield.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 1,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "generator_yield.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 5,
+      "dest": null
+    },
+    {
+      "type": "PY_START",
+      "code_name": "gen",
+      "code_filename": "generator_yield.py",
+      "code_firstlineno": 1,
+      "offset": 4,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "gen",
+      "code_filename": "generator_yield.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 2,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "gen",
+      "code_filename": "generator_yield.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 3,
+      "dest": null
+    },
+    {
+      "type": "PY_RESUME",
+      "code_name": "gen",
+      "code_filename": "generator_yield.py",
+      "code_firstlineno": 1,
+      "offset": 44,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "gen",
+      "code_filename": "generator_yield.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 2,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "gen",
+      "code_filename": "generator_yield.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 3,
+      "dest": null
+    },
+    {
+      "type": "PY_RESUME",
+      "code_name": "gen",
+      "code_filename": "generator_yield.py",
+      "code_firstlineno": 1,
+      "offset": 44,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "gen",
+      "code_filename": "generator_yield.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 2,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "gen",
+      "code_filename": "generator_yield.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 3,
+      "dest": null
+    },
+    {
+      "type": "PY_RESUME",
+      "code_name": "gen",
+      "code_filename": "generator_yield.py",
+      "code_firstlineno": 1,
+      "offset": 44,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "gen",
+      "code_filename": "generator_yield.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 2,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "gen",
+      "code_filename": "generator_yield.py",
+      "code_firstlineno": 1,
+      "offset": 56,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "<module>",
+      "code_filename": "generator_yield.py",
+      "code_firstlineno": 1,
+      "offset": 36,
+      "line": null,
+      "dest": null
+    }
+  ],
+  "expected_lines": [
+    1,
+    2,
+    3,
+    5
+  ],
+  "expected_arcs": [
+    [
+      1,
+      1
+    ],
+    [
+      2,
+      -1
+    ],
+    [
+      2,
+      2
+    ],
+    [
+      3,
+      3
+    ],
+    [
+      5,
+      -1
+    ],
+    [
+      5,
+      5
+    ]
+  ]
+}

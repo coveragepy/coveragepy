@@ -1,0 +1,123 @@
+{
+  "python_version": [
+    3,
+    15,
+    0,
+    "alpha",
+    6
+  ],
+  "source_code": "result = []\ntry:\n    x = 1\nexcept ValueError:\n    result.append(\"except\")\nelse:\n    result.append(\"else\")\nfinally:\n    result.append(\"finally\")\ndone = True\n",
+  "filename": "try_except_else_finally.py",
+  "events": [
+    {
+      "type": "PY_START",
+      "code_name": "<module>",
+      "code_filename": "try_except_else_finally.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "try_except_else_finally.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 1,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "try_except_else_finally.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 2,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "try_except_else_finally.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 3,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "try_except_else_finally.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 7,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "try_except_else_finally.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 9,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "try_except_else_finally.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 10,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "<module>",
+      "code_filename": "try_except_else_finally.py",
+      "code_firstlineno": 1,
+      "offset": 86,
+      "line": null,
+      "dest": null
+    }
+  ],
+  "expected_lines": [
+    1,
+    2,
+    3,
+    7,
+    9,
+    10
+  ],
+  "expected_arcs": [
+    [
+      1,
+      1
+    ],
+    [
+      2,
+      2
+    ],
+    [
+      3,
+      3
+    ],
+    [
+      7,
+      7
+    ],
+    [
+      9,
+      9
+    ],
+    [
+      10,
+      -1
+    ],
+    [
+      10,
+      10
+    ]
+  ]
+}

@@ -1,0 +1,281 @@
+{
+  "python_version": [
+    3,
+    15,
+    0,
+    "alpha",
+    6
+  ],
+  "source_code": "import asyncio\n\nasync def fetch(x):\n    await asyncio.sleep(0)\n    return x * 2\n\nasync def main():\n    a = await fetch(1)\n    b = await fetch(2)\n    return a + b\n\nresult = asyncio.run(main())\n",
+  "filename": "async_await.py",
+  "events": [
+    {
+      "type": "PY_START",
+      "code_name": "<module>",
+      "code_filename": "async_await.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "async_await.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 1,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "async_await.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 3,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "async_await.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 7,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "async_await.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 12,
+      "dest": null
+    },
+    {
+      "type": "PY_START",
+      "code_name": "main",
+      "code_filename": "async_await.py",
+      "code_firstlineno": 7,
+      "offset": 4,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "main",
+      "code_filename": "async_await.py",
+      "code_firstlineno": 7,
+      "offset": 0,
+      "line": 8,
+      "dest": null
+    },
+    {
+      "type": "PY_START",
+      "code_name": "fetch",
+      "code_filename": "async_await.py",
+      "code_firstlineno": 3,
+      "offset": 4,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "fetch",
+      "code_filename": "async_await.py",
+      "code_firstlineno": 3,
+      "offset": 0,
+      "line": 4,
+      "dest": null
+    },
+    {
+      "type": "PY_RESUME",
+      "code_name": "main",
+      "code_filename": "async_await.py",
+      "code_firstlineno": 7,
+      "offset": 36,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "PY_RESUME",
+      "code_name": "fetch",
+      "code_filename": "async_await.py",
+      "code_firstlineno": 3,
+      "offset": 58,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "fetch",
+      "code_filename": "async_await.py",
+      "code_firstlineno": 3,
+      "offset": 0,
+      "line": 5,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "fetch",
+      "code_filename": "async_await.py",
+      "code_firstlineno": 3,
+      "offset": 82,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "main",
+      "code_filename": "async_await.py",
+      "code_firstlineno": 7,
+      "offset": 0,
+      "line": 9,
+      "dest": null
+    },
+    {
+      "type": "PY_START",
+      "code_name": "fetch",
+      "code_filename": "async_await.py",
+      "code_firstlineno": 3,
+      "offset": 4,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "fetch",
+      "code_filename": "async_await.py",
+      "code_firstlineno": 3,
+      "offset": 0,
+      "line": 4,
+      "dest": null
+    },
+    {
+      "type": "PY_RESUME",
+      "code_name": "main",
+      "code_filename": "async_await.py",
+      "code_firstlineno": 7,
+      "offset": 74,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "PY_RESUME",
+      "code_name": "fetch",
+      "code_filename": "async_await.py",
+      "code_firstlineno": 3,
+      "offset": 58,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "fetch",
+      "code_filename": "async_await.py",
+      "code_firstlineno": 3,
+      "offset": 0,
+      "line": 5,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "fetch",
+      "code_filename": "async_await.py",
+      "code_firstlineno": 3,
+      "offset": 82,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "main",
+      "code_filename": "async_await.py",
+      "code_firstlineno": 7,
+      "offset": 0,
+      "line": 10,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "main",
+      "code_filename": "async_await.py",
+      "code_firstlineno": 7,
+      "offset": 96,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "<module>",
+      "code_filename": "async_await.py",
+      "code_firstlineno": 1,
+      "offset": 70,
+      "line": null,
+      "dest": null
+    }
+  ],
+  "expected_lines": [
+    1,
+    3,
+    4,
+    5,
+    7,
+    8,
+    9,
+    10,
+    12
+  ],
+  "expected_arcs": [
+    [
+      1,
+      1
+    ],
+    [
+      3,
+      3
+    ],
+    [
+      4,
+      4
+    ],
+    [
+      5,
+      -3
+    ],
+    [
+      5,
+      5
+    ],
+    [
+      7,
+      7
+    ],
+    [
+      8,
+      8
+    ],
+    [
+      9,
+      9
+    ],
+    [
+      10,
+      -7
+    ],
+    [
+      10,
+      10
+    ],
+    [
+      12,
+      -1
+    ],
+    [
+      12,
+      12
+    ]
+  ]
+}

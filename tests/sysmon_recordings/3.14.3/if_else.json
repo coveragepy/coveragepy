@@ -1,0 +1,108 @@
+{
+  "python_version": [
+    3,
+    14,
+    3,
+    "final",
+    0
+  ],
+  "source_code": "x = 1\nif x > 0:\n    y = 3\nelse:\n    y = 5\nz = 6\n",
+  "filename": "if_else.py",
+  "events": [
+    {
+      "type": "PY_START",
+      "code_name": "<module>",
+      "code_filename": "if_else.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "if_else.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 1,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "if_else.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 2,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_LEFT",
+      "code_name": "<module>",
+      "code_filename": "if_else.py",
+      "code_firstlineno": 1,
+      "offset": 14,
+      "line": null,
+      "dest": 20
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "if_else.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 3,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "if_else.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 6,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "<module>",
+      "code_filename": "if_else.py",
+      "code_firstlineno": 1,
+      "offset": 30,
+      "line": null,
+      "dest": null
+    }
+  ],
+  "expected_lines": [
+    1,
+    2,
+    3,
+    6
+  ],
+  "expected_arcs": [
+    [
+      1,
+      1
+    ],
+    [
+      2,
+      2
+    ],
+    [
+      2,
+      3
+    ],
+    [
+      3,
+      3
+    ],
+    [
+      6,
+      -1
+    ],
+    [
+      6,
+      6
+    ]
+  ]
+}

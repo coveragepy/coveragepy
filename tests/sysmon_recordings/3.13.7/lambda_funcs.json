@@ -1,0 +1,279 @@
+{
+  "python_version": [
+    3,
+    13,
+    7,
+    "final",
+    0
+  ],
+  "source_code": "double = lambda x: x * 2\nadd = lambda x, y: x + y\nnums = [1, 2, 3, 4, 5]\ndoubled = list(map(double, nums))\ntotal = add(sum(doubled), 10)\n",
+  "filename": "lambda_funcs.py",
+  "events": [
+    {
+      "type": "PY_START",
+      "code_name": "<module>",
+      "code_filename": "lambda_funcs.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "lambda_funcs.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 1,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "lambda_funcs.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 2,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "lambda_funcs.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 3,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "lambda_funcs.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 4,
+      "dest": null
+    },
+    {
+      "type": "PY_START",
+      "code_name": "<lambda>",
+      "code_filename": "lambda_funcs.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<lambda>",
+      "code_filename": "lambda_funcs.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 1,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "<lambda>",
+      "code_filename": "lambda_funcs.py",
+      "code_firstlineno": 1,
+      "offset": 10,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "PY_START",
+      "code_name": "<lambda>",
+      "code_filename": "lambda_funcs.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<lambda>",
+      "code_filename": "lambda_funcs.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 1,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "<lambda>",
+      "code_filename": "lambda_funcs.py",
+      "code_firstlineno": 1,
+      "offset": 10,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "PY_START",
+      "code_name": "<lambda>",
+      "code_filename": "lambda_funcs.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<lambda>",
+      "code_filename": "lambda_funcs.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 1,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "<lambda>",
+      "code_filename": "lambda_funcs.py",
+      "code_firstlineno": 1,
+      "offset": 10,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "PY_START",
+      "code_name": "<lambda>",
+      "code_filename": "lambda_funcs.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<lambda>",
+      "code_filename": "lambda_funcs.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 1,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "<lambda>",
+      "code_filename": "lambda_funcs.py",
+      "code_firstlineno": 1,
+      "offset": 10,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "PY_START",
+      "code_name": "<lambda>",
+      "code_filename": "lambda_funcs.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<lambda>",
+      "code_filename": "lambda_funcs.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 1,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "<lambda>",
+      "code_filename": "lambda_funcs.py",
+      "code_firstlineno": 1,
+      "offset": 10,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "lambda_funcs.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 5,
+      "dest": null
+    },
+    {
+      "type": "PY_START",
+      "code_name": "<lambda>",
+      "code_filename": "lambda_funcs.py",
+      "code_firstlineno": 2,
+      "offset": 0,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<lambda>",
+      "code_filename": "lambda_funcs.py",
+      "code_firstlineno": 2,
+      "offset": 0,
+      "line": 2,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "<lambda>",
+      "code_filename": "lambda_funcs.py",
+      "code_firstlineno": 2,
+      "offset": 8,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "<module>",
+      "code_filename": "lambda_funcs.py",
+      "code_firstlineno": 1,
+      "offset": 82,
+      "line": null,
+      "dest": null
+    }
+  ],
+  "expected_lines": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "expected_arcs": [
+    [
+      1,
+      -1
+    ],
+    [
+      1,
+      1
+    ],
+    [
+      2,
+      -2
+    ],
+    [
+      2,
+      2
+    ],
+    [
+      3,
+      3
+    ],
+    [
+      4,
+      4
+    ],
+    [
+      5,
+      -1
+    ],
+    [
+      5,
+      5
+    ]
+  ]
+}

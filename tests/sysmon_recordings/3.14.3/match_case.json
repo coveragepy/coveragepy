@@ -1,0 +1,337 @@
+{
+  "python_version": [
+    3,
+    14,
+    3,
+    "final",
+    0
+  ],
+  "source_code": "# requires: 3.10+\ndef classify(x):\n    match x:\n        case 0:\n            return \"zero\"\n        case n if n > 0:\n            return \"positive\"\n        case _:\n            return \"negative\"\n\nresults = [classify(0), classify(5), classify(-1)]\n",
+  "filename": "match_case.py",
+  "events": [
+    {
+      "type": "PY_START",
+      "code_name": "<module>",
+      "code_filename": "match_case.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "match_case.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 2,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "match_case.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 11,
+      "dest": null
+    },
+    {
+      "type": "PY_START",
+      "code_name": "classify",
+      "code_filename": "match_case.py",
+      "code_firstlineno": 2,
+      "offset": 0,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "classify",
+      "code_filename": "match_case.py",
+      "code_firstlineno": 2,
+      "offset": 0,
+      "line": 3,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "classify",
+      "code_filename": "match_case.py",
+      "code_firstlineno": 2,
+      "offset": 0,
+      "line": 4,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_LEFT",
+      "code_name": "classify",
+      "code_filename": "match_case.py",
+      "code_firstlineno": 2,
+      "offset": 12,
+      "line": null,
+      "dest": 18
+    },
+    {
+      "type": "LINE",
+      "code_name": "classify",
+      "code_filename": "match_case.py",
+      "code_firstlineno": 2,
+      "offset": 0,
+      "line": 5,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "classify",
+      "code_filename": "match_case.py",
+      "code_firstlineno": 2,
+      "offset": 22,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "PY_START",
+      "code_name": "classify",
+      "code_filename": "match_case.py",
+      "code_firstlineno": 2,
+      "offset": 0,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "classify",
+      "code_filename": "match_case.py",
+      "code_firstlineno": 2,
+      "offset": 0,
+      "line": 3,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "classify",
+      "code_filename": "match_case.py",
+      "code_firstlineno": 2,
+      "offset": 0,
+      "line": 4,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_RIGHT",
+      "code_name": "classify",
+      "code_filename": "match_case.py",
+      "code_firstlineno": 2,
+      "offset": 12,
+      "line": null,
+      "dest": 24
+    },
+    {
+      "type": "LINE",
+      "code_name": "classify",
+      "code_filename": "match_case.py",
+      "code_firstlineno": 2,
+      "offset": 0,
+      "line": 6,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_LEFT",
+      "code_name": "classify",
+      "code_filename": "match_case.py",
+      "code_firstlineno": 2,
+      "offset": 32,
+      "line": null,
+      "dest": 38
+    },
+    {
+      "type": "LINE",
+      "code_name": "classify",
+      "code_filename": "match_case.py",
+      "code_firstlineno": 2,
+      "offset": 0,
+      "line": 7,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "classify",
+      "code_filename": "match_case.py",
+      "code_firstlineno": 2,
+      "offset": 40,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "PY_START",
+      "code_name": "classify",
+      "code_filename": "match_case.py",
+      "code_firstlineno": 2,
+      "offset": 0,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "classify",
+      "code_filename": "match_case.py",
+      "code_firstlineno": 2,
+      "offset": 0,
+      "line": 3,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "classify",
+      "code_filename": "match_case.py",
+      "code_firstlineno": 2,
+      "offset": 0,
+      "line": 4,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_RIGHT",
+      "code_name": "classify",
+      "code_filename": "match_case.py",
+      "code_firstlineno": 2,
+      "offset": 12,
+      "line": null,
+      "dest": 24
+    },
+    {
+      "type": "LINE",
+      "code_name": "classify",
+      "code_filename": "match_case.py",
+      "code_firstlineno": 2,
+      "offset": 0,
+      "line": 6,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_RIGHT",
+      "code_name": "classify",
+      "code_filename": "match_case.py",
+      "code_firstlineno": 2,
+      "offset": 32,
+      "line": null,
+      "dest": 42
+    },
+    {
+      "type": "LINE",
+      "code_name": "classify",
+      "code_filename": "match_case.py",
+      "code_firstlineno": 2,
+      "offset": 0,
+      "line": 8,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "classify",
+      "code_filename": "match_case.py",
+      "code_firstlineno": 2,
+      "offset": 0,
+      "line": 9,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "classify",
+      "code_filename": "match_case.py",
+      "code_firstlineno": 2,
+      "offset": 46,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "<module>",
+      "code_filename": "match_case.py",
+      "code_firstlineno": 1,
+      "offset": 56,
+      "line": null,
+      "dest": null
+    }
+  ],
+  "expected_lines": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    11
+  ],
+  "expected_arcs": [
+    [
+      2,
+      2
+    ],
+    [
+      3,
+      3
+    ],
+    [
+      4,
+      4
+    ],
+    [
+      4,
+      5
+    ],
+    [
+      4,
+      6
+    ],
+    [
+      5,
+      -2
+    ],
+    [
+      5,
+      5
+    ],
+    [
+      6,
+      6
+    ],
+    [
+      6,
+      7
+    ],
+    [
+      6,
+      8
+    ],
+    [
+      7,
+      -2
+    ],
+    [
+      7,
+      7
+    ],
+    [
+      8,
+      8
+    ],
+    [
+      9,
+      -2
+    ],
+    [
+      9,
+      9
+    ],
+    [
+      11,
+      -1
+    ],
+    [
+      11,
+      11
+    ]
+  ]
+}

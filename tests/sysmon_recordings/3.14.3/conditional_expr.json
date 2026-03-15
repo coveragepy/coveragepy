@@ -1,0 +1,157 @@
+{
+  "python_version": [
+    3,
+    14,
+    3,
+    "final",
+    0
+  ],
+  "source_code": "x = 5\na = \"pos\" if x > 0 else \"neg\"\nb = \"big\" if x > 100 else \"small\"\nc = \"zero\" if x == 0 else (\"one\" if x == 1 else \"other\")\nresult = f\"{a} {b} {c}\"\n",
+  "filename": "conditional_expr.py",
+  "events": [
+    {
+      "type": "PY_START",
+      "code_name": "<module>",
+      "code_filename": "conditional_expr.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": null,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "conditional_expr.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 1,
+      "dest": null
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "conditional_expr.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 2,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_LEFT",
+      "code_name": "<module>",
+      "code_filename": "conditional_expr.py",
+      "code_firstlineno": 1,
+      "offset": 14,
+      "line": null,
+      "dest": 20
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "conditional_expr.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 3,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_RIGHT",
+      "code_name": "<module>",
+      "code_filename": "conditional_expr.py",
+      "code_firstlineno": 1,
+      "offset": 36,
+      "line": null,
+      "dest": 46
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "conditional_expr.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 4,
+      "dest": null
+    },
+    {
+      "type": "BRANCH_RIGHT",
+      "code_name": "<module>",
+      "code_filename": "conditional_expr.py",
+      "code_firstlineno": 1,
+      "offset": 58,
+      "line": null,
+      "dest": 68
+    },
+    {
+      "type": "BRANCH_RIGHT",
+      "code_name": "<module>",
+      "code_filename": "conditional_expr.py",
+      "code_firstlineno": 1,
+      "offset": 76,
+      "line": null,
+      "dest": 86
+    },
+    {
+      "type": "LINE",
+      "code_name": "<module>",
+      "code_filename": "conditional_expr.py",
+      "code_firstlineno": 1,
+      "offset": 0,
+      "line": 5,
+      "dest": null
+    },
+    {
+      "type": "PY_RETURN",
+      "code_name": "<module>",
+      "code_filename": "conditional_expr.py",
+      "code_firstlineno": 1,
+      "offset": 112,
+      "line": null,
+      "dest": null
+    }
+  ],
+  "expected_lines": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "expected_arcs": [
+    [
+      1,
+      1
+    ],
+    [
+      2,
+      2
+    ],
+    [
+      2,
+      3
+    ],
+    [
+      3,
+      3
+    ],
+    [
+      3,
+      4
+    ],
+    [
+      4,
+      4
+    ],
+    [
+      4,
+      5
+    ],
+    [
+      5,
+      -1
+    ],
+    [
+      5,
+      5
+    ]
+  ]
+}
