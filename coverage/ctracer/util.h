@@ -5,7 +5,14 @@
 #define _COVERAGE_UTIL_H
 
 #include <Python.h>
+
+#if defined(_MSC_VER) && _MSC_VER < 1939
+#define _Atomic volatile
+#define atomic_load(p) (*(p))
+#define atomic_store(p, v) _InterlockedExchange((p), (v))
+#else
 #include <stdatomic.h>
+#endif
 
 /* Compile-time debugging helpers */
 #undef WHAT_LOG         /* Define to log the WHAT params in the trace function. */

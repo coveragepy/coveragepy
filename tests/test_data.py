@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+
+import gc
 import glob
 import os
 import os.path
@@ -24,6 +26,7 @@ from coverage.exceptions import DataError, NoDataError
 from coverage.files import PathAliases, canonical_filename
 from coverage.types import FilePathClasses, FilePathType, TArc, TLineNo
 
+from tests import osinfo
 from tests.coveragetest import CoverageTest
 from tests.helpers import DebugControlString, assert_count_equal
 
@@ -745,7 +748,7 @@ class CoverageDataFilesTest(CoverageTest):
 
         assert re.search(
             r"^"
-            + r"Closing dbs, force=False: {}\n"
+            + r"Closing dbs, force=True: {}\n"
             + r"Erasing data file '.*\.coverage' \(does not exist\)\n"
             + r"Opening data file '.*\.coverage' \(does not exist\)\n"
             + r"Initing data file '.*\.coverage' \(0 bytes, modified [-:. 0-9]+\)\n"
@@ -1093,3 +1096,34 @@ class NoDiskTest(CoverageTest):
         b = CoverageData(no_disk=True)
         b.update(a)
         assert b.measured_files() == {"foo.py"}
+
+    @pytest.mark.flaky
+    def test_erase_doesnt_leak_memory(self) -> None:
+        # https://github.com/coveragepy/coveragepy/issues/2138
+        # Repeated erase cycles on no_disk data should not leak memory
+        # from unclosed in-memory database connections.
+
+        # Keep references to erased data objects, simulating how
+        # Coverage._data_to_close accumulates them.
+        old_data = []
+
+        # Warmup
+        covdata = CoverageData(no_disk=True)
+        covdata.add_lines({"foo.py": list(range(1, 1000))})
+        covdata.erase()
+        old_data.append(covdata)
+
+        gc.collect()
+        baseline = osinfo.process_ram()
+
+        for _ in range(200):
+            covdata = CoverageData(no_disk=True)
+            covdata.add_lines({"foo.py": list(range(1, 1000))})
+            covdata.erase()
+            old_data.append(covdata)
+
+        gc.collect()
+        growth = osinfo.process_ram() - baseline
+        # Before fixing 2138, 200 cycles leaked ~44MB from unclosed in-memory
+        # SQLite databases.  With the fix, growth is well under 1MB.
+        assert growth < 4_000_000, f"Memory grew by {growth:,} bytes over 200 erase cycles"

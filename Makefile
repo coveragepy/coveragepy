@@ -130,7 +130,7 @@ KITBIN = .tox/$(KITVER)/bin
 $(KITBIN):
 	tox -q -e $(KITVER) --notest
 
-PIP_COMPILE = uv pip compile -q --universal ${COMPILE_OPTS}
+PIP_COMPILE = uv pip compile -q --universal --generate-hashes ${COMPILE_OPTS}
 
 # Limit to packages that were released more than 10 days ago.
 # https://blog.yossarian.net/2025/11/21/We-should-all-be-using-dependency-cooldowns

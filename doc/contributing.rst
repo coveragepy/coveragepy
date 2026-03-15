@@ -83,65 +83,71 @@ Running the tests
 The tests are written mostly as standard unittest-style tests, and are run with
 pytest running under `tox`_::
 
-    % python3 -m tox -e py39
-    py39: wheel-0.45.1-py3-none-any.whl already present in /Users/ned/Library/Application Support/virtualenv/wheel/3.9/embed/3/wheel.json
-    py39: pip-25.0.1-py3-none-any.whl already present in /Users/ned/Library/Application Support/virtualenv/wheel/3.9/embed/3/pip.json
-    py39: setuptools-78.1.0-py3-none-any.whl already present in /Users/ned/Library/Application Support/virtualenv/wheel/3.9/embed/3/setuptools.json
-    py39: install_deps> python -m pip install -U -r requirements/pip.pip -r requirements/pytest.pip -r requirements/light-threads.pip
+    % python3 -m tox -e py310
+    py310: pip-26.0.1-py3-none-any.whl already present in /Users/ned/.cache/virtualenv/wheel/3.10/embed/3/pip.json
+    py310: setuptools-82.0.1-py3-none-any.whl already present in /Users/ned/.cache/virtualenv/wheel/3.10/embed/3/setuptools.json
+    py310: install_deps> python -m pip install -U -r requirements/pip.pip -r requirements/pytest.pip -r requirements/light-threads.pip
     .pkg: install_requires> python -I -m pip install setuptools
-    .pkg: _optional_hooks> python /usr/local/virtualenvs/coverage/lib/python3.9/site-packages/pyproject_api/_backend.py True setuptools.build_meta
-    .pkg: get_requires_for_build_editable> python /usr/local/virtualenvs/coverage/lib/python3.9/site-packages/pyproject_api/_backend.py True setuptools.build_meta
-    .pkg: build_editable> python /usr/local/virtualenvs/coverage/lib/python3.9/site-packages/pyproject_api/_backend.py True setuptools.build_meta
-    py39: install_package_deps> python -m pip install -U 'tomli; python_full_version <= "3.11.0a6"'
-    py39: install_package> python -m pip install -U --force-reinstall --no-deps .tox/.tmp/package/1/coverage-7.8.1a0.dev1-0.editable-cp39-cp39-macosx_15_0_arm64.whl
-    py39: commands[0]> python igor.py zip_mods
-    py39: commands[1]> python igor.py remove_extension
-    py39: commands[2]> python igor.py test_with_core pytrace
-    === CPython 3.9.21 (gil) with Python tracer (.tox/py39/bin/python) ===
+    .pkg: _optional_hooks> python /Users/ned/coverage/trunk/.venv/lib/python3.10/site-packages/pyproject_api/_backend.py True setuptools.build_meta
+    .pkg: get_requires_for_build_sdist> python /Users/ned/coverage/trunk/.venv/lib/python3.10/site-packages/pyproject_api/_backend.py True setuptools.build_meta
+    .pkg: get_requires_for_build_wheel> python /Users/ned/coverage/trunk/.venv/lib/python3.10/site-packages/pyproject_api/_backend.py True setuptools.build_meta
+    .pkg: prepare_metadata_for_build_wheel> python /Users/ned/coverage/trunk/.venv/lib/python3.10/site-packages/pyproject_api/_backend.py True setuptools.build_meta
+    .pkg: build_sdist> python /Users/ned/coverage/trunk/.venv/lib/python3.10/site-packages/pyproject_api/_backend.py True setuptools.build_meta
+    py310: install_package_deps> python -m pip install -U 'tomli; python_full_version <= "3.11.0a6"'
+    py310: install_package> python -m pip install -U --force-reinstall --no-deps .tox/.tmp/package/1/coverage-7.13.5a0.dev1.tar.gz
+    py310: commands[0]> python igor.py zip_mods
+    py310: commands[1]> python setup.py --quiet build_ext --inplace
+    py310: commands[2]> python -m pip install -q -e .
+    py310: commands[3]> python igor.py clean_for_core ctrace
+    py310: commands[4]> python igor.py test_with_core ctrace
+    === CPython 3.10.20 (main Mar  3 2026 05:34:05) (gil) with C tracer (/usr/local/pyenv/pyenv/versions/3.10.20) ===
     bringing up nodes...
     ....................................................................................... [  5%]
-    ..................................................................x................s... [ 11%]
-    ......s...s.....s....s......s.s.s.s.................................................... [ 17%]
-    ...........................................s..ss...ss.ss.ss............................ [ 23%]
-    ....................................................................................... [ 29%]
-    ....................................................................................... [ 35%]
-    ....................................................................................... [ 41%]
-    ................................................s...................................... [ 47%]
-    ....................................................................................... [ 53%]
-    ...................................................s..........s........................ [ 59%]
+    ...................................................................................s... [ 10%]
+    ......................................................................................s [ 16%]
+    .................................................................s....s................ [ 21%]
+    ....................................................................................... [ 27%]
+    ..............s........................................................................ [ 32%]
+    ....................................................................................... [ 38%]
+    ....................................................................................... [ 43%]
+    ....................................................................................... [ 49%]
+    ....................................................................................... [ 54%]
+    ...............................................s............s.......................... [ 60%]
     ....................................................................................... [ 65%]
-    ..........................ssss......................................................... [ 71%]
-    ..s.....s.ss..........................ss...................s.s..sssssss.ssssss.sssss... [ 77%]
-    .........ss..........................s...s.s......s........s........................s.. [ 83%]
-    .............................s......................................................... [ 88%]
-    ....................................................................................... [ 94%]
-    .............................................s.......................ss....             [100%]
-    1403 passed, 63 skipped, 1 xfailed in 15.05s
-    py39: commands[3]> python setup.py --quiet build_ext --inplace
-    py39: commands[4]> python -m pip install -q -e .
-    py39: commands[5]> python igor.py test_with_core ctrace
-    === CPython 3.9.21 (gil) with C tracer (.tox/py39/bin/python) ===
+    ..............................s........................................................ [ 71%]
+    .........................................s............................................. [ 76%]
+    ..........s...........................s.......s.s..s.............................s..... [ 82%]
+    ...............s.......................................s............................... [ 87%]
+    ....................................................................................... [ 93%]
+    ...................................................................................s... [ 98%]
+    ................                                                                        [100%]
+    1564 passed, 18 skipped in 17.78s
+    py310: commands[5]> python igor.py clean_for_core pytrace
+    py310: commands[6]> python igor.py test_with_core pytrace
+    === CPython 3.10.20 (main Mar  3 2026 05:34:05) (gil) with Python tracer (/usr/local/pyenv/pyenv/versions/3.10.20) ===
     bringing up nodes...
     ....................................................................................... [  5%]
-    ..........................................sx................................s.......... [ 11%]
-    ..........ss........s....................................s............................. [ 17%]
-    ..............................sss...................................................... [ 23%]
-    ..............................................................s........................ [ 29%]
-    ....................................................................................... [ 35%]
-    ....................................................................................... [ 41%]
-    ......................................................s................................ [ 47%]
-    .............................................s......................................... [ 53%]
-    .......s..................s............................................................ [ 59%]
-    ....................................................................................s.. [ 65%]
-    .......................................................ss.......................s...... [ 71%]
-    ....................................................s............................ss.... [ 77%]
-    ..........................s...................s........................................ [ 83%]
-    ....................................................................................... [ 88%]
-    ............................s......s................................................... [ 94%]
-    .................................................................s.........             [100%]
-    1440 passed, 26 skipped, 1 xfailed in 12.38s
-    py39: OK (40.04=setup[9.03]+cmd[0.17,0.09,15.40,0.13,2.47,12.77] seconds)
-    congratulations :) (40.61 seconds)
+    ..................................................................................s.... [ 10%]
+    .................................................................................s..... [ 16%]
+    .......................................................s..s...s.ss.ss.s.s.............. [ 21%]
+    ...s................................................................................... [ 27%]
+    ...........s........................................................................... [ 32%]
+    .................................................................................s..... [ 38%]
+    ............................................s.......................................... [ 43%]
+    ....................................................................................... [ 49%]
+    ....................................................................................... [ 54%]
+    ..................................................s.............s...................... [ 60%]
+    ....................................................................................... [ 65%]
+    .............................s.ss...s.................................................. [ 71%]
+    ........................................s.....................ss..s.ss.ss.sssssssssssss [ 76%]
+    ....s...............s.....................s.....s.s..s..............................s.. [ 82%]
+    ..........s..............................................s............................. [ 87%]
+    ....................................................................................... [ 93%]
+    ............................................................................s.......... [ 98%]
+    ..........ss....                                                                        [100%]
+    1528 passed, 54 skipped in 15.73s
+      py310: OK (52.35=setup[12.35]+cmd[0.16,0.60,2.20,0.12,19.79,0.15,16.98] seconds)
+      congratulations :) (52.38 seconds)
 
 Tox runs the complete test suite a few times for each version of Python you
 have installed.  The first run uses the C implementation of the trace function,
@@ -167,32 +173,29 @@ name, which can be very convenient for ad-hoc test selection.  Of course you
 can combine tox and pytest options::
 
     % python3 -m tox -q -e py310 -- -n 0 -vv -k hash
-    Skipping tests with Python tracer: Only one core: not running pytrace
-    === CPython 3.10.16 (gil) with C tracer (.tox/py310/bin/python) ===
+    === CPython 3.10.20 (main Mar  3 2026 05:34:05) (gil) with C tracer (/usr/local/pyenv/pyenv/versions/3.10.20) ===
     ===================================== test session starts =====================================
-    platform darwin -- Python 3.10.16, pytest-8.3.5, pluggy-1.5.0 -- /Users/ned/coverage/trunk/.tox/py310/bin/python
+    platform darwin -- Python 3.10.20, pytest-9.0.2, pluggy-1.6.0 -- /Users/ned/coverage/trunk/.tox/py310/bin/python
     cachedir: .tox/py310/.pytest_cache
-    hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase(PosixPath('/Users/ned/coverage/trunk/.hypothesis/examples'))
+    hypothesis profile 'default'
     rootdir: /Users/ned/coverage/trunk
     configfile: pyproject.toml
-    plugins: flaky-3.8.1, hypothesis-6.128.1, xdist-3.6.1
-    collected 1467 items / 1457 deselected / 10 selected
+    plugins: flaky-3.8.1, xdist-3.8.0, hypothesis-6.151.9
+    collected 1582 items / 1575 deselected / 7 selected
     run-last-failure: no previously failed tests, not deselecting items.
 
-    tests/test_data.py::CoverageDataTest::test_add_to_hash_with_lines PASSED                [ 10%]
-    tests/test_data.py::CoverageDataTest::test_add_to_hash_with_arcs PASSED                 [ 20%]
-    tests/test_data.py::CoverageDataTest::test_add_to_lines_hash_with_missing_file PASSED   [ 30%]
-    tests/test_data.py::CoverageDataTest::test_add_to_arcs_hash_with_missing_file PASSED    [ 40%]
-    tests/test_execfile.py::RunPycFileTest::test_running_hashed_pyc PASSED                  [ 50%]
-    tests/test_misc.py::HasherTest::test_string_hashing PASSED                              [ 60%]
-    tests/test_misc.py::HasherTest::test_bytes_hashing PASSED                               [ 70%]
-    tests/test_misc.py::HasherTest::test_unicode_hashing PASSED                             [ 80%]
-    tests/test_misc.py::HasherTest::test_dict_hashing PASSED                                [ 90%]
-    tests/test_misc.py::HasherTest::test_dict_collision PASSED                              [100%]
+    tests/test_data.py::CoverageDataTest::test_add_to_hash_with_lines PASSED                [ 14%]
+    tests/test_data.py::CoverageDataTest::test_add_to_hash_with_arcs PASSED                 [ 28%]
+    tests/test_data.py::CoverageDataTest::test_add_to_lines_hash_with_missing_file PASSED   [ 42%]
+    tests/test_data.py::CoverageDataTest::test_add_to_arcs_hash_with_missing_file PASSED    [ 57%]
+    tests/test_execfile.py::RunPycFileTest::test_running_hashed_pyc PASSED                  [ 71%]
+    tests/test_misc.py::HasherTest::test_scrambled_sets PASSED                              [ 85%]
+    tests/test_misc.py::HasherTest::test_equality_matches_hash PASSED                       [100%]
 
-    ============================= 10 passed, 1457 deselected in 3.13s =============================
-    py310: OK (16.62 seconds)
-    congratulations :) (16.97 seconds)
+    ============================= 7 passed, 1575 deselected in 0.95s ==============================
+    Skipping tests with Python tracer: Only one core: not running pytrace
+      py310: OK (10.18 seconds)
+      congratulations :) (10.21 seconds)
 
 You can also affect the test runs with environment variables:
 

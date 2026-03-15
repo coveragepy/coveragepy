@@ -298,8 +298,7 @@ class CoverageData:
 
     def _reset(self) -> None:
         """Reset our attributes."""
-        if not self._no_disk:
-            self.close()
+        self.close(force=True)
         self._file_map = {}
         self._have_used = False
         self._current_context_id = None

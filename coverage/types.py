@@ -171,16 +171,6 @@ TMorfs = TMorf | Iterable[TMorf] | None
 TSourceTokenLines = Iterable[list[tuple[str, str]]]
 
 
-## Plugins
-
-
-class TPlugin(Protocol):
-    """What all plugins have in common."""
-
-    _coverage_plugin_name: str
-    _coverage_enabled: bool
-
-
 ## Debugging
 
 

@@ -167,10 +167,10 @@ class Hasher:
             case None:
                 pass
             case str():
-                self.hash.update(f"{len(v)}:".encode("utf-8"))
+                self.hash.update(f"{len(v)}:".encode())
                 self.hash.update(v.encode("utf-8"))
             case bytes():
-                self.hash.update(f"{len(v)}:".encode("utf-8"))
+                self.hash.update(f"{len(v)}:".encode())
                 self.hash.update(v)
             case int() | float():
                 self.hash.update(str(v).encode("utf-8"))
