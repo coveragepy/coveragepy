@@ -112,17 +112,18 @@ class PhysTokensTest(CoverageTest):
         tokens = list(
             source_token_lines(
                 textwrap.dedent("""
-            x = \
-                1
-            a = ["aaa",\\
-                 "bbb \\
-                 ccc"]
-            """)
+                    x = \\
+                        1
+                    a = ["aaa",\\
+                         "bbb \\
+                         ccc"]
+                """)
             )
         )
         assert tokens == [
             [],
-            [("nam", "x"), ("ws", " "), ("op", "="), ("ws", "                 "), ("num", "1")],
+            [("nam", "x"), ("ws", " "), ("op", "="), ("ws", " "), ("xx", "\\")],
+            [("ws", "    "), ("num", "1")],
             [
                 ("nam", "a"),
                 ("ws", " "),
@@ -159,8 +160,8 @@ class PhysTokensTest(CoverageTest):
         tokens = list(
             source_token_lines(
                 textwrap.dedent("""\
-            f'Look: {x} {{x}}!'
-            """)
+                    f'Look: {x} {{x}}!'
+                """)
             )
         )
         if env.PYBEHAVIOR.fstring_syntax:

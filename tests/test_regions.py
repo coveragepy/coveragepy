@@ -20,50 +20,50 @@ from tests.helpers import all_our_source_files
 def test_code_regions() -> None:
     regions = code_regions(
         textwrap.dedent("""\
-        # Numbers in this code are the line number.
-        '''Module docstring'''
+            # Numbers in this code are the line number.
+            '''Module docstring'''
 
-        CONST = 4
-        class MyClass:
-            class_attr = 6
+            CONST = 4
+            class MyClass:
+                class_attr = 6
 
-            def __init__(self):
-                self.x = 9
+                def __init__(self):
+                    self.x = 9
 
-            def method_a(self):
-                self.x = 12
-                def inmethod():
-                    self.x = 14
-                    class DeepInside:
-                        def method_b():
-                            self.x = 17
-                        class Deeper:
-                            def bb():
-                                self.x = 20
-                self.y = 21
+                def method_a(self):
+                    self.x = 12
+                    def inmethod():
+                        self.x = 14
+                        class DeepInside:
+                            def method_b():
+                                self.x = 17
+                            class Deeper:
+                                def bb():
+                                    self.x = 20
+                    self.y = 21
 
-            class InnerClass:
-                constant = 24
-                def method_c(self):
-                    self.x = 26
+                class InnerClass:
+                    constant = 24
+                    def method_c(self):
+                        self.x = 26
 
-        def func():
-            x = 29
-            y = 30
-            def inner():
-                z = 32
-                def inner_inner():
-                    w = 34
+            def func():
+                x = 29
+                y = 30
+                def inner():
+                    z = 32
+                    def inner_inner():
+                        w = 34
 
-            class InsideFunc:
-                def method_d(self):
-                    self.x = 38
+                class InsideFunc:
+                    def method_d(self):
+                        self.x = 38
 
-            return 40
+                return 40
 
-        async def afunc():
-            x = 43
-    """)
+            async def afunc():
+                x = 43
+        """)
     )
 
     F = "function"
