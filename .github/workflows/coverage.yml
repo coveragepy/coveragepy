@@ -338,7 +338,7 @@ jobs:
           github.repository_owner == 'coveragepy'
           && github.ref == 'refs/heads/main'
         # https://gist.githubusercontent.com/nedbat/8c6980f77988a327348f9b02bbaf67f5
-        uses: schneegans/dynamic-badges-action@e9a478b16159b4d31420099ba146cdc50f134483 # v1.7.0
+        uses: schneegans/dynamic-badges-action@0e50b8bad39e7e1afd3e4e9c2b7dd145fad07501 # v1.8.0
         with:
           # Personal access token: gist access
           auth: ${{ secrets.METACOV_GIST_SECRET }}
