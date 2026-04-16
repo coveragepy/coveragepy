@@ -16,7 +16,7 @@ repos:
         exclude: "stress_phystoken|\\.py,cover$"
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.10
+    rev: v0.15.11
     hooks:
       - id: ruff-format
 

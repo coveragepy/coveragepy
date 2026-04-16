@@ -88,14 +88,6 @@ cffi==2.0.0 \
     # via
     #   -r requirements/light-threads.in
     #   gevent
-dnspython==2.8.0 \
-    --hash=sha256:01d9bbc4a2d76bf0db7c1f729812ded6d912bd318d3b1cf81d30c0f845dbf3af \
-    --hash=sha256:181d3c6996452cb1189c4046c61599b84a5a86e099562ffde77d26984ff26d0f
-    # via eventlet
-eventlet==0.41.0 \
-    --hash=sha256:35df85f0ccd3e73effb6fd9f1ceae46b500b966c7da1817289c323a307bd397b \
-    --hash=sha256:bc22396093cb4119ff7007776be6a5348a613ccd42eeb0f9519853a6efcbcabe
-    # via -r requirements/light-threads.in
 gevent==25.9.1 \
     --hash=sha256:012a44b0121f3d7c800740ff80351c897e85e76a7e4764690f35c5ad9ec17de5 \
     --hash=sha256:03c74fec58eda4b4edc043311fca8ba4f8744ad1632eb0a41d5ec25413581975 \
@@ -197,7 +189,6 @@ greenlet==3.3.2 \
     --hash=sha256:e3cb43ce200f59483eb82949bf1835a99cf43d7571e900d7c8d5c62cdf25d2f9
     # via
     #   -r requirements/light-threads.in
-    #   eventlet
     #   gevent
 pycparser==3.0 ; implementation_name != 'PyPy' \
     --hash=sha256:600f49d217304a5902ac3c37e1281c9fe94e4d0489de643a9504c5cdfdfc6b29 \

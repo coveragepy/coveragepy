@@ -35,11 +35,6 @@ from tests.coveragetest import CoverageTest
 # These libraries aren't always available, we'll skip tests if they aren't.
 
 try:
-    import eventlet
-except ImportError:
-    eventlet = None
-
-try:
     import gevent
 except ImportError:
     gevent = None
@@ -151,12 +146,6 @@ THREAD = """
     import queue
     """
 
-# Import the things to use eventlet.
-EVENTLET = """
-    import eventlet.green.threading as threading
-    import eventlet.queue as queue
-    """
-
 # Import the things to use gevent.
 GEVENT = """
     from gevent import monkey
@@ -266,14 +255,6 @@ class ConcurrencyTest(CoverageTest):
         code = SIMPLE.format(QLIMIT=self.QLIMIT)
         self.try_some_code(code, "thread", threading)
 
-    def test_eventlet(self) -> None:
-        code = (EVENTLET + SUM_RANGE_Q + PRINT_SUM_RANGE).format(QLIMIT=self.QLIMIT)
-        self.try_some_code(code, "eventlet", eventlet)
-
-    def test_eventlet_simple_code(self) -> None:
-        code = SIMPLE.format(QLIMIT=self.QLIMIT)
-        self.try_some_code(code, "eventlet", eventlet)
-
     # https://github.com/coveragepy/coveragepy/issues/663
     @pytest.mark.skipif(env.WINDOWS, reason="gevent has problems on Windows: #663")
     def test_gevent(self) -> None:
@@ -306,6 +287,10 @@ class ConcurrencyTest(CoverageTest):
         code = SIMPLE.format(QLIMIT=self.QLIMIT)
         self.try_some_code(code, "greenlet", greenlet)
 
+    # The code in tracer.c that went with this test doesn't seem particular to
+    # eventlet. I don't want to remove this test, but I don't know how to
+    # rewrite it to demonstrate the original problem without eventlet.
+    @pytest.mark.skip(reason="We don't test eventlet; don't know how to rewrite this test.")
     def test_bug_330(self) -> None:
         BUG_330 = """\
             from weakref import WeakKeyDictionary
@@ -322,6 +307,7 @@ class ConcurrencyTest(CoverageTest):
             eventlet.sleep(.1)
             print(len(gts))
             """
+        eventlet = glob  # quiet linters on the next line.
         self.try_some_code(BUG_330, "eventlet", eventlet, "0\n")
 
     # Sometimes a test fails due to inherent randomness. Try more times.
@@ -382,12 +368,12 @@ class ConcurrencyTest(CoverageTest):
             self.command_line("run prog.py")
 
     def test_no_multiple_light_concurrency(self) -> None:
-        with pytest.raises(ConfigError, match="Conflicting concurrency settings: eventlet, gevent"):
-            self.command_line("run --concurrency=gevent,eventlet prog.py")
+        with pytest.raises(ConfigError, match="Conflicting concurrency settings: gevent, greenlet"):
+            self.command_line("run --concurrency=gevent,greenlet prog.py")
 
     def test_no_multiple_light_concurrency_in_config(self) -> None:
-        self.make_file(".coveragerc", "[run]\nconcurrency = gevent, eventlet\n")
-        with pytest.raises(ConfigError, match="Conflicting concurrency settings: eventlet, gevent"):
+        self.make_file(".coveragerc", "[run]\nconcurrency = gevent, greenlet\n")
+        with pytest.raises(ConfigError, match="Conflicting concurrency settings: gevent, greenlet"):
             self.command_line("run prog.py")
 
     def test_multiprocessing_needs_config_file(self) -> None:
@@ -398,7 +384,7 @@ class ConcurrencyTest(CoverageTest):
 class WithoutConcurrencyModuleTest(CoverageTest):
     """Tests of what happens if the requested concurrency isn't installed."""
 
-    @pytest.mark.parametrize("module", ["eventlet", "gevent", "greenlet"])
+    @pytest.mark.parametrize("module", ["gevent", "greenlet"])
     def test_missing_module(self, module: str) -> None:
         self.make_file("prog.py", "a = 1")
         sys.modules[module] = None  # type: ignore[assignment]
@@ -543,23 +529,6 @@ class MultiprocessingTest(CoverageTest):
             threading,
             nprocs,
             args="--append",
-            start_method=start_method,
-        )
-
-    def test_multiprocessing_and_gevent(self, start_method: str) -> None:
-        nprocs = 3
-        upto = 30
-        code = (SUM_RANGE_WORK + EVENTLET + SUM_RANGE_Q + MULTI_CODE).format(
-            NPROCS=nprocs, UPTO=upto
-        )
-        total = sum(sum(range((x + 1) * 100)) for x in range(upto))
-        expected_out = f"{nprocs} pids, total = {total}"
-        self.try_multiprocessing_code(
-            code,
-            expected_out,
-            eventlet,
-            nprocs,
-            concurrency="multiprocessing,eventlet",
             start_method=start_method,
         )
 

@@ -86,7 +86,7 @@ class ConfigTest(CoverageTest):
             [tool.somethingelse]
             authors = ["Joe D'Ávila <joe@gmail.com>"]
             [tool.coverage.run]
-            concurrency = ["thread", "eventlet"]
+            concurrency = ["thread", "gevent"]
             timid = true
             data_file = ".hello_kitty.data"
             plugins = ["plugins.a_plugin"]
@@ -102,7 +102,7 @@ class ConfigTest(CoverageTest):
         cov = coverage.Coverage()
         assert cov.config.timid
         assert not cov.config.branch
-        assert cov.config.concurrency == ["thread", "eventlet"]
+        assert cov.config.concurrency == ["thread", "gevent"]
         assert cov.config.data_file == ".hello_kitty.data"
         assert cov.config.plugins == ["plugins.a_plugin"]
         assert cov.config.precision == 3

@@ -23,7 +23,8 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
-Nothing yet.
+- We are no longer testing eventlet support. Eventlet issues stern deprecation
+  warnings that break our tests. Our support code is still there.
 
 
 .. start-releases
