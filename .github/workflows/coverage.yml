@@ -227,15 +227,6 @@ jobs:
           set -xe
           python igor.py combine_html
 
-      - name: "Check targets"
-        run: |
-          # Maybe someday goals will be a real feature
-          python -m pip install wcmatch
-          # Very crude check that nothing catastrophic has happened.
-          python lab/goals.py --group 90 "coverage/*.py" "tests/*.py"
-          # Absolutely all of our test code should be covered.
-          python lab/goals.py --file 100 "tests/test_*.py"
-
       - name: "Upload HTML report"
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
@@ -255,6 +246,15 @@ jobs:
         id: total
         run: |
           echo "total=$(python -m coverage report --format=total)" >> $GITHUB_OUTPUT
+
+      - name: "Check targets"
+        run: |
+          # Maybe someday goals will be a real feature
+          python -m pip install wcmatch
+          # Very crude check that nothing catastrophic has happened.
+          python lab/goals.py --group 90 "coverage/*.py" "tests/*.py"
+          # Absolutely all of our test code should be covered.
+          python lab/goals.py --file 100 "tests/test_*.py"
 
   publish:
     name: "Publish coverage report"
