@@ -817,7 +817,8 @@ class ProcessTest(CoverageTest):
             """)
 
 
-TRY_EXECFILE = os.path.join(os.path.dirname(__file__), "modules/process_test/try_execfile.py")
+TRY_EXECFILE = Path(__file__).parent / "modules/process_test/try_execfile.py"
+TRY_EXECFILE_CODE = TRY_EXECFILE.read_text(encoding="utf-8")
 
 
 class EnvironmentTest(CoverageTest):
@@ -835,23 +836,20 @@ class EnvironmentTest(CoverageTest):
         assert actual == expected
 
     def test_coverage_run_is_like_python(self) -> None:
-        with open(TRY_EXECFILE, encoding="utf-8") as f:
-            self.make_file("run_me.py", f.read())
+        self.make_file("run_me.py", TRY_EXECFILE_CODE)
         expected = self.run_command("python run_me.py")
         actual = self.run_command("coverage run run_me.py")
         self.assert_tryexecfile_output(expected, actual)
 
     def test_coverage_run_far_away_is_like_python(self) -> None:
-        with open(TRY_EXECFILE, encoding="utf-8") as f:
-            self.make_file("sub/overthere/prog.py", f.read())
+        self.make_file("sub/overthere/prog.py", TRY_EXECFILE_CODE)
         expected = self.run_command("python sub/overthere/prog.py")
         actual = self.run_command("coverage run sub/overthere/prog.py")
         self.assert_tryexecfile_output(expected, actual)
 
     @pytest.mark.skipif(not env.WINDOWS, reason="This is about Windows paths")
     def test_coverage_run_far_away_is_like_python_windows(self) -> None:
-        with open(TRY_EXECFILE, encoding="utf-8") as f:
-            self.make_file("sub/overthere/prog.py", f.read())
+        self.make_file("sub/overthere/prog.py", TRY_EXECFILE_CODE)
         expected = self.run_command("python sub\\overthere\\prog.py")
         actual = self.run_command("coverage run sub\\overthere\\prog.py")
         self.assert_tryexecfile_output(expected, actual)
@@ -863,24 +861,19 @@ class EnvironmentTest(CoverageTest):
         self.assert_tryexecfile_output(expected, actual)
 
     def test_coverage_run_dir_is_like_python_dir(self) -> None:
-        with open(TRY_EXECFILE, encoding="utf-8") as f:
-            self.make_file("with_main/__main__.py", f.read())
-
+        self.make_file("with_main/__main__.py", TRY_EXECFILE_CODE)
         expected = self.run_command("python with_main")
         actual = self.run_command("coverage run with_main")
         self.assert_tryexecfile_output(expected, actual)
 
     def test_coverage_run_dashm_dir_no_init_is_like_python(self) -> None:
-        with open(TRY_EXECFILE, encoding="utf-8") as f:
-            self.make_file("with_main/__main__.py", f.read())
-
+        self.make_file("with_main/__main__.py", TRY_EXECFILE_CODE)
         expected = self.run_command("python -m with_main")
         actual = self.run_command("coverage run -m with_main")
         self.assert_tryexecfile_output(expected, actual)
 
     def test_coverage_run_dashm_dir_with_init_is_like_python(self) -> None:
-        with open(TRY_EXECFILE, encoding="utf-8") as f:
-            self.make_file("with_main/__main__.py", f.read())
+        self.make_file("with_main/__main__.py", TRY_EXECFILE_CODE)
         self.make_file("with_main/__init__.py", "")
 
         expected = self.run_command("python -m with_main")
@@ -953,9 +946,7 @@ class EnvironmentTest(CoverageTest):
     def test_coverage_run_dashm_is_like_python_dashm_off_path(self) -> None:
         # https://github.com/coveragepy/coveragepy/issues/242
         self.make_file("sub/__init__.py", "")
-        with open(TRY_EXECFILE, encoding="utf-8") as f:
-            self.make_file("sub/run_me.py", f.read())
-
+        self.make_file("sub/run_me.py", TRY_EXECFILE_CODE)
         expected = self.run_command("python -m sub.run_me")
         actual = self.run_command("coverage run -m sub.run_me")
         self.assert_tryexecfile_output(expected, actual)
@@ -972,8 +963,7 @@ class EnvironmentTest(CoverageTest):
         # Test running coverage from a zip file itself.  Some environments
         # (windows?) zip up the coverage main to be used as the coverage
         # command.
-        with open(TRY_EXECFILE, encoding="utf-8") as f:
-            self.make_file("run_me.py", f.read())
+        self.make_file("run_me.py", TRY_EXECFILE_CODE)
         expected = self.run_command("python run_me.py")
         cov_main = os.path.join(TESTS_DIR, "covmain.zip")
         actual = self.run_command(f"python {cov_main} run run_me.py")
@@ -985,8 +975,7 @@ class EnvironmentTest(CoverageTest):
         reason="Windows gets this wrong: https://github.com/python/cpython/issues/131484",
     )
     def test_pythonsafepath(self) -> None:
-        with open(TRY_EXECFILE, encoding="utf-8") as f:
-            self.make_file("run_me.py", f.read())
+        self.make_file("run_me.py", TRY_EXECFILE_CODE)
         self.set_environ("PYTHONSAFEPATH", "1")
         expected = self.run_command("python run_me.py")
         actual = self.run_command("coverage run run_me.py")
@@ -994,8 +983,7 @@ class EnvironmentTest(CoverageTest):
 
     @pytest.mark.skipif(env.PYVERSION < (3, 11), reason="PYTHONSAFEPATH is new in 3.11")
     def test_pythonsafepath_dashm_runme(self) -> None:
-        with open(TRY_EXECFILE, encoding="utf-8") as f:
-            self.make_file("run_me.py", f.read())
+        self.make_file("run_me.py", TRY_EXECFILE_CODE)
         self.set_environ("PYTHONSAFEPATH", "1")
         expected = self.run_command("python run_me.py")
         actual = self.run_command("python -m coverage run run_me.py")
@@ -1003,9 +991,7 @@ class EnvironmentTest(CoverageTest):
 
     @pytest.mark.skipif(env.PYVERSION < (3, 11), reason="PYTHONSAFEPATH is new in 3.11")
     def test_pythonsafepath_dashm(self) -> None:
-        with open(TRY_EXECFILE, encoding="utf-8") as f:
-            self.make_file("with_main/__main__.py", f.read())
-
+        self.make_file("with_main/__main__.py", TRY_EXECFILE_CODE)
         self.set_environ("PYTHONSAFEPATH", "1")
         expected = self.run_command("python -m with_main", status=1)
         actual = self.run_command("coverage run -m with_main", status=1)
