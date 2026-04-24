@@ -40,6 +40,8 @@ The **json** command writes coverage data to a "coverage.json" file.
                             Include only files whose paths match one of these
                             patterns. Accepts shell-style wildcards, which must be
                             quoted.
+      --no-combine          Don't combine data files before reporting; use the
+                            existing data file as-is.
       --omit=PAT1,PAT2,...  Omit files whose paths match one of these patterns.
                             Accepts shell-style wildcards, which must be quoted.
       -o OUTFILE            Write the JSON report to this file. Defaults to
@@ -53,7 +55,7 @@ The **json** command writes coverage data to a "coverage.json" file.
       --rcfile=RCFILE       Specify configuration file. By default '.coveragerc',
                             'setup.cfg', 'tox.ini', and 'pyproject.toml' are
                             tried. [env: COVERAGE_RCFILE]
-.. [[[end]]] (sum: 5T5gy2XZcc)
+.. [[[end]]] (sum: b3I5EwZv2k)
 
 You can specify the name of the output file with the ``-o`` switch.  The JSON
 can be nicely formatted by specifying the ``--pretty-print`` switch.

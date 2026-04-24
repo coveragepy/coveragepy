@@ -65,6 +65,8 @@ For example::
                             Include only files whose paths match one of these
                             patterns. Accepts shell-style wildcards, which must be
                             quoted.
+      --no-combine          Don't combine data files before reporting; use the
+                            existing data file as-is.
       --omit=PAT1,PAT2,...  Omit files whose paths match one of these patterns.
                             Accepts shell-style wildcards, which must be quoted.
       --debug=OPTS          Debug options, separated by commas. [env:
@@ -73,6 +75,6 @@ For example::
       --rcfile=RCFILE       Specify configuration file. By default '.coveragerc',
                             'setup.cfg', 'tox.ini', and 'pyproject.toml' are
                             tried. [env: COVERAGE_RCFILE]
-.. [[[end]]] (sum: /X2PvS3W4k)
+.. [[[end]]] (sum: EN2xMup1lI)
 
 Other common reporting options are described above in :ref:`cmd_reporting`.
