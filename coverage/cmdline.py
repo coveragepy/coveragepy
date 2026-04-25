@@ -886,10 +886,8 @@ class CoverageScript:
         # plugins may try to, for example, to read Django settings.
         sys.path.insert(0, "")
 
-        if options.no_combine:
-            self.coverage.load()
-        else:
-            self.coverage.load()
+        self.coverage.load()
+        if not options.no_combine:
             self.coverage.combine(strict=False, keep=True)
 
         total = None
