@@ -889,7 +889,8 @@ class CoverageScript:
         if options.no_combine:
             self.coverage.load()
         else:
-            self.coverage.combine(strict=False)
+            self.coverage.load()
+            self.coverage.combine(strict=False, keep=True)
 
         total = None
         if options.action == "report":
