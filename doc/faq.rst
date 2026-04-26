@@ -181,7 +181,8 @@ Q: Where can I get more help with coverage.py?
 
 You can discuss coverage.py or get help using it on the `Python discussion
 forums`_ or in the `Python Discord`_.  If you ping me (``@nedbat``), there's a
-higher chance I'll see the post.
+higher chance I'll see the post.  (`Join the Python Discord server <https://discord.com/invite/python>`_ first,
+if you haven't already.)
 
 .. _Python discussion forums: https://discuss.python.org/
 .. _Python Discord: https://discord.com/channels/267624335836053506/1253355750684753950
