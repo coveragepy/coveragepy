@@ -718,6 +718,24 @@ class PathAliasesTest(CoverageTest):
         self.assert_mapped(aliases, "/foo/bar/d1/x.py", "./mysrc1/x.py")
         self.assert_mapped(aliases, "/foo/bar/d2/y.py", "./mysrc2/y.py")
 
+    def test_nested_directories_same_name(self) -> None:
+        # https://github.com/coveragepy/coveragepy/issues/2072
+        # When using relative_files=true, paths like "pkg/features/x.py" should
+        # not be incorrectly mapped by a rule auto-generated for "features/x.py".
+        aliases = PathAliases(relative=True)
+        # Map both paths. The auto-generated rules should keep them distinct.
+        # First, map features/templates.py - this will auto-generate a rule for "features/"
+        result1 = aliases.map("features/templates.py", exists=lambda p: True)
+        assert result1 == os_sep("features/templates.py")
+
+        # Now map pkg/features/templates.py - this should NOT match the "features/" rule
+        # and should auto-generate its own "pkg/" rule.
+        result2 = aliases.map("pkg/features/templates.py", exists=lambda p: True)
+        assert result2 == os_sep("pkg/features/templates.py")
+
+        # Verify both paths remain distinct
+        assert result1 != result2
+
     @pytest.mark.parametrize("dirname", [".", "..", "../other", "/"])
     def test_dot(self, dirname: str) -> None:
         if env.WINDOWS and dirname == "/":
