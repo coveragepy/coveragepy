@@ -255,6 +255,12 @@ class Opts:
         action="store_true",
         help="Format the JSON for human readers.",
     )
+    omit_regions = optparse.make_option(
+        "",
+        "--omit-regions",
+        action="store_true",
+        help="Do not emit region-level data in the report.",
+    )
     parallel_mode = optparse.make_option(
         "-p",
         "--parallel-mode",
@@ -614,6 +620,7 @@ COMMANDS = {
             Opts.skip_covered,
             Opts.no_skip_covered,
             Opts.skip_empty,
+            Opts.omit_regions,
             Opts.title,
         ]
         + GLOBAL_ARGS,
@@ -637,6 +644,7 @@ COMMANDS = {
             Opts.omit,
             Opts.output_json,
             Opts.json_pretty_print,
+            Opts.omit_regions,
             Opts.quiet,
             Opts.show_contexts,
         ]
@@ -895,6 +903,7 @@ class CoverageScript:
                 skip_covered=options.skip_covered,
                 skip_empty=options.skip_empty,
                 show_contexts=options.show_contexts,
+                omit_regions=options.omit_regions,
                 title=options.title,
                 **report_args,
             )
@@ -909,6 +918,7 @@ class CoverageScript:
                 outfile=options.outfile,
                 pretty_print=options.pretty_print,
                 show_contexts=options.show_contexts,
+                omit_regions=options.omit_regions,
                 **report_args,
             )
         elif options.action == "lcov":
