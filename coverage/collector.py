@@ -9,7 +9,7 @@ import contextlib
 import functools
 import os
 import sys
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Collection, Mapping
 from types import FrameType
 from typing import Any, TypeVar, cast
 
@@ -451,11 +451,12 @@ class Collector:
             return False
 
         if self.branch:
+            arc_data: dict[str, Collection[TArc]]
             if self.core.packed_arcs:
                 # Unpack the line number pairs packed into integers.  See
                 # tracer.c:CTracer_record_pair for the C code that creates
                 # these packed ints.
-                arc_data: dict[str, list[TArc]] = {}
+                arc_data = {}
                 packed_data = cast(dict[str, set[int]], self.data)
 
                 # The list() here and in the inner loop are to get a clean copy
@@ -472,7 +473,7 @@ class Collector:
                         tuples.append((l1, l2))
                     arc_data[fname] = tuples
             else:
-                arc_data = cast(dict[str, list[TArc]], self.data)
+                arc_data = cast(dict[str, set[TArc]], self.data)
             self.covdata.add_arcs(self.mapped_file_dict(arc_data))
         else:
             line_data = cast(dict[str, set[int]], self.data)
