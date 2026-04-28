@@ -398,25 +398,6 @@ class CmdLineTest(BaseCmdLineTest):
             """,
         )
 
-    def test_no_combine(self) -> None:
-        # --no-combine skips the cov.combine() call for each reporting command
-        for cmd, report_call in [
-            ("annotate", "cov.annotate()"),
-            ("html", "cov.html_report()"),
-            ("json", "cov.json_report()"),
-            ("lcov", "cov.lcov_report()"),
-            ("report", "cov.report(show_missing=None)"),
-            ("xml", "cov.xml_report()"),
-        ]:
-            self.cmd_executes(
-                f"{cmd} --no-combine",
-                f"""\
-                cov = Coverage()
-                cov.load()
-                {report_call}
-                """,
-            )
-
     @pytest.mark.parametrize(
         "cmd, output",
         [
