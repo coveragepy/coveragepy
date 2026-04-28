@@ -58,8 +58,6 @@ Click the keyboard icon in the upper right to see the complete list.
                             Include only files whose paths match one of these
                             patterns. Accepts shell-style wildcards, which must be
                             quoted.
-      --no-combine          Don't combine data files before reporting; use the
-                            existing data file as-is.
       --omit=PAT1,PAT2,...  Omit files whose paths match one of these patterns.
                             Accepts shell-style wildcards, which must be quoted.
       --precision=N         Number of digits after the decimal point to display
@@ -76,7 +74,7 @@ Click the keyboard icon in the upper right to see the complete list.
       --rcfile=RCFILE       Specify configuration file. By default '.coveragerc',
                             'setup.cfg', 'tox.ini', and 'pyproject.toml' are
                             tried. [env: COVERAGE_RCFILE]
-.. [[[end]]] (sum: nhcql2nImD)
+.. [[[end]]] (sum: DwG6DxRZIf)
 
 The title of the report can be set with the ``title`` setting in the
 ``[html]`` section of the configuration file, or the ``--title`` switch on

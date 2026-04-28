@@ -55,8 +55,6 @@ as a percentage.
                             Include only files whose paths match one of these
                             patterns. Accepts shell-style wildcards, which must be
                             quoted.
-      --no-combine          Don't combine data files before reporting; use the
-                            existing data file as-is.
       --omit=PAT1,PAT2,...  Omit files whose paths match one of these patterns.
                             Accepts shell-style wildcards, which must be quoted.
       --precision=N         Number of digits after the decimal point to display
@@ -74,7 +72,7 @@ as a percentage.
       --rcfile=RCFILE       Specify configuration file. By default '.coveragerc',
                             'setup.cfg', 'tox.ini', and 'pyproject.toml' are
                             tried. [env: COVERAGE_RCFILE]
-.. [[[end]]] (sum: 4THvsBxygU)
+.. [[[end]]] (sum: FnJyop2efr)
 
 The ``-m`` flag also shows the line numbers of missing statements::
 
