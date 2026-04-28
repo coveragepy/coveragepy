@@ -450,6 +450,13 @@ class Collector:
         if not self._activity():
             return False
 
+        # dict.copy() and set.copy() are atomic in CPython (the GIL is
+        # held for the duration of the C-level copy), so we get clean
+        # snapshots of the dict and each per-file set even while tracers
+        # in other threads continue to add data. Without these copies,
+        # add_arcs() and add_lines() iterate the live sets and can fail
+        # with "RuntimeError: Set changed size during iteration" when a
+        # tracer thread mutates them mid-iteration.
         if self.branch:
             arc_data: dict[str, Collection[TArc]]
             if self.core.packed_arcs:
@@ -459,11 +466,9 @@ class Collector:
                 arc_data = {}
                 packed_data = cast(dict[str, set[int]], self.data)
 
-                # The list() here and in the inner loop are to get a clean copy
-                # even as tracers are continuing to add data.
-                for fname, packeds in list(packed_data.items()):
+                for fname, packeds in packed_data.copy().items():
                     tuples = []
-                    for packed in list(packeds):
+                    for packed in packeds.copy():
                         l1 = packed & 0xFFFFFFF
                         l2 = (packed & (0xFFFFFFF << 28)) >> 28
                         if packed & (1 << 56):
@@ -473,10 +478,16 @@ class Collector:
                         tuples.append((l1, l2))
                     arc_data[fname] = tuples
             else:
-                arc_data = cast(dict[str, set[TArc]], self.data)
+                arc_data = {
+                    fname: arcs.copy()
+                    for fname, arcs in cast(dict[str, set[TArc]], self.data).copy().items()
+                }
             self.covdata.add_arcs(self.mapped_file_dict(arc_data))
         else:
-            line_data = cast(dict[str, set[int]], self.data)
+            line_data = {
+                fname: linenos.copy()
+                for fname, linenos in cast(dict[str, set[int]], self.data).copy().items()
+            }
             self.covdata.add_lines(self.mapped_file_dict(line_data))
 
         file_tracers = {
