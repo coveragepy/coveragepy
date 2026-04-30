@@ -293,7 +293,7 @@ jobs:
           TOKEN: ${{ secrets.COVERAGE_REPORTS_TOKEN }}
         run: |
           set -xe
-          git clone --depth=1 --no-checkout "https://$TOKEN@github.com/coveragepy/metacov-reports reports_repo"
+          git clone --depth=1 --no-checkout "https://$TOKEN@github.com/coveragepy/metacov-reports" reports_repo
           cd reports_repo
           git sparse-checkout init --cone
           git sparse-checkout set --skip-checks '/*' '!/reports'
