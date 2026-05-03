@@ -26,6 +26,8 @@ Unreleased
 - Fix: running a Python file through a symlink now sets the sys.path correctly,
   matching regular Python behavior. Fixes `issue 2157`_.
 
+- Fix: the soft keyword ``lazy`` is now bolded in HTML reports.
+
 - We are no longer testing eventlet support. Eventlet issues stern deprecation
   warnings that break our tests. Our support code is still there.
 

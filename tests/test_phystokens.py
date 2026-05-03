@@ -226,6 +226,20 @@ class SoftKeywordTest(CoverageTest):
         assert tokens[0][0] == ("key", "type")
         assert tokens[1][0] == ("nam", "type")
 
+    @pytest.mark.skipif(sys.version_info < (3, 15), reason="lazy isn't a soft keyword until 3.15")
+    def test_soft_keyword_lazy(self) -> None:
+        source = textwrap.dedent("""\
+            lazy import foo
+            lazy from foo import bar
+            def lazy(f): pass
+            lazy(12)
+            """)
+        tokens = list(source_token_lines(source))
+        assert tokens[0][0] == ("key", "lazy")
+        assert tokens[1][0] == ("key", "lazy")
+        assert tokens[2][2] == ("nam", "lazy")
+        assert tokens[3][0] == ("nam", "lazy")
+
 
 # The default source file encoding.
 DEF_ENCODING = "utf-8"
