@@ -102,6 +102,10 @@ class BaseCmdLineTest(CoverageTest):
         outfile=None,
         contexts=None,
     )
+    _defaults.Coverage().combine(
+        strict=False,
+        keep=True,
+    )
     _defaults.Coverage(
         data_file=DEFAULT_DATAFILE,
         cover_pylib=None,
@@ -261,6 +265,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage()
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.annotate()
             """,
         )
@@ -269,6 +274,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage()
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.annotate(directory="dir1")
             """,
         )
@@ -277,6 +283,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage()
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.annotate(ignore_errors=True)
             """,
         )
@@ -285,6 +292,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage(omit=["fooey"])
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.annotate(omit=["fooey"])
             """,
         )
@@ -293,6 +301,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage(omit=["fooey", "booey"])
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.annotate(omit=["fooey", "booey"])
             """,
         )
@@ -301,6 +310,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage()
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.annotate(morfs=["mod1"])
             """,
         )
@@ -309,6 +319,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage()
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.annotate(morfs=["mod1", "mod2", "mod3"])
             """,
         )
@@ -502,6 +513,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage()
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.html_report()
             """,
         )
@@ -510,6 +522,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage()
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.html_report(directory="dir1")
             """,
         )
@@ -518,6 +531,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage()
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.html_report(ignore_errors=True)
             """,
         )
@@ -526,6 +540,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage(omit=["fooey"])
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.html_report(omit=["fooey"])
             """,
         )
@@ -534,6 +549,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage(omit=["fooey", "booey"])
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.html_report(omit=["fooey", "booey"])
             """,
         )
@@ -542,6 +558,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage()
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.html_report(morfs=["mod1"])
             """,
         )
@@ -550,6 +567,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage()
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.html_report(morfs=["mod1", "mod2", "mod3"])
             """,
         )
@@ -558,6 +576,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage()
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.html_report(precision=3)
             """,
         )
@@ -566,6 +585,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage()
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.html_report(title='Hello_there')
             """,
         )
@@ -574,6 +594,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage(messages=False)
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.html_report()
             """,
         )
@@ -582,6 +603,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage(messages=False)
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.html_report()
             """,
         )
@@ -593,6 +615,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage()
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.json_report()
             """,
         )
@@ -601,6 +624,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage()
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.json_report(pretty_print=True)
             """,
         )
@@ -609,6 +633,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage()
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.json_report(pretty_print=True, show_contexts=True)
             """,
         )
@@ -617,6 +642,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage()
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.json_report(ignore_errors=True)
             """,
         )
@@ -625,6 +651,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage()
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.json_report(outfile="myjson.foo")
             """,
         )
@@ -633,6 +660,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage()
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.json_report(outfile="-")
             """,
         )
@@ -641,6 +669,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage(omit=["fooey"])
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.json_report(omit=["fooey"])
             """,
         )
@@ -649,6 +678,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage(omit=["fooey", "booey"])
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.json_report(omit=["fooey", "booey"])
             """,
         )
@@ -657,6 +687,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage()
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.json_report(morfs=["mod1"])
             """,
         )
@@ -665,6 +696,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage()
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.json_report(morfs=["mod1", "mod2", "mod3"])
             """,
         )
@@ -673,6 +705,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage(messages=False)
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.json_report()
             """,
         )
@@ -681,6 +714,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage(messages=False)
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.json_report()
             """,
         )
@@ -692,6 +726,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage()
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.lcov_report()
             """,
         )
@@ -700,6 +735,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage()
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.lcov_report(ignore_errors=True)
             """,
         )
@@ -708,6 +744,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage()
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.lcov_report(outfile="mylcov.foo")
             """,
         )
@@ -716,6 +753,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage()
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.lcov_report(outfile="-")
             """,
         )
@@ -724,6 +762,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage(omit=["fooey"])
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.lcov_report(omit=["fooey"])
             """,
         )
@@ -732,6 +771,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage(omit=["fooey", "booey"])
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.lcov_report(omit=["fooey", "booey"])
             """,
         )
@@ -740,6 +780,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage(messages=False)
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.lcov_report()
             """,
         )
@@ -748,6 +789,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage(messages=False)
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.lcov_report()
             """,
         )
@@ -759,6 +801,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage()
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.report(show_missing=None)
             """,
         )
@@ -767,6 +810,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage()
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.report(ignore_errors=True)
             """,
         )
@@ -775,6 +819,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage()
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.report(show_missing=True)
             """,
         )
@@ -783,6 +828,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage(omit=["fooey"])
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.report(omit=["fooey"])
             """,
         )
@@ -791,6 +837,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage(omit=["fooey", "booey"])
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.report(omit=["fooey", "booey"])
             """,
         )
@@ -799,6 +846,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage()
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.report(morfs=["mod1"])
             """,
         )
@@ -807,6 +855,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage()
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.report(morfs=["mod1", "mod2", "mod3"])
             """,
         )
@@ -815,6 +864,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage()
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.report(precision=7)
             """,
         )
@@ -823,6 +873,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage()
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.report(skip_covered=True)
             """,
         )
@@ -831,6 +882,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage()
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.report(skip_covered=False)
             """,
         )
@@ -839,6 +891,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage()
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.report(skip_covered=False)
             """,
         )
@@ -847,6 +900,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage()
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.report(skip_empty=True)
             """,
         )
@@ -855,6 +909,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage()
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.report(contexts=["foo", "bar"])
             """,
         )
@@ -863,6 +918,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage()
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.report(sort='-foo')
             """,
         )
@@ -871,6 +927,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage(data_file="foo.cov.2")
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.report(show_missing=None)
             """,
         )
@@ -879,6 +936,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage()
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.report(output_format="markdown")
             """,
         )
@@ -1211,6 +1269,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage()
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.xml_report()
             """,
         )
@@ -1219,6 +1278,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage()
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.xml_report(ignore_errors=True)
             """,
         )
@@ -1227,6 +1287,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage()
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.xml_report(outfile="myxml.foo")
             """,
         )
@@ -1235,6 +1296,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage()
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.xml_report(outfile="-")
             """,
         )
@@ -1243,6 +1305,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage(omit=["fooey"])
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.xml_report(omit=["fooey"])
             """,
         )
@@ -1251,6 +1314,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage(omit=["fooey", "booey"])
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.xml_report(omit=["fooey", "booey"])
             """,
         )
@@ -1259,6 +1323,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage()
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.xml_report(morfs=["mod1"])
             """,
         )
@@ -1267,6 +1332,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage()
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.xml_report(morfs=["mod1", "mod2", "mod3"])
             """,
         )
@@ -1275,6 +1341,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage(messages=False)
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.xml_report()
             """,
         )
@@ -1283,6 +1350,7 @@ class CmdLineTest(BaseCmdLineTest):
             """\
             cov = Coverage(messages=False)
             cov.load()
+            cov.combine(strict=False, keep=True)
             cov.xml_report()
             """,
         )
@@ -1574,6 +1642,9 @@ class CoverageReportingFake:
         return self.config.get_option(optname)
 
     def load(self) -> None:
+        pass
+
+    def combine(self, *args_unused: Any, **kwargs_unused: Any) -> None:
         pass
 
     def report(self, *args_unused: Any, **kwargs_unused: Any) -> float:
