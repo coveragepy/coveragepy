@@ -79,9 +79,9 @@ jobs:
           set -xe
           export PYENV_ROOT="$HOME/.pyenv"
           export PATH="$PYENV_ROOT/bin:$PATH"
-          echo "$PYENV_ROOT/shims:$PYENV_ROOT/bin" >> $GITHUB_PATH
-          pyenv install $PYVER -v
-          pyenv global $PYVER
+          echo "$PYENV_ROOT/shims:$PYENV_ROOT/bin" >> "$GITHUB_PATH"
+          pyenv install "$PYVER" -v
+          pyenv global "$PYVER"
 
       - name: "Show diagnostic info"
         run: |

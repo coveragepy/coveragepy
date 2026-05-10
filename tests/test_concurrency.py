@@ -477,16 +477,19 @@ class MultiprocessingTest(CoverageTest):
         assert out.rstrip() == expected_out
         assert len(glob.glob(".coverage.*")) == nprocs + 1
 
-        out = self.run_command("coverage combine")
+        out = self.run_command("coverage combine --debug=combine")
         out_lines = out.splitlines()
-        assert len(out_lines) == nprocs + 1
+        # main proc log file, nprocs log files, one summary line
+        assert len(out_lines) == 1 + nprocs + 1
         assert all(
             re.fullmatch(
                 rf"(Combined data file|Skipping duplicate data) \.coverage{SUFFIX_PATTERN}",
                 line,
             )
-            for line in out_lines
+            for line in out_lines[:-1]
         )
+        # Combines the main and one subprocess, the other subprocesses are skipped.
+        assert out_lines[-1] == f"Combined 2 files, skipped {nprocs - 1}"
         assert len(glob.glob(".coverage.*")) == 0
         out = self.run_command("coverage report -m")
 

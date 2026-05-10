@@ -143,7 +143,7 @@ jobs:
       - name: "Show environment"
         run: |
           set -xe
-          echo matrix id: $MATRIX_ID
+          echo matrix id: "$MATRIX_ID"
           python -VV
           python -m site
           env | sort
@@ -166,7 +166,7 @@ jobs:
           COVERAGE_RCFILE: "metacov.ini"
         run: |
           python -m coverage combine
-          mv .metacov .metacov.$MATRIX_ID
+          mv .metacov ".metacov.$MATRIX_ID"
 
       - name: "Upload coverage data"
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -237,15 +237,15 @@ jobs:
       - name: "Show text report"
         run: |
           set -xe
-          echo "## Coverage: $(python -m coverage report --format=total)%" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          python -m coverage report --skip-covered >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "## Coverage: $(python -m coverage report --format=total)%" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          python -m coverage report --skip-covered >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
 
       - name: "Get total"
         id: total
         run: |
-          echo "total=$(python -m coverage report --format=total)" >> $GITHUB_OUTPUT
+          echo "total=$(python -m coverage report --format=total)" >> "$GITHUB_OUTPUT"
 
       - name: "Check targets"
         run: |
@@ -276,13 +276,15 @@ jobs:
           REF: ${{ github.ref }}
           SHA: ${{ github.sha }}
         run: |
-          export SHA10=$(echo $SHA | cut -c 1-10)
-          export SLUG=$(date +'%Y%m%d')_$SHA10
-          echo "sha10=$SHA10" >> $GITHUB_ENV
-          echo "slug=$SLUG" >> $GITHUB_ENV
-          echo "report_dir=reports/$SLUG/htmlcov" >> $GITHUB_ENV
-          echo "url=https://coveragepy.github.io/metacov-reports/reports/$SLUG/htmlcov" >> $GITHUB_ENV
-          echo "branch=${REF#refs/heads/}" >> $GITHUB_ENV
+          SHA10=$(echo "$SHA" | cut -c 1-10)
+          export SHA10
+          SLUG=$(date +'%Y%m%d')_$SHA10
+          export SLUG
+          echo "sha10=$SHA10" >> "$GITHUB_ENV"
+          echo "slug=$SLUG" >> "$GITHUB_ENV"
+          echo "report_dir=reports/$SLUG/htmlcov" >> "$GITHUB_ENV"
+          echo "url=https://coveragepy.github.io/metacov-reports/reports/$SLUG/htmlcov" >> "$GITHUB_ENV"
+          echo "branch=${REF#refs/heads/}" >> "$GITHUB_ENV"
 
       - name: "Checkout reports repo"
         if: ${{ github.ref == 'refs/heads/main' }}
@@ -291,7 +293,7 @@ jobs:
           TOKEN: ${{ secrets.COVERAGE_REPORTS_TOKEN }}
         run: |
           set -xe
-          git clone --depth=1 --no-checkout https://${TOKEN}@github.com/coveragepy/metacov-reports reports_repo
+          git clone --depth=1 --no-checkout "https://$TOKEN@github.com/coveragepy/metacov-reports" reports_repo
           cd reports_repo
           git sparse-checkout init --cone
           git sparse-checkout set --skip-checks '/*' '!/reports'
@@ -326,12 +328,12 @@ jobs:
           echo "${sha10}: ${branch}" >> commit.txt
           # Commit.
           cd ./reports_repo
-          git sparse-checkout set --skip-checks '/*' ${report_dir}
-          rm ${report_dir}/.gitignore
-          git add ${report_dir} latest.html
+          git sparse-checkout set --skip-checks '/*' "$report_dir"
+          rm "$report_dir/.gitignore"
+          git add "$report_dir" latest.html
           git commit --file=../commit.txt
           git push
-          echo "[${url}](${url})" >> $GITHUB_STEP_SUMMARY
+          echo "[${url}](${url})" >> "$GITHUB_STEP_SUMMARY"
 
       - name: "Create badge"
         if: |

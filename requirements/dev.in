@@ -12,6 +12,7 @@
 -r pytest.in
 
 # for linting.
+actionlint-py
 check-manifest
 cogapp
 greenlet

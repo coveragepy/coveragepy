@@ -82,8 +82,8 @@ jobs:
         run: |
           ls -alR
           echo "Number of dists, should be $EXPECTED:"
-          ls -1 dist | wc -l
-          files=$(ls dist 2>/dev/null | wc -l) && [ "$files" -eq $EXPECTED ] || exit 1
+          find dist/* | wc -l
+          files=$(find dist/* 2>/dev/null | wc -l) && [ "$files" -eq "$EXPECTED" ] || exit 1
 
       - name: "Generate attestations"
         uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
@@ -123,8 +123,8 @@ jobs:
         run: |
           ls -alR
           echo "Number of dists, should be $EXPECTED:"
-          ls -1 dist | wc -l
-          files=$(ls dist 2>/dev/null | wc -l) && [ "$files" -eq $EXPECTED ] || exit 1
+          find dist/* | wc -l
+          files=$(find dist/* 2>/dev/null | wc -l) && [ "$files" -eq "$EXPECTED" ] || exit 1
 
       - name: "Generate attestations"
         uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0

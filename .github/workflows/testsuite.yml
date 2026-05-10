@@ -147,8 +147,8 @@ jobs:
           # Ideally, the system Python wouldn't have writable sitepackages so
           # try to make it not writable.  We can't always always change the
           # permissions (Ubuntu & Windows yes, Mac no), so be ready for it to fail.
-          chmod u-w $(python -c "import site; print(site.getsitepackages()[0])") || echo "Couldn't lock down site-packages"
-          ls -ld $(python -c "import site; print(site.getsitepackages()[0])")
+          chmod u-w "$(python -c "import site; print(site.getsitepackages()[0])")" || echo "Couldn't lock down site-packages"
+          ls -ld "$(python -c "import site; print(site.getsitepackages()[0])")"
           whoami
 
       - name: "Install dependencies"

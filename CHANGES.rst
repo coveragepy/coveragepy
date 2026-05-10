@@ -23,6 +23,17 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
+- Feature: now when running one of the reporting commands, if there are
+  parallel data files that need combining, they will be implicitly combined
+  before creating the report. There is no option to avoid the combination; let
+  us know if you have a use case that requires it.  Thanks, `Tim Hatch
+  <pull 2162_>`_. Closes `issue 1781`_.
+
+- Fix: the output from ``combine`` was too verbose, listing each file
+  considered. Now it shows a single line with the counts of files combined,
+  files skipped, and files with errors. The ``-q`` flag suppresses this line.
+  The old detailed lines are available with the new ``--debug=combine`` option.
+
 - Fix: running a Python file through a symlink now sets the sys.path correctly,
   matching regular Python behavior. Fixes `issue 2157`_.
 
@@ -32,10 +43,15 @@ Unreleased
   passed to ``CoverageData`` are now snapshotted via ``dict.copy()`` and
   ``set.copy()``, which are atomic under the GIL.
 
-- We are no longer testing eventlet support. Eventlet issues stern deprecation
-  warnings that break our tests. Our support code is still there.
+- Fix: the soft keyword ``lazy`` is now bolded in HTML reports.
 
+- We are no longer testing eventlet support. Eventlet started issuing stern
+  deprecation warnings that break our tests. Our support code is still there.
+
+.. _issue 1781: https://github.com/coveragepy/coveragepy/issues/1781
 .. _issue 2157: https://github.com/coveragepy/coveragepy/issues/2157
+.. _pull 2162: https://github.com/coveragepy/coveragepy/pull/2162
+
 
 .. start-releases
 
@@ -59,6 +75,7 @@ Version 7.13.5 — 2026-03-17
 .. _issue 2141: https://github.com/coveragepy/coveragepy/issues/2141
 .. _pull 2142: https://github.com/coveragepy/coveragepy/pull/2142
 .. _issue 2145: https://github.com/coveragepy/coveragepy/issues/2145
+
 
 .. _changes_7-13-4:
 

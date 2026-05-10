@@ -74,6 +74,9 @@ of activity to log:
 * ``callers``: annotate each debug message with a stack trace of the callers
   to that point.
 
+* ``combine``: show each file considered for data combining and whether it was
+  combined or skipped because it offered no new data.
+
 * ``config``: before starting, dump all the :ref:`configuration <config>`
   values.
 

@@ -874,6 +874,7 @@ class CoverageScript:
         sys.path.insert(0, "")
 
         self.coverage.load()
+        self.coverage.combine(strict=False, keep=False)
 
         total = None
         if options.action == "report":

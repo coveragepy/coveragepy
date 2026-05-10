@@ -177,6 +177,7 @@ def combine_parallel_data(
     classifier = DataFileClassifier()
     combined_any = False
 
+    combined = skipped = errored = 0
     for f in files_to_combine:
         if f == data.data_filename():
             # Sometimes we are combining into a file which is one of the
@@ -203,21 +204,24 @@ def combine_parallel_data(
                 new_data = CoverageData(f, debug=data._debug)
                 new_data.read()
             except CoverageException as exc:
+                errored += 1
                 if data._warn:
                     # The CoverageException has the file name in it, so just
                     # use the message as the warning.
                     data._warn(str(exc))
-                if message:
-                    message(f"Couldn't combine data file {rel_file_name}: {exc}")
+                if data._debug.should("combine"):
+                    data._debug.write(f"Couldn't combine data file {rel_file_name}: {exc}")
                 delete_this_one = False
             else:
                 data.update(new_data, map_path=map_path)
+                combined += 1
                 combined_any = True
-                if message:
-                    message(f"Combined data file {rel_file_name}")
+                if data._debug.should("combine"):
+                    data._debug.write(f"Combined data file {rel_file_name}")
         else:
-            if message:
-                message(f"Skipping duplicate data {rel_file_name}")
+            skipped += 1
+            if data._debug.should("combine"):
+                data._debug.write(f"Skipping duplicate data {rel_file_name}")
 
         if delete_this_one:
             if data._debug.should("dataio"):
@@ -226,6 +230,14 @@ def combine_parallel_data(
 
     if strict and not combined_any:
         raise NoDataError("No usable data files")
+
+    if message and (combined + skipped + errored > 0):
+        msg = f"Combined {plural(combined, 'file')}"
+        if skipped:
+            msg += f", skipped {skipped}"
+        if errored:
+            msg += f", {plural(errored, 'file')} errored"
+        message(msg)
 
 
 def debug_data_file(filename: str) -> None:

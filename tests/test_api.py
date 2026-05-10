@@ -1483,8 +1483,9 @@ class CombiningTest(CoverageTest):
         self.make_data_file(".coverage.c", lines=self.C_LINES)
 
         # Combine the parallel coverage data files into .coverage .
-        cov = coverage.Coverage()
+        cov = coverage.Coverage(messages=True)
         cov.combine(strict=True)
+        assert self.stdout() == "Combined 2 files\n"
         self.assert_exists(".coverage")
 
         # After combining, there should be only the .coverage file.
@@ -1516,7 +1517,7 @@ class CombiningTest(CoverageTest):
         self.make_file(".coverage.bad", "This isn't a coverage data file.")
 
         # Combine the parallel coverage data files into .coverage .
-        cov = coverage.Coverage()
+        cov = coverage.Coverage(debug=["combine"], messages=True)
         with pytest.warns(Warning) as warns:
             cov.combine(strict=True)
         assert_coverage_warnings(
@@ -1525,6 +1526,7 @@ class CombiningTest(CoverageTest):
                 r"Couldn't use data file '.*[/\\]\.coverage\.bad': " + BAD_SQLITE_REGEX,
             ),
         )
+        assert self.stdout() == "Combined 2 files, 1 file errored\n"
 
         # After combining, those two should be the only data files.
         self.assert_exists(".coverage")

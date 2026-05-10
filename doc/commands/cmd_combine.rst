@@ -24,13 +24,16 @@ then combine all the separate data files into one combined file for reporting.
 The **combine** command reads a number of separate data files, matches the data
 by source file name, and writes a combined data file with all of the data.
 
+As of version 7.14.0, files are combined by the :ref:`reporting commands
+<cmd_reporting>`, so there is less need to use an explicit ``combine`` command.
+
 Coverage normally writes data to a filed named ".coverage".  The ``run
 --parallel-mode`` switch (or ``[run] parallel=True`` configuration option)
-tells coverage to expand the file name to include machine name, process id, and
-a random number so that every data file is distinct::
+tells coverage to expand the file name to include distinguising information
+so that every data file is distinct::
 
-    .coverage.Neds-MacBook-Pro.local.88335.316857
-    .coverage.Geometer.8044.799674
+    .coverage.Neds-MacBook-Pro.pid88335.XSpwmKEx.HFOd8LCkdg8h
+    .coverage.Geometer.pid8044.XJeYqEYx.H7cDrkGAlTVh
 
 You can also define a new data file name with the ``[run] data_file`` option.
 

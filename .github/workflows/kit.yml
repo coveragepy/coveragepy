@@ -291,8 +291,8 @@ jobs:
         run: |
           ls -alR
           echo "Number of dists, there should be $EXPECTED:"
-          ls -1 coverage-* | wc -l
-          files=$(ls coverage-* 2>/dev/null | wc -l) && [ "$files" -eq $EXPECTED ] || exit 1
+          find coverage-* | wc -l
+          files=$(find coverage-* 2>/dev/null | wc -l) && [ "$files" -eq "$EXPECTED" ] || exit 1
 
       - name: "Sign artifacts"
         uses: sigstore/gh-action-sigstore-python@04cffa1d795717b140764e8b640de88853c92acc # v3.3.0
