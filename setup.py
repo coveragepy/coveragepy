@@ -71,6 +71,7 @@ CLASSIFIERS = textwrap.dedent("""\
     Programming Language :: Python :: 3.13
     Programming Language :: Python :: 3.14
     Programming Language :: Python :: 3.15
+    Programming Language :: Python :: 3.16
     Programming Language :: Python :: Free Threading :: 3 - Stable
     Programming Language :: Python :: Implementation :: CPython
     Programming Language :: Python :: Implementation :: PyPy
