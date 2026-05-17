@@ -40,6 +40,30 @@ if you haven't already.)
 .. _discord: https://discord.com/channels/267624335836053506/1253355750684753950
 
 
+System prerequisites
+--------------------
+
+A few things need to be available on your system before you can build and test
+coverage.py locally:
+
+- **git**, to clone the repository.
+- **A C compiler** (``gcc`` or ``clang`` on Linux/macOS, MSVC on Windows) and
+  Python development headers, to build the bundled C tracer.  See
+  :ref:`install_extension` for the package names on common Linux distributions.
+- **make**, used by the ``make`` targets shown below.  Many distributions
+  install it alongside ``gcc``.
+- **tox**, used to run the test matrix.  It can be installed with
+  ``pip install tox`` or your system package manager.
+
+To exercise the full ``tox`` matrix you also need each supported CPython and
+PyPy interpreter installed and on ``PATH``; see the ``envlist`` in
+``tox.ini``.  This includes the free-threaded CPython builds (``py313t``,
+``py314t``, ...) used to test coverage.py without the GIL, which on some
+distributions ship as separate packages (for example
+``python3.13-freethreading`` on Fedora).  Interpreters that aren't installed
+are skipped, so you can start with just one or two and expand from there.
+
+
 Getting the code
 ----------------
 
