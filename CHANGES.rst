@@ -29,7 +29,11 @@ Unreleased
   uses CSS to accomplish the same visual tweak so that searches with slashes
   work correctly. Closes `issue 2170`_.
 
+- `Add a 3.16 PyPI classifier <hugo-316_>`_ since we test on the 3.16 main
+  branch.
+
 .. _issue 2170: https://github.com/coveragepy/coveragepy/issues/2170
+.. _hugo-316: https://mastodon.social/@hugovk/116588523571204490
 
 
 .. start-releases
