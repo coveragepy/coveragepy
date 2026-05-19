@@ -390,9 +390,10 @@ class HtmlReporter:
 
         for ftr in files_to_report:
             self.write_html_page(ftr)
-            for noun, plural_noun in ftr.fr.code_region_kinds():
-                if noun not in self.index_pages:
-                    self.index_pages[noun] = self.new_index_page(noun, plural_noun)
+            if not self.config.omit_regions:
+                for noun, plural_noun in ftr.fr.code_region_kinds():
+                    if noun not in self.index_pages:
+                        self.index_pages[noun] = self.new_index_page(noun, plural_noun)
 
         # Write the index page.
         if files_to_report:
@@ -403,7 +404,8 @@ class HtmlReporter:
         self.write_file_index_page(first_html, final_html)
 
         # Write function and class index pages.
-        self.write_region_index_pages(files_to_report)
+        if not self.config.omit_regions:
+            self.write_region_index_pages(files_to_report)
 
         return (
             self.index_pages["file"].totals.n_statements
