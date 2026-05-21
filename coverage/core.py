@@ -75,6 +75,12 @@ class Core:
             reason_no_sysmon = "sys.monitoring isn't available in this version"
         elif config.branch and not env.PYBEHAVIOR.branch_right_left:
             reason_no_sysmon = "sys.monitoring can't measure branches in this version"
+        elif config.branch and not config.core:
+            # On 3.14+, sysmon branch coverage is correct but can't disable
+            # per-arc LINE events, so it fires a Python callback on every
+            # execution — no faster than ctrace, and slower due to Python
+            # dispatch overhead. Fall back silently. See issue #2172.
+            reason_no_sysmon = "sysmon branch coverage has no speed advantage in this version"
         elif dynamic_contexts:
             reason_no_sysmon = "it doesn't yet support dynamic contexts"
         elif any((bad := c) in config.concurrency for c in ["greenlet", "eventlet", "gevent"]):
