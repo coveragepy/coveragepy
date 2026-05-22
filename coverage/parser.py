@@ -158,6 +158,14 @@ class PythonParser:
                         ltext,
                     )
                 )
+            if toktype == token.STRING and slineno != elineno:
+                # Exclusion regexes are matched against plain text. Don't let
+                # matches inside multi-line string literals exclude the whole
+                # statement containing the string.
+                string_lines = range(slineno, elineno + 1)
+                self.raw_excluded.difference_update(string_lines)
+                self.excluded.difference_update(string_lines)
+
             if toktype == token.INDENT:
                 indent += 1
             elif toktype == token.DEDENT:
