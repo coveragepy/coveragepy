@@ -1518,11 +1518,11 @@ class ExcludeTest(CoverageTest):
 
     def test_default_ellipsis_exclusion_ignores_single_line_strings(self) -> None:
         self.check_coverage(
-            '''\
+            """\
             pattern = "literal ..."
             skipped = "literal ..."  # pragma: no cover
             after = 1
-            ''',
+            """,
             lines=[1, 3],
         )
 
