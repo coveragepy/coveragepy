@@ -165,6 +165,10 @@ class PythonParser:
                 string_lines = range(slineno, elineno + 1)
                 self.raw_excluded.difference_update(string_lines)
                 self.excluded.difference_update(string_lines)
+            elif toktype == tokenize.COMMENT and self.exclude:
+                if re.search(self.exclude, ttext, flags=re.MULTILINE):
+                    self.raw_excluded.add(slineno)
+                    self.excluded.add(slineno)
 
             if toktype == token.INDENT:
                 indent += 1

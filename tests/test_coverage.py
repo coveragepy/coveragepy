@@ -1516,6 +1516,18 @@ class ExcludeTest(CoverageTest):
             lines=[1, 6],
         )
 
+    def test_default_ellipsis_exclusion_keeps_multiline_pragma(self) -> None:
+        self.check_coverage(
+            '''\
+            YAML_LITERAL = """\\
+            ---
+            ...
+            """  # pragma: no cover
+            after = 1
+            ''',
+            lines=[5],
+        )
+
     def test_default_ellipsis_exclusion_ignores_single_line_strings(self) -> None:
         self.check_coverage(
             """\
