@@ -1,0 +1,21 @@
+# From:
+# https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/keeping-your-actions-up-to-date-with-dependabot
+# Set update schedule for GitHub Actions
+
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      # Check for updates to GitHub Actions once a week
+      interval: "weekly"
+      day: "sunday"
+    cooldown:
+      # https://blog.yossarian.net/2025/11/21/We-should-all-be-using-dependency-cooldowns
+      default-days: 10
+    groups:
+      action-dependencies:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "chore"

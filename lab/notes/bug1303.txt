@@ -1,0 +1,92 @@
+https://github.com/coveragepy/coveragepy/issues/1303
+
+Looks like the race condition is between erasing and creating...
+
+
+COVERAGE_DEBUG=dataio,pid,process,self pytest "./test/." \
+	-q -s -m unittest \
+	--cov-report=xml --cov-report=term-missing \
+	--cov="./pji/." \
+	 \
+
+ 7715.ea8c: cwd is now '/src/bugs/bug1303/pji'
+ 7715.ea8c: New process: executable: '/usr/local/bin/python'
+ 7715.ea8c: New process: cmd: ['/usr/local/bin/pytest', './test/.', '-q', '-s', '-m', 'unittest', '--cov-report=xml', '--cov-report=term-missing', '--cov=./pji/.']
+ 7715.ea8c: New process: pid: 7715, parent pid: 7714
+ 7715.ea8c: Erasing data file '/src/bugs/bug1303/pji/.coverage'
+ 7715.ea8c: self: <CoverageData @0x7f7400fed6a0 _no_disk=False _basename='/src/bugs/bug1303/pji/.coverage' _suffix=None _filename='/src/bugs/bug1303/pji/.coverage' _file_map={} _dbs={} _pid=7715 _lock=<unlocked _thread.lock object at 0x7f740192caf8> _have_used=False _has_lines=False _has_arcs=False _current_context=None _current_context_id=None _query_context_ids=None>
+.......................
+ 7720.ea8c: Opening data file '/src/bugs/bug1303/pji/.coverage'
+ 7720.ea8c: self: <CoverageData @0x7f73fbc190b8 _no_disk=False _basename='/src/bugs/bug1303/pji/.coverage' _suffix=None _filename='/src/bugs/bug1303/pji/.coverage' _file_map={} _dbs={} _pid=7720 _lock=<unlocked _thread.lock object at 0x7f73fbc77760> _have_used=False _has_lines=False _has_arcs=False _current_context=None _current_context_id=None _query_context_ids=None>
+ 7725.ea8c: Opening data file '/src/bugs/bug1303/pji/.coverage'
+ 7725.ea8c: self: <CoverageData @0x7f73fbc19828 _no_disk=False _basename='/src/bugs/bug1303/pji/.coverage' _suffix=None _filename='/src/bugs/bug1303/pji/.coverage' _file_map={} _dbs={} _pid=7725 _lock=<unlocked _thread.lock object at 0x7f73fbc77648> _have_used=False _has_lines=False _has_arcs=False _current_context=None _current_context_id=None _query_context_ids=None>
+.
+ 7732.ea8c: Opening data file '/src/bugs/bug1303/pji/.coverage'
+ 7732.ea8c: self: <CoverageData @0x7f73fbc19860 _no_disk=False _basename='/src/bugs/bug1303/pji/.coverage' _suffix=None _filename='/src/bugs/bug1303/pji/.coverage' _file_map={} _dbs={} _pid=7732 _lock=<unlocked _thread.lock object at 0x7f73fbc77e68> _have_used=False _has_lines=False _has_arcs=False _current_context=None _current_context_id=None _query_context_ids=None>
+ 7737.ea8c: Opening data file '/src/bugs/bug1303/pji/.coverage'
+ 7737.ea8c: self: <CoverageData @0x7f73fbc19908 _no_disk=False _basename='/src/bugs/bug1303/pji/.coverage' _suffix=None _filename='/src/bugs/bug1303/pji/.coverage' _file_map={} _dbs={} _pid=7737 _lock=<unlocked _thread.lock object at 0x7f73fbc77648> _have_used=False _has_lines=False _has_arcs=False _current_context=None _current_context_id=None _query_context_ids=None>
+................................................................................................................................................................................................................................................................................................
+ 7715.ea8c: Erasing data file '/src/bugs/bug1303/pji/.coverage.docker-desktop.7715.157477'
+ 7715.ea8c: self: <CoverageData @0x7f7400fed630 _no_disk=False _basename='/src/bugs/bug1303/pji/.coverage' _suffix=True _filename='/src/bugs/bug1303/pji/.coverage.docker-desktop.7715.157477' _file_map={} _dbs={} _pid=7715 _lock=<locked _thread.lock object at 0x7f7401432850> _have_used=False _has_lines=False _has_arcs=False _current_context=None _current_context_id=None _query_context_ids=None>
+ 7715.ea8c: Creating data file '/src/bugs/bug1303/pji/.coverage.docker-desktop.7715.157477'
+ 7715.ea8c: self: <CoverageData @0x7f7400fed630 _no_disk=False _basename='/src/bugs/bug1303/pji/.coverage' _suffix=True _filename='/src/bugs/bug1303/pji/.coverage.docker-desktop.7715.157477' _file_map={} _dbs={} _pid=7715 _lock=<locked _thread.lock object at 0x7f7401432850> _have_used=True _has_lines=True _has_arcs=False _current_context=None _current_context_id=None _query_context_ids=None>
+ 7715.ea8c: Opening data file '/src/bugs/bug1303/pji/.coverage'
+ 7715.ea8c: self: <CoverageData @0x7f73fbca8048 _no_disk=False _basename='/src/bugs/bug1303/pji/.coverage' _suffix=None _filename='/src/bugs/bug1303/pji/.coverage' _file_map={} _dbs={} _pid=7715 _lock=<unlocked _thread.lock object at 0x7f73fbb891e8> _have_used=False _has_lines=False _has_arcs=False _current_context=None _current_context_id=None _query_context_ids=None>
+INTERNALERROR> Traceback (most recent call last):
+INTERNALERROR>   File "/usr/local/lib/python3.6/site-packages/coverage/sqldata.py", line 1100, in execute
+INTERNALERROR>     return self.con.execute(sql, parameters)
+INTERNALERROR> sqlite3.OperationalError: no such table: coverage_schema
+INTERNALERROR>
+INTERNALERROR> During handling of the above exception, another exception occurred:
+INTERNALERROR>
+INTERNALERROR> Traceback (most recent call last):
+INTERNALERROR>   File "/usr/local/lib/python3.6/site-packages/coverage/sqldata.py", line 1105, in execute
+INTERNALERROR>     return self.con.execute(sql, parameters)
+INTERNALERROR> sqlite3.OperationalError: no such table: coverage_schema
+INTERNALERROR>
+INTERNALERROR> The above exception was the direct cause of the following exception:
+INTERNALERROR>
+INTERNALERROR> Traceback (most recent call last):
+INTERNALERROR>   File "/usr/local/lib/python3.6/site-packages/coverage/sqldata.py", line 290, in _read_db
+INTERNALERROR>     schema_version, = db.execute_one("select version from coverage_schema")
+INTERNALERROR>   File "/usr/local/lib/python3.6/site-packages/coverage/sqldata.py", line 1133, in execute_one
+INTERNALERROR>     rows = list(self.execute(sql, parameters))
+INTERNALERROR>   File "/usr/local/lib/python3.6/site-packages/coverage/sqldata.py", line 1122, in execute
+INTERNALERROR>     raise DataError(f"Couldn't use data file {self.filename!r}: {msg}") from exc
+INTERNALERROR> coverage.exceptions.DataError: Couldn't use data file '/src/bugs/bug1303/pji/.coverage': no such table: coverage_schema
+INTERNALERROR>
+INTERNALERROR> The above exception was the direct cause of the following exception:
+INTERNALERROR>
+INTERNALERROR> Traceback (most recent call last):
+INTERNALERROR>   File "/usr/local/lib/python3.6/site-packages/_pytest/main.py", line 269, in wrap_session
+INTERNALERROR>     session.exitstatus = doit(config, session) or 0
+INTERNALERROR>   File "/usr/local/lib/python3.6/site-packages/_pytest/main.py", line 323, in _main
+INTERNALERROR>     config.hook.pytest_runtestloop(session=session)
+INTERNALERROR>   File "/usr/local/lib/python3.6/site-packages/pluggy/_hooks.py", line 265, in __call__
+INTERNALERROR>     return self._hookexec(self.name, self.get_hookimpls(), kwargs, firstresult)
+INTERNALERROR>   File "/usr/local/lib/python3.6/site-packages/pluggy/_manager.py", line 80, in _hookexec
+INTERNALERROR>     return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+INTERNALERROR>   File "/usr/local/lib/python3.6/site-packages/pluggy/_callers.py", line 55, in _multicall
+INTERNALERROR>     gen.send(outcome)
+INTERNALERROR>   File "/usr/local/lib/python3.6/site-packages/pytest_cov/plugin.py", line 294, in pytest_runtestloop
+INTERNALERROR>     self.cov_controller.finish()
+INTERNALERROR>   File "/usr/local/lib/python3.6/site-packages/pytest_cov/engine.py", line 44, in ensure_topdir_wrapper
+INTERNALERROR>     return meth(self, *args, **kwargs)
+INTERNALERROR>   File "/usr/local/lib/python3.6/site-packages/pytest_cov/engine.py", line 230, in finish
+INTERNALERROR>     self.cov.stop()
+INTERNALERROR>   File "/usr/local/lib/python3.6/site-packages/coverage/control.py", line 446, in load
+INTERNALERROR>     self._data.read()
+INTERNALERROR>   File "/usr/local/lib/python3.6/site-packages/coverage/sqldata.py", line 778, in read
+INTERNALERROR>     with self._connect():       # TODO: doesn't look right
+INTERNALERROR>   File "/usr/local/lib/python3.6/site-packages/coverage/sqldata.py", line 316, in _connect
+INTERNALERROR>     self._open_db()
+INTERNALERROR>   File "/usr/local/lib/python3.6/site-packages/coverage/sqldata.py", line 284, in _open_db
+INTERNALERROR>     self._read_db()
+INTERNALERROR>   File "/usr/local/lib/python3.6/site-packages/coverage/sqldata.py", line 296, in _read_db
+INTERNALERROR>     ) from exc
+INTERNALERROR> coverage.exceptions.DataError: Data file '/src/bugs/bug1303/pji/.coverage' doesn't seem to be a coverage data file: Couldn't use data file '/src/bugs/bug1303/pji/.coverage': no such table: coverage_schema
+
+312 passed, 1 warning in 62.60s (0:01:02)
+ 7715.ea8c: atexit: pid: 7715, instance: <coverage.control.Coverage object at 0x7f74018974e0>
+ 7715.ea8c: self: <coverage.control.Coverage object at 0x7f74018974e0>
+make: *** [Makefile:17: unittest] Error 3

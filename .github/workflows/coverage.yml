@@ -1,0 +1,353 @@
+# Licensed under the Apache License: http://www.apache.org/licenses/LICENSE-2.0
+# For details: https://github.com/coveragepy/coveragepy/blob/main/NOTICE.txt
+
+name: "Coverage"
+
+on:
+  # As currently structured, this adds too many jobs (checks?), so don't run it
+  # on pull requests yet.
+  push:
+    branches:
+      - main
+      - "**/*metacov*"
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  PIP_DISABLE_PIP_VERSION_CHECK: 1
+  COVERAGE_IGOR_VERBOSE: 2
+  FORCE_COLOR: 1    # Get colored pytest output
+  HYPOTHESIS_PROFILE: ci
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  changed:
+    name: "Check changed files"
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read   # Needed for this check to run on pull requests
+    outputs:
+      run_coverage: ${{ steps.filter.outputs.run_coverage }}
+      workflow: ${{ steps.filter.outputs.workflow }}
+    steps:
+      - name: "Check out the repo"
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: "Examine changed files"
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+        id: filter
+        with:
+          filters: |
+            run_coverage:
+              - "*.py"
+              - "coverage/**.py"
+              - "tests/**.py"
+              - "**.h"
+              - "**.c"
+              - ".github/workflows/coverage.yml"
+              - "tox.ini"
+              - "metacov.ini"
+              - "requirements/*.pip"
+              - "tests/gold/**"
+
+  coverage:
+    name: "${{ matrix.python-version }} on ${{ matrix.os }}"
+    runs-on: "${{ matrix.os }}-${{ matrix.os-version }}"
+    timeout-minutes: 15
+
+    # Only run coverage if Python files or this workflow changed.
+    needs: changed
+    if:
+      needs.changed.outputs.run_coverage == 'true'
+
+    env:
+      MATRIX_ID: "${{ matrix.python-version }}.${{ matrix.os }}"
+      TOX_GH_MAJOR_MINOR: "${{ matrix.python-version }}"
+
+    strategy:
+      matrix:
+        os:
+          - ubuntu
+          - macos
+          - windows
+        os-version:
+          - latest
+        python-version:
+          # When changing this list, be sure to check the [gh] list in
+          # tox.ini so that tox will run properly. PYVERSIONS
+          # Available versions:
+          # https://github.com/actions/python-versions/blob/main/versions-manifest.json
+          - "3.10"
+          - "3.11"
+          - "3.12"
+          - "3.13"
+          - "3.13t"
+          - "3.14"
+          - "3.14t"
+          - "3.15"
+          - "3.15t"
+          - "pypy-3.10"
+          - "pypy-3.11"
+        exclude:
+          # Mac PyPy always takes the longest, and doesn't add anything.
+          - os: macos
+            python-version: "pypy-3.10"
+          - os: macos
+            python-version: "pypy-3.11"
+          # Windows pypy 3.10 gets stuck with PyPy 7.3.15.  I hope to
+          # unstick them, but I don't want that to block all other progress, so
+          # skip them for now.
+          - os: windows
+            python-version: "pypy-3.10"
+          # Windows 3.13t often fails during installation.
+          - os: windows
+            python-version: "3.13t"
+        # If we need to tweak the os version we can do it with an include like
+        # this:
+        #  include:
+        #    - python-version: "3.12"
+        #      os: "macos"
+        #      os-version: "15"
+
+      # If one job fails, stop the whole thing.
+      fail-fast: true
+
+    steps:
+      - name: "Check out the repo"
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: "Set up Python"
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "${{ matrix.python-version }}"
+          allow-prereleases: true
+          # At a certain point, installing dependencies failed on pypy 3.9 and
+          # 3.10 on Windows.  Commenting out the cache here fixed it.  Someday
+          # try using the cache again.
+          #cache: pip
+          #cache-dependency-path: 'requirements/*.pip'
+
+      - name: "Show environment"
+        run: |
+          set -xe
+          echo matrix id: "$MATRIX_ID"
+          python -VV
+          python -m site
+          env | sort
+
+      - name: "Install dependencies"
+        run: |
+          set -xe
+          python -m pip install -r requirements/tox.pip
+
+      - name: "Run tox coverage for ${{ matrix.python-version }}"
+        env:
+          COVERAGE_COVERAGE: "yes"
+          COVERAGE_CONTEXT: "${{ env.MATRIX_ID }}"
+        run: |
+          set -xe
+          python -m tox
+
+      - name: "Combine data"
+        env:
+          COVERAGE_RCFILE: "metacov.ini"
+        run: |
+          python -m coverage combine
+          mv .metacov ".metacov.$MATRIX_ID"
+
+      - name: "Upload coverage data"
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: metacov-${{ env.MATRIX_ID }}
+          path: .metacov.*
+          include-hidden-files: true
+
+  combine:
+    name: "Combine coverage data"
+    needs: coverage
+    runs-on: ubuntu-latest
+    outputs:
+      total: ${{ steps.total.outputs.total }}
+    env:
+      COVERAGE_RCFILE: "metacov.ini"
+
+    steps:
+      - name: "Check out the repo"
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: "Set up Python"
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.10" # Minimum of PYVERSIONS
+          # At a certain point, installing dependencies failed on pypy 3.9 and
+          # 3.10 on Windows.  Commenting out the cache here fixed it.  Someday
+          # try using the cache again.
+          #cache: pip
+          #cache-dependency-path: 'requirements/*.pip'
+
+      - name: "Show environment"
+        run: |
+          set -xe
+          python -VV
+          python -m site
+          env | sort
+
+      - name: "Install dependencies"
+        run: |
+          set -xe
+          python -m pip install -e .
+          python igor.py zip_mods
+
+      - name: "Download coverage data"
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: metacov-*
+          merge-multiple: true
+
+      - name: "Combine and report"
+        id: combine
+        env:
+          COVERAGE_CONTEXT: "yes"
+        run: |
+          set -xe
+          python igor.py combine_html
+
+      - name: "Upload HTML report"
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: html_report
+          path: htmlcov
+          include-hidden-files: true
+
+      - name: "Show text report"
+        run: |
+          set -xe
+          echo "## Coverage: $(python -m coverage report --format=total)%" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          python -m coverage report -m --skip-covered >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: "Get total"
+        id: total
+        run: |
+          echo "total=$(python -m coverage report --format=total)" >> "$GITHUB_OUTPUT"
+
+      - name: "Check targets"
+        run: |
+          # Maybe someday goals will be a real feature
+          python -m pip install wcmatch
+          # Very crude check that nothing catastrophic has happened.
+          python lab/goals.py --group 90 "coverage/*.py" "tests/*.py"
+          # Absolutely all of our test code should be covered.
+          python lab/goals.py --file 100 "tests/test_*.py"
+
+  publish:
+    name: "Publish coverage report"
+    needs: combine
+    runs-on: ubuntu-latest
+    environment:
+      name: "publish report"
+      deployment: false
+
+    steps:
+      - name: "Show environment"
+        run: |
+          set -xe
+          env | sort
+
+      - name: "Compute info for later steps"
+        id: info
+        env:
+          REF: ${{ github.ref }}
+          SHA: ${{ github.sha }}
+        run: |
+          SHA10=$(echo "$SHA" | cut -c 1-10)
+          export SHA10
+          SLUG=$(date +'%Y%m%d')_$SHA10
+          export SLUG
+          echo "sha10=$SHA10" >> "$GITHUB_ENV"
+          echo "slug=$SLUG" >> "$GITHUB_ENV"
+          echo "report_dir=reports/$SLUG/htmlcov" >> "$GITHUB_ENV"
+          echo "url=https://coveragepy.github.io/metacov-reports/reports/$SLUG/htmlcov" >> "$GITHUB_ENV"
+          echo "branch=${REF#refs/heads/}" >> "$GITHUB_ENV"
+
+      - name: "Checkout reports repo"
+        if: ${{ github.ref == 'refs/heads/main' }}
+        env:
+          # Fine-grained, with write access to coveragepy/metacov-reports
+          TOKEN: ${{ secrets.COVERAGE_REPORTS_TOKEN }}
+        run: |
+          set -xe
+          git clone --depth=1 --no-checkout "https://$TOKEN@github.com/coveragepy/metacov-reports" reports_repo
+          cd reports_repo
+          git sparse-checkout init --cone
+          git sparse-checkout set --skip-checks '/*' '!/reports'
+          git config user.name nedbat
+          git config user.email ned@nedbatchelder.com
+          git checkout main
+
+      - name: "Download coverage HTML report"
+        if: ${{ github.ref == 'refs/heads/main' }}
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: html_report
+          path: reports_repo/${{ env.report_dir }}
+
+      - name: "Push to report repo"
+        if: |
+          github.repository_owner == 'coveragepy'
+          && github.ref == 'refs/heads/main'
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          TOTAL: ${{ needs.combine.outputs.total }}
+        run: |
+          set -xe
+          # Make the redirect to the latest report.
+          echo "<html><head>" > reports_repo/latest.html
+          echo "<meta http-equiv='refresh' content='0;url=${url}' />" >> reports_repo/latest.html
+          echo "<body>Coverage report redirect..." >> reports_repo/latest.html
+          # Make the commit message.
+          echo "${TOTAL}% - ${COMMIT_MESSAGE}" > commit.txt
+          echo "" >> commit.txt
+          echo "${url}" >> commit.txt
+          echo "${sha10}: ${branch}" >> commit.txt
+          # Commit.
+          cd ./reports_repo
+          git sparse-checkout set --skip-checks '/*' "$report_dir"
+          rm "$report_dir/.gitignore"
+          git add "$report_dir" latest.html
+          git commit --file=../commit.txt
+          git push
+          echo "[${url}](${url})" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: "Create badge"
+        if: |
+          github.repository_owner == 'coveragepy'
+          && github.ref == 'refs/heads/main'
+        # https://gist.githubusercontent.com/nedbat/8c6980f77988a327348f9b02bbaf67f5
+        uses: schneegans/dynamic-badges-action@0e50b8bad39e7e1afd3e4e9c2b7dd145fad07501 # v1.8.0
+        with:
+          # Personal access token: gist access
+          auth: ${{ secrets.METACOV_GIST_SECRET }}
+          gistID: 8c6980f77988a327348f9b02bbaf67f5
+          filename: metacov.json
+          label: Coverage
+          message: ${{ needs.combine.outputs.total }}%
+          minColorRange: 60
+          maxColorRange: 95
+          valColorRange: ${{ needs.combine.outputs.total }}

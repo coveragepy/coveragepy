@@ -1,0 +1,109 @@
+a:hover {
+    text-decoration: underline;
+}
+
+img.tideliftlogo {
+    border: 1px solid #888;
+    margin-top: .5em !important;
+}
+
+.rst-content ol.arabic li {
+    margin-bottom: 12px;
+}
+
+.rst-content h3, .rst-content h4, .rst-content h5, .rst-content h6 {
+    /* This makes config.rst look a little better, but the paras are still too
+     * spaced out.
+     */
+    margin-bottom: 12px;
+}
+
+.ui.menu {
+    font-family: Helvetica;
+    min-height: 0;
+}
+
+.ui.tabular.menu .item {
+    padding: .25em 1em;
+}
+
+.ui.menu .item {
+    padding: 0;
+}
+
+.sig {
+    font-family: Consolas,"Andale Mono WT","Andale Mono","Lucida Console","Lucida Sans Typewriter","DejaVu Sans Mono","Bitstream Vera Sans Mono","Liberation Mono","Nimbus Mono L",Monaco,"Courier New",Courier,monospace;
+}
+
+.sig-name, .sig-prename {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: black;
+}
+
+.rst-content dl dt.sig {
+    font-weight: inherit;
+}
+
+/* .. parsed-literal:: isn't styled like other <pre> blocks!? */
+
+.rst-content pre.literal-block {
+    white-space: pre;
+    padding: 12px 12px !important;
+    font-family: Consolas,"Andale Mono WT","Andale Mono","Lucida Console","Lucida Sans Typewriter","DejaVu Sans Mono","Bitstream Vera Sans Mono","Liberation Mono","Nimbus Mono L",Monaco,"Courier New",Courier,monospace;
+    font-size: 12px;
+    display: block;
+    overflow: auto;
+    color: #404040;
+    background: #efc;
+}
+
+/* I'm not sure why I had to make this so specific to get it to take effect... */
+div.rst-content div.document div.wy-table-responsive table.docutils.align-default tbody tr td {
+    vertical-align: top !important;
+}
+
+/* And this doesn't work, and I guess I just have to live with it. */
+div.rst-content div.document div.wy-table-responsive table.docutils.align-default tbody tr td .line-block {
+    margin-bottom: 0 !important;
+}
+
+/* sphinx-code-tabs */
+
+/* Some selectors here are extra-specific (.container) because this file comes
+ * before code-tabs.css, so we need the specificity to override it.
+ */
+
+div.tabs.container > ul.tabbar > li.tabbutton {
+    color: #666;
+    background-color: #ddd;
+    border-color: #aaa;
+}
+
+div.tabs.container > ul.tabbar > li.tabbutton:hover {
+	background-color: #eee;
+}
+
+div.tabs.container > ul.tabbar > li.tabbutton.selected {
+    color: black;
+    background-color: #fff;
+    border-color: #aaa;
+    border-bottom-color: #fff;
+}
+
+div.tabs.container > ul.tabbar > li.tabbutton.selected:hover {
+    background-color: #fff;
+}
+
+div.tabs.container {
+    margin-bottom: 1em;
+}
+
+div.tab.selected {
+    border: 1px solid #ccc;
+    border-radius: 0 .5em .5em .5em;
+}
+
+div.tab.codetab.selected {
+    border: none;
+}

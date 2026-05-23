@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<the_root a="one" b="2" c="three">
+    <also z="nine"   y="8"   x="seven">
+        Goodbye
+    </also>
+</the_root>

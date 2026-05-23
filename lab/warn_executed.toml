@@ -1,0 +1,15 @@
+warn-executed = [
+    "pragma: not covered",
+    "pragma: not testing",
+    "raise AssertionError",
+    "pragma: only failure",
+    "pragma: cant happen",
+    "pragma: never called",
+    "pytest.mark.skipif\\(env.METACOV",
+    ]
+
+warn-not-partial = [
+    "pragma: partial metacov",
+    "if env.METACOV:",
+    "pragma: part covered",
+    ]

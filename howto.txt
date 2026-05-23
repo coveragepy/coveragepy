@@ -1,0 +1,77 @@
+* Release checklist
+
+- Check that the current virtualenv matches the current coverage branch.
+    $ make sterile venv install
+    $ python -V # should match lowest PYVERSIONS
+- start branch for release work
+    $ make relbranch
+- check version number in coverage/version.py
+    - Update to a major/minor version bump if needed.
+    - IF PRE-RELEASE:
+        - edit to look like one of these:
+            version_info = (4, 0, 2, "alpha", 1)
+            version_info = (4, 0, 2, "beta", 1)
+            version_info = (4, 0, 2, "candidate", 1)
+            version_info = (4, 0, 2, "final", 0)
+        - also:
+            _dev = 0
+    - IF NOT PRE-RELEASE:
+        $ make release_version
+- Update source files with release facts, and get useful snippets:
+    $ make edit_for_release cheats
+- Edit supported Python version numbers. Search for "PYVERSIONS".
+    - Especially README.rst and doc/index.rst
+- Look over CHANGES.rst
+- Update docs
+    - IF PRE-RELEASE:
+        - Version of latest stable release in doc/index.rst
+    - Make sure the docs are cogged:
+        $ make prebuild
+    - Don't forget the man page: doc/python-coverage.1.txt
+    - Check that the docs build correctly:
+        $ tox -e doc
+- commit the release-prep changes
+    $ make relcommit1
+- Generate new sample_html to get the latest, incl footer version number:
+    - IF PRE-RELEASE:
+        $ make sample_html_beta relcommit2 install
+    - IF NOT PRE-RELEASE:
+        $ make sample_html relcommit2 install
+- Build and publish docs:
+    - IF PRE-RELEASE:
+        $ make publishbeta
+    - ELSE:
+        $ make publish
+    - commit and publish nedbatchelder.com
+- Done with changes to source files
+    $ g puo; gshipit
+        - check them in on the release prep branch
+        - wait for ci to finish
+        - merge to main
+        - git push
+- Start the kits:
+    $ opvars github; make build_kits
+- Kits:
+    - Wait for kits to finish:
+        - https://github.com/coveragepy/coveragepy/actions/workflows/kit.yml
+    - test the pypi upload:
+        $ make test_upload
+        - approve the action using the url printed out
+        - take a look: https://test.pypi.org/project/coverage/
+    - upload kits:
+        $ make pypi_upload
+        - approve the action using the url printed out
+- Tag the tree, update GitHub releases and comment on issues:
+    $ make clean tag github_releases comment_on_fixes
+- Bump version:
+    $ make bump_version
+- Update readthedocs
+    - IF PRE-RELEASE
+        - find the latest tag in the inactive list, edit it, make it active.
+        - keep just the latest version of each x.y release, make the rest active but hidden.
+            - pre-releases should be hidden
+    - IF NOT PRE-RELEASE:
+        $ opvars; make update_rtd
+$ deopvars
+- Once CI passes, merge the bump-version branch to main and push it
+    $ gshipit

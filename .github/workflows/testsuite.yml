@@ -1,0 +1,181 @@
+# Licensed under the Apache License: http://www.apache.org/licenses/LICENSE-2.0
+# For details: https://github.com/coveragepy/coveragepy/blob/main/NOTICE.txt
+
+name: "Tests"
+
+on:
+  push:
+    branches:
+      - main
+      - nedbat/*
+  pull_request:
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  PIP_DISABLE_PIP_VERSION_CHECK: 1
+  COVERAGE_IGOR_VERBOSE: 2
+  FORCE_COLOR: 1    # Get colored pytest output
+  HYPOTHESIS_PROFILE: ci
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  changed:
+    name: "Check changed files"
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read   # Needed for this check to run on pull requests
+    outputs:
+      run_tests: ${{ steps.filter.outputs.run_tests }}
+    steps:
+      - name: "Check out the repo"
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: "Examine changed files"
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+        id: filter
+        with:
+          filters: |
+            run_tests:
+              - "*.py"
+              - "coverage/**.py"
+              - "tests/**.py"
+              - "**.h"
+              - "**.c"
+              - ".github/workflows/testsuite.yml"
+              - "tox.ini"
+              - "requirements/*.pip"
+              - "tests/gold/**"
+
+  tests:
+    name: "${{ matrix.python-version }} on ${{ matrix.os }}"
+    runs-on: "${{ matrix.os }}-${{ matrix.os-version }}"
+    timeout-minutes: 15
+
+    # Don't run tests if the branch name includes "-notests".
+    # Only run tests if files that affect tests have changed.
+    needs: changed
+    if:
+      needs.changed.outputs.run_tests == 'true'
+      && !contains(github.ref, '-notests')
+
+    env:
+      TOX_GH_MAJOR_MINOR: "${{ matrix.python-version }}"
+
+    strategy:
+      matrix:
+        os:
+          - ubuntu
+          - macos
+          - windows
+        os-version:
+          - latest
+        python-version:
+          # When changing this list, be sure to check the [gh] list in
+          # tox.ini so that tox will run properly. PYVERSIONS
+          # Available versions:
+          # https://github.com/actions/python-versions/blob/main/versions-manifest.json
+          # https://github.com/actions/setup-python/blob/main/docs/advanced-usage.md#available-versions-of-python-and-pypy
+          - "3.10"
+          - "3.11"
+          - "3.12"
+          - "3.13"
+          - "3.13t"
+          - "3.14"
+          - "3.14t"
+          - "3.15"
+          - "3.15t"
+          - "pypy-3.10"
+          - "pypy-3.11"
+        exclude:
+          # Windows 3.13t often fails during installation.
+          - os: windows
+            python-version: "3.13t"
+
+        #
+        # If we need to exclude any combinations, do it like this:
+        #  exclude:
+        #    # Windows pypy 3.9 and 3.10 get stuck with PyPy 7.3.15.
+        #    - os: windows
+        #      python-version: "pypy-3.10"
+        #
+        # If we need to tweak the os version we can do it with an include like
+        # this:
+        #  include:
+        #    - python-version: "3.12"
+        #      os: "macos"
+        #      os-version: "15"
+
+      fail-fast: false
+
+    steps:
+      - name: "Check out the repo"
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: "Set up Python"
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "${{ matrix.python-version }}"
+          allow-prereleases: true
+          # At a certain point, installing dependencies failed on pypy 3.9 and
+          # 3.10 on Windows.  Commenting out the cache here fixed it.  Someday
+          # try using the cache again.
+          #cache: pip
+          #cache-dependency-path: 'requirements/*.pip'
+
+      - name: "Show environment"
+        run: |
+          set -xe
+          python -VV
+          python -m site
+          # For extreme debugging:
+          # python -c "import urllib.request as r; exec(r.urlopen('https://bit.ly/pydoctor').read())"
+          env | sort
+          # Ideally, the system Python wouldn't have writable sitepackages so
+          # try to make it not writable.  We can't always always change the
+          # permissions (Ubuntu & Windows yes, Mac no), so be ready for it to fail.
+          chmod u-w "$(python -c "import site; print(site.getsitepackages()[0])")" || echo "Couldn't lock down site-packages"
+          ls -ld "$(python -c "import site; print(site.getsitepackages()[0])")"
+          whoami
+
+      - name: "Install dependencies"
+        run: |
+          set -xe
+          python -m pip install -r requirements/tox.pip
+
+      - name: "Run tox for ${{ matrix.python-version }}"
+        run: |
+          python -m tox -- -rfsEX
+
+      - name: "Retry tox for ${{ matrix.python-version }}"
+        if: failure()
+        run: |
+          # `exit 1` makes sure that the job remains red with flaky runs
+          python -m tox -- -rfsEX --lf -vvvvv && exit 1
+
+  # This job aggregates test results. It's the required check for branch protection.
+  # https://github.com/marketplace/actions/alls-green#why
+  # https://github.com/orgs/community/discussions/33579
+  success:
+    name: "Tests successful"
+    needs:
+      - tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Decide success or failure"
+        uses: re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe # v1.2.2
+        with:
+          jobs: ${{ toJSON(needs) }}

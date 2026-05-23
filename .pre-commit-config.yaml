@@ -1,0 +1,36 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-case-conflict
+      - id: check-illegal-windows-names
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: check-toml
+      - id: check-xml
+      - id: check-yaml
+      - id: end-of-file-fixer
+        exclude: "(status\\.json|\\.min\\.js)$"
+      - id: trailing-whitespace
+        exclude: "stress_phystoken|\\.py,cover$"
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.13
+    hooks:
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/pygrep-hooks
+    rev: v1.10.0
+    hooks:
+    - id: rst-directive-colons
+    - id: rst-inline-touching-normal
+
+  - repo: https://github.com/sphinx-contrib/sphinx-lint
+    rev: v1.0.2
+    hooks:
+      - id: sphinx-lint
+
+  - repo: meta
+    hooks:
+      - id: check-useless-excludes

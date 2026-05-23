@@ -1,0 +1,184 @@
+# Licensed under the Apache License: http://www.apache.org/licenses/LICENSE-2.0
+# For details: https://github.com/coveragepy/coveragepy/blob/main/NOTICE.txt
+
+[build-system]
+requires = ['setuptools']
+build-backend = 'setuptools.build_meta'
+
+## MYPY
+
+[tool.mypy]
+check_untyped_defs = true
+disallow_any_generics = true
+disallow_incomplete_defs = true
+disallow_subclassing_any = true
+disallow_untyped_calls = true
+disallow_untyped_decorators = true
+disallow_untyped_defs = true
+follow_imports = "silent"
+ignore_missing_imports = true
+no_implicit_optional = true
+show_error_codes = true
+warn_redundant_casts = true
+warn_return_any = true
+warn_unreachable = true
+warn_unused_configs = true
+warn_unused_ignores = true
+
+exclude = """(?x)(
+    ^tests/.*_plugin\\.py$           # not part of our test suite.
+    )"""
+
+## PYLINT
+
+[tool.pylint.basic]
+no-docstring-rgx = "__.*__|test[A-Z_].*|setUp|_decorator|_wrapper|_.*__.*"
+
+[tool.pylint.classes]
+defining-attr-methods = [
+    "__init__",
+    "__new__",
+    "__post_init__",
+    "setUp",
+    "reset",
+    "_reset",
+]
+
+[tool.pylint.design]
+max-args = 15
+max-attributes = 40
+max-bool-expr = 5
+max-branches = 50
+max-locals = 50
+max-parents = 12
+max-public-methods = 500
+max-returns = 20
+max-statements = 150
+min-public-methods = 0
+
+[tool.pylint.main]
+extension-pkg-whitelist = ["greenlet"]
+
+[tool.pylint."messages control"]
+enable = [
+    "useless-suppression",
+]
+
+disable = [
+    "spelling",
+    # Messages that are just silly:
+    "locally-disabled",
+    "exec-used",
+    "global-statement",
+    "broad-except",
+    "no-else-return",
+    "subprocess-run-check",
+    "use-dict-literal",
+    # Messages that may be silly:
+    "no-member",
+    "using-constant-test",
+    "too-many-nested-blocks",
+    "too-many-ancestors",
+    "unnecessary-pass",
+    "no-else-break",
+    "no-else-continue",
+    # Questionable things, but it's ok, I don't need to be told:
+    "import-outside-toplevel",
+    "self-assigning-variable",
+    "consider-using-with",
+    "missing-timeout",
+    "too-many-lines",
+    "use-implicit-booleaness-not-comparison",
+    "too-many-positional-arguments",
+    # Formatting stuff
+    "superfluous-parens",
+    # Messages that are noisy for now, eventually maybe we'll turn them on:
+    "invalid-name",
+    "protected-access",
+    "unspecified-encoding",
+    "consider-using-f-string",
+    "duplicate-code",
+    "cyclic-import",
+]
+
+[tool.pylint.reports]
+score = false
+
+[tool.pylint.variables]
+dummy-variables-rgx = "_|unused|.*_unused"
+ignored-argument-names = "_|unused|.*_unused"
+
+## PYTEST
+
+[tool.pytest]
+minversion = "9.0.0"
+addopts = [
+    "-q",
+    "-n", "auto",
+    "--dist", "loadgroup",
+    "-p", "no:legacypath",
+    "--no-flaky-report",
+    "-rfEX",
+    "--failed-first",
+]
+python_classes = ["*Test"]
+strict = true
+
+### pytest.mark.xdist_group() values, and why:
+# "virtualenv_test": because of an expensive session-scoped fixture
+# "compare_test": Because of shared-file manipulations (~/tests/actual/testing)
+# "get_zip_bytes_test": no idea why this one fails if run on separate workers
+
+# How come these warnings are suppressed successfully here, but not in conftest.py??
+filterwarnings = [
+    # Sample 'ignore':
+    # "ignore:the imp module is deprecated in favour of importlib:DeprecationWarning",
+
+    # Note: when writing the regex for the message, it's matched with re.match,
+    # so it has to match the beginning of the message.  Add ".*" to make it
+    # match something in the middle of the message.
+
+    ## Pytest warns if it can't collect things that seem to be tests. This should be an error.
+    "error::pytest.PytestCollectionWarning",
+]
+
+verbosity_assertions = "5"
+
+## Scriv
+
+[tool.scriv]
+changelog = "tmp/only-changes.md"
+ghrel_template = """
+## {{title}}
+
+{{body}}
+
+:arrow_right:\u00a0 PyPI page: [coverage {{version}}](https://pypi.org/project/coverage/{{version}}).
+:arrow_right:\u00a0 To install: `python3 -m pip install coverage=={{version}}`
+
+"""
+
+## RUFF
+# We are using ruff for formatting, but not for linting.
+
+[tool.ruff]
+# PYVERSION
+target-version = "py310"  # Can't use [project]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "ANN401",       # any-type
+    "C901",         # complex structure
+    "COM812",       # missing-trailing-comma
+    "D203",         # incorrect-blank-line-before-class
+    "D213",         # multi-line-summary-second-line
+    "EM101",        # Exception must not use a string literal, assign to variable first
+    "EM102",        # Exception must not use an f-string literal, assign to variable first
+    "ERA001",       # Found commented-out code
+    "PLR0913",      # Too many arguments in function definition
+    "S101",         # Use of `assert` detected
+    "TRY003",       # Avoid specifying long messages outside the exception class
+]
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?)|[a-zA-Z0-9_]+_unused)$"

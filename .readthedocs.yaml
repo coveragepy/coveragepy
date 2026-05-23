@@ -1,0 +1,26 @@
+# Licensed under the Apache License: http://www.apache.org/licenses/LICENSE-2.0
+# For details: https://github.com/coveragepy/coveragepy/blob/main/NOTICE.txt
+#
+# ReadTheDocs configuration.
+# See https://docs.readthedocs.io/en/stable/config-file/v2.html
+
+version: 2
+
+build:
+  os: ubuntu-22.04
+  tools:
+    # PYVERSIONS: the version we use for building docs. Check tox.ini[doc] also.
+    python: "3.12"
+
+sphinx:
+  builder: html
+  configuration: doc/conf.py
+
+# Don't build anything except HTML.
+formats: []
+
+python:
+  install:
+    - requirements: doc/requirements.pip
+    - method: pip
+      path: .

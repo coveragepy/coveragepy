@@ -1,0 +1,25 @@
+# .ignore for coverage: controls what files get searched.
+build/
+htmlcov/
+html0/
+.tox*
+.coverage*
+.metacov
+coverage.json
+coverage.xml
+coverage.lcov
+*.min.js
+style.css
+tests/gold/*/*/*.*
+sample_html/
+sample_html_beta/
+*.so
+*.pyd
+*.gz
+*.zip
+_build/
+_spell/
+*.egg
+*.egg-info
+.*_cache
+tmp/

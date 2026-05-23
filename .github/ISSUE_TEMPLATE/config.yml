@@ -1,0 +1,13 @@
+# Licensed under the Apache License: http://www.apache.org/licenses/LICENSE-2.0
+# For details: https://github.com/coveragepy/coveragepy/blob/main/NOTICE.txt
+
+# https://help.github.com/en/github/building-a-strong-community/configuring-issue-templates-for-your-repository
+
+blank_issues_enabled: false
+contact_links:
+  - name: Frequently Asked Questions
+    url: https://coverage.readthedocs.io/en/latest/faq.html
+    about: Some common problems are described here.
+  - name: Tidelift security contact
+    url: https://tidelift.com/security
+    about: Please report security vulnerabilities here.

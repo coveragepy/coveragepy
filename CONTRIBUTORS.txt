@@ -1,0 +1,260 @@
+Coverage.py was originally written by Gareth Rees, and since 2004 has been
+extended and maintained by Ned Batchelder.
+
+Other contributions, including writing code, updating docs, and submitting
+useful bug reports, have been made by:
+
+Abdeali Kothari
+Adam Turner
+Adi Roiban
+Agbonze O. Jeremiah
+Albertas Agejevas
+Aleksi Torhamo
+Alex Gaynor
+Alex Groce
+Alex Sandro
+Alex Vandiver
+Alexander Todorov
+Alexander Walters
+Alpha Chen
+Ammar Askar
+Anders Kaseorg
+Andrew Hoos
+Anthony Sottile
+Arcadiy Ivanov
+Arkady Gilinsky
+Aron Griffis
+Artem Dayneko
+Arthur Deygin
+Arthur Rio
+Asher Foa
+Ask Hjorth Larsen
+Ayisha Mohammed
+Ben Carlsson
+Ben Finney
+Benjamin Parzella
+Benjamin Schubert
+Bernát Gábor
+Bill Hart
+Brad Smith
+Bradley Burns
+Brandon Rhodes
+Brett Cannon
+Brian Grohe
+Bruno Oliveira
+Bruno P. Kinoshita
+Bruno Rodrigues dos Santos
+Buck Evan
+Buck Golemon
+Calen Pennington
+Carl Friedrich Bolz-Tereick
+Carl Gieringer
+Catherine Proulx
+Charles Chan
+Chris Adams
+Chris Jerdonek
+Chris Rose
+Chris Warrick
+Christian Clauss
+Christian Heimes
+Christine Lytwynec
+Christoph Blessing
+Christoph Zwerschke
+Christopher Pickering
+Clément Pit-Claudel
+Conrad Ho
+Cosimo Lupo
+Dan Hemberger
+Dan Riti
+Dan Wandschneider
+Danek Duvall
+Daniel Diniz
+Daniel Hahler
+Danny Allen
+David Christian
+David MacIver
+David Stanek
+David Szotten
+Dennis Sweeney
+Detlev Offenbach
+Devin Jeanpierre
+Dirk Thomas
+Dmitry Shishov
+Dmitry Trofimov
+Edgar Ramírez Mondragón
+Eduardo Schettino
+Edward Loper
+Eli Skeggs
+Ellie Ayla
+Emil Madsen
+Éric Larivière
+Federico Bond
+Felix Horvat
+Finn Womack
+Frazer McLean
+Geoff Bache
+George Paci
+George Song
+George-Cristian Bîrzan
+Greg Biles
+Greg Rogers
+Guido van Rossum
+Guillaume Chazarain
+Guillaume Pujol
+Henry Schreiner
+Holger Krekel
+Hugo van Kemenade
+Ian Moore
+Ilia Meerovich
+Imri Goldberg
+Ionel Cristian Mărieș
+Ivan Ciuvalschii
+J. M. F. Tsang
+JT Olds
+Jacqueline Lee
+Jakub Wilk
+James Valleroy
+Jan Kühle
+Jan Rusak
+Janakarajan Natarajan
+Janine vN
+Jeremy Fleischman
+Jerin Peter George
+Jessamyn Smith
+Jianrong Zhao
+Joanna Ejzel
+Joe Doherty
+Joe Jevnik
+John Vandenberg
+Jon Chappell
+Jon Dufresne
+Joseph Tate
+Josh Williams
+Judson Neer
+Julian Berman
+Julien Voisin
+Justas Sadzevičius
+Karthikeyan Singaravelan
+Kassandra Keeton
+Ken Schackart
+Kevin Brown-Silva
+Kjell Braden
+Krystian Kichewko
+Kumar Aditya
+Kyle Altendorf
+Lars Hupfeldt Nielsen
+Latrice Wilgus
+Leonardo Pistone
+Lewis Gaul
+Lex Berezhny
+Liam DeVoe
+LiuYinCarl
+Loïc Dachary
+Lorenzo Micò
+Louis Heredero
+Luis Nell
+Łukasz Stolcman
+Maciej Kowalczyk
+Manuel Jacob
+Marc Abramowitz
+Marc Gibbons
+Marc Legendre
+Marcelo Trylesinski
+Marco Ricci
+Marcus Cobden
+Mariatta
+Marius Gedminas
+Mark van der Wal
+Martin Fuzzey
+Mathieu Kniewallner
+Matt Bachmann
+Matthew Boehm
+Matthew Desmarais
+Matthias Schoettle
+Matus Valo
+Max Linke
+Mayank Singhal
+Michael Bell
+Michael Krebs
+Michał Bultrowicz
+Michał Górny
+Mickie Betz
+Mike Fiedler
+Min ho Kim
+Nathan Goldbaum
+Nathan Land
+Naveen Srinivasan
+Naveen Yadav
+Neil Pilgrim
+Nicholas Nadeau
+Nick Drozd
+Nikita Bloshchanevich
+Nikita Sobolev
+Nils Kattenbeck
+Noah Fatsi
+Noel O'Boyle
+Oleg Höfling
+Oleh Krehel
+Olena Yefymenko
+Olivier Grisel
+Ori Avtalion
+Pablo Carballo
+Pankaj Pandey
+Pankhudi Jain
+Patrick Mezard
+Paul Timmins
+Pavel Tsialnou
+Peter Baughman
+Peter Ebden
+Peter Portante
+Phebe Polk
+Reya B
+Ricardo Newbery
+Robert Harris
+Rodrigue Cloutier
+Roger Hu
+Roland Illig
+Ross Lawley
+Roy Williams
+Russell Keith-Magee
+Ryuta Otsuka
+S. Y. Lee
+Salvatore Zagaria
+Sandra Martocchia
+Scott Belden
+Sebastián Ramírez
+Sergey B Kirpichev
+Shantanu
+Sigve Tjora
+Simon Willison
+Stan Hu
+Stanisław Pitucha
+Stefan Behnel
+Stephan Deibel
+Stephan Richter
+Stephen Finucane
+Steve Dower
+Steve Leonard
+Steve Oswald
+Steve Peak
+Sviatoslav Sydorenko
+Tanaydin Sirin
+Teake Nutma
+Ted Wexler
+Thijs Triemstra
+Thomas Grainger
+Tim Hatch
+Timo Furrer
+Titus Brown
+Tom Gurion
+Tomas Uribe
+Valentin Lab
+Ville Skyttä
+Vince Salvino
+Wonwin McBrootles
+Xie Yanbo
+Yilei "Dolee" Yang
+Yury Selivanov
+Zac Hatfield-Dodds
+Zack Weinberg
+Zooko Wilcox-O'Hearn

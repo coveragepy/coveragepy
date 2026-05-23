@@ -1,0 +1,16 @@
+# Licensed under the Apache License: http://www.apache.org/licenses/LICENSE-2.0
+# For details: https://github.com/coveragepy/coveragepy/blob/main/NOTICE.txt
+
+-c pins.pip
+
+# Just install tox, which will then install more things.
+# "make upgrade" turns this into requirements/tox.pip.
+
+tox
+tox-gh
+
+# Tox has a windows-only dependency on colorama:
+# https://github.com/tox-dev/tox/blob/master/setup.cfg#L44
+#   colorama>=0.4.1 ;platform_system=="Windows"
+# We copy it here so it can get pinned.
+colorama>=0.4.1

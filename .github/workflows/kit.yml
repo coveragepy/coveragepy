@@ -1,0 +1,311 @@
+# Licensed under the Apache License: http://www.apache.org/licenses/LICENSE-2.0
+# For details: https://github.com/coveragepy/coveragepy/blob/main/NOTICE.txt
+
+# This file is meant to be processed with cog.
+# Running "make prebuild" will bring it up to date.
+
+# Based on:
+# https://github.com/joerick/cibuildwheel/blob/master/examples/github-deploy.yml
+
+# To test installing wheels without uploading them to PyPI:
+#
+#   $ mkdir /tmp/pypi
+#   $ cp dist/* /tmp/pypi
+#   $ python -m pip install piprepo
+#   $ piprepo build /tmp/pypi
+#   $ python -m pip install -v coverage --index-url=file:///tmp/pypi/simple
+#
+
+name: "Kits"
+
+on:
+  push:
+    branches:
+      # Don't build kits all the time, but do if the branch is about kits.
+      - "**/*kit*"
+  workflow_dispatch:
+  repository_dispatch:
+    types:
+      - build-kits
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  PIP_DISABLE_PIP_VERSION_CHECK: 1
+  # PYVERSIONS: changing the list of versions will change the number of
+  # expected distributions. This must match the same number in publish.yml.
+  EXPECTED: 106
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  wheels:
+    name: "${{ matrix.py }} ${{ matrix.os }} ${{ matrix.arch }} wheels"
+    runs-on: "${{ matrix.os }}-${{ matrix.os-version || 'latest' }}"
+    env:
+      MATRIX_ID: "${{ matrix.py }}-${{ matrix.os }}-${{ matrix.arch }}"
+    strategy:
+      matrix:
+        include:
+          # To change the matrix, edit the choices, then process this file with cog:
+          #
+          # $ make workflows
+          #
+          # which runs:
+          #
+          # $ python -m pip install cogapp
+          # $ python -m cogapp -crP .github/workflows/kit.yml
+          #
+          # Choices come from the table on https://pypi.org/project/cibuildwheel/
+          #
+          # [[[cog
+          #   #----- vvv Choices for the matrix vvv -----
+          #
+          #   # For each OS, what arch to use with cibuildwheel:
+          #   os_archs = {
+          #       "ubuntu": ["x86_64", "i686", "aarch64", "riscv64", "ppc64le"],
+          #       "macos": ["arm64", "x86_64"],
+          #       "windows": ["x86", "AMD64", "ARM64"],
+          #   }
+          #   # PYVERSIONS. Available versions: https://pypi.org/project/cibuildwheel/
+          #   # Note that cibuildwheel recommends not shipping wheels for pre-release versions
+          #   # of Python: https://cibuildwheel.readthedocs.io/en/stable/options/#enable
+          #   # When changing this, also adjust SHIPPING_WHEELS in env.py.
+          #
+          #   pys = ["cp310", "cp311", "cp312", "cp313", "cp314"]
+          #   cipy = "3.11"  # PYVERSIONS, default for cibuildwheel
+          #
+          #   # Some OS/arch combinations need overrides for the Python versions:
+          #   os_arch_pys = {
+          #     # ("macos", "arm64"): ["cp38", "cp39", "cp310", "cp311", "cp312"],
+          #     ("windows", "ARM64"): ["cp311", "cp312", "cp313", "cp314"],
+          #   }
+          #
+          #   #----- ^^^ ---------------------- ^^^ -----
+          #
+          #   import json
+          #   for the_os, archs in os_archs.items():
+          #       for the_arch in archs:
+          #           for the_py in os_arch_pys.get((the_os, the_arch), pys):
+          #               them = {
+          #                   "os": the_os,
+          #                   "py": the_py,
+          #                   "arch": the_arch,
+          #                   "cipy": cipy,
+          #               }
+          #               if the_os == "macos":
+          #                   them["os-version"] = "14"
+          #               if the_os == "windows" and the_arch == "ARM64":
+          #                   them["os-version"] = "11-arm"
+          #                   # them["cipy"] = "3.11"
+          #               if the_arch == "aarch64":
+          #                   # https://github.com/pypa/cibuildwheel/issues/2257
+          #                   them["os-version"] = "22.04-arm"
+          #               if the_arch == "ppc64le":
+          #                   them["os-version"] = "24.04-ppc64le"
+          #               print(f"- {json.dumps(them)}")
+          # ]]]
+          - {"os": "ubuntu", "py": "cp310", "arch": "x86_64", "cipy": "3.11"}
+          - {"os": "ubuntu", "py": "cp311", "arch": "x86_64", "cipy": "3.11"}
+          - {"os": "ubuntu", "py": "cp312", "arch": "x86_64", "cipy": "3.11"}
+          - {"os": "ubuntu", "py": "cp313", "arch": "x86_64", "cipy": "3.11"}
+          - {"os": "ubuntu", "py": "cp314", "arch": "x86_64", "cipy": "3.11"}
+          - {"os": "ubuntu", "py": "cp310", "arch": "i686", "cipy": "3.11"}
+          - {"os": "ubuntu", "py": "cp311", "arch": "i686", "cipy": "3.11"}
+          - {"os": "ubuntu", "py": "cp312", "arch": "i686", "cipy": "3.11"}
+          - {"os": "ubuntu", "py": "cp313", "arch": "i686", "cipy": "3.11"}
+          - {"os": "ubuntu", "py": "cp314", "arch": "i686", "cipy": "3.11"}
+          - {"os": "ubuntu", "py": "cp310", "arch": "aarch64", "cipy": "3.11", "os-version": "22.04-arm"}
+          - {"os": "ubuntu", "py": "cp311", "arch": "aarch64", "cipy": "3.11", "os-version": "22.04-arm"}
+          - {"os": "ubuntu", "py": "cp312", "arch": "aarch64", "cipy": "3.11", "os-version": "22.04-arm"}
+          - {"os": "ubuntu", "py": "cp313", "arch": "aarch64", "cipy": "3.11", "os-version": "22.04-arm"}
+          - {"os": "ubuntu", "py": "cp314", "arch": "aarch64", "cipy": "3.11", "os-version": "22.04-arm"}
+          - {"os": "ubuntu", "py": "cp310", "arch": "riscv64", "cipy": "3.11"}
+          - {"os": "ubuntu", "py": "cp311", "arch": "riscv64", "cipy": "3.11"}
+          - {"os": "ubuntu", "py": "cp312", "arch": "riscv64", "cipy": "3.11"}
+          - {"os": "ubuntu", "py": "cp313", "arch": "riscv64", "cipy": "3.11"}
+          - {"os": "ubuntu", "py": "cp314", "arch": "riscv64", "cipy": "3.11"}
+          - {"os": "ubuntu", "py": "cp310", "arch": "ppc64le", "cipy": "3.11", "os-version": "24.04-ppc64le"}
+          - {"os": "ubuntu", "py": "cp311", "arch": "ppc64le", "cipy": "3.11", "os-version": "24.04-ppc64le"}
+          - {"os": "ubuntu", "py": "cp312", "arch": "ppc64le", "cipy": "3.11", "os-version": "24.04-ppc64le"}
+          - {"os": "ubuntu", "py": "cp313", "arch": "ppc64le", "cipy": "3.11", "os-version": "24.04-ppc64le"}
+          - {"os": "ubuntu", "py": "cp314", "arch": "ppc64le", "cipy": "3.11", "os-version": "24.04-ppc64le"}
+          - {"os": "macos", "py": "cp310", "arch": "arm64", "cipy": "3.11", "os-version": "14"}
+          - {"os": "macos", "py": "cp311", "arch": "arm64", "cipy": "3.11", "os-version": "14"}
+          - {"os": "macos", "py": "cp312", "arch": "arm64", "cipy": "3.11", "os-version": "14"}
+          - {"os": "macos", "py": "cp313", "arch": "arm64", "cipy": "3.11", "os-version": "14"}
+          - {"os": "macos", "py": "cp314", "arch": "arm64", "cipy": "3.11", "os-version": "14"}
+          - {"os": "macos", "py": "cp310", "arch": "x86_64", "cipy": "3.11", "os-version": "14"}
+          - {"os": "macos", "py": "cp311", "arch": "x86_64", "cipy": "3.11", "os-version": "14"}
+          - {"os": "macos", "py": "cp312", "arch": "x86_64", "cipy": "3.11", "os-version": "14"}
+          - {"os": "macos", "py": "cp313", "arch": "x86_64", "cipy": "3.11", "os-version": "14"}
+          - {"os": "macos", "py": "cp314", "arch": "x86_64", "cipy": "3.11", "os-version": "14"}
+          - {"os": "windows", "py": "cp310", "arch": "x86", "cipy": "3.11"}
+          - {"os": "windows", "py": "cp311", "arch": "x86", "cipy": "3.11"}
+          - {"os": "windows", "py": "cp312", "arch": "x86", "cipy": "3.11"}
+          - {"os": "windows", "py": "cp313", "arch": "x86", "cipy": "3.11"}
+          - {"os": "windows", "py": "cp314", "arch": "x86", "cipy": "3.11"}
+          - {"os": "windows", "py": "cp310", "arch": "AMD64", "cipy": "3.11"}
+          - {"os": "windows", "py": "cp311", "arch": "AMD64", "cipy": "3.11"}
+          - {"os": "windows", "py": "cp312", "arch": "AMD64", "cipy": "3.11"}
+          - {"os": "windows", "py": "cp313", "arch": "AMD64", "cipy": "3.11"}
+          - {"os": "windows", "py": "cp314", "arch": "AMD64", "cipy": "3.11"}
+          - {"os": "windows", "py": "cp311", "arch": "ARM64", "cipy": "3.11", "os-version": "11-arm"}
+          - {"os": "windows", "py": "cp312", "arch": "ARM64", "cipy": "3.11", "os-version": "11-arm"}
+          - {"os": "windows", "py": "cp313", "arch": "ARM64", "cipy": "3.11", "os-version": "11-arm"}
+          - {"os": "windows", "py": "cp314", "arch": "ARM64", "cipy": "3.11", "os-version": "11-arm"}
+        # [[[end]]] (sum: AhCqn9SafY)
+        #            ^^^^^^^^^^^^^^^
+        # If a check fails and points to this checksum line, it means you edited
+        # the matrix directly instead of editing the Python code in the comment
+        # above it.  The matrix is generated by running cog as described at the
+        # top of that comment.
+
+      fail-fast: false
+
+    steps:
+      - name: "Check out the repo"
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: "Install Python"
+        if: ${{ matrix.arch != 'ppc64le' }}
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "${{ matrix.cipy }}"
+          cache: pip
+          cache-dependency-path: 'requirements/*.pip'
+
+      # Rust toolchain is not currently installed on windows arm64 images.
+      # We need it for nh3, needed by readme-renderer, needed by twine.
+      # https://github.com/actions/partner-runner-images/issues/77
+      - name: "Setup Rust"
+        if: ${{ matrix.os-version == '11-arm' }}
+        id: setup-rust
+        shell: pwsh
+        run: |
+          Invoke-WebRequest https://static.rust-lang.org/rustup/dist/aarch64-pc-windows-msvc/rustup-init.exe -OutFile .\rustup-init.exe
+          .\rustup-init.exe -y
+          Add-Content $env:GITHUB_PATH "$env:USERPROFILE\.cargo\bin"
+
+      - name: "Install tools"
+        run: |
+          python -m pip install -r requirements/kit.pip
+
+      - name: "Set up QEMU"
+        if: ${{ matrix.arch == 'riscv64' }}
+        uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a # v4.0.0
+
+      - name: "Build binary wheels"
+        env:
+          CIBW_BUILD: ${{ matrix.py }}*-*
+          CIBW_ARCHS: ${{ matrix.arch }}
+          CIBW_ENVIRONMENT: PIP_DISABLE_PIP_VERSION_CHECK=1
+          CIBW_ENABLE: cpython-prerelease cpython-freethreading
+          CIBW_TEST_COMMAND: python -c "from coverage.tracer import CTracer; print('CTracer OK!')"
+        run: |
+          python -m cibuildwheel --output-dir wheelhouse
+
+      - name: "List binary wheels"
+        run: |
+          ls -al wheelhouse/
+
+      - name: "Check wheels"
+        run: |
+          python -m twine check wheelhouse/*
+
+      - name: "Upload binary wheels"
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: dist-${{ env.MATRIX_ID }}
+          path: wheelhouse/*.whl
+          retention-days: 7
+
+  non-binary:
+    name: "Non-binary artifacts"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Check out the repo"
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: "Install Python"
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.11" # PYVERSIONS: the kit-building version
+          cache: pip
+          cache-dependency-path: 'requirements/*.pip'
+
+      - name: "Install tools"
+        run: |
+          python -m pip install -r requirements/kit.pip
+
+      - name: "Build non-binary artifacts"
+        env:
+          COVERAGE_DISABLE_EXTENSION: 1
+        run: |
+          python -m build
+
+      - name: "List non-binary artifacts"
+        run: |
+          ls -al dist/
+
+      - name: "Check non-binary artifacts"
+        run: |
+          python -m twine check dist/*
+
+      - name: "Upload non-binary artifacts"
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: dist-non-binary
+          path: dist/*
+          retention-days: 7
+
+  sign:
+    # This signs our artifacts, but we don't use the signatures for anything
+    # yet.  Someday maybe PyPI will have a way to upload and verify them.
+    name: "Sign artifacts"
+    needs:
+      - wheels
+      - non-binary
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write   # Needed for signing artifacts
+    steps:
+      - name: "Download artifacts"
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: dist-*
+          merge-multiple: true
+
+      - name: "List distributions"
+        run: |
+          ls -alR
+          echo "Number of dists, there should be $EXPECTED:"
+          find coverage-* | wc -l
+          files=$(find coverage-* 2>/dev/null | wc -l) && [ "$files" -eq "$EXPECTED" ] || exit 1
+
+      - name: "Sign artifacts"
+        uses: sigstore/gh-action-sigstore-python@04cffa1d795717b140764e8b640de88853c92acc # v3.3.0
+        with:
+          inputs: coverage-*.*
+
+      - name: "List files"
+        run: |
+          ls -alR
+
+      - name: "Upload signatures"
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: signatures
+          path: "*.sigstore.json"
+          retention-days: 7

@@ -1,0 +1,22 @@
+# Licensed under the Apache License: http://www.apache.org/licenses/LICENSE-2.0
+# For details: https://github.com/coveragepy/coveragepy/blob/main/NOTICE.txt
+
+cff-version: 1.2.0
+title: "Coverage.py: The code coverage tool for Python"
+message: >-
+  If you use this software, please cite it using the metadata from this file.
+type: software
+authors:
+  - family-names: Batchelder
+    given-names: Ned
+    orcid: https://orcid.org/0009-0006-2659-884X
+  - name: "Contributors to Coverage.py"
+repository-code: "https://github.com/coveragepy/coveragepy"
+url: "https://coverage.readthedocs.io/"
+abstract: >-
+  Coverage.py is a tool for measuring code coverage of Python programs. It monitors your program,
+  noting which parts of the code have been executed, then analyzes the source to identify code
+  that could have been executed but was not.
+  Coverage measurement is typically used to gauge the effectiveness of tests. It can show which
+  parts of your code are being exercised by tests, and which are not.
+license: Apache-2.0

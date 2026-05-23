@@ -1,0 +1,487 @@
+===============
+python-coverage
+===============
+
+----------------------------
+Measure Python code coverage
+----------------------------
+
+:Author: Ned Batchelder <ned@nedbatchelder.com>
+:Author: |author|
+:Date: 2025-07-24
+:Copyright: Apache 2.0 license, attribution and disclaimer required.
+:Manual section: 1
+:Manual group: Coverage.py
+
+..  |command| replace:: **python-coverage**
+
+..
+    This file is .rst format to produce a man page source file.
+
+    To test this file:
+    $ rst2man < doc/python-coverage.1.txt  | groff -man -Tascii
+
+
+SYNOPSIS
+========
+
+| |command| `command` [ `option` ... ]
+| |command| **help** [ `command` ]
+
+
+DESCRIPTION
+===========
+
+|command| executes a Python program and measures which of its statements are
+executed and which are not, and reports these coverage measurements.
+
+
+COMMAND OVERVIEW
+================
+
+|command| **annotate**
+    Annotate source files with execution information.
+
+|command| **combine**
+    Combine a number of data files.
+
+|command| **debug**
+    Display information about the internals of coverage.py.
+
+|command| **erase**
+    Erase previously collected coverage data.
+
+|command| **help**
+    Get help on using coverage.py.
+
+|command| **html**
+    Create an HTML report.
+
+|command| **json**
+    Create a JSON report of coverage results.
+
+|command| **report**
+    Report coverage stats on modules.
+
+|command| **run**
+    Run a Python program and measure code execution.
+
+|command| **xml**
+    Create an XML report of coverage results.
+
+|command| **lcov**
+    Create an LCOV report of coverage results.
+
+
+GLOBAL OPTIONS
+==============
+
+**--help**, **-h**
+    Describe how to use coverage.py, in general or a command.
+
+**--rcfile** `RCFILE`
+    Specify configuration file `RCFILE`.  By default ``.coveragerc``,
+    ``setup.cfg``, ``tox.ini``, and ``pyproject.toml`` are tried.
+
+**--debug** `DEBUGOPT`,...
+    Debug options `DEBUGOPT`, separated by commas.
+
+
+
+COMMAND REFERENCE
+=================
+
+**annotate** [ `option` ... ] [ `MODULE` ... ]
+
+    Make annotated copies of the given files, marking statements that are
+    executed and statements that are missed.
+
+    Options:
+
+    \-d `DIR`, --directory=`DIR`
+        Write the output files to DIR.
+
+    \--data-file `INFILE`
+        Read coverage data for report generation from this
+        file. Defaults to ``.coverage``.
+
+    \-i, --ignore-errors
+        Ignore errors while reading source files.
+
+    \--include `PATTERN` [ , ... ]
+        Include only files whose paths match one of these
+        PATTERNs. Accepts shell-style wildcards, which must be quoted.
+
+    \--omit `PATTERN` [ , ... ]
+        Omit files when their file name matches one of these PATTERNs.
+        Usually needs quoting on the command line.
+
+
+**combine** [ `option` ... ] [ `PATH` ... ]
+
+    Combine data from multiple coverage files collected with ``run -p``.
+    The combined results are written to a single file representing the
+    union of the data.  Unless --keep is provided the original input
+    coverage files are deleted.
+
+    If `PATH` is specified, they are files or directories containing data to
+    be combined.
+
+    Options:
+
+    \--append
+        Append coverage data to .coverage, otherwise it starts clean each
+        time.
+
+    \--data-file `DATAFILE`
+        Base name of the data files to operate on.  Defaults to ``.coverage``.
+
+    \--keep
+        Keep original coverage data files.
+
+    \-q, --quiet
+        Don't print messages about what is happening.
+
+
+**debug** `TOPIC`
+
+    Display information about the internals of coverage.py, for diagnosing
+    problems.
+
+    Topics are:
+
+        ``data`` to show a summary of the collected data;
+        ``sys`` to show installation information;
+        ``config`` to show the configuration;
+        ``premain`` to show what is calling coverage;
+        ``pybehave`` to show internal flags describing Python behavior;
+        ``sqlite`` to show SQLite compilation options.
+
+
+**erase**
+
+    Erase previously collected coverage data.
+
+    Options:
+
+    \--data-file `DATAFILE`
+        Base name of the data files to operate on. Defaults to ``.coverage``.
+
+
+**help** [ `command` ]
+
+    Describe how to use coverage.py.
+
+
+**html** [ `option` ... ] [ `MODULE` ... ]
+
+    Create an HTML report of the coverage of each `MODULE` file. Each file
+    gets its own page, with the source decorated to show executed,
+    excluded, and missed lines.
+
+    Options:
+
+    \--contexts `PAT` [ , ... ]
+        Only include contexts that match one of the regex patterns.
+
+    \-d `DIR`, --directory `DIR`
+        Write the output files to `DIR`.
+
+    \--data-file `INFILE`
+        Read coverage data for report generation from this file.
+        Defaults to ``.coverage``.
+
+    \--fail-under `MIN`
+        Exit with a status of 2 if the total coverage is less than `MIN`.
+
+    \-i, --ignore-errors
+        Ignore errors while reading source files.
+
+    \--include `PATTERN` [ , ... ]
+        Include only files whose paths match one of these
+        PATTERNs. Accepts shell-style wildcards, which must be quoted.
+
+    \--omit `PATTERN` [ , ... ]
+        Omit files when their file name matches one of these PATTERNs.
+        Usually needs quoting on the command line.
+
+    \--precision `N`
+        Number of digits after the decimal point to display for
+        reported coverage percentages.
+
+    \-q, --quiet
+        Don't print messages about what is happening.
+
+    \--show-contexts
+        Annotate lines with the contexts that executed them.
+
+    \--skip-covered
+        Skip files with 100% coverage.
+
+    \--no-skip-covered
+        Disable ``--skip-covered``.
+
+    \--skip-empty
+        Skip files with no code.
+
+    \--title `TITLE`
+        Use the text string `TITLE` as the title on the HTML.
+
+
+**json** [ `option` ... ] [ `MODULE` ... ]
+
+    Generate a JSON report of coverage results.
+
+    \--contexts `PAT` [ , ... ]
+        Only include contexts that match one of the regex patterns.
+
+    \--data-file `INFILE`
+        Read coverage data for report generation from this file.
+        Defaults to ``.coverage``.
+
+    \--fail-under `MIN`
+        Exit with a status of 2 if the total coverage is less than `MIN`.
+
+    \-i, --ignore-errors
+        Ignore errors while reading source files.
+
+    \--include `PATTERN` [ , ... ]
+        Include only files whose paths match one of these
+        PATTERNs. Accepts shell-style wildcards, which must be quoted.
+
+    \-o `OUTFILE`
+        Write the JSON report to `OUTFILE`. Defaults to ``coverage.json``.
+
+    \--omit `PATTERN` [ , ... ]
+        Omit files when their file name matches one of these PATTERNs.
+        Usually needs quoting on the command line.
+
+    \--pretty-print
+        Format the JSON for human readers.
+
+    \-q, --quiet
+        Don't print messages about what is happening.
+
+    \--show-contexts
+        Include information about the contexts that executed each line.
+
+
+**lcov** [ `option` ... ] [ `MODULE` ... ]
+
+    Create an LCOV report of the coverage results.
+
+    Options:
+
+    \--data-file `INFILE`
+        Read coverage data for report generation from this file.
+        Defaults to ``.coverage``.
+
+    \--fail-under `MIN`
+        Exit with a status of 2 if the total coverage is less than `MIN`.
+
+    \-i, --ignore-errors
+        Ignore errors while reading source files.
+
+    \-o `OUTFILE`
+        Write the LCOV report to `OUTFILE`. Defaults to ``coverage.lcov``.
+
+    \--include `PATTERN` [ , ... ]
+        Include only files whose paths match one of these
+        PATTERNs. Accepts shell-style wildcards, which must be quoted.
+
+    \--omit `PATTERN` [ , ... ]
+        Omit files when their file name matches one of these PATTERNs.
+        Usually needs quoting on the command line.
+
+    \-q, --quiet
+        Don't print messages about what is happening.
+
+
+**report** [ `option` ... ] [ `MODULE` ... ]
+
+    Report coverage statistics on each `MODULE`.
+
+    Options:
+
+    \--contexts `PAT` [ , ... ]
+        Only include contexts that match one of the regex patterns.
+
+    \--data-file `INFILE`
+        Read coverage data for report generation from this file.
+        Defaults to ``.coverage``.
+
+    \--fail-under `MIN`
+        Exit with a status of 2 if the total coverage is less than `MIN`.
+
+    \--format `FORMAT`
+        Output format, either ``text`` (default), ``markdown``, or ``total``.
+
+    \-i, --ignore-errors
+        Ignore errors while reading source files.
+
+    \--include `PATTERN` [ , ... ]
+        Include only files whose paths match one of these
+        PATTERNs. Accepts shell-style wildcards, which must be quoted.
+
+    \--omit `PATTERN` [ , ... ]
+        Omit files when their file name matches one of these PATTERNs.
+        Usually needs quoting on the command line.
+
+    \-m, --show-missing
+        Show line numbers of statements in each module that weren't
+        executed.
+
+    \--precision `N`
+        Number of digits after the decimal point to display for
+        reported coverage percentages.
+
+    \--skip-covered
+        Skip files with 100% coverage.
+
+    \--no-skip-covered
+        Disable ``--skip-covered``.
+
+    \--skip-empty
+        Skip files with no code.
+
+    \--sort `COLUMN`
+        Sort the report by the named column: ``name``, ``stmts``, ``miss``,
+        ``branch``, ``brpart``, or ``cover``.
+
+
+**run** [ `options` ... ] `PROGRAMFILE` [ `program_options` ]
+
+    Run a Python program `PROGRAMFILE`, measuring code execution.
+
+    Options:
+
+    \-a, --append
+        Append coverage data to .coverage, otherwise it is started clean
+        with each run.
+
+    \--branch
+        Measure branch coverage in addition to statement coverage.
+
+    \--concurrency `LIBS`
+        Properly measure code using a concurrency library. Valid values are:
+        ``thread``, ``gevent``, ``greenlet``, ``eventlet``,
+        ``multiprocessing``, or a comma-list of them.
+
+    \--context `CONTEXT`
+        The context label to record for this coverage run.
+
+    \--data-file `OUTFILE`
+        Write the recorded coverage data to this file.
+        Defaults to ``.coverage``.
+
+    \--include `PATTERN` [ , ... ]
+        Include only files whose paths match one of these
+        PATTERNs. Accepts shell-style wildcards, which must be quoted.
+
+    \-m
+        `PROGRAMFILE` is interpreted as a module name.
+
+    \--omit `PATTERN` [ , ... ]
+        Omit files when their file name matches one of these PATTERNs.
+        Usually needs quoting on the command line.
+
+    \-L, --pylib
+        Measure coverage even inside the Python installed library, which
+        isn't done by default.
+
+    \-p, --parallel-mode
+        Append the machine name, process id and random number to the
+        ``.coverage`` data file name to simplify collecting data from many
+        processes.
+
+    \--save-signal `SIGNAL`
+        Specify a signal that will trigger coverage to write its collected
+        data.  Supported values are: ``USR1``, ``USR2``.
+
+    \--source `SOURCE` ...
+        A list of packages or directories of code to be measured.
+
+    \--timid
+        Use the slower Python trace function core.
+
+
+**xml** [ `options` ... ] [ `MODULES` ... ]
+
+    Generate an XML report of coverage results on each `MODULE`.
+
+    Options:
+
+    \--data-file `INFILE`
+        Read coverage data for report generation from this file.
+        Defaults to ``.coverage``.
+
+    \--fail-under `MIN`
+        Exit with a status of 2 if the total coverage is less than `MIN`.
+
+    \-i, --ignore-errors
+        Ignore errors while reading source files.
+
+    \--include `PATTERN` [ , ... ]
+        Include only files whose paths match one of these
+        PATTERNs. Accepts shell-style wildcards, which must be quoted.
+
+    \--omit `PATTERN` [ , ... ]
+        Omit files when their file name matches one of these PATTERNs.
+        Usually needs quoting on the command line.
+
+    \-o `OUTFILE`
+        Write the XML report to `OUTFILE`. Defaults to ``coverage.xml``.
+
+    \-q, --quiet
+        Don't print messages about what is happening.
+
+    \--skip-empty
+        Skip files with no code.
+
+
+ENVIRONMENT VARIABLES
+=====================
+
+COVERAGE_DEBUG
+
+    Debug options, same as for the ``--debug`` option.
+
+COVERAGE_DEBUG_FILE
+
+    Where to write debug information, defaulting to stderr.
+
+COVERAGE_FILE
+
+    Path to the file where coverage measurements are collected to and
+    reported from. Default: ``.coverage`` in the current working directory.
+
+COVERAGE_RCFILE
+
+    Path to the configuration file, often named ``.coveragerc``.
+
+
+HISTORY
+=======
+
+The |command| command is a Python program which calls the ``coverage``
+Python library to do all the work.
+
+It was originally developed by Gareth Rees, and is now developed
+by Ned Batchelder and many others.
+
+This manual page was written by |author|.
+
+..  |author| replace:: |authorname| |authoremail|
+..  |authorname| replace:: Ben Finney
+..  |authoremail| replace:: <ben+python@benfinney.id.au>
+
+..
+    Local variables:
+    mode: rst
+    coding: utf-8
+    time-stamp-format: "%:y-%02m-%02d"
+    time-stamp-start: "^:Date:[         ]+"
+    time-stamp-end: "$"
+    time-stamp-line-limit: 20
+    End:
+    vim: filetype=rst fileencoding=utf-8 :

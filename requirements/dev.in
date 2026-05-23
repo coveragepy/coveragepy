@@ -1,0 +1,27 @@
+# Licensed under the Apache License: http://www.apache.org/licenses/LICENSE-2.0
+# For details: https://github.com/coveragepy/coveragepy/blob/main/NOTICE.txt
+
+# Requirements input for doing local development work on coverage.py.
+# "make upgrade" turns this into requirements/dev.pip.
+
+-c pins.pip
+-r pip.in
+
+# PyPI requirements for running tests.
+-r tox.in
+-r pytest.in
+
+# for linting.
+actionlint-py
+check-manifest
+cogapp
+greenlet
+pylint
+readme_renderer
+ruff
+
+# for kitting.
+libsass
+requests
+scriv
+twine

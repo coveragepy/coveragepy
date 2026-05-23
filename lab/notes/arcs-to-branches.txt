@@ -1,0 +1,24 @@
+August 2024
+
+Until now, "arcs" means a complete set of predicted and measured (from, to)
+pairs of line numbers.  Branches were determined by finding "from" lines that
+appeared in more than one predicted arc.
+
+That scheme found branches that were not true branches, such as the lines in
+finally clauses that could jump to more than one place based on how the finally
+clause was reached.
+
+Now we are shifting to true branches. To do this, we are removing code that
+predicted arcs that aren't part of true branches.  The ideal goal would be to
+only predict arcs that are part of branches, but a minimal goal is to stop
+predicting arcs that led to false branches.  ie, it's ok to predict an arc if
+the arc is the only arc for a given "from" line. Those arcs will be discarded
+and won't lead to false branches.
+
+There are many tests that look odd now, because they were testing arc
+determination, but they have no branches.  Or the interesting part of the tests
+were non-branch arcs, so they aren't visible in the tests anymore.
+
+parser.py likely is working harder than it needs to, since we don't need to find
+all arcs.  The new code.co_branches() function might be good enough to replace
+it.

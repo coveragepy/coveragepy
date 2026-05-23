@@ -1,0 +1,48 @@
+# Licensed under the Apache License: http://www.apache.org/licenses/LICENSE-2.0
+# For details: https://github.com/coveragepy/coveragepy/blob/main/NOTICE.txt
+
+# MANIFEST.in file for coverage.py
+
+# This file includes everything needed to recreate the entire project, even
+# though many of these files are not installed by setup.py.  Unpacking the
+# .tar.gz source distribution would give you everything needed to continue
+# developing the project.  "pip install" will not install many of these files.
+
+include .editorconfig
+include .git-blame-ignore-revs
+include .ignore
+include .pre-commit-config.yaml
+include .readthedocs.yaml
+include CHANGES.rst
+include CITATION.cff
+include CONTRIBUTORS.txt
+include LICENSE.txt
+include MANIFEST.in
+include Makefile
+include NOTICE.txt
+include README.rst
+include __main__.py
+include howto.txt
+include igor.py
+include metacov.ini
+include setup.py
+include tox.ini
+
+recursive-include ci *
+recursive-include lab *
+recursive-include .github *
+
+recursive-include coverage *.pyi
+recursive-include coverage/ctracer *.c *.h
+
+recursive-include doc *.py *.in *.pip *.rst *.txt *.png
+recursive-include doc/_static *
+prune doc/_build
+prune doc/_spell
+
+recursive-include requirements *.in *.pip
+
+recursive-include tests *.py *.tok
+recursive-include tests/gold *
+recursive-include tests js/* qunit/*
+prune tests/eggsrc/build

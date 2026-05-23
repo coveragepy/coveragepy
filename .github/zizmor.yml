@@ -1,0 +1,8 @@
+# Rules for checking workflows
+# https://woodruffw.github.io/zizmor
+
+rules:
+  unpinned-uses:
+    config:
+      policies:
+        actions/*: hash-pin

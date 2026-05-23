@@ -1,0 +1,97 @@
+Comparing versions:
+
+export PY38=/usr/local/pyenv/pyenv/versions/3.8.12/bin/python3.8
+export PY39=/usr/local/pyenv/pyenv/versions/3.9.10/bin/python3.9
+export PP38old=/usr/local/pypy/pypy3.8-v7.3.7-osx64/bin/pypy3
+export PP38=/usr/local/pypy/pypy3.8-v7.3.8rc1-osx64/bin/pypy3
+export PP39=/usr/local/pypy/pypy3.9-v7.3.8rc1-osx64/bin/pypy3
+
+$ for py in $PY38 $PY39 $PP38old $PP38 $PP39; do $py -m coverage run --debug=pybehave igor.py; done 2>&1 | grep trace
+            trace_decorated_def: True
+     trace_decorator_line_again: False
+            trace_decorated_def: True
+     trace_decorator_line_again: False
+            trace_decorated_def: False
+     trace_decorator_line_again: False
+            trace_decorated_def: False
+     trace_decorator_line_again: False
+            trace_decorated_def: False
+     trace_decorator_line_again: False
+
+# t466a_ast.py:
+    import ast
+    import sys
+
+    def find_function(node, name):
+        if node.__class__.__name__ == "FunctionDef" and node.name == name:
+            return node
+        for node in getattr(node, "body", ()):
+            fnode = find_function(node, name)
+            if fnode is not None:
+                return fnode
+
+    root_node = ast.parse(open(__file__).read())
+    func_node = find_function(root_node, "parse")
+
+    print(func_node.name, func_node.lineno, func_node.end_lineno, tuple(sys.version_info), tuple(getattr(sys, "pypy_version_info", ())))
+
+    class Parser(object):
+
+        @classmethod
+        def parse(cls):
+            formats = [ 5 ]
+
+
+            return None
+
+    Parser.parse()
+
+
+$ for py in $PY38 $PY39 $PP38old $PP38 $PP39; do $py t466a_ast.py; done
+parse 20 24 (3, 8, 12, 'final', 0) ()
+parse 20 24 (3, 9, 10, 'final', 0) ()
+parse 19 -1 (3, 8, 12, 'final', 0) (7, 3, 7, 'final', 0)
+parse 19 -1 (3, 8, 12, 'final', 0) (7, 3, 8, 'final', 0)
+parse 20 24 (3, 9, 10, 'final', 0) (7, 3, 8, 'final', 0)
+
+
+PyPy <=3.8 includes the decorator line in the FunctionDef node
+PyPy >=3.9 does not include the decorator line in the node
+
+PyPy traces the decorator line, but not the def:
+
+$ $PP38 -m trace --trace t466a_plain.py
+ --- modulename: t466a_plain, funcname: <module>
+t466a_plain.py(1): class Parser(object):
+ --- modulename: t466a_plain, funcname: Parser
+t466a_plain.py(1): class Parser(object):
+t466a_plain.py(3):     @classmethod
+t466a_plain.py(10): Parser.parse()
+ --- modulename: t466a_plain, funcname: parse
+t466a_plain.py(5):         formats = [ 5 ]
+t466a_plain.py(8):         return None
+
+$ $PP39 -m trace --trace t466a_plain.py
+ --- modulename: t466a_plain, funcname: <module>
+t466a_plain.py(1): class Parser(object):
+ --- modulename: t466a_plain, funcname: Parser
+t466a_plain.py(1): class Parser(object):
+t466a_plain.py(3):     @classmethod
+t466a_plain.py(10): Parser.parse()
+ --- modulename: t466a_plain, funcname: parse
+t466a_plain.py(5):         formats = [ 5 ]
+t466a_plain.py(8):         return None
+
+CPython traces the decorator and the def:
+
+$ $PY39 -m trace --trace t466a_plain.py
+ --- modulename: t466a_plain, funcname: <module>
+t466a_plain.py(1): class Parser(object):
+ --- modulename: t466a_plain, funcname: Parser
+t466a_plain.py(1): class Parser(object):
+t466a_plain.py(3):     @classmethod
+t466a_plain.py(4):     def parse(cls):
+t466a_plain.py(10): Parser.parse()
+ --- modulename: t466a_plain, funcname: parse
+t466a_plain.py(5):         formats = [ 5 ]
+t466a_plain.py(8):         return None

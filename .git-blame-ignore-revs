@@ -1,0 +1,39 @@
+# Commits to ignore when doing git-blame.
+
+# 2023-01-05 style: use good style for annotated defaults parameters
+78444f4c06df6a634fa67dd99ee7c07b6b633d9e
+
+# 2023-01-06 style(perf): blacken lab/benchmark.py
+bf6c12f5da54db7c5c0cc47cbf22c70f686e8236
+
+# 2023-03-22 style: use double-quotes
+16abd82b6e87753184e8308c4b2606ff3979f8d3
+b7be64538aa480fce641349d3053e9a84862d571
+
+# 2023-04-01 style: use double-quotes in JavaScript
+b03ab92bae24c54f1d5a98baa3af6b9a18de4d36
+
+# 2023-11-04 style: ruff format igor.py, setup.py, __main__.py
+acb80450d7c033a6ea6e06eb2e74d3590c268435
+
+# 2023-11-20 style: fr"" is better than rf"", for real
+d8daa08b347fe6b7099c437b09d926eb999d0803
+
+# 2023-12-02 style: check_coverage close parens should be on their own line
+5d0b5d4464b84adb6389c8894c207a323edb2b2b
+
+# 2024-02-27 style: fix COM812 Trailing comma missing
+e4e238a9ed8f2ad2b9060247591b4c057c2953bf
+
+# 2024-02-27 style: modernize type hints, a few more f-strings
+401a63bf08bdfd780b662f64d2dfe3603f2584dd
+
+# 2025-08-09 style: ruff check --fix --fixable=I001,Q000 coverage/*.py
+a32cd74bc0aaf0714acaf37beb21c84cbe2ee3ff
+
+# 2025-08-21 chore: `ruff format .`
+82467f72306efdb207af09ace27b6b3ed4c7ad6f
+
+# 2025-11-09 move to the coveragepy org GitHub account
+b33a5e889711d27610433ca0040cab67a9fb01f4
+776f313f5415bc95ea736f6486634c3f9d0b96f4
