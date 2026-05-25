@@ -15,11 +15,17 @@ import threading
 import traceback
 from collections.abc import Callable
 from dataclasses import dataclass
-from types import CodeType
+from types import CodeType, FrameType
 from typing import Any, NewType, Optional, cast
 
 from coverage import env
-from coverage.bytecode import TBranchTrails, always_jumps, branch_trails, bytes_to_lines
+from coverage.bytecode import (
+    TBranchTrails,
+    always_jumps,
+    branch_trails,
+    bytes_to_lines,
+    multi_visit_lines,
+)
 from coverage.debug import short_filename, short_stack
 from coverage.exceptions import NoSource, NotPython
 from coverage.misc import isolate_module
@@ -187,6 +193,10 @@ class CodeInfo:
     # to another offset.
     always_jumps: dict[TOffset, TOffset]
 
+    # Lines that can be visited multiple times per function call.
+    # We must not DISABLE LINE events for these.
+    multi_visit_lines: set[TLineNo]
+
 
 class SysMonitor(Tracer):
     """Python implementation of the raw data tracer for PEP669 implementations."""
@@ -231,6 +241,24 @@ class SysMonitor(Tracer):
 
         self._activity = False
 
+        # Track last line per frame for arc coverage.
+        # Key is id(frame), value is last line number.
+        self.last_lines: dict[int, TLineNo] = {}
+
+    def _get_caller_frame(self) -> Optional[FrameType]:
+        """Get the frame of the code that triggered this callback.
+
+        Returns the caller's frame, or None if not available.
+        Accounts for the extra frame added by @panopticon when LOG is enabled.
+        """
+        frame = inspect.currentframe()
+        # Skip frames: _get_caller_frame, callback method, (@panopticon wrapper if LOG)
+        for _ in range(3 if LOG else 2):  # pragma: debugging
+            if frame is None:
+                break
+            frame = frame.f_back
+        return frame
+
     def __repr__(self) -> str:
         points = sum(len(v) for v in self.data.values())
         files = len(self.data)
@@ -249,6 +277,7 @@ class SysMonitor(Tracer):
             register(events.PY_START, self.sysmon_py_start)
             if self.trace_arcs:
                 register(events.PY_RETURN, self.sysmon_py_return)
+                register(events.PY_UNWIND, self.sysmon_py_unwind)
                 register(events.LINE, self.sysmon_line_arcs)
                 if env.PYBEHAVIOR.branch_right_left:
                     register(events.BRANCH_RIGHT, self.sysmon_branch_either)
@@ -327,12 +356,7 @@ class SysMonitor(Tracer):
             filename = code.co_filename
             disp = self.should_trace_cache.get(filename)
             if disp is None:
-                frame = inspect.currentframe()
-                if frame is not None:
-                    frame = inspect.currentframe().f_back  # type: ignore[union-attr]
-                    if LOG:  # pragma: debugging
-                        # @panopticon adds a frame.
-                        frame = frame.f_back  # type: ignore[union-attr]
+                frame = self._get_caller_frame()
                 disp = self.should_trace(filename, frame)  # type: ignore[arg-type]
                 self.should_trace_cache[filename] = disp
 
@@ -358,6 +382,9 @@ class SysMonitor(Tracer):
                 byte_to_line=b2l,
                 branch_trails={},
                 always_jumps={},
+                multi_visit_lines=(
+                    multi_visit_lines(code) if (tracing_code and self.trace_arcs) else set()
+                ),
             )
             self.code_infos[id(code)] = code_info
             self.code_objects.append(code)
@@ -396,11 +423,29 @@ class SysMonitor(Tracer):
         code_info = self.code_infos.get(id(code))
         # code_info is not None and code_info.file_data is not None, since we
         # wouldn't have enabled this event if they were.
+
+        # Clean up the last_lines entry for this frame.
+        if (frame := self._get_caller_frame()) is not None:
+            self.last_lines.pop(id(frame), None)
+
         last_line = code_info.byte_to_line.get(instruction_offset)  # type: ignore
         if last_line is not None:
             arc = (last_line, -code.co_firstlineno)
             code_info.file_data.add(arc)  # type: ignore
             # log(f"adding {arc=}")
+        return DISABLE
+
+    @panopticon("code", "@", None)
+    def sysmon_py_unwind(
+        self,
+        code: CodeType,
+        instruction_offset: TOffset,
+        exception: BaseException,
+    ) -> MonitorReturn:
+        """Handle sys.monitoring.events.PY_UNWIND events for branch coverage."""
+        # Clean up the last_lines entry for this frame when unwinding due to exception.
+        if (frame := self._get_caller_frame()) is not None:
+            self.last_lines.pop(id(frame), None)
         return DISABLE
 
     @panopticon("code", "line")
@@ -418,16 +463,34 @@ class SysMonitor(Tracer):
         return DISABLE
 
     @panopticon("code", "line")
-    def sysmon_line_arcs(self, code: CodeType, line_number: TLineNo) -> MonitorReturn:
+    def sysmon_line_arcs(
+        self,
+        code: CodeType,
+        line_number: TLineNo,
+    ) -> MonitorReturn:
         """Handle sys.monitoring.events.LINE events for branch coverage."""
         if self.stats is not None:
             self.stats["line_arcs"] += 1
         code_info = self.code_infos[id(code)]
+
+        # Track line-to-line transitions per frame for arc coverage.
+        if (frame := self._get_caller_frame()) is not None:
+            frame_id = id(frame)
+            if (last_line := self.last_lines.get(frame_id)) is not None:
+                if last_line != line_number:
+                    code_info.file_data.add((last_line, line_number))  # type: ignore
+            self.last_lines[frame_id] = line_number
+
+        # Also add a self-arc to mark this line as executed.
         # code_info is not None and code_info.file_data is not None, since we
         # wouldn't have enabled this event if they were.
-        arc = (line_number, line_number)
-        code_info.file_data.add(arc)  # type: ignore
-        # log(f"adding {arc=}")
+        code_info.file_data.add((line_number, line_number))  # type: ignore
+
+        # Selectively DISABLE: lines that can be visited multiple times (like
+        # `with` statements) must keep receiving events to track all transitions.
+        # Single-visit lines can be disabled for better performance.
+        if line_number in code_info.multi_visit_lines:
+            return None
         return DISABLE
 
     @panopticon("code", "@", "@")
