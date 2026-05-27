@@ -67,6 +67,7 @@ Click the keyboard icon in the upper right to see the complete list.
       --skip-covered        Skip files with 100% coverage.
       --no-skip-covered     Disable --skip-covered.
       --skip-empty          Skip files with no code.
+      --omit-regions        Do not emit region-level data in the report.
       --title=TITLE         A text string to use as the title on the HTML.
       --debug=OPTS          Debug options, separated by commas. [env:
                             COVERAGE_DEBUG]
@@ -74,7 +75,7 @@ Click the keyboard icon in the upper right to see the complete list.
       --rcfile=RCFILE       Specify configuration file. By default '.coveragerc',
                             'setup.cfg', 'tox.ini', and 'pyproject.toml' are
                             tried. [env: COVERAGE_RCFILE]
-.. [[[end]]] (sum: DwG6DxRZIf)
+.. [[[end]]] (sum: 7IA6oLLLpx)
 
 The title of the report can be set with the ``title`` setting in the
 ``[html]`` section of the configuration file, or the ``--title`` switch on
