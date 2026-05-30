@@ -117,17 +117,19 @@ class JsonReporter:
         final_executed_lines = analysis.executed
         if (self.config.json_multiline):
             multiline_map = {}
-            
             flag = {}
-            for i in analysis.executed:
-                flag[i] = True
+            original_executed_line = {}
+            for line in analysis.executed:
+                flag[line] = True
+                original_executed_line[line] = True
             if hasattr(file_reporter, "multiline_map"):
                 multiline_map = file_reporter.multiline_map()
                 tot_lines = len(file_reporter.source().split('\n'))
-                for i in range(0, tot_lines + 1):
-                    if (multiline_map.get(i) != None and flag.get(i) != True):
-                        final_executed_lines.add(i)
-                        flag[i] = True
+                for line in range(0, tot_lines + 1):
+                    original_stmt_line = multiline_map.get(line)
+                    if (original_executed_line.get(original_stmt_line) == True and multiline_map.get(line) != None and flag.get(line) != True):
+                        final_executed_lines.add(line)
+                        flag[line] = True
                         
         reported_file: JsonObj = {
             "executed_lines": sorted(final_executed_lines),
