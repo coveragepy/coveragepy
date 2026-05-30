@@ -54,7 +54,7 @@ The **json** command writes coverage data to a "coverage.json" file.
       --rcfile=RCFILE       Specify configuration file. By default '.coveragerc',
                             'setup.cfg', 'tox.ini', and 'pyproject.toml' are
                             tried. [env: COVERAGE_RCFILE]
-.. [[[end]]] (sum: 5T5gy2XZcc)
+.. [[[end]]] (sum: RGT9YaYsPg)
 
 You can specify the name of the output file with the ``-o`` switch.  The JSON
 can be nicely formatted by specifying the ``--pretty-print`` switch.

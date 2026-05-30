@@ -372,7 +372,7 @@ class Opts:
         "",
         "--multiline",
         action="store_true",
-        help="Output actual covered lines and not just statements"
+        help="Output actual covered lines and not just statements",
     )
 
 
