@@ -47,6 +47,7 @@ The **json** command writes coverage data to a "coverage.json" file.
       --pretty-print        Format the JSON for human readers.
       -q, --quiet           Don't print messages about what is happening.
       --show-contexts       Show contexts for covered lines.
+      --multiline           Output actual covered lines and not just statements
       --debug=OPTS          Debug options, separated by commas. [env:
                             COVERAGE_DEBUG]
       -h, --help            Get help on this command.
