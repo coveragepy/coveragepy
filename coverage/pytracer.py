@@ -259,10 +259,54 @@ class PyTracer(Tracer):
 
         elif event == "line":
             # Record an executed line.
+            # Workaround for Python 3.11 bug (https://github.com/python/cpython/issues/106749):
+            # after catching CancelledError from an awaited cancelled task, Python may not
+            # emit CALL events for subsequent lines. Ensure the frame is properly set up
+            # for tracing if we detect this scenario.
+            filename = frame.f_code.co_filename
+            # If we're seeing a LINE event but cur_file_data is None, we may have missed
+            # a CALL event due to the Python 3.11 bug. Set up tracing for this file.
+            # The bug specifically affects lines after exception handling in async code,
+            # so we should already be in a file (cur_file_name should be set).
+            if self.cur_file_data is None and filename == self.cur_file_name:
+                # Same file but no file_data - this shouldn't happen normally, but
+                # can occur due to the Python 3.11 bug where CALL events are missing
+                # after catching CancelledError. Re-setup tracing for this file.
+                disp = self.should_trace_cache.get(filename)
+                if disp is None:
+                    disp = self.should_trace(filename, frame)
+                    self.should_trace_cache[filename] = disp
+
+                if disp.trace:
+                    tracename = disp.source_filename
+                    assert tracename is not None
+                    self.lock_data()
+                    try:
+                        if tracename not in self.data:
+                            self.data[tracename] = set()
+                    finally:
+                        self.unlock_data()
+                    self.cur_file_data = self.data[tracename]
+                    # Re-enable line tracing which may have been disabled
+                    frame.f_trace_lines = True
+                    # Try to restore last_line from data_stack if available
+                    if self.data_stack:
+                        _, _, saved_last_line, _ = self.data_stack[-1]
+                        self.last_line = saved_last_line
+                    else:
+                        # No stack info available, use current line as fallback
+                        # This will create a self-loop arc, but it's better than crashing
+                        self.last_line = frame.f_lineno
+                else:
+                    frame.f_trace_lines = False
+
             if self.cur_file_data is not None:
                 flineno: TLineNo = frame.f_lineno
 
                 if self.trace_arcs:
+                    # Record the arc. If we restored state, last_line was restored from
+                    # the data_stack, so use it. This might create a self-loop if last_line
+                    # equals flineno, but that's acceptable in this edge case.
                     cast(set_TArc, self.cur_file_data).add((self.last_line, flineno))
                 else:
                     cast(set_TLineNo, self.cur_file_data).add(flineno)
@@ -299,6 +343,10 @@ class PyTracer(Tracer):
                     cast(set_TArc, self.cur_file_data).add((self.last_line, -first))
 
             # Leaving this function, pop the filename stack.
+            # Guard: Python 3.11 bug (cpython#106749) or trace being cleared during
+            # async can cause RETURN without matching CALL, leaving the stack empty.
+            if not self.data_stack:
+                return self._cached_bound_method_trace
             self.cur_file_data, self.cur_file_name, self.last_line, self.started_context = (
                 self.data_stack.pop()
             )
