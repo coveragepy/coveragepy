@@ -301,7 +301,6 @@ class Coverage(TConfigurable):
         self._data_to_close: list[CoverageData] = []
         self._core: Core | None = None
         self._collector: Collector | None = None
-        self._metacov = False
 
         self._file_mapper: Callable[[str], str] = abs_file
         self._data_suffix = self._run_suffix = None
@@ -596,7 +595,6 @@ class Coverage(TConfigurable):
             debug=(self._debug if self._debug.should("core") else None),
             config=self.config,
             dynamic_contexts=(should_start_context is not None),
-            metacov=self._metacov,
         )
         self._collector = Collector(
             core=self._core,

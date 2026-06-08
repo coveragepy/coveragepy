@@ -61,7 +61,6 @@ class Core:
         debug: TDebugCtl | None,
         config: CoverageConfig,
         dynamic_contexts: bool,
-        metacov: bool,
     ) -> None:
         def _debug(msg: str) -> None:
             if debug:
@@ -115,7 +114,6 @@ class Core:
 
         if core_name == "sysmon":
             self.tracer_class = SysMonitor
-            self.tracer_kwargs["tool_id"] = 3 if metacov else 1
             self.file_disposition_class = FileDisposition
             self.supports_plugins = False
             self.packed_arcs = False

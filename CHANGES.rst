@@ -23,7 +23,12 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
-Nothing yet.
+- Fix: when using sys.monitoring, we were assuming we could use the
+  ``COVERAGE_ID`` tool id.  But other tools might also assume they could use
+  that id.  Pre-allocated ids don't really make sense, so now we search for a
+  usable one instead. Fixes `issue 2187`_.
+
+.. _issue 2187: https://github.com/coveragepy/coveragepy/issues/2187
 
 
 .. start-releases
