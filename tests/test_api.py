@@ -1099,8 +1099,6 @@ class SourceIncludeOmitTest(IncludeOmitTestsMixin, CoverageTest):
         ):
             self.coverage_usepkgs_counts(source_dirs=["i-do-not-exist"])
 
-
-
     def test_file_and_path_for_module_handles_find_spec_crash(self) -> None:
         # https://github.com/nedbat/coveragepy/issues/2189
         # find_spec can raise BaseException (e.g. Abort from a C extension loader)
