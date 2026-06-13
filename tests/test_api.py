@@ -1100,6 +1100,22 @@ class SourceIncludeOmitTest(IncludeOmitTestsMixin, CoverageTest):
             self.coverage_usepkgs_counts(source_dirs=["i-do-not-exist"])
 
 
+
+    def test_file_and_path_for_module_handles_find_spec_crash(self) -> None:
+        # https://github.com/nedbat/coveragepy/issues/2189
+        # find_spec can raise BaseException (e.g. Abort from a C extension loader)
+        # when invoked on a submodule whose parent package loads a broken extension.
+        # file_and_path_for_module must not propagate such errors.
+        from coverage.inorout import file_and_path_for_module
+
+        with mock.patch("coverage.inorout.importlib.util.find_spec") as mock_find_spec:
+            mock_find_spec.side_effect = SystemExit("native crash")
+            # Must not raise SystemExit
+            filename, path = file_and_path_for_module("some.submodule")
+            assert filename is None
+            assert path == []
+
+
 class ReportIncludeOmitTest(IncludeOmitTestsMixin, CoverageTest):
     """Tests of the report include/omit functionality."""
 
