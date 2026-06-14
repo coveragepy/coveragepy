@@ -1300,6 +1300,7 @@ class Coverage(TConfigurable):
         contexts: list[str] | None = None,
         pretty_print: bool | None = None,
         show_contexts: bool | None = None,
+        multiline: bool | None = None,
     ) -> float:
         """Generate a JSON report of coverage results.
 
@@ -1325,6 +1326,7 @@ class Coverage(TConfigurable):
             report_contexts=contexts,
             json_pretty_print=pretty_print,
             json_show_contexts=show_contexts,
+            json_multiline=multiline,
         ):
             return render_report(self.config.json_output, JsonReporter(self), morfs, self._message)
 
