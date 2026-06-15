@@ -1503,6 +1503,28 @@ class ExcludeTest(CoverageTest):
             lines=[1, 3, 5, 7, 9, 11, 19, 24, 25],
         )
 
+    def test_default_multiline_annotation(self) -> None:
+        # A return type annotation split across multiple lines should
+        # still be excluded when the body is `...`.
+        # https://github.com/coveragepy/coveragepy/issues/2185
+        self.check_coverage(
+            """\
+            from __future__ import annotations
+            a = 2
+            def method3() -> dict[
+                str, str
+            ]: ...
+            b = 6
+            def method7(
+                x: int,
+            ) -> list[
+                int
+            ]: ...
+            c = 12
+            """,
+            lines=[1, 2, 6, 12],
+        )
+
     def test_two_excludes(self) -> None:
         self.check_coverage(
             """\
