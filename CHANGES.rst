@@ -23,12 +23,20 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
+- Fix: ``CoverageData`` kept one SQLite connection per thread that recorded
+  coverage, but never closed them when those threads terminated. On long runs
+  with many short-lived threads this leaked one file descriptor per dead
+  thread, eventually failing with ``OSError: [Errno 24] Too many open files``.
+  Connections belonging to terminated threads are now closed and dropped.
+  Fixes `issue 2192`_.
+
 - Fix: when using sys.monitoring, we were assuming we could use the
   ``COVERAGE_ID`` tool id.  But other tools might also assume they could use
   that id.  Pre-allocated ids don't really make sense, so now we search for a
   usable one instead. Fixes `issue 2187`_.
 
 .. _issue 2187: https://github.com/coveragepy/coveragepy/issues/2187
+.. _issue 2192: https://github.com/coveragepy/coveragepy/issues/2192
 
 
 .. start-releases
