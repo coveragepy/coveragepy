@@ -32,9 +32,14 @@ Unreleased
   that id.  Pre-allocated ids don't really make sense, so now we search for a
   usable one instead. Fixes `issue 2187`_.
 
+- Fix: the default ``...`` exclusion rule now also matches function bodies
+  whose closing return-type bracket is on its own line (for example, after a
+  long ``-> dict[ ... ]`` annotation that a formatter has split over multiple
+  lines). Closes `issue 2185`_.
+
+.. _issue 2185: https://github.com/coveragepy/coveragepy/issues/2185
 .. _issue 2187: https://github.com/coveragepy/coveragepy/issues/2187
 .. _issue 2197: https://github.com/coveragepy/coveragepy/issues/2197
-
 
 .. start-releases
 

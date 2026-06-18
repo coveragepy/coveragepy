@@ -149,7 +149,7 @@ TConfigParser = HandyConfigParser | TomlConfigParser
 # The default line exclusion regexes.
 DEFAULT_EXCLUDE = [
     r"#\s*(pragma|PRAGMA)[:\s]?\s*(no|NO)\s*(cover|COVER)",
-    r"^\s*(((async )?def .*?)?\)(\s*->.*?)?:\s*)?\.\.\.\s*(#|$)",
+    r"^\s*(((async )?def .*?)?[\])]+(\s*->.*?)?:\s*)?\.\.\.\s*(#|$)",
     r"if (typing\.)?TYPE_CHECKING:",
 ]
 
