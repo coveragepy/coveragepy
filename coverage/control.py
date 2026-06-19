@@ -502,7 +502,7 @@ class Coverage(TConfigurable):
     def _message(self, msg: str) -> None:
         """Write a message to the user, if configured to do so."""
         if self._messages:
-            print(msg)
+            print(msg, file=sys.stderr)
 
     def get_option(self, option_name: str) -> TConfigValueOut | None:
         """Get an option from the configuration.

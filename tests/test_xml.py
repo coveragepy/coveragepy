@@ -122,14 +122,14 @@ class XmlReportTest(XmlTestHelpers, CoverageTest):
         self.make_mycode_data()
         self.run_xml_report()
         self.assert_exists("coverage.xml")
-        assert self.stdout() == ""
+        assert self.stderr() == ""
 
     def test_argument_affects_xml_placement(self) -> None:
         self.make_mycode_data()
         cov = coverage.Coverage(messages=True)
         cov.load()
         cov.xml_report(outfile="put_it_there.xml")
-        assert self.stdout() == "Wrote XML report to put_it_there.xml\n"
+        assert self.stderr() == "Wrote XML report to put_it_there.xml\n"
         self.assert_doesnt_exist("coverage.xml")
         self.assert_exists("put_it_there.xml")
 

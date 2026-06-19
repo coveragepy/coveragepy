@@ -1485,7 +1485,7 @@ class CombiningTest(CoverageTest):
         # Combine the parallel coverage data files into .coverage .
         cov = coverage.Coverage(messages=True)
         cov.combine(strict=True)
-        assert self.stdout() == "Combined 2 files\n"
+        assert self.stderr() == "Combined 2 files\n"
         self.assert_exists(".coverage")
 
         # After combining, there should be only the .coverage file.
@@ -1526,7 +1526,9 @@ class CombiningTest(CoverageTest):
                 r"Couldn't use data file '.*[/\\]\.coverage\.bad': " + BAD_SQLITE_REGEX,
             ),
         )
-        assert self.stdout() == "Combined 2 files, 1 file errored\n"
+        # Stderr has messages about the bad files. We want to see the last line
+        # is the summary.
+        assert self.stderr().splitlines()[-1] == "Combined 2 files, 1 file errored"
 
         # After combining, those two should be the only data files.
         self.assert_exists(".coverage")

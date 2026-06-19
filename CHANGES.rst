@@ -23,12 +23,17 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
+- Fix: some messages were being written to stdout, making ``-o -`` useless for
+  capturing the JSON output of ``coverage json``. Now messages are written to
+  stderr, fixing `issue 2197`.
+
 - Fix: when using sys.monitoring, we were assuming we could use the
   ``COVERAGE_ID`` tool id.  But other tools might also assume they could use
   that id.  Pre-allocated ids don't really make sense, so now we search for a
   usable one instead. Fixes `issue 2187`_.
 
 .. _issue 2187: https://github.com/coveragepy/coveragepy/issues/2187
+.. _issue 2197: https://github.com/coveragepy/coveragepy/issues/2197
 
 
 .. start-releases
