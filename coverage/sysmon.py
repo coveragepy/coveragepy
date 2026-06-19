@@ -193,7 +193,7 @@ class SysMonitor(Tracer):
 
     # One of these will be used across threads. Be careful.
 
-    def __init__(self, tool_id: int) -> None:
+    def __init__(self) -> None:
         # Attributes set from the collector:
         self.data: TTraceData
         self.trace_arcs = False
@@ -208,7 +208,11 @@ class SysMonitor(Tracer):
         # TODO: warn is unused.
         self.warn: TWarnFn
 
-        self.myid = tool_id
+        assert sys_monitoring is not None
+        # sys.monitoring pre-allocates tool ids, but it's kind of pointless.
+        # There's no guarantee that "our" tool id will still be available, so
+        # we have to search for a usable one in start() anyway.
+        self.myid = sys_monitoring.COVERAGE_ID
 
         # Map id(code_object) -> CodeInfo
         self.code_infos: dict[int, CodeInfo] = {}
@@ -241,7 +245,15 @@ class SysMonitor(Tracer):
         """Start this Tracer."""
         with self.lock:
             assert sys_monitoring is not None
-            sys_monitoring.use_tool_id(self.myid, "coverage.py")
+            while self.myid <= 5:
+                try:
+                    sys_monitoring.use_tool_id(self.myid, "coverage.py")
+                    break
+                except ValueError:
+                    self.myid += 1
+                    continue
+            else:
+                raise RuntimeError("No sys.monitoring tool id is available")
             register = functools.partial(sys_monitoring.register_callback, self.myid)
             events = sys.monitoring.events
 

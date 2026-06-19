@@ -194,7 +194,6 @@ def run_tests_with_coverage(core, *runner_args):
     cov = coverage.Coverage(config_file="metacov.ini")
     cov._warn_unimported_source = False
     cov._warn_preimported_source = False
-    cov._metacov = True
     cov.start()
 
     try:
