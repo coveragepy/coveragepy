@@ -20,8 +20,12 @@ upgrading your version of coverage.py.
     ..  Version 9.8.1 — 2027-07-27
     ..  --------------------------
 
-Unreleased
-----------
+.. start-releases
+
+.. _changes_7-14-2:
+
+Version 7.14.2 — 2026-06-20
+---------------------------
 
 - Fix: some messages were being written to stdout, making ``coverage json -o
   -`` useless for capturing JSON output. Now messages are written to stderr,
@@ -48,8 +52,6 @@ Unreleased
 .. _issue 2197: https://github.com/coveragepy/coveragepy/issues/2197
 .. _pull 2198: https://github.com/coveragepy/coveragepy/pull/2198
 .. _no-13t: https://py-free-threading.github.io/ci/#building-free-threaded-wheels-with-cibuildwheel
-
-.. start-releases
 
 .. _changes_7-14-1:
 
