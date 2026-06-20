@@ -1503,6 +1503,34 @@ class ExcludeTest(CoverageTest):
             lines=[1, 3, 5, 7, 9, 11, 19, 24, 25],
         )
 
+    def test_excluding_multiline_return_annotations(self) -> None:
+        # A function whose body is only "..." is excluded by default even when
+        # its return annotation is split over multiple lines, so the line with
+        # the body ends in a closing bracket (`]`/`)`/`}`) instead of the
+        # def's own `)`.  Formatters such as black/ruff wrap signatures this
+        # way when the annotation is long.  https://github.com/coveragepy/coveragepy/issues/2185
+        self.check_coverage(
+            """\
+            a = 1
+            def f2() -> dict[
+                str, str
+            ]: ...
+            def g5() -> (
+                int
+            ): ...
+            async def h8() -> list[
+                int
+            ]: ...
+            def real11() -> dict[
+                str, int
+            ]:
+                return {}
+            x = 15
+            """,
+            lines=[1, 11, 14, 15],
+            missing="14",
+        )
+
     def test_two_excludes(self) -> None:
         self.check_coverage(
             """\

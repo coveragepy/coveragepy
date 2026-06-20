@@ -23,7 +23,13 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
-Nothing yet.
+- Fix: a function whose body is only ``...`` is now excluded by the default
+  exclusion rules even when its return type annotation is split over multiple
+  lines, so the line with the body ends in a closing ``]``, ``)``, or ``}``
+  instead of the function's own ``)``.  Code formatters wrap long signatures
+  this way.  Fixes `issue 2185`_.
+
+.. _issue 2185: https://github.com/coveragepy/coveragepy/issues/2185
 
 
 .. start-releases
