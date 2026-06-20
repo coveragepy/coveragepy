@@ -42,21 +42,20 @@ Version 7.14.2 — 2026-06-20
   with many short-lived threads this leaked one file descriptor per dead
   thread, eventually failing with ``OSError: [Errno 24] Too many open files``.
   Connections belonging to terminated threads are now closed and dropped.
-  Fixes `issue 2192`_.
+  Fixes `issue 2192`_.  Thanks, `Matthew Lloyd <pull 2193_>`_.
 
 - Fix: when using sys.monitoring, we were assuming we could use the
   ``COVERAGE_ID`` tool id.  But other tools might also assume they could use
   that id.  Pre-allocated ids don't really make sense, so now we search for a
-  usable one instead. Fixes `issue 2187`_. Thanks, `Matthew Lloyd
-  <pull 2198_>`_.
+  usable one instead. Fixes `issue 2187`_.
 
 - Following `the advice of cibuildwheel <no-13t_>`_, we no longer distribute
   wheels for Python 3.13 free-threaded.
 
 .. _issue 2187: https://github.com/coveragepy/coveragepy/issues/2187
 .. _issue 2192: https://github.com/coveragepy/coveragepy/issues/2192
+.. _pull 2193: https://github.com/coveragepy/coveragepy/pull/2193
 .. _issue 2197: https://github.com/coveragepy/coveragepy/issues/2197
-.. _pull 2198: https://github.com/coveragepy/coveragepy/pull/2198
 .. _no-13t: https://py-free-threading.github.io/ci/#building-free-threaded-wheels-with-cibuildwheel
 
 .. _changes_7-14-1:
