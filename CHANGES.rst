@@ -37,7 +37,8 @@ Unreleased
 - Fix: when using sys.monitoring, we were assuming we could use the
   ``COVERAGE_ID`` tool id.  But other tools might also assume they could use
   that id.  Pre-allocated ids don't really make sense, so now we search for a
-  usable one instead. Fixes `issue 2187`_. Thanks, `Matt Lloyd <pull 2198_>`_.
+  usable one instead. Fixes `issue 2187`_. Thanks, `Matthew Lloyd
+  <pull 2198_>`_.
 
 - Following `the advice of cibuildwheel <no-13t_>`_, we no longer distribute
   wheels for Python 3.13 free-threaded.
