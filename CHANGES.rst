@@ -37,7 +37,7 @@ Unreleased
 - Fix: when using sys.monitoring, we were assuming we could use the
   ``COVERAGE_ID`` tool id.  But other tools might also assume they could use
   that id.  Pre-allocated ids don't really make sense, so now we search for a
-  usable one instead. Fixes `issue 2187`_.
+  usable one instead. Fixes `issue 2187`_. Thanks, `Matt Lloyd <pull 2198_>`_.
 
 - Following `the advice of cibuildwheel <no-13t_>`_, we no longer distribute
   wheels for Python 3.13 free-threaded.
@@ -45,6 +45,7 @@ Unreleased
 .. _issue 2187: https://github.com/coveragepy/coveragepy/issues/2187
 .. _issue 2192: https://github.com/coveragepy/coveragepy/issues/2192
 .. _issue 2197: https://github.com/coveragepy/coveragepy/issues/2197
+.. _pull 2198: https://github.com/coveragepy/coveragepy/pull/2198
 .. _no-13t: https://py-free-threading.github.io/ci/#building-free-threaded-wheels-with-cibuildwheel
 
 .. start-releases
