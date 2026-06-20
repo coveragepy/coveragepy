@@ -23,6 +23,10 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
+- Fix: some messages were being written to stdout, making ``coverage json -o
+  -`` useless for capturing JSON output. Now messages are written to stderr,
+  fixing `issue 2197`_.
+
 - Fix: ``CoverageData`` kept one SQLite connection per thread that recorded
   coverage, but never closed them when those threads terminated. On long runs
   with many short-lived threads this leaked one file descriptor per dead
@@ -35,9 +39,13 @@ Unreleased
   that id.  Pre-allocated ids don't really make sense, so now we search for a
   usable one instead. Fixes `issue 2187`_.
 
+- Following `the advice of cibuildwheel <no-13t_>`_, we no longer distribute
+  wheels for Python 3.13 free-threaded.
+
 .. _issue 2187: https://github.com/coveragepy/coveragepy/issues/2187
 .. _issue 2192: https://github.com/coveragepy/coveragepy/issues/2192
-
+.. _issue 2197: https://github.com/coveragepy/coveragepy/issues/2197
+.. _no-13t: https://py-free-threading.github.io/ci/#building-free-threaded-wheels-with-cibuildwheel
 
 .. start-releases
 
