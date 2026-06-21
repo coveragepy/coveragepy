@@ -856,6 +856,58 @@ class SwitchContextTest(CoverageTest):
             cov.switch_context("test3")
 
 
+@pytest.mark.skipif(not env.PYBEHAVIOR.pep669, reason="No sys.monitoring core available.")
+class SwitchContextSysmonFallbackTest(CoverageTest):
+    """Tests for switching away from sysmon when contexts are requested."""
+
+    def make_test_files(self) -> None:
+        self.make_file(
+            "testsuite.py",
+            """\
+            def timestwo(x):
+                return x*2
+
+            def test_multiply_zero():
+                assert timestwo(0) == 0
+
+            def test_multiply_six():
+                assert timestwo(6) == 12
+            """,
+        )
+
+    def test_switch_context_falls_back_from_sysmon(self) -> None:
+        self.set_environ("COVERAGE_CORE", "sysmon")
+        self.make_test_files()
+
+        cov = coverage.Coverage()
+        with cov.collect():
+            suite = import_local_file("testsuite")
+            with pytest.warns(Warning) as warns:
+                cov.switch_context("multiply_zero")
+                assert cov._collector is not None
+                assert cov._collector.tracer_name() == "PyTracer"
+                suite.test_multiply_zero()
+                cov.switch_context("multiply_six")
+                suite.test_multiply_six()
+
+        assert_coverage_warnings(
+            warns,
+            "Can't use core=sysmon: it doesn't yet support dynamic contexts, using pytrace core"
+            " (no-sysmon)",
+        )
+
+        data = cov.get_data()
+        assert ["", "multiply_six", "multiply_zero"] == sorted(data.measured_contexts())
+
+        filenames = self.get_measured_filenames(data)
+        suite_filename = filenames["testsuite.py"]
+
+        data.set_query_context("multiply_six")
+        assert [2, 8] == sorted_lines(data, suite_filename)
+        data.set_query_context("multiply_zero")
+        assert [2, 5] == sorted_lines(data, suite_filename)
+
+
 class CurrentInstanceTest(CoverageTest):
     """Tests of Coverage.current()."""
 

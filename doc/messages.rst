@@ -154,6 +154,11 @@ Can't use core=sysmon: it doesn't yet support dynamic contexts, using default co
   This isn't supported by coverage.py yet.  A default core will be used
   instead.
 
+Can't use core=sysmon: it doesn't yet support dynamic contexts, using pytrace core (no-sysmon)
+  You requested dynamic contexts after starting measurement with the
+  sys.monitoring core. Coverage.py switches to the Python tracer so later
+  context changes are recorded correctly.
+
 Can't use core=sysmon: it doesn't support concurrency=ZZZ, using default core (no-sysmon)
   Your requested the sys.monitoring measurement core and also a particular
   concurrency setting, but that combination isn't supported.  A default core
