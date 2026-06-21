@@ -861,6 +861,7 @@ class SwitchContextSysmonFallbackTest(CoverageTest):
     """Tests for switching away from sysmon when contexts are requested."""
 
     def make_test_files(self) -> None:
+        """Create a tiny suite with a shared helper line."""
         self.make_file(
             "testsuite.py",
             """\

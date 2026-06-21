@@ -612,9 +612,11 @@ class Coverage(TConfigurable):
 
         assert self._data is not None
         self._collector.use_data(self._data, self.config.context)
+        assert self._core is not None
+        core = self._core
 
         # Early warning if we aren't going to be able to support plugins.
-        if self._plugins.file_tracers and not self._core.supports_plugins:
+        if self._plugins.file_tracers and not core.supports_plugins:
             self._warn(
                 "Plugin file tracers ({}) aren't supported with {}".format(
                     ", ".join(
@@ -634,7 +636,7 @@ class Coverage(TConfigurable):
             include_namespace_packages=self.config.include_namespace_packages,
         )
         self._inorout.plugins = self._plugins
-        self._inorout.disp_class = self._core.file_disposition_class
+        self._inorout.disp_class = core.file_disposition_class
 
         # It's useful to write debug info after initing for start.
         self._should_write_debug = True
