@@ -23,7 +23,12 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
-Nothing yet.
+- Fix: the default ``...`` exclusion rule now also matches function bodies
+  whose closing return-type bracket is on its own line (for example, after a
+  long ``-> dict[ ... ]`` annotation that a formatter has split over multiple
+  lines). Closes `issue 2185`_.
+
+.. _issue 2185: https://github.com/coveragepy/coveragepy/issues/2185
 
 
 .. start-releases
@@ -57,6 +62,7 @@ Version 7.14.2 — 2026-06-20
 .. _pull 2193: https://github.com/coveragepy/coveragepy/pull/2193
 .. _issue 2197: https://github.com/coveragepy/coveragepy/issues/2197
 .. _no-13t: https://py-free-threading.github.io/ci/#building-free-threaded-wheels-with-cibuildwheel
+
 
 .. _changes_7-14-1:
 
