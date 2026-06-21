@@ -229,10 +229,6 @@ class MemoryLeakTest(CoverageTest):
         # In fact, sysmon explicitly holds onto all code objects,
         # so this will definitely fail with sysmon.
     )
-    @pytest.mark.skipif(
-        env.PYVERSION[:2] == (3, 13) and not env.GIL,
-        reason="3.13t never frees code objects: https://github.com/python/cpython/pull/131989",
-    )
     @pytest.mark.parametrize("branch", [False, True])
     def test_eval_codeobject_leak(self, branch: bool) -> None:
         # https://github.com/coveragepy/coveragepy/issues/1924

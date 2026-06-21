@@ -91,17 +91,12 @@ jobs:
           - "3.11"
           - "3.12"
           - "3.13"
-          - "3.13t"
           - "3.14"
           - "3.14t"
           - "3.15"
           - "3.15t"
           - "pypy-3.10"
           - "pypy-3.11"
-        exclude:
-          # Windows 3.13t often fails during installation.
-          - os: windows
-            python-version: "3.13t"
 
         #
         # If we need to exclude any combinations, do it like this:

@@ -23,25 +23,46 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
-- Fix: some messages were being written to stdout, making ``-o -`` useless for
-  capturing the JSON output of ``coverage json``. Now messages are written to
-  stderr, fixing `issue 2197`.
-
-- Fix: when using sys.monitoring, we were assuming we could use the
-  ``COVERAGE_ID`` tool id.  But other tools might also assume they could use
-  that id.  Pre-allocated ids don't really make sense, so now we search for a
-  usable one instead. Fixes `issue 2187`_.
-
 - Fix: the default ``...`` exclusion rule now also matches function bodies
   whose closing return-type bracket is on its own line (for example, after a
   long ``-> dict[ ... ]`` annotation that a formatter has split over multiple
   lines). Closes `issue 2185`_.
 
 .. _issue 2185: https://github.com/coveragepy/coveragepy/issues/2185
-.. _issue 2187: https://github.com/coveragepy/coveragepy/issues/2187
-.. _issue 2197: https://github.com/coveragepy/coveragepy/issues/2197
+
 
 .. start-releases
+
+.. _changes_7-14-2:
+
+Version 7.14.2 — 2026-06-20
+---------------------------
+
+- Fix: some messages were being written to stdout, making ``coverage json -o
+  -`` useless for capturing JSON output. Now messages are written to stderr,
+  fixing `issue 2197`_.
+
+- Fix: ``CoverageData`` kept one SQLite connection per thread that recorded
+  coverage, but never closed them when those threads terminated. On long runs
+  with many short-lived threads this leaked one file descriptor per dead
+  thread, eventually failing with ``OSError: [Errno 24] Too many open files``.
+  Connections belonging to terminated threads are now closed and dropped.
+  Fixes `issue 2192`_.  Thanks, `Matthew Lloyd <pull 2193_>`_.
+
+- Fix: when using sys.monitoring, we were assuming we could use the
+  ``COVERAGE_ID`` tool id.  But other tools might also assume they could use
+  that id.  Pre-allocated ids don't really make sense, so now we search for a
+  usable one instead. Fixes `issue 2187`_.
+
+- Following `the advice of cibuildwheel <no-13t_>`_, we no longer distribute
+  wheels for Python 3.13 free-threaded.
+
+.. _issue 2187: https://github.com/coveragepy/coveragepy/issues/2187
+.. _issue 2192: https://github.com/coveragepy/coveragepy/issues/2192
+.. _pull 2193: https://github.com/coveragepy/coveragepy/pull/2193
+.. _issue 2197: https://github.com/coveragepy/coveragepy/issues/2197
+.. _no-13t: https://py-free-threading.github.io/ci/#building-free-threaded-wheels-with-cibuildwheel
+
 
 .. _changes_7-14-1:
 
