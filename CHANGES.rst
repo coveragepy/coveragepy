@@ -26,9 +26,10 @@ Unreleased
 - Fix: the default ``...`` exclusion rule now also matches function bodies
   whose closing return-type bracket is on its own line (for example, after a
   long ``-> dict[ ... ]`` annotation that a formatter has split over multiple
-  lines). Closes `issue 2185`_.
+  lines). Closes `issue 2185`_ via `pull 2196`_.
 
 .. _issue 2185: https://github.com/coveragepy/coveragepy/issues/2185
+.. _pull 2196: https://github.com/coveragepy/coveragepy/pull/2196
 
 
 .. start-releases
