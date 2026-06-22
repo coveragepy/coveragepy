@@ -28,8 +28,13 @@ Unreleased
   long ``-> dict[ ... ]`` annotation that a formatter has split over multiple
   lines). Closes `issue 2185`_, thanks `Mengjia Shang <pull 2196_>`_.
 
+- Fix: On 3.13t, we incorrectly issued ``Couldn't import C tracer`` errors.
+  We can't import the C tracer because in 7.14.2 we stopped shipping compiled
+  wheels for 3.13t. Thanks, `Hugo van Kemenade <pull 2203_>`_.
+
 .. _issue 2185: https://github.com/coveragepy/coveragepy/issues/2185
 .. _pull 2196: https://github.com/coveragepy/coveragepy/pull/2196
+.. _pull 2203: https://github.com/coveragepy/coveragepy/pull/2203
 
 
 .. start-releases
