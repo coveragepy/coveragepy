@@ -20,8 +20,12 @@ upgrading your version of coverage.py.
     ..  Version 9.8.1 — 2027-07-27
     ..  --------------------------
 
-Unreleased
-----------
+.. start-releases
+
+.. _changes_7-14-3:
+
+Version 7.14.3 — 2026-06-22
+---------------------------
 
 - Fix: the default ``...`` exclusion rule now also matches function bodies
   whose closing return-type bracket is on its own line (for example, after a
@@ -36,8 +40,6 @@ Unreleased
 .. _pull 2196: https://github.com/coveragepy/coveragepy/pull/2196
 .. _pull 2203: https://github.com/coveragepy/coveragepy/pull/2203
 
-
-.. start-releases
 
 .. _changes_7-14-2:
 
