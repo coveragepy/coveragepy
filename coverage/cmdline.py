@@ -368,6 +368,12 @@ class Opts:
         action="store_true",
         help="Display version information and exit.",
     )
+    multiline = optparse.make_option(
+        "",
+        "--multiline",
+        action="store_true",
+        help="Output actual covered lines and not just statements",
+    )
 
 
 class CoverageOptionParser(optparse.OptionParser):
@@ -639,6 +645,7 @@ COMMANDS = {
             Opts.json_pretty_print,
             Opts.quiet,
             Opts.show_contexts,
+            Opts.multiline,
         ]
         + GLOBAL_ARGS,
         usage="[options] [modules]",
@@ -910,6 +917,7 @@ class CoverageScript:
                 outfile=options.outfile,
                 pretty_print=options.pretty_print,
                 show_contexts=options.show_contexts,
+                multiline=options.multiline,
                 **report_args,
             )
         elif options.action == "lcov":

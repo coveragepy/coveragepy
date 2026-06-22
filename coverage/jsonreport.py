@@ -114,8 +114,28 @@ class JsonReporter:
         nums = analysis.numbers
         self.total += nums
         summary = self.make_summary(nums)
+        final_executed_lines = analysis.executed
+        if self.config.json_multiline:
+            multiline_map = {}
+            flag = {}
+            original_executed_line = {}
+            for line in analysis.executed:
+                flag[line] = True
+                original_executed_line[line] = True
+            if hasattr(file_reporter, "multiline_map"):
+                multiline_map = file_reporter.multiline_map()
+                tot_lines = len(file_reporter.source().split("\n"))
+                for line in range(0, tot_lines + 1):
+                    original_stmt_line = multiline_map.get(line)
+                    if (
+                        original_executed_line.get(original_stmt_line) is True
+                        and multiline_map.get(line) is not None
+                        and flag.get(line) is not True
+                    ):
+                        final_executed_lines.add(line)
+                        flag[line] = True
         reported_file: JsonObj = {
-            "executed_lines": sorted(analysis.executed),
+            "executed_lines": sorted(final_executed_lines),
             "summary": summary,
             "missing_lines": sorted(analysis.missing),
             "excluded_lines": sorted(analysis.excluded),

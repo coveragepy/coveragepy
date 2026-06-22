@@ -252,6 +252,7 @@ class CoverageConfig(TConfigurable, TPluginConfig):
         self.json_output = "coverage.json"
         self.json_pretty_print = False
         self.json_show_contexts = False
+        self.json_multiline = False
 
         # Defaults for [lcov]
         self.lcov_output = "coverage.lcov"

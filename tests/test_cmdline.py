@@ -93,6 +93,7 @@ class BaseCmdLineTest(CoverageTest):
         contexts=None,
         pretty_print=None,
         show_contexts=None,
+        multiline=None,
     )
     _defaults.Coverage().lcov_report(
         ignore_errors=None,
@@ -204,7 +205,6 @@ class BaseCmdLineTest(CoverageTest):
         for name, _, kwargs in expected.mock_calls:
             for k, v in self.DEFAULT_KWARGS.get(name, {}).items():
                 kwargs.setdefault(k, v)
-
         self.assert_same_mock_calls(expected, called)
 
     def cmd_executes_same(self, args1: str, args2: str) -> None:
@@ -716,6 +716,15 @@ class CmdLineTest(BaseCmdLineTest):
             cov.load()
             cov.combine(strict=False, keep=False)
             cov.json_report()
+            """,
+        )
+        self.cmd_executes(
+            "json --multiline",
+            """\
+            cov = Coverage()
+            cov.load()
+            cov.combine(strict=False, keep=False)
+            cov.json_report(multiline=True)
             """,
         )
 
