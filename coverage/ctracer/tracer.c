@@ -771,12 +771,14 @@ CTracer_handle_return(CTracer *self, PyFrameObject *frame)
             real_return = !(is_yield || is_yield_from);
 #endif
             if (real_return) {
-                int lineno = PyFrame_GetLineNumber(frame);
-                if (lineno != self->pcur_entry->last_line) {
-                    if (CTracer_record_pair(self, self->pcur_entry->last_line, lineno) < 0) {
-                        goto error;
+                if (self->pcur_entry->file_tracer == Py_None) {
+                    int lineno = PyFrame_GetLineNumber(frame);
+                    if (lineno != self->pcur_entry->last_line) {
+                        if (CTracer_record_pair(self, self->pcur_entry->last_line, lineno) < 0) {
+                            goto error;
+                        }
+                        self->pcur_entry->last_line = lineno;
                     }
-                    self->pcur_entry->last_line = lineno;
                 }
                 int first = MyFrame_BorrowCode(frame)->co_firstlineno;
                 if (CTracer_record_pair(self, self->pcur_entry->last_line, -first) < 0) {
