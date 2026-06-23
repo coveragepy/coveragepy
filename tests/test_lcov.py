@@ -388,6 +388,64 @@ class LcovTest(CoverageTest):
         actual_result = self.get_lcov_report_content()
         assert expected_result == actual_result
 
+    def test_excluded_functions(self) -> None:
+        self.make_file(
+            ".coveragerc",
+            """\
+            [report]
+            exclude_also =
+                @(abc\\.)?abstractmethod
+                raise NotImplementedError
+            """,
+        )
+        self.make_file(
+            "runme.py",
+            """\
+            from abc import ABC, abstractmethod
+
+            class Base(ABC):
+                @abstractmethod
+                def excluded_abstract(self):
+                    raise NotImplementedError
+
+                def covered(self):
+                    return 1
+
+            class Concrete(Base):
+                def excluded_abstract(self):
+                    return 2
+
+            assert Concrete().covered() == 1
+            assert Concrete().excluded_abstract() == 2
+            """,
+        )
+        cov = coverage.Coverage(source=".")
+        self.start_import_stop(cov, "runme")
+        cov.lcov_report()
+        expected_result = textwrap.dedent("""\
+            SF:runme.py
+            DA:1,1
+            DA:3,1
+            DA:8,1
+            DA:9,1
+            DA:11,1
+            DA:12,1
+            DA:13,1
+            DA:15,1
+            DA:16,1
+            LF:9
+            LH:9
+            FN:8,9,Base.covered
+            FNDA:1,Base.covered
+            FN:12,13,Concrete.excluded_abstract
+            FNDA:1,Concrete.excluded_abstract
+            FNF:2
+            FNH:2
+            end_of_record
+            """)
+        actual_result = self.get_lcov_report_content()
+        assert expected_result == actual_result
+
     def test_exit_branches(self) -> None:
         self.make_file(
             "runme.py",

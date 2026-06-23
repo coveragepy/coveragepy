@@ -84,19 +84,25 @@ def lcov_functions(
     narrower.add_regions(r.lines for _, _, r in functions)
 
     functions.sort()
+    functions_found = 0
     functions_hit = 0
     for first_line, last_line, region in functions:
         # A function counts as having been executed if any of it has been
         # executed.
         analysis = narrower.narrow(region.lines)
+        if analysis.numbers.n_statements == 0:
+            continue
+
+        functions_found += 1
         hit = int(analysis.numbers.n_executed > 0)
         functions_hit += hit
 
         outfile.write(f"FN:{first_line},{last_line},{region.name}\n")
         outfile.write(f"FNDA:{hit},{region.name}\n")
 
-    outfile.write(f"FNF:{len(functions)}\n")
-    outfile.write(f"FNH:{functions_hit}\n")
+    if functions_found:
+        outfile.write(f"FNF:{functions_found}\n")
+        outfile.write(f"FNH:{functions_hit}\n")
 
 
 def lcov_arcs(
