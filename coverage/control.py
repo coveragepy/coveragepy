@@ -57,7 +57,6 @@ from coverage.python import PythonFileReporter
 from coverage.report import SummaryReporter
 from coverage.report_core import render_report
 from coverage.results import Analysis, analysis_from_file_reporter
-from coverage.sysmon import SysMonitor
 from coverage.types import (
     FilePath,
     TConfigSectionIn,
@@ -302,7 +301,6 @@ class Coverage(TConfigurable):
         self._data_to_close: list[CoverageData] = []
         self._core: Core | None = None
         self._collector: Collector | None = None
-        self._should_start_context: Callable[[FrameType], str | None] | None = None
 
         self._file_mapper: Callable[[str], str] = abs_file
         self._data_suffix = self._run_suffix = None
@@ -589,10 +587,23 @@ class Coverage(TConfigurable):
             plugin.dynamic_context for plugin in self._plugins.context_switchers
         )
 
-        self._should_start_context = combine_context_switchers(context_switchers)
-        self._collector = self._make_collector(
+        should_start_context = combine_context_switchers(context_switchers)
+
+        self._core = Core(
+            warn=self._warn,
+            debug=(self._debug if self._debug.should("core") else None),
+            config=self.config,
+            dynamic_contexts=(should_start_context is not None),
+        )
+        self._collector = Collector(
+            core=self._core,
+            should_trace=self._should_trace,
+            check_include=self._check_include_omit_etc,
+            should_start_context=should_start_context,
+            file_mapper=self._file_mapper,
+            branch=self.config.branch,
+            warn=self._warn,
             concurrency=concurrency,
-            dynamic_contexts=(self._should_start_context is not None),
         )
 
         suffix = self._data_suffix_specified
@@ -612,11 +623,8 @@ class Coverage(TConfigurable):
 
         assert self._data is not None
         self._collector.use_data(self._data, self.config.context)
-        assert self._core is not None
-        core = self._core
-
         # Early warning if we aren't going to be able to support plugins.
-        if self._plugins.file_tracers and not core.supports_plugins:
+        if self._plugins.file_tracers and not self._core.supports_plugins:
             self._warn(
                 "Plugin file tracers ({}) aren't supported with {}".format(
                     ", ".join(
@@ -636,7 +644,7 @@ class Coverage(TConfigurable):
             include_namespace_packages=self.config.include_namespace_packages,
         )
         self._inorout.plugins = self._plugins
-        self._inorout.disp_class = core.file_disposition_class
+        self._inorout.disp_class = self._core.file_disposition_class
 
         # It's useful to write debug info after initing for start.
         self._should_write_debug = True
@@ -653,46 +661,6 @@ class Coverage(TConfigurable):
                     signal.SIGTERM,
                     self._on_sigterm,
                 )
-
-    def _make_collector(
-        self,
-        *,
-        concurrency: list[str],
-        dynamic_contexts: bool,
-    ) -> Collector:
-        """Create a collector for the current configuration."""
-        self._core = Core(
-            warn=self._warn,
-            debug=(self._debug if self._debug.should("core") else None),
-            config=self.config,
-            dynamic_contexts=dynamic_contexts,
-        )
-        return Collector(
-            core=self._core,
-            should_trace=self._should_trace,
-            check_include=self._check_include_omit_etc,
-            should_start_context=self._should_start_context,
-            file_mapper=self._file_mapper,
-            branch=self.config.branch,
-            warn=self._warn,
-            concurrency=concurrency,
-        )
-
-    def _warn_no_sysmon_context_switching(self) -> bool:
-        """Warn when sysmon can't honor explicit context switching."""
-        assert self._collector is not None
-        assert self._core is not None
-
-        if self._core.tracer_class is not SysMonitor:
-            return False
-
-        self._warn(
-            "Can't use switch_context() with core=sysmon: "
-            "it doesn't yet support dynamic contexts, keeping the current context",
-            slug="no-sysmon",
-            once=True,
-        )
-        return True
 
     def _init_data(self, suffix: str | bool | None) -> None:
         """Create a data file if we don't have one yet."""
@@ -826,8 +794,11 @@ class Coverage(TConfigurable):
             raise CoverageException("Cannot switch context, coverage is not started")
 
         assert self._collector is not None
-        if self._warn_no_sysmon_context_switching():
-            return
+        if self._collector.tracer_name() == "SysMonitor":
+            raise CoverageException(
+                "Cannot switch context with core=sysmon: dynamic contexts are not supported, "
+                "use core=ctrace or core=pytrace instead",
+            )
         if self._collector.should_start_context:
             self._warn("Conflicting dynamic contexts", slug="dynamic-conflict", once=True)
 

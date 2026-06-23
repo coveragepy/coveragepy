@@ -154,11 +154,6 @@ Can't use core=sysmon: it doesn't yet support dynamic contexts, using default co
   This isn't supported by coverage.py yet.  A default core will be used
   instead.
 
-Can't use switch_context() with core=sysmon: it doesn't yet support dynamic contexts, keeping the current context (no-sysmon)
-  You called :meth:`.Coverage.switch_context` while using the sys.monitoring
-  core. Coverage.py leaves the current context unchanged. Choose a different
-  core if you need dynamic contexts.
-
 Can't use core=sysmon: it doesn't support concurrency=ZZZ, using default core (no-sysmon)
   Your requested the sys.monitoring measurement core and also a particular
   concurrency setting, but that combination isn't supported.  A default core

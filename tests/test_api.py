@@ -857,49 +857,22 @@ class SwitchContextTest(CoverageTest):
 
 
 @pytest.mark.skipif(not env.PYBEHAVIOR.pep669, reason="No sys.monitoring core available.")
-class SwitchContextSysmonWarningTest(CoverageTest):
-    """Tests for switch_context() warnings under sysmon."""
+class SwitchContextSysmonErrorTest(CoverageTest):
+    """Tests for switch_context() errors under sysmon."""
 
-    def make_test_files(self) -> None:
-        """Create a tiny suite with a shared helper line."""
-        self.make_file(
-            "testsuite.py",
-            """\
-            def timestwo(x):
-                return x*2
-
-            def test_multiply_zero():
-                assert timestwo(0) == 0
-
-            def test_multiply_six():
-                assert timestwo(6) == 12
-            """,
-        )
-
-    def test_switch_context_warns_and_keeps_sysmon(self) -> None:
+    def test_switch_context_raises_with_sysmon(self) -> None:
         self.set_environ("COVERAGE_CORE", "sysmon")
-        self.make_test_files()
 
         cov = coverage.Coverage()
         with cov.collect():
-            suite = import_local_file("testsuite")
-            with pytest.warns(Warning) as warns:
+            with pytest.raises(
+                CoverageException,
+                match=(
+                    "Cannot switch context with core=sysmon: dynamic contexts are not supported, "
+                    "use core=ctrace or core=pytrace instead"
+                ),
+            ):
                 cov.switch_context("multiply_zero")
-                assert cov._collector is not None
-                assert cov._collector.tracer_name() == "SysMonitor"
-                suite.test_multiply_zero()
-                cov.switch_context("multiply_six")
-                suite.test_multiply_six()
-
-        assert_coverage_warnings(
-            warns,
-            "Can't use switch_context() with core=sysmon: "
-            "it doesn't yet support dynamic contexts, keeping the current context"
-            " (no-sysmon)",
-        )
-
-        data = cov.get_data()
-        assert [""] == sorted(data.measured_contexts())
 
 
 class CurrentInstanceTest(CoverageTest):
