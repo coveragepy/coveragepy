@@ -857,8 +857,8 @@ class SwitchContextTest(CoverageTest):
 
 
 @pytest.mark.skipif(not env.PYBEHAVIOR.pep669, reason="No sys.monitoring core available.")
-class SwitchContextSysmonFallbackTest(CoverageTest):
-    """Tests for switching away from sysmon when contexts are requested."""
+class SwitchContextSysmonWarningTest(CoverageTest):
+    """Tests for switch_context() warnings under sysmon."""
 
     def make_test_files(self) -> None:
         """Create a tiny suite with a shared helper line."""
@@ -876,7 +876,7 @@ class SwitchContextSysmonFallbackTest(CoverageTest):
             """,
         )
 
-    def test_switch_context_falls_back_from_sysmon(self) -> None:
+    def test_switch_context_warns_and_keeps_sysmon(self) -> None:
         self.set_environ("COVERAGE_CORE", "sysmon")
         self.make_test_files()
 
@@ -886,27 +886,20 @@ class SwitchContextSysmonFallbackTest(CoverageTest):
             with pytest.warns(Warning) as warns:
                 cov.switch_context("multiply_zero")
                 assert cov._collector is not None
-                assert cov._collector.tracer_name() == "PyTracer"
+                assert cov._collector.tracer_name() == "SysMonitor"
                 suite.test_multiply_zero()
                 cov.switch_context("multiply_six")
                 suite.test_multiply_six()
 
         assert_coverage_warnings(
             warns,
-            "Can't use core=sysmon: it doesn't yet support dynamic contexts, using pytrace core"
+            "Can't use switch_context() with core=sysmon: "
+            "it doesn't yet support dynamic contexts, keeping the current context"
             " (no-sysmon)",
         )
 
         data = cov.get_data()
-        assert ["", "multiply_six", "multiply_zero"] == sorted(data.measured_contexts())
-
-        filenames = self.get_measured_filenames(data)
-        suite_filename = filenames["testsuite.py"]
-
-        data.set_query_context("multiply_six")
-        assert [2, 8] == sorted_lines(data, suite_filename)
-        data.set_query_context("multiply_zero")
-        assert [2, 5] == sorted_lines(data, suite_filename)
+        assert [""] == sorted(data.measured_contexts())
 
 
 class CurrentInstanceTest(CoverageTest):

@@ -678,38 +678,21 @@ class Coverage(TConfigurable):
             concurrency=concurrency,
         )
 
-    def _switch_to_tracing_core_for_contexts(self) -> None:
-        """Move off sysmon before explicit context switching."""
+    def _warn_no_sysmon_context_switching(self) -> bool:
+        """Warn when sysmon can't honor explicit context switching."""
         assert self._collector is not None
-        assert self._data is not None
         assert self._core is not None
 
         if self._core.tracer_class is not SysMonitor:
-            return
+            return False
 
-        self._collector.flush_data()
-        self._collector.stop()
         self._warn(
-            "Can't use core=sysmon: it doesn't yet support dynamic contexts, using pytrace core",
+            "Can't use switch_context() with core=sysmon: "
+            "it doesn't yet support dynamic contexts, keeping the current context",
             slug="no-sysmon",
             once=True,
         )
-
-        configured_core = self.config.core
-        self.config.core = "pytrace"
-        try:
-            self._collector = self._make_collector(
-                concurrency=self.config.concurrency,
-                dynamic_contexts=True,
-            )
-        finally:
-            self.config.core = configured_core
-        self._collector.use_data(self._data, self.config.context)
-        self._collector.start()
-        if self._core.systrace:
-            trace_fn = sys.gettrace()
-            if trace_fn is not None:
-                sys._getframe(2).f_trace = trace_fn
+        return True
 
     def _init_data(self, suffix: str | bool | None) -> None:
         """Create a data file if we don't have one yet."""
@@ -843,7 +826,8 @@ class Coverage(TConfigurable):
             raise CoverageException("Cannot switch context, coverage is not started")
 
         assert self._collector is not None
-        self._switch_to_tracing_core_for_contexts()
+        if self._warn_no_sysmon_context_switching():
+            return
         if self._collector.should_start_context:
             self._warn("Conflicting dynamic contexts", slug="dynamic-conflict", once=True)
 
