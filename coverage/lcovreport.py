@@ -100,9 +100,8 @@ def lcov_functions(
         outfile.write(f"FN:{first_line},{last_line},{region.name}\n")
         outfile.write(f"FNDA:{hit},{region.name}\n")
 
-    if functions_found:
-        outfile.write(f"FNF:{functions_found}\n")
-        outfile.write(f"FNH:{functions_hit}\n")
+    outfile.write(f"FNF:{functions_found}\n")
+    outfile.write(f"FNH:{functions_hit}\n")
 
 
 def lcov_arcs(

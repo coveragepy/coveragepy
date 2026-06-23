@@ -446,6 +446,43 @@ class LcovTest(CoverageTest):
         actual_result = self.get_lcov_report_content()
         assert expected_result == actual_result
 
+    def test_all_functions_excluded(self) -> None:
+        self.make_file(
+            ".coveragerc",
+            """\
+            [report]
+            exclude_also =
+                raise NotImplementedError
+            """,
+        )
+        self.make_file(
+            "runme.py",
+            """\
+            x = 1
+
+            def excluded():
+                raise NotImplementedError
+
+            assert x == 1
+            """,
+        )
+        cov = coverage.Coverage(source=".")
+        self.start_import_stop(cov, "runme")
+        cov.lcov_report()
+        expected_result = textwrap.dedent("""\
+            SF:runme.py
+            DA:1,1
+            DA:3,1
+            DA:6,1
+            LF:3
+            LH:3
+            FNF:0
+            FNH:0
+            end_of_record
+            """)
+        actual_result = self.get_lcov_report_content()
+        assert expected_result == actual_result
+
     def test_exit_branches(self) -> None:
         self.make_file(
             "runme.py",
