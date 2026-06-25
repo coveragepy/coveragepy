@@ -61,6 +61,7 @@ class BaseCmdLineTest(CoverageTest):
         contexts=None,
         skip_empty=None,
         precision=None,
+        omit_regions=None,
     )
     _defaults.Coverage().report(
         ignore_errors=None,
@@ -93,6 +94,7 @@ class BaseCmdLineTest(CoverageTest):
         contexts=None,
         pretty_print=None,
         show_contexts=None,
+        omit_regions=None,
     )
     _defaults.Coverage().lcov_report(
         ignore_errors=None,
