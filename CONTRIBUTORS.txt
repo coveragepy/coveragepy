@@ -166,6 +166,7 @@ Mariatta
 Marius Gedminas
 Mark van der Wal
 Martin Fuzzey
+Martin Kuntz Jacobsen
 Mathieu Kniewallner
 Matt Bachmann
 Matthew Boehm
