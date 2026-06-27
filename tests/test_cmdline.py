@@ -298,6 +298,15 @@ class CmdLineTest(BaseCmdLineTest):
             """,
         )
         self.cmd_executes(
+            "annotate --keep-combined",
+            """\
+            cov = Coverage()
+            cov.load()
+            cov.combine(strict=False, keep=True)
+            cov.annotate()
+            """,
+        )
+        self.cmd_executes(
             "annotate --omit fooey",
             """\
             cov = Coverage(omit=["fooey"])
@@ -546,6 +555,15 @@ class CmdLineTest(BaseCmdLineTest):
             """,
         )
         self.cmd_executes(
+            "html --keep-combined",
+            """\
+            cov = Coverage()
+            cov.load()
+            cov.combine(strict=False, keep=True)
+            cov.html_report()
+            """,
+        )
+        self.cmd_executes(
             "html --omit fooey",
             """\
             cov = Coverage(omit=["fooey"])
@@ -657,6 +675,15 @@ class CmdLineTest(BaseCmdLineTest):
             """,
         )
         self.cmd_executes(
+            "json --keep-combined",
+            """\
+            cov = Coverage()
+            cov.load()
+            cov.combine(strict=False, keep=True)
+            cov.json_report()
+            """,
+        )
+        self.cmd_executes(
             "json -o myjson.foo",
             """\
             cov = Coverage()
@@ -750,6 +777,15 @@ class CmdLineTest(BaseCmdLineTest):
             """,
         )
         self.cmd_executes(
+            "lcov --keep-combined",
+            """\
+            cov = Coverage()
+            cov.load()
+            cov.combine(strict=False, keep=True)
+            cov.lcov_report()
+            """,
+        )
+        self.cmd_executes(
             "lcov -o mylcov.foo",
             """\
             cov = Coverage()
@@ -822,6 +858,15 @@ class CmdLineTest(BaseCmdLineTest):
             cov.load()
             cov.combine(strict=False, keep=False)
             cov.report(ignore_errors=True)
+            """,
+        )
+        self.cmd_executes(
+            "report --keep-combined",
+            """\
+            cov = Coverage()
+            cov.load()
+            cov.combine(strict=False, keep=True)
+            cov.report()
             """,
         )
         self.cmd_executes(
@@ -1290,6 +1335,15 @@ class CmdLineTest(BaseCmdLineTest):
             cov.load()
             cov.combine(strict=False, keep=False)
             cov.xml_report(ignore_errors=True)
+            """,
+        )
+        self.cmd_executes(
+            "xml --keep-combined",
+            """\
+            cov = Coverage()
+            cov.load()
+            cov.combine(strict=False, keep=True)
+            cov.xml_report()
             """,
         )
         self.cmd_executes(

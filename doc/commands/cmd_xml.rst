@@ -39,6 +39,8 @@ compatible with `Cobertura`_.
                             Include only files whose paths match one of these
                             patterns. Accepts shell-style wildcards, which must be
                             quoted.
+      --keep-combined       Keep original coverage files, otherwise they are
+                            deleted after combining.
       --omit=PAT1,PAT2,...  Omit files whose paths match one of these patterns.
                             Accepts shell-style wildcards, which must be quoted.
       -o OUTFILE            Write the XML report to this file. Defaults to
@@ -51,7 +53,7 @@ compatible with `Cobertura`_.
       --rcfile=RCFILE       Specify configuration file. By default '.coveragerc',
                             'setup.cfg', 'tox.ini', and 'pyproject.toml' are
                             tried. [env: COVERAGE_RCFILE]
-.. [[[end]]] (sum: iyOdiVNL4L)
+.. [[[end]]] (sum: 6i8iwXIv4S)
 
 You can specify the name of the output file with the ``-o`` switch.
 

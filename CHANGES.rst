@@ -23,10 +23,16 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
+- Since 7.14.0, reporting commands implicitly combine parallel data files. Now
+  those commands have a new option ``--keep-combined`` to retain the data files
+  after combining them instead of the default, which is to delete them.
+  Finishes `issue 2198`_.
+
 - Fix: the LCOV report would incorrectly count excluded functions as uncovered,
   as described in `issue 2205`_. This is now fixed thanks to, `Martin Kuntz
   Jacobsen <pull 2206_>`_.
 
+.. _issue 2198:  https://github.com/coveragepy/coveragepy/issues/2198
 .. _issue 2205:  https://github.com/coveragepy/coveragepy/issues/2205
 .. _pull 2206: https://github.com/coveragepy/coveragepy/pull/2206
 

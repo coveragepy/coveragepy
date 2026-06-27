@@ -29,7 +29,9 @@ The command-line arguments are module or file names to report on if you'd like
 to report on a subset of the data collected.
 
 If parallel data files are present, the are implicitly combined as if you had
-used the :ref:`combine <cmd_combine>` command.
+used the :ref:`combine <cmd_combine>` command. As with the :ref:`combine
+<cmd_combine>` command, individual data files are deleted after combining. You
+can use the ``--keep-combined`` option to keep them instead.
 
 The ``--include`` and ``--omit`` flags specify lists of file name patterns.
 They control which files to report on, and are described in more detail in
