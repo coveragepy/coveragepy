@@ -29,7 +29,7 @@ Unreleased
   Finishes `issue 2198`_.
 
 - Fix: the LCOV report would incorrectly count excluded functions as uncovered,
-  as described in `issue 2205`_. This is now fixed thanks to, `Martin Kuntz
+  as described in `issue 2205`_. This is now fixed thanks to `Martin Kuntz
   Jacobsen <pull 2206_>`_.
 
 .. _issue 2198:  https://github.com/coveragepy/coveragepy/issues/2198
