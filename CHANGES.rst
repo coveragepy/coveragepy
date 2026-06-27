@@ -23,7 +23,12 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
-Nothing yet.
+- Fix: the LCOV report would incorrectly count excluded functions as uncovered,
+  as described in `issue 2205`_. This is now fixed thanks to, `Martin Kuntz
+  Jacobsen <pull 2206_>`_.
+
+.. _issue 2205:  https://github.com/coveragepy/coveragepy/issues/2205
+.. _pull 2206: https://github.com/coveragepy/coveragepy/pull/2206
 
 
 .. start-releases
