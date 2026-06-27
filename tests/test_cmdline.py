@@ -220,6 +220,16 @@ class BaseCmdLineTest(CoverageTest):
         # so we can tell what's going on.  We have to use the real == first due
         # to CmdOptionParser.__eq__
         if m1.mock_calls != m2.mock_calls:
+            # The kwargs in a call can be in different orders in the two sets of
+            # calls, since cmdline.py and the tests build them differently.  The
+            # order doesn't affect equality, but it makes the diff noisy.  Sort
+            # the kwargs of each call so the diff shows only real differences.
+            for mk in (m1, m2):
+                for one_call in mk.mock_calls:
+                    kwargs = one_call[2]
+                    sorted_kwargs = sorted(kwargs.items())
+                    kwargs.clear()
+                    kwargs.update(sorted_kwargs)
             pp1 = pprint.pformat(m1.mock_calls)
             pp2 = pprint.pformat(m2.mock_calls)
             assert pp1 + "\n" == pp2 + "\n"
