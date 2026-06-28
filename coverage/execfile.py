@@ -140,6 +140,7 @@ class PyRunner:
             if self.spec is not None:
                 self.modulename = self.spec.name
             self.loader = DummyLoader(self.modulename)
+            self.spec.loader = self.loader
             assert pathname is not None
             self.pathname = os.path.abspath(pathname)
             self.args[0] = self.arg0 = self.pathname
@@ -157,12 +158,13 @@ class PyRunner:
             else:
                 raise NoSource(f"Can't find '__main__' module in '{self.arg0}'")
 
-            # Make a spec. I don't know if this is the right way to do it.
             try_filename = python_reported_file(try_filename)
-            self.spec = importlib.machinery.ModuleSpec("__main__", None, origin=try_filename)
-            self.spec.has_location = True
             self.package = ""
             self.loader = DummyLoader("__main__")
+
+            # Make a spec. I don't know if this is the right way to do it.
+            self.spec = importlib.machinery.ModuleSpec("__main__", self.loader, origin=try_filename)
+            self.spec.has_location = True
         else:
             self.loader = DummyLoader("__main__")
 
