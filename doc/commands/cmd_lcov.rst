@@ -36,6 +36,8 @@ The **lcov** command writes coverage data to a "coverage.lcov" file.
                             Include only files whose paths match one of these
                             patterns. Accepts shell-style wildcards, which must be
                             quoted.
+      --keep-combined       Keep original coverage files, otherwise they are
+                            deleted after combining.
       -o OUTFILE            Write the LCOV report to this file. Defaults to
                             'coverage.lcov'
       --omit=PAT1,PAT2,...  Omit files whose paths match one of these patterns.
@@ -47,7 +49,7 @@ The **lcov** command writes coverage data to a "coverage.lcov" file.
       --rcfile=RCFILE       Specify configuration file. By default '.coveragerc',
                             'setup.cfg', 'tox.ini', and 'pyproject.toml' are
                             tried. [env: COVERAGE_RCFILE]
-.. [[[end]]] (sum: Fqz7roAR0u)
+.. [[[end]]] (sum: 4Y093mzLUk)
 
 Common reporting options are described above in :ref:`cmd_reporting`.
 Also see :ref:`Configuration: [lcov] <config_lcov>`.

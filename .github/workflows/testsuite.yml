@@ -38,7 +38,7 @@ jobs:
       run_tests: ${{ steps.filter.outputs.run_tests }}
     steps:
       - name: "Check out the repo"
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
 
@@ -91,17 +91,12 @@ jobs:
           - "3.11"
           - "3.12"
           - "3.13"
-          - "3.13t"
           - "3.14"
           - "3.14t"
           - "3.15"
           - "3.15t"
           - "pypy-3.10"
           - "pypy-3.11"
-        exclude:
-          # Windows 3.13t often fails during installation.
-          - os: windows
-            python-version: "3.13t"
 
         #
         # If we need to exclude any combinations, do it like this:
@@ -121,7 +116,7 @@ jobs:
 
     steps:
       - name: "Check out the repo"
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
 

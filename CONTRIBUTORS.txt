@@ -166,14 +166,17 @@ Mariatta
 Marius Gedminas
 Mark van der Wal
 Martin Fuzzey
+Martin Kuntz Jacobsen
 Mathieu Kniewallner
 Matt Bachmann
 Matthew Boehm
 Matthew Desmarais
+Matthew Lloyd
 Matthias Schoettle
 Matus Valo
 Max Linke
 Mayank Singhal
+Mengjia Shang
 Michael Bell
 Michael Krebs
 Michał Bultrowicz

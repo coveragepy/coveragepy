@@ -185,6 +185,12 @@ class Opts:
         action="store_true",
         help="Keep original coverage files, otherwise they are deleted.",
     )
+    keep_combined = optparse.make_option(
+        "",
+        "--keep-combined",
+        action="store_true",
+        help="Keep original coverage files, otherwise they are deleted after combining.",
+    )
     pylib = optparse.make_option(
         "-L",
         "--pylib",
@@ -401,6 +407,7 @@ class CoverageOptionParser(optparse.OptionParser):
             ignore_errors=None,
             include=None,
             keep=None,
+            keep_combined=None,
             module=None,
             omit=None,
             parallel_mode=None,
@@ -535,6 +542,7 @@ COMMANDS = {
             Opts.datafile_input,
             Opts.ignore_errors,
             Opts.include,
+            Opts.keep_combined,
             Opts.omit,
         ]
         + GLOBAL_ARGS,
@@ -607,6 +615,7 @@ COMMANDS = {
             Opts.fail_under,
             Opts.ignore_errors,
             Opts.include,
+            Opts.keep_combined,
             Opts.omit,
             Opts.precision,
             Opts.quiet,
@@ -620,7 +629,7 @@ COMMANDS = {
         usage="[options] [modules]",
         description=prep_help(
             """
-            Create an HTML report of the coverage of the files.
+            Create an HTML report of coverage results.
             Each file gets its own page, with the source decorated to show
             executed, excluded, and missed lines.
             """
@@ -634,6 +643,7 @@ COMMANDS = {
             Opts.fail_under,
             Opts.ignore_errors,
             Opts.include,
+            Opts.keep_combined,
             Opts.omit,
             Opts.output_json,
             Opts.json_pretty_print,
@@ -651,6 +661,7 @@ COMMANDS = {
             Opts.fail_under,
             Opts.ignore_errors,
             Opts.include,
+            Opts.keep_combined,
             Opts.output_lcov,
             Opts.omit,
             Opts.quiet,
@@ -668,6 +679,7 @@ COMMANDS = {
             Opts.format,
             Opts.ignore_errors,
             Opts.include,
+            Opts.keep_combined,
             Opts.omit,
             Opts.precision,
             Opts.sort,
@@ -708,6 +720,7 @@ COMMANDS = {
             Opts.fail_under,
             Opts.ignore_errors,
             Opts.include,
+            Opts.keep_combined,
             Opts.omit,
             Opts.output_xml,
             Opts.quiet,
@@ -874,7 +887,7 @@ class CoverageScript:
         sys.path.insert(0, "")
 
         self.coverage.load()
-        self.coverage.combine(strict=False, keep=False)
+        self.coverage.combine(strict=False, keep=bool(options.keep_combined))
 
         total = None
         if options.action == "report":

@@ -614,6 +614,45 @@ class CoverageDataTest(CoverageTest):
         assert_lines1_data(covdata)
         assert not exceptions
 
+    def test_dead_thread_dbs_are_reaped(self) -> None:
+        # Each thread that records coverage opens its own SqliteDb. Those
+        # connections must be closed and dropped when the thread terminates,
+        # so _dbs (and the fds it holds) stays bounded by the live-thread
+        # count rather than growing without limit. See issue 2192.
+        covdata = CoverageData(no_disk=True)
+
+        nthreads = 50
+        # Keep the workers concurrent so they get distinct thread ids. A naive
+        # sequential start/join loop can let the OS recycle a single id and
+        # hide the leak.
+        barrier = threading.Barrier(nthreads + 1)
+
+        def thread_main() -> None:
+            covdata.add_lines(LINES_1)
+            barrier.wait()
+
+        threads = [threading.Thread(target=thread_main) for _ in range(nthreads)]
+        for t in threads:
+            t.start()
+        barrier.wait()
+        for t in threads:
+            t.join()
+
+        assert threading.active_count() == 1
+        # The dead threads each opened a connection; they are retained until
+        # something triggers reaping.
+        assert len(covdata._dbs) == nthreads
+
+        # The main thread hasn't recorded any coverage yet, so recording now
+        # runs the cold path of _connect, which reaps the dead threads'
+        # connections before opening the main thread's own.
+        covdata.add_lines(LINES_1)
+
+        # Only the live main thread's connection remains; all of the dead
+        # threads were reaped.
+        assert threading.active_count() == 1
+        assert len(covdata._dbs) == 1
+
     def test_purge_files_lines(self) -> None:
         covdata = DebugCoverageData()
         covdata.add_lines(LINES_1)

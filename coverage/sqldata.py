@@ -370,9 +370,33 @@ class CoverageData:
             )
         db.executemany_void("INSERT OR IGNORE INTO meta (key, value) VALUES (?, ?)", meta_data)
 
+    def _reap_dead_thread_dbs(self) -> None:
+        """Close and drop SqliteDb connections held by terminated threads.
+
+        Connections are keyed by thread id in ``self._dbs`` and are otherwise
+        only closed at process end. On workloads with many short-lived threads
+        whose ids are not recycled, this leaks one open fd per dead thread.
+        Closing is safe from another thread because connections use
+        ``check_same_thread=False``.
+        """
+        with self._lock:
+            live_idents = {thread.ident for thread in threading.enumerate()}
+            dead_idents = [ident for ident in self._dbs if ident not in live_idents]
+            for ident in dead_idents:
+                db = self._dbs.pop(ident)
+                if self._debug.should("dataio"):
+                    self._debug.write(f"Reaping dead thread's data file: {db!r}")
+                try:
+                    db.close(force=True)
+                except Exception:
+                    # Closing is best-effort; a failure here must not break
+                    # collection. The entry has already been dropped.
+                    pass
+
     def _connect(self) -> SqliteDb:
         """Get the SqliteDb object to use."""
         if threading.get_ident() not in self._dbs:
+            self._reap_dead_thread_dbs()
             self._open_db()
         return self._dbs[threading.get_ident()]
 

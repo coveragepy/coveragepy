@@ -40,7 +40,7 @@ jobs:
       workflow: ${{ steps.filter.outputs.workflow }}
     steps:
       - name: "Check out the repo"
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
 
@@ -92,7 +92,6 @@ jobs:
           - "3.11"
           - "3.12"
           - "3.13"
-          - "3.13t"
           - "3.14"
           - "3.14t"
           - "3.15"
@@ -110,9 +109,6 @@ jobs:
           # skip them for now.
           - os: windows
             python-version: "pypy-3.10"
-          # Windows 3.13t often fails during installation.
-          - os: windows
-            python-version: "3.13t"
         # If we need to tweak the os version we can do it with an include like
         # this:
         #  include:
@@ -125,7 +121,7 @@ jobs:
 
     steps:
       - name: "Check out the repo"
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
 
@@ -186,7 +182,7 @@ jobs:
 
     steps:
       - name: "Check out the repo"
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
 

@@ -8,6 +8,7 @@ from __future__ import annotations
 import os
 import platform
 import sys
+import sysconfig
 from collections.abc import Iterable
 from typing import Any, Final
 
@@ -42,8 +43,14 @@ else:
 # Do we have a GIL?
 GIL = getattr(sys, "_is_gil_enabled", lambda: True)()
 
+# Is this a free-threaded build of CPython? Checks the build, not runtime GIL
+# state, since the GIL can be re-enabled at runtime on a free-threaded build.
+FREE_THREADED = bool(sysconfig.get_config_var("Py_GIL_DISABLED"))
+
 # Do we ship compiled coveragepy wheels for this version?
-SHIPPING_WHEELS = CPYTHON and PYVERSION[:2] <= (3, 14)
+SHIPPING_WHEELS = (
+    CPYTHON and PYVERSION[:2] <= (3, 14) and not (FREE_THREADED and PYVERSION[:2] == (3, 13))
+)
 
 # Should we default to sys.monitoring?
 SYSMON_DEFAULT = CPYTHON and PYVERSION >= (3, 14)

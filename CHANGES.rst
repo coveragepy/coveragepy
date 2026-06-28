@@ -20,11 +20,86 @@ upgrading your version of coverage.py.
     ..  Version 9.8.1 — 2027-07-27
     ..  --------------------------
 
+Unreleased
+----------
+
+- Since 7.14.0, reporting commands implicitly combine parallel data files. Now
+  those commands have a new option ``--keep-combined`` to retain the data files
+  after combining them instead of the default, which is to delete them.
+  Finishes `issue 2198`_.
+
+- Fix: the LCOV report would incorrectly count excluded functions as uncovered,
+  as described in `issue 2205`_. This is now fixed thanks to `Martin Kuntz
+  Jacobsen <pull 2206_>`_.
+
+- When running your program, coverage now correctly sets
+  ``yourmodule.__spec__.loader`` as `strongly recommended <--loader--_>`_,
+  avoiding the deprecation warning described in `issue 2208`_. Thanks, `A5rocks
+  <pull 2209_>`_.
+
+.. _--loader--: https://docs.python.org/3/reference/datamodel.html#module.__loader__
+.. _issue 2198:  https://github.com/coveragepy/coveragepy/issues/2198
+.. _issue 2205:  https://github.com/coveragepy/coveragepy/issues/2205
+.. _pull 2206: https://github.com/coveragepy/coveragepy/pull/2206
+.. _issue 2208:  https://github.com/coveragepy/coveragepy/issues/2208
+.. _pull 2209: https://github.com/coveragepy/coveragepy/pull/2209
+
+
 .. start-releases
+
+.. _changes_7-14-3:
+
+Version 7.14.3 — 2026-06-22
+---------------------------
+
+- Fix: the default ``...`` exclusion rule now also matches function bodies
+  whose closing return-type bracket is on its own line (for example, after a
+  long ``-> dict[ ... ]`` annotation that a formatter has split over multiple
+  lines). Closes `issue 2185`_, thanks `Mengjia Shang <pull 2196_>`_.
+
+- Fix: On 3.13t, we incorrectly issued ``Couldn't import C tracer`` errors.
+  We can't import the C tracer because in 7.14.2 we stopped shipping compiled
+  wheels for 3.13t. Thanks, `Hugo van Kemenade <pull 2203_>`_.
+
+.. _issue 2185: https://github.com/coveragepy/coveragepy/issues/2185
+.. _pull 2196: https://github.com/coveragepy/coveragepy/pull/2196
+.. _pull 2203: https://github.com/coveragepy/coveragepy/pull/2203
+
+
+.. _changes_7-14-2:
+
+Version 7.14.2 — 2026-06-20
+---------------------------
+
+- Fix: some messages were being written to stdout, making ``coverage json -o
+  -`` useless for capturing JSON output. Now messages are written to stderr,
+  fixing `issue 2197`_.
+
+- Fix: ``CoverageData`` kept one SQLite connection per thread that recorded
+  coverage, but never closed them when those threads terminated. On long runs
+  with many short-lived threads this leaked one file descriptor per dead
+  thread, eventually failing with ``OSError: [Errno 24] Too many open files``.
+  Connections belonging to terminated threads are now closed and dropped.
+  Fixes `issue 2192`_.  Thanks, `Matthew Lloyd <pull 2193_>`_.
+
+- Fix: when using sys.monitoring, we were assuming we could use the
+  ``COVERAGE_ID`` tool id.  But other tools might also assume they could use
+  that id.  Pre-allocated ids don't really make sense, so now we search for a
+  usable one instead. Fixes `issue 2187`_.
+
+- Following `the advice of cibuildwheel <no-13t_>`_, we no longer distribute
+  wheels for Python 3.13 free-threaded.
+
+.. _issue 2187: https://github.com/coveragepy/coveragepy/issues/2187
+.. _issue 2192: https://github.com/coveragepy/coveragepy/issues/2192
+.. _pull 2193: https://github.com/coveragepy/coveragepy/pull/2193
+.. _issue 2197: https://github.com/coveragepy/coveragepy/issues/2197
+.. _no-13t: https://py-free-threading.github.io/ci/#building-free-threaded-wheels-with-cibuildwheel
+
 
 .. _changes_7-14-1:
 
-Version 7.14.1 — 2026-05-17
+Version 7.14.1 — 2026-05-26
 ---------------------------
 
 - Fix: the HTML report used typographic niceties to make file paths more

@@ -39,8 +39,8 @@ Click the keyboard icon in the upper right to see the complete list.
     $ coverage html --help
     Usage: coverage html [options] [modules]
 
-    Create an HTML report of the coverage of the files. Each file gets its own
-    page, with the source decorated to show executed, excluded, and missed lines.
+    Create an HTML report of coverage results. Each file gets its own page, with
+    the source decorated to show executed, excluded, and missed lines.
 
     Options:
       --contexts=REGEX1,REGEX2,...
@@ -58,6 +58,8 @@ Click the keyboard icon in the upper right to see the complete list.
                             Include only files whose paths match one of these
                             patterns. Accepts shell-style wildcards, which must be
                             quoted.
+      --keep-combined       Keep original coverage files, otherwise they are
+                            deleted after combining.
       --omit=PAT1,PAT2,...  Omit files whose paths match one of these patterns.
                             Accepts shell-style wildcards, which must be quoted.
       --precision=N         Number of digits after the decimal point to display
@@ -74,7 +76,7 @@ Click the keyboard icon in the upper right to see the complete list.
       --rcfile=RCFILE       Specify configuration file. By default '.coveragerc',
                             'setup.cfg', 'tox.ini', and 'pyproject.toml' are
                             tried. [env: COVERAGE_RCFILE]
-.. [[[end]]] (sum: DwG6DxRZIf)
+.. [[[end]]] (sum: PxT3s5PUUO)
 
 The title of the report can be set with the ``title`` setting in the
 ``[html]`` section of the configuration file, or the ``--title`` switch on

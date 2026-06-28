@@ -1537,6 +1537,36 @@ class ExcludeTest(CoverageTest):
             """,
             lines=[1, 3],
         )
+        
+    def test_default_ellipsis_multiline_return_type(self) -> None:
+        # Issue #2185: the default `...` exclusion should still apply when the
+        # return type annotation is split over multiple lines (a common shape
+        # produced by formatters like Ruff when the annotation is long).
+        # The trailing block also pins down what should NOT be excluded by
+        # the widened pattern: a `...`-valued annotated assignment, and a
+        # def whose return type contains `]` but has a real body.
+        self.check_coverage(
+            """\
+            a = 1
+            def short() -> dict[str, str]: ...
+            def split_return() -> dict[
+                str, str
+            ]: ...
+            def split_param_and_return(
+                arg: int,
+            ) -> dict[
+                str, str
+            ]: ...
+            def split_param_with_inner_ellipsis(arg: tuple[
+                int, ...
+            ]) -> int: ...
+            # Not stubs, and so not excluded:
+            x: list[int] = ...
+            def with_body() -> dict[str, str]: return {}
+            z = 17
+            """,
+            lines=[1, 15, 16, 17],
+        )
 
     def test_two_excludes(self) -> None:
         self.check_coverage(

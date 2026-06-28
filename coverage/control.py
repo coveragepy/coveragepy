@@ -301,7 +301,6 @@ class Coverage(TConfigurable):
         self._data_to_close: list[CoverageData] = []
         self._core: Core | None = None
         self._collector: Collector | None = None
-        self._metacov = False
 
         self._file_mapper: Callable[[str], str] = abs_file
         self._data_suffix = self._run_suffix = None
@@ -503,7 +502,7 @@ class Coverage(TConfigurable):
     def _message(self, msg: str) -> None:
         """Write a message to the user, if configured to do so."""
         if self._messages:
-            print(msg)
+            print(msg, file=sys.stderr)
 
     def get_option(self, option_name: str) -> TConfigValueOut | None:
         """Get an option from the configuration.
@@ -596,7 +595,6 @@ class Coverage(TConfigurable):
             debug=(self._debug if self._debug.should("core") else None),
             config=self.config,
             dynamic_contexts=(should_start_context is not None),
-            metacov=self._metacov,
         )
         self._collector = Collector(
             core=self._core,

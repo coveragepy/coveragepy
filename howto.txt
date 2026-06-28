@@ -1,6 +1,7 @@
 * Release checklist
 
 - Check that the current virtualenv matches the current coverage branch.
+    $ g ma
     $ make sterile venv install
     $ python -V # should match lowest PYVERSIONS
 - start branch for release work
@@ -65,13 +66,13 @@
     $ make clean tag github_releases comment_on_fixes
 - Bump version:
     $ make bump_version
-- Update readthedocs
+$ deopvars
+- Once CI passes, merge the bump-version branch to main and push it
+    $ gshipit
+- Update readthedocs (this might need to wait 15 minutes after shipping)
     - IF PRE-RELEASE
         - find the latest tag in the inactive list, edit it, make it active.
         - keep just the latest version of each x.y release, make the rest active but hidden.
             - pre-releases should be hidden
     - IF NOT PRE-RELEASE:
         $ opvars; make update_rtd
-$ deopvars
-- Once CI passes, merge the bump-version branch to main and push it
-    $ gshipit

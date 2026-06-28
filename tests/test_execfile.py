@@ -342,3 +342,10 @@ class RunModuleTest(UsingModulesMixin, CoverageTest):
     def test_no_main(self) -> None:
         with pytest.raises(NoSource):
             run_python_module(["pkg2", "hi"])
+
+    def test_no_spec_deprecation(self) -> None:
+        # https://github.com/coveragepy/coveragepy/issues/2208
+        run_python_module(["checkspec"])
+        out, err = self.stdouterr()
+        assert out == ""
+        assert err == ""

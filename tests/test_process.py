@@ -8,6 +8,7 @@ from __future__ import annotations
 import csv
 import glob
 import itertools
+import json
 import os
 import os.path
 import platform
@@ -1765,3 +1766,17 @@ class ProcessStartupWithSourceTest(CoverageTest):
         summary = line_counts(data)
         assert summary[source + ".py"] == 3
         assert len(summary) == 1
+
+
+class StdoutStderrTest(CoverageTest):
+    """Tests that messages go to stderr, data goes to stdout."""
+
+    def test_stdout_is_only_json(self) -> None:
+        self.make_file("code.py", "".join(f"a{i} = {i}\n" for i in range(5)))
+        self.make_data_file(suffix="1", lines={abs_file("code.py"): [1, 2]})
+        self.make_data_file(suffix="2", lines={abs_file("code.py"): [4, 5]})
+        output = self.run_command("coverage json -o - > data.json")
+        assert output == "Combined 2 files\n"
+        with open("data.json", encoding="utf-8") as fdata:
+            d = json.load(fdata)
+        assert d["files"]["code.py"]["executed_lines"] == [1, 2, 4, 5]
