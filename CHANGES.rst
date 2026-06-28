@@ -32,9 +32,17 @@ Unreleased
   as described in `issue 2205`_. This is now fixed thanks to `Martin Kuntz
   Jacobsen <pull 2206_>`_.
 
+- When running your program, coverage now correctly sets
+  ``yourmodule.__spec__.loader`` as `strongly recommended <--loader--_>`_,
+  avoiding the deprecation warning described in `issue 2208`_. Thanks, `A5rocks
+  <pull 2209_>`_.
+
+.. _--loader--: https://docs.python.org/3/reference/datamodel.html#module.__loader__
 .. _issue 2198:  https://github.com/coveragepy/coveragepy/issues/2198
 .. _issue 2205:  https://github.com/coveragepy/coveragepy/issues/2205
 .. _pull 2206: https://github.com/coveragepy/coveragepy/pull/2206
+.. _issue 2208:  https://github.com/coveragepy/coveragepy/issues/2208
+.. _pull 2209: https://github.com/coveragepy/coveragepy/pull/2209
 
 
 .. start-releases
