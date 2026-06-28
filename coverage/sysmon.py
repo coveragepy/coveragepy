@@ -188,6 +188,14 @@ class CodeInfo:
     always_jumps: dict[TOffset, TOffset]
 
 
+@dataclass
+class FrameInfo:
+    """Execution state for an active traced frame."""
+
+    code_id: int
+    last_line: TLineNo
+
+
 class SysMonitor(Tracer):
     """Python implementation of the raw data tracer for PEP669 implementations."""
 
@@ -225,6 +233,7 @@ class SysMonitor(Tracer):
 
         self.sysmon_on = False
         self.lock = threading.Lock()
+        self.thread_data = threading.local()
 
         self.stats: dict[str, int] | None = None
         if COLLECT_STATS:
@@ -239,6 +248,12 @@ class SysMonitor(Tracer):
         points = sum(len(v) for v in self.data.values())
         files = len(self.data)
         return f"<SysMonitor at {id(self):#x}: {points} data points in {files} files>"
+
+    def _frame_stack(self) -> list[FrameInfo]:
+        """Get the active traced-frame stack for this thread."""
+        if not hasattr(self.thread_data, "frame_stack"):
+            self.thread_data.frame_stack = []
+        return cast(list[FrameInfo], self.thread_data.frame_stack)
 
     @panopticon()
     def start(self) -> None:
@@ -261,7 +276,11 @@ class SysMonitor(Tracer):
             register(events.PY_START, self.sysmon_py_start)
             if self.trace_arcs:
                 register(events.PY_RETURN, self.sysmon_py_return)
+                register(events.PY_RESUME, self.sysmon_py_resume)
                 register(events.LINE, self.sysmon_line_arcs)
+                py_yield = getattr(events, "PY_YIELD", 0)
+                if py_yield:
+                    register(py_yield, self.sysmon_py_yield)
                 if env.PYBEHAVIOR.branch_right_left:
                     register(events.BRANCH_RIGHT, self.sysmon_branch_either)
                     register(events.BRANCH_LEFT, self.sysmon_branch_either)
@@ -382,6 +401,7 @@ class SysMonitor(Tracer):
                     if self.sysmon_on:
                         assert sys_monitoring is not None
                         local_events = events.PY_RETURN | events.PY_RESUME | events.LINE
+                        local_events |= getattr(events, "PY_YIELD", 0)
                         if self.trace_arcs:
                             assert env.PYBEHAVIOR.branch_right_left
                             local_events |= events.BRANCH_RIGHT | events.BRANCH_LEFT
@@ -392,7 +412,22 @@ class SysMonitor(Tracer):
                                 self.filename_code_ids[f"{code.co_filename}:{code.co_name}"].add(
                                     id(code)
                                 )
+                self._frame_stack().append(
+                    FrameInfo(code_id=id(code), last_line=-code.co_firstlineno),
+                )
 
+        return DISABLE
+
+    @panopticon("code", "@")
+    def sysmon_py_resume(self, code: CodeType, instruction_offset: TOffset) -> MonitorReturn:
+        """Handle sys.monitoring.events.PY_RESUME events for branch coverage."""
+        code_info = self.code_infos.get(id(code))
+        if code_info is None:
+            return DISABLE
+        last_line = code.co_firstlineno
+        if code_info.byte_to_line is not None:
+            last_line = code_info.byte_to_line.get(instruction_offset, code.co_firstlineno)
+        self._frame_stack().append(FrameInfo(code_id=id(code), last_line=last_line))
         return DISABLE
 
     @panopticon("code", "@", None)
@@ -405,14 +440,30 @@ class SysMonitor(Tracer):
         """Handle sys.monitoring.events.PY_RETURN events for branch coverage."""
         if self.stats is not None:
             self.stats["returns"] += 1
-        code_info = self.code_infos.get(id(code))
-        # code_info is not None and code_info.file_data is not None, since we
-        # wouldn't have enabled this event if they were.
-        last_line = code_info.byte_to_line.get(instruction_offset)  # type: ignore
-        if last_line is not None:
-            arc = (last_line, -code.co_firstlineno)
-            code_info.file_data.add(arc)  # type: ignore
-            # log(f"adding {arc=}")
+        frame_stack = self._frame_stack()
+        frame_info = (
+            frame_stack[-1] if frame_stack and frame_stack[-1].code_id == id(code) else None
+        )
+        if frame_info is not None:
+            code_info = self.code_infos.get(id(code))
+            if code_info is not None and code_info.file_data is not None:
+                arc = (frame_info.last_line, -code.co_firstlineno)
+                code_info.file_data.add(arc)  # type: ignore
+                # log(f"adding {arc=}")
+            frame_stack.pop()
+        return DISABLE
+
+    @panopticon("code", "@", None)
+    def sysmon_py_yield(
+        self,
+        code: CodeType,
+        instruction_offset: TOffset,
+        retval: object,
+    ) -> MonitorReturn:
+        """Handle sys.monitoring.events.PY_YIELD events for branch coverage."""
+        frame_stack = self._frame_stack()
+        if frame_stack and frame_stack[-1].code_id == id(code):
+            frame_stack.pop()
         return DISABLE
 
     @panopticon("code", "line")
@@ -437,7 +488,13 @@ class SysMonitor(Tracer):
         code_info = self.code_infos[id(code)]
         # code_info is not None and code_info.file_data is not None, since we
         # wouldn't have enabled this event if they were.
-        arc = (line_number, line_number)
+        frame_stack = self._frame_stack()
+        if frame_stack and frame_stack[-1].code_id == id(code):
+            last_line = frame_stack[-1].last_line
+            frame_stack[-1].last_line = line_number
+        else:
+            last_line = line_number
+        arc = (last_line, line_number)
         code_info.file_data.add(arc)  # type: ignore
         # log(f"adding {arc=}")
         return DISABLE
