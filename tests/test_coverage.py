@@ -1537,7 +1537,7 @@ class ExcludeTest(CoverageTest):
             """,
             lines=[1, 3],
         )
-        
+
     def test_default_ellipsis_multiline_return_type(self) -> None:
         # Issue #2185: the default `...` exclusion should still apply when the
         # return type annotation is split over multiple lines (a common shape
