@@ -856,6 +856,25 @@ class SwitchContextTest(CoverageTest):
             cov.switch_context("test3")
 
 
+@pytest.mark.skipif(not env.PYBEHAVIOR.pep669, reason="No sys.monitoring core available.")
+class SwitchContextSysmonErrorTest(CoverageTest):
+    """Tests for switch_context() errors under sysmon."""
+
+    def test_switch_context_raises_with_sysmon(self) -> None:
+        self.set_environ("COVERAGE_CORE", "sysmon")
+
+        cov = coverage.Coverage()
+        with cov.collect():
+            with pytest.raises(
+                CoverageException,
+                match=(
+                    "Cannot switch context with core=sysmon: dynamic contexts are not supported, "
+                    "use core=ctrace or core=pytrace instead"
+                ),
+            ):
+                cov.switch_context("multiply_zero")
+
+
 class CurrentInstanceTest(CoverageTest):
     """Tests of Coverage.current()."""
 

@@ -569,7 +569,6 @@ class Coverage(TConfigurable):
 
     def _init_for_start(self) -> None:
         """Initialization for start()"""
-        # Construct the collector.
         concurrency: list[str] = self.config.concurrency
         if "multiprocessing" in concurrency:
             if self.config.config_file is None:
@@ -624,7 +623,6 @@ class Coverage(TConfigurable):
 
         assert self._data is not None
         self._collector.use_data(self._data, self.config.context)
-
         # Early warning if we aren't going to be able to support plugins.
         if self._plugins.file_tracers and not self._core.supports_plugins:
             self._warn(
@@ -796,6 +794,11 @@ class Coverage(TConfigurable):
             raise CoverageException("Cannot switch context, coverage is not started")
 
         assert self._collector is not None
+        if self._collector.tracer_name() == "SysMonitor":
+            raise CoverageException(
+                "Cannot switch context with core=sysmon: dynamic contexts are not supported, "
+                "use core=ctrace or core=pytrace instead",
+            )
         if self._collector.should_start_context:
             self._warn("Conflicting dynamic contexts", slug="dynamic-conflict", once=True)
 
