@@ -140,7 +140,7 @@ class PyRunner:
             if self.spec is not None:
                 self.modulename = self.spec.name
             self.loader = DummyLoader(self.modulename)
-            self.spec.loader = self.loader
+            self.spec.loader = self.loader  # type: ignore[assignment]
             assert pathname is not None
             self.pathname = os.path.abspath(pathname)
             self.args[0] = self.arg0 = self.pathname
@@ -163,7 +163,11 @@ class PyRunner:
             self.loader = DummyLoader("__main__")
 
             # Make a spec. I don't know if this is the right way to do it.
-            self.spec = importlib.machinery.ModuleSpec("__main__", self.loader, origin=try_filename)
+            self.spec = importlib.machinery.ModuleSpec(
+                "__main__",
+                self.loader,  # type: ignore[arg-type]
+                origin=try_filename,
+            )
             self.spec.has_location = True
         else:
             self.loader = DummyLoader("__main__")
