@@ -153,3 +153,30 @@ class CoverageCoreTest(CoverageTest):
         cov = coverage.Coverage()
         with pytest.raises(ConfigError, match=r"Unknown core value: 'nosuchcore'"):
             self.start_import_stop(cov, "numbers")
+
+    def test_core_default_branch_uses_ctrace(self) -> None:
+        # When branch=True and no core is explicitly set, sysmon should fall
+        # back to ctrace silently (no warning) on 3.14+ because sysmon branch
+        # coverage has no speed advantage over ctrace. See issue #2172.
+        self.make_file(
+            ".coveragerc",
+            """\
+            [run]
+            branch = True
+            """,
+        )
+        out = self.run_command("coverage run --debug=sys numbers.py")
+        assert out.endswith("123 456\n")
+        core = re_line(r" core:", out).strip()
+        warns = re_lines(r"\(no-sysmon\)", out)
+        if env.PYBEHAVIOR.branch_right_left:
+            # On 3.14+: should silently use ctrace, no warning
+            assert core in ["core: CTracer", "core: PyTracer"]
+            assert not warns
+        elif env.PYBEHAVIOR.pep669:
+            # 3.12/3.13: already falls back, with no warning (existing behavior)
+            assert core in ["core: CTracer", "core: PyTracer"]
+            assert not warns
+        else:
+            # Pre-3.12: sysmon not available, uses ctrace/pytrace
+            assert core in ["core: CTracer", "core: PyTracer"]
