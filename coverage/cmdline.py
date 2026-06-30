@@ -866,6 +866,9 @@ class CoverageScript:
             return self.do_run(options, args)
 
         elif options.action == "combine":
+            # We need to be able to import from the current directory, because
+            # plugins may live next to the config file being used.
+            sys.path.insert(0, "")
             if options.append:
                 self.coverage.load()
             data_paths = args or None
