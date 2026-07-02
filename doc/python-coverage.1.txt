@@ -112,6 +112,10 @@ COMMAND REFERENCE
         Include only files whose paths match one of these
         PATTERNs. Accepts shell-style wildcards, which must be quoted.
 
+    \--keep-combined
+        Keep original coverage files, otherwise they are delete after
+        combining.
+
     \--omit `PATTERN` [ , ... ]
         Omit files when their file name matches one of these PATTERNs.
         Usually needs quoting on the command line.
@@ -201,6 +205,10 @@ COMMAND REFERENCE
         Include only files whose paths match one of these
         PATTERNs. Accepts shell-style wildcards, which must be quoted.
 
+    \--keep-combined
+        Keep original coverage files, otherwise they are delete after
+        combining.
+
     \--omit `PATTERN` [ , ... ]
         Omit files when their file name matches one of these PATTERNs.
         Usually needs quoting on the command line.
@@ -249,6 +257,10 @@ COMMAND REFERENCE
         Include only files whose paths match one of these
         PATTERNs. Accepts shell-style wildcards, which must be quoted.
 
+    \--keep-combined
+        Keep original coverage files, otherwise they are delete after
+        combining.
+
     \-o `OUTFILE`
         Write the JSON report to `OUTFILE`. Defaults to ``coverage.json``.
 
@@ -282,12 +294,16 @@ COMMAND REFERENCE
     \-i, --ignore-errors
         Ignore errors while reading source files.
 
-    \-o `OUTFILE`
-        Write the LCOV report to `OUTFILE`. Defaults to ``coverage.lcov``.
+    \--keep-combined
+        Keep original coverage files, otherwise they are delete after
+        combining.
 
     \--include `PATTERN` [ , ... ]
         Include only files whose paths match one of these
         PATTERNs. Accepts shell-style wildcards, which must be quoted.
+
+    \-o `OUTFILE`
+        Write the LCOV report to `OUTFILE`. Defaults to ``coverage.lcov``.
 
     \--omit `PATTERN` [ , ... ]
         Omit files when their file name matches one of these PATTERNs.
@@ -323,13 +339,17 @@ COMMAND REFERENCE
         Include only files whose paths match one of these
         PATTERNs. Accepts shell-style wildcards, which must be quoted.
 
-    \--omit `PATTERN` [ , ... ]
-        Omit files when their file name matches one of these PATTERNs.
-        Usually needs quoting on the command line.
+    \--keep-combined
+        Keep original coverage files, otherwise they are delete after
+        combining.
 
     \-m, --show-missing
         Show line numbers of statements in each module that weren't
         executed.
+
+    \--omit `PATTERN` [ , ... ]
+        Omit files when their file name matches one of these PATTERNs.
+        Usually needs quoting on the command line.
 
     \--precision `N`
         Number of digits after the decimal point to display for
@@ -424,6 +444,10 @@ COMMAND REFERENCE
     \--include `PATTERN` [ , ... ]
         Include only files whose paths match one of these
         PATTERNs. Accepts shell-style wildcards, which must be quoted.
+
+    \--keep-combined
+        Keep original coverage files, otherwise they are delete after
+        combining.
 
     \--omit `PATTERN` [ , ... ]
         Omit files when their file name matches one of these PATTERNs.
