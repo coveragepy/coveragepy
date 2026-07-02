@@ -37,12 +37,19 @@ Unreleased
   avoiding the deprecation warning described in `issue 2208`_. Thanks, `A5rocks
   <pull 2209_>`_.
 
+- Fix: with Python 3.10, running with the ``-I`` (isolated mode) option didn't
+  correctly omit the current directory from the module search path, as
+  described in `issue 2103`_. That is now fixed thanks to `Ilia Sorokin <pull
+  2211_>`_.
+
 .. _--loader--: https://docs.python.org/3/reference/datamodel.html#module.__loader__
+.. _issue 2103:  https://github.com/coveragepy/coveragepy/issues/2103
 .. _issue 2198:  https://github.com/coveragepy/coveragepy/issues/2198
 .. _issue 2205:  https://github.com/coveragepy/coveragepy/issues/2205
 .. _pull 2206: https://github.com/coveragepy/coveragepy/pull/2206
 .. _issue 2208:  https://github.com/coveragepy/coveragepy/issues/2208
 .. _pull 2209: https://github.com/coveragepy/coveragepy/pull/2209
+.. _pull 2211: https://github.com/coveragepy/coveragepy/pull/2211
 
 
 .. start-releases
