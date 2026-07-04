@@ -737,7 +737,7 @@ class AstArcAnalyzer:
             # Empty module.
             self.add_arc(start, -start)
 
-    def _code_object__FunctionDef(self, node: ast.FunctionDef) -> None:
+    def _code_object__FunctionDef(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
         start = self.line_for_node(node)
         self.block_stack.append(FunctionBlock(start=start, name=node.name))
         exits = self.process_body(node.body)
