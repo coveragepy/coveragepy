@@ -9,7 +9,6 @@ import atexit
 import collections
 import contextlib
 import datetime
-import functools
 import os
 import os.path
 import signal
@@ -1022,6 +1021,7 @@ class Coverage(TConfigurable):
         return analysis
 
     def _clear_analysis_caches(self) -> None:
+        """Forget cached analyses and file reporters, because data changed."""
         self._analysis_cache.clear()
         self._file_reporter_cache.clear()
 
@@ -1041,9 +1041,9 @@ class Coverage(TConfigurable):
 
     def _get_file_reporter(self, morf: TMorf) -> FileReporter:
         """Get a FileReporter for a module or file name."""
-        file_reporter = self._file_reporter_cache.get(morf)
-        if file_reporter is not None:
-            return file_reporter
+        cached = self._file_reporter_cache.get(morf)
+        if cached is not None:
+            return cached
         assert self._data is not None
         plugin = None
         file_reporter: str | FileReporter = "python"
