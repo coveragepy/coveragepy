@@ -753,7 +753,9 @@ class AstArcAnalyzer:
         """
         node_name = node.__class__.__name__
         handler: Callable[[ast.AST], TLineNo] | None = getattr(
-            self, f"_line__{node_name}", None,
+            self,
+            f"_line__{node_name}",
+            None,
         )
         if handler is not None:
             line = handler(node)
@@ -836,7 +838,9 @@ class AstArcAnalyzer:
         """
         node_name = node.__class__.__name__
         handler: Callable[[ast.AST], set[ArcStart]] | None = getattr(
-            self, f"_handle__{node_name}", None,
+            self,
+            f"_handle__{node_name}",
+            None,
         )
         if handler is not None:
             arc_starts = handler(node)
