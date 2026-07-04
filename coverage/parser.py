@@ -207,7 +207,7 @@ class PythonParser:
         # AST lets us find classes, docstrings, and decorator-affected
         # functions and classes.
         assert self._ast_root is not None
-        for node in ast.walk(self._ast_root):
+        for node in walk_statement_nodes(self._ast_root):
             # Find docstrings.
             if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef, ast.Module)):
                 if node.body:
@@ -574,6 +574,33 @@ class TryBlock(Block):
 # TODO: Shouldn't the cause messages join with "and" instead of "or"?
 
 
+# Node types that are statements, or that wrap suites of statements
+# (`except` clauses and `case` clauses).  Only these can lead to more
+# statements, so `walk_statement_nodes` only descends into them.
+_STMT_CONTAINERS = (ast.stmt, ast.excepthandler, ast.match_case)
+
+
+def walk_statement_nodes(root: ast.AST) -> Iterable[ast.AST]:
+    """Yield `root` and its descendant statement-level nodes.
+
+    Like ast.walk, but skips expression subtrees entirely, since statements
+    (including def and class) can never appear inside them.  This visits a
+    small fraction of the nodes ast.walk does, which matters when scanning
+    many files during reporting.
+
+    ExceptHandler and match_case nodes are also yielded; callers only
+    interested in particular node types must check for them.
+
+    """
+    todo = [root]
+    while todo:
+        node = todo.pop()
+        yield node
+        for child in ast.iter_child_nodes(node):
+            if isinstance(child, _STMT_CONTAINERS):
+                todo.append(child)
+
+
 def is_constant_test_expr(node: ast.AST) -> tuple[bool, bool]:
     """Is this a compile-time constant test expression?
 
@@ -661,11 +688,13 @@ class AstArcAnalyzer:
 
     def analyze(self) -> None:
         """Examine the AST tree from `self.root_node` to determine possible arcs."""
-        for node in ast.walk(self.root_node):
-            node_name = node.__class__.__name__
-            code_object_handler = getattr(self, f"_code_object__{node_name}", None)
-            if code_object_handler is not None:
-                code_object_handler(node)
+        for node in walk_statement_nodes(self.root_node):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                self._code_object__FunctionDef(node)
+            elif isinstance(node, ast.ClassDef):
+                self._code_object__ClassDef(node)
+            elif isinstance(node, ast.Module):
+                self._code_object__Module(node)
 
     def with_jump_fixers(self) -> dict[TArc, tuple[TArc, TArc]]:
         """Get a dict with data for fixing jumps out of with statements.
