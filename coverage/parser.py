@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import ast
 import collections
-import functools
 import os
 import re
 import token
@@ -97,6 +96,9 @@ class PythonParser:
         self._all_arcs: set[TArc] | None = None
         self._missing_arc_fragments: TArcFragments | None = None
         self._with_jump_fixers: dict[TArc, tuple[TArc, TArc]] = {}
+
+        self._first_line_cache: dict[TLineNo, TLineNo] = {}
+        self._exit_counts: dict[TLineNo, int] | None = None
 
     def lines_matching(self, regex: str) -> set[TLineNo]:
         """Find the lines matching a regex.
@@ -227,14 +229,16 @@ class PythonParser:
                 if self.excluded.intersection(range(first_line, node.lineno + 1)):
                     self.excluded.update(range(first_line, cast(int, node.end_lineno) + 1))
 
-    @functools.lru_cache(maxsize=1000)
     def first_line(self, lineno: TLineNo) -> TLineNo:
         """Return the first line number of the statement including `lineno`."""
-        if lineno < 0:
-            lineno = -self.multiline_map.get(-lineno, -lineno)
-        else:
-            lineno = self.multiline_map.get(lineno, lineno)
-        return lineno
+        first = self._first_line_cache.get(lineno)
+        if first is None:
+            if lineno < 0:
+                first = -self.multiline_map.get(-lineno, -lineno)
+            else:
+                first = self.multiline_map.get(lineno, lineno)
+            self._first_line_cache[lineno] = first
+        return first
 
     def first_lines(self, linenos: Iterable[TLineNo]) -> set[TLineNo]:
         """Map the line numbers in `linenos` to the correct first line of the
@@ -352,25 +356,26 @@ class PythonParser:
         arcs = (set(arcs) | to_add) - to_remove
         return arcs
 
-    @functools.lru_cache
     def exit_counts(self) -> dict[TLineNo, int]:
         """Get a count of exits from that each line.
 
         Excluded lines are excluded.
 
         """
-        exit_counts: dict[TLineNo, int] = collections.defaultdict(int)
-        for l1, l2 in self.arcs():
-            assert l1 > 0, f"{l1=} should be greater than zero in {self.filename}"
-            if l1 in self.excluded:
-                # Don't report excluded lines as line numbers.
-                continue
-            if l2 in self.excluded:
-                # Arcs to excluded lines shouldn't count.
-                continue
-            exit_counts[l1] += 1
+        if self._exit_counts is None:
+            exit_counts: dict[TLineNo, int] = collections.defaultdict(int)
+            for l1, l2 in self.arcs():
+                assert l1 > 0, f"{l1=} should be greater than zero in {self.filename}"
+                if l1 in self.excluded:
+                    # Don't report excluded lines as line numbers.
+                    continue
+                if l2 in self.excluded:
+                    # Arcs to excluded lines shouldn't count.
+                    continue
+                exit_counts[l1] += 1
+            self._exit_counts = exit_counts
 
-        return exit_counts
+        return self._exit_counts
 
     def _finish_action_msg(self, action_msg: str | None, end: TLineNo) -> str:
         """Apply some defaulting and formatting to an arc's description."""
