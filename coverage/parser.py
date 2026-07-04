@@ -744,8 +744,6 @@ class AstArcAnalyzer:
         self.process_return_exits(exits)
         self.block_stack.pop()
 
-    _code_object__AsyncFunctionDef = _code_object__FunctionDef
-
     def _code_object__ClassDef(self, node: ast.ClassDef) -> None:
         start = self.line_for_node(node)
         exits = self.process_body(node.body)
