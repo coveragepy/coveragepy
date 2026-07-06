@@ -930,6 +930,11 @@ CTracer_call(CTracer *self, PyObject *args, PyObject *kwds)
     for (what = 0; what_names[what]; what++) {
         int should_break;
         ascii = PyUnicode_AsASCIIString(what_str);
+
+        if (ascii == NULL) {
+            goto done; 
+        }
+
         should_break = !strcmp(PyBytes_AS_STRING(ascii), what_names[what]);
         Py_DECREF(ascii);
         if (should_break) {
@@ -983,8 +988,18 @@ static PyObject *
 CTracer_start(CTracer *self, PyObject *args_unused)
 {
     assert(atomic_load(&self->started) == FALSE);
+
+    int is_true = 0;
+    if (self->trace_arcs) {
+        is_true = PyObject_IsTrue(self->trace_arcs);
+        if (is_true == -1) {
+            return NULL; 
+        }
+    }
+
+
     PyEval_SetTrace((Py_tracefunc)CTracer_trace, (PyObject*)self);
-    self->tracing_arcs = self->trace_arcs && PyObject_IsTrue(self->trace_arcs);
+    self->tracing_arcs = is_true;
     atomic_store(&self->started, TRUE);
 
     /* start() returns a trace function usable with sys.settrace() */
