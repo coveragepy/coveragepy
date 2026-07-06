@@ -9,7 +9,6 @@ import atexit
 import collections
 import contextlib
 import datetime
-import functools
 import os
 import os.path
 import signal
@@ -305,6 +304,8 @@ class Coverage(TConfigurable):
         self._file_mapper: Callable[[str], str] = abs_file
         self._data_suffix = self._run_suffix = None
         self._exclude_re: dict[str, str] = {}
+        self._analysis_cache: dict[TMorf, Analysis] = {}
+        self._file_reporter_cache: dict[TMorf, FileReporter] = {}
         self._old_sigterm: Callable[[int, FrameType | None], Any] | None = None
 
         # State machine variables:
@@ -566,6 +567,7 @@ class Coverage(TConfigurable):
         if not should_skip:
             assert self._data is not None
             self._data.read()
+        self._clear_analysis_caches()
 
     def _init_for_start(self) -> None:
         """Initialization for start()"""
@@ -778,6 +780,7 @@ class Coverage(TConfigurable):
         self._data.erase(parallel=self.config.parallel)
         self._data = None
         self._inited_for_start = False
+        self._clear_analysis_caches()
 
     def switch_context(self, new_context: str) -> None:
         """Switch to a new dynamic context.
@@ -910,6 +913,7 @@ class Coverage(TConfigurable):
             keep=keep,
             message=self._message,
         )
+        self._clear_analysis_caches()
 
     def get_data(self) -> CoverageData:
         """Get the collected data.
@@ -931,6 +935,7 @@ class Coverage(TConfigurable):
                     self._collector.plugin_was_disabled(plugin)
 
             if self._collector.flush_data():
+                self._clear_analysis_caches()
                 self._post_save_work()
 
         assert self._data is not None
@@ -999,16 +1004,26 @@ class Coverage(TConfigurable):
             analysis.missing_formatted(),
         )
 
-    @functools.lru_cache(maxsize=1)
     def _analyze(self, morf: TMorf) -> Analysis:
         """Analyze a module or file.  Private for now."""
+        analysis = self._analysis_cache.get(morf)
+        if analysis is not None:
+            return analysis
+
         self._init()
         self._post_init()
 
         data = self.get_data()
         file_reporter = self._get_file_reporter(morf)
         filename = self._file_mapper(file_reporter.filename)
-        return analysis_from_file_reporter(data, self.config.precision, file_reporter, filename)
+        analysis = analysis_from_file_reporter(data, self.config.precision, file_reporter, filename)
+        self._analysis_cache[morf] = analysis
+        return analysis
+
+    def _clear_analysis_caches(self) -> None:
+        """Forget cached analyses and file reporters, because data changed."""
+        self._analysis_cache.clear()
+        self._file_reporter_cache.clear()
 
     def branch_stats(self, morf: TMorf) -> dict[TLineNo, tuple[int, int]]:
         """Get branch statistics about a module.
@@ -1024,9 +1039,11 @@ class Coverage(TConfigurable):
         analysis = self._analyze(morf)
         return analysis.branch_stats()
 
-    @functools.lru_cache(maxsize=1)
     def _get_file_reporter(self, morf: TMorf) -> FileReporter:
         """Get a FileReporter for a module or file name."""
+        cached = self._file_reporter_cache.get(morf)
+        if cached is not None:
+            return cached
         assert self._data is not None
         plugin = None
         file_reporter: str | FileReporter = "python"
@@ -1051,6 +1068,7 @@ class Coverage(TConfigurable):
             file_reporter = PythonFileReporter(morf, self)
 
         assert isinstance(file_reporter, FileReporter)
+        self._file_reporter_cache[morf] = file_reporter
         return file_reporter
 
     def _get_file_reporters(
