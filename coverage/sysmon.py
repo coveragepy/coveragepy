@@ -364,7 +364,8 @@ class SysMonitor(Tracer):
                 finally:
                     self.unlock_data()
                 file_data = self.data[tracename]
-                b2l = bytes_to_lines(code)
+                # byte_to_line is only read by the arc callbacks
+                b2l = bytes_to_lines(code) if self.trace_arcs else None
             else:
                 file_data = None
                 b2l = None
@@ -386,10 +387,12 @@ class SysMonitor(Tracer):
                 with self.lock:
                     if self.sysmon_on:
                         assert sys_monitoring is not None
-                        local_events = events.PY_RETURN | events.PY_RESUME | events.LINE
+                        local_events = events.LINE
                         if self.trace_arcs:
                             assert env.PYBEHAVIOR.branch_right_left
-                            local_events |= events.BRANCH_RIGHT | events.BRANCH_LEFT
+                            local_events |= (
+                                events.PY_RETURN | events.BRANCH_RIGHT | events.BRANCH_LEFT
+                            )
                         sys_monitoring.set_local_events(self.myid, code, local_events)
 
                         if LOG:  # pragma: debugging

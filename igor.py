@@ -230,8 +230,6 @@ def do_combine_html():
     import coverage
 
     os.environ["COVERAGE_HOME"] = os.getcwd()
-    # Get all messages but filter them ourselves. Better would be to have
-    # tighter control over message verbosity...
     cov = coverage.Coverage(config_file="metacov.ini", messages=True)
     cov.combine()
     cov.save()
@@ -241,6 +239,7 @@ def do_combine_html():
     total = cov.html_report(show_contexts=show_contexts)
     print(f"Total: {total:.3f}%")
     cov.json_report()
+    cov.xml_report()
 
 
 def do_test_with_core(core, *runner_args):
