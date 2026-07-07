@@ -20,7 +20,7 @@ from types import CodeType
 from typing import Any, NewType, Optional, cast
 
 from coverage import env
-from coverage.bytecode import TBranchTrails, always_jumps, branch_trails, bytes_to_lines
+from coverage.bytecode import BranchArcResolver, bytes_to_lines
 from coverage.debug import short_filename, short_stack
 from coverage.exceptions import NoSource
 from coverage.misc import isolate_module
@@ -177,17 +177,9 @@ class CodeInfo:
     file_data: TTraceFileData | None
     byte_to_line: dict[TOffset, TLineNo] | None
 
-    # Keys are start instruction offsets for branches.
-    # Values are dicts:
-    #   {
-    #       (from_line, to_line): {offset, offset, ...},
-    #       (from_line, to_line): {offset, offset, ...},
-    #   }
-    branch_trails: TBranchTrails
-
-    # Always-jumps are bytecode offsets that do no work but move
-    # to another offset.
-    always_jumps: dict[TOffset, TOffset]
+    # Lazily-created resolver of branch events to arcs, created on the
+    # first branch event in the code object.
+    branch_resolver: BranchArcResolver | None
 
 
 class SysMonitor(Tracer):
@@ -374,8 +366,7 @@ class SysMonitor(Tracer):
                 tracing=tracing_code,
                 file_data=file_data,
                 byte_to_line=b2l,
-                branch_trails={},
-                always_jumps={},
+                branch_resolver=None,
             )
             self.code_infos[id(code)] = code_info
             self.code_objects.append(code)
@@ -460,34 +451,21 @@ class SysMonitor(Tracer):
         code_info = self.code_infos[id(code)]
         # code_info is not None and code_info.file_data is not None, since we
         # wouldn't have enabled this event if they were.
-        if not code_info.branch_trails:
+        resolver = code_info.branch_resolver
+        if resolver is None:
             if self.stats is not None:
                 self.stats["branch_trails"] += 1
-            multiline_map = self.get_multiline_map(code.co_filename)
-            code_info.branch_trails = branch_trails(code, multiline_map=multiline_map)
-            code_info.always_jumps = always_jumps(code)
-            # log(f"branch_trails for {code}:\n{ppformat(code_info.branch_trails)}")
-        added_arc = False
-        dest_info = code_info.branch_trails.get(instruction_offset)
-
-        # Re-map the destination offset through always-jumps to deal with NOP etc.
-        dests = {destination_offset}
-        while (dest := code_info.always_jumps.get(destination_offset)) is not None:
-            destination_offset = dest
-            dests.add(destination_offset)
-
-        # log(f"dest_info = {ppformat(dest_info)}")
-        if dest_info is not None:
-            for arc, offsets in dest_info.items():
-                if arc is None:
-                    continue
-                if dests & offsets:
-                    code_info.file_data.add(arc)  # type: ignore
-                    # log(f"adding {arc=}")
-                    added_arc = True
-                    break
-
-        if not added_arc:
+            assert code_info.byte_to_line is not None
+            resolver = code_info.branch_resolver = BranchArcResolver(
+                code,
+                code_info.byte_to_line,
+                self.get_multiline_map(code.co_filename),
+            )
+        arc = resolver.resolve(instruction_offset, destination_offset)
+        if arc is not None:
+            code_info.file_data.add(arc)  # type: ignore
+            # log(f"adding {arc=}")
+        else:
             # This could be an exception jumping from line to line.
             assert code_info.byte_to_line is not None
             l1 = code_info.byte_to_line.get(instruction_offset)
