@@ -12,6 +12,7 @@ import os
 import os.path
 import sys
 import threading
+import tokenize
 import traceback
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -21,9 +22,10 @@ from typing import Any, NewType, Optional, cast
 from coverage import env
 from coverage.bytecode import TBranchTrails, always_jumps, branch_trails, bytes_to_lines
 from coverage.debug import short_filename, short_stack
-from coverage.exceptions import NoSource, NotPython
+from coverage.exceptions import NoSource
 from coverage.misc import isolate_module
-from coverage.parser import PythonParser
+from coverage.parser import multiline_map_from_text
+from coverage.python import get_python_source
 from coverage.types import (
     AnyCallable,
     TFileDisposition,
@@ -222,6 +224,9 @@ class SysMonitor(Tracer):
 
         # Map filename:__name__ -> set(id(code_object))
         self.filename_code_ids: dict[str, set[int]] = collections.defaultdict(set)
+
+        # Map filename -> multiline map, so each file is parsed at most once.
+        self.multiline_maps: dict[str, dict[TLineNo, TLineNo]] = {}
 
         self.sysmon_on = False
         self.lock = threading.Lock()
@@ -455,7 +460,7 @@ class SysMonitor(Tracer):
         if not code_info.branch_trails:
             if self.stats is not None:
                 self.stats["branch_trails"] += 1
-            multiline_map = get_multiline_map(code.co_filename)
+            multiline_map = self.get_multiline_map(code.co_filename)
             code_info.branch_trails = branch_trails(code, multiline_map=multiline_map)
             code_info.always_jumps = always_jumps(code)
             # log(f"branch_trails for {code}:\n{ppformat(code_info.branch_trails)}")
@@ -492,20 +497,26 @@ class SysMonitor(Tracer):
 
         return DISABLE
 
+    def get_multiline_map(self, filename: str) -> dict[TLineNo, TLineNo]:
+        """Get the multiline map for `filename`, computing it at most once."""
+        multiline_map = self.multiline_maps.get(filename)
+        if multiline_map is None:
+            multiline_map = self.multiline_maps[filename] = compute_multiline_map(filename)
+        return multiline_map
 
-@functools.lru_cache(maxsize=20)
-def get_multiline_map(filename: str) -> dict[TLineNo, TLineNo]:
-    """Get a PythonParser for the given filename, cached."""
+
+def compute_multiline_map(filename: str) -> dict[TLineNo, TLineNo]:
+    """Tokenize `filename` and return its multiline map."""
     try:
-        parser = PythonParser(filename=filename)
-        parser.parse_source()
-    except NotPython:
+        text = get_python_source(filename)
+    except (OSError, NoSource):
+        # This can happen if open() in python.py fails.
+        return {}
+    try:
+        return multiline_map_from_text(text)
+    except (tokenize.TokenError, IndentationError, SyntaxError):
         # The file was not Python. This can happen when the code object refers
         # to an original non-Python source file, like a Jinja template.
         # In that case, just return an empty map, which might lead to slightly
         # wrong branch coverage, but we don't have any better option.
         return {}
-    except NoSource:
-        # This can happen if open() in python.py fails.
-        return {}
-    return parser.multiline_map
