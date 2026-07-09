@@ -2774,8 +2774,7 @@ Significant code changes.
 Earlier History
 ---------------
 
-These entries are from Gareth Rees' original changelog.  The initials GDR
-refer to Gareth.
+These entries are from Gareth Rees' original changelog.
 
 - 2002-01-07: Update sys.path when running a file with the -x option, so that
   it matches the value the program would get if it were run on its own.
