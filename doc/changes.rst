@@ -2774,22 +2774,25 @@ Significant code changes.
 Earlier History
 ---------------
 
-2001-12-04 GDR Created.
+These entries are from Gareth Rees' original changelog.  The initials GDR
+refer to Gareth.
 
-2001-12-06 GDR Added command-line interface and source code annotation.
+- 2002-01-07: Update sys.path when running a file with the -x option, so that
+  it matches the value the program would get if it were run on its own.
 
-2001-12-09 GDR Moved design and interface to separate documents.
+- 2002-01-03: Module-level functions work correctly.
 
-2001-12-10 GDR Open cache file as binary on Windows. Allow simultaneous -e and
--x, or -a and -r.
+- 2001-12-13: Improved speed while recording. Portable between Python 1.5.2
+  and 2.1.1.
 
-2001-12-12 GDR Added command-line help. Cache analysis so that it only needs to
-be done once when you specify -a and -r.
+- 2001-12-12: Added command-line help. Cache analysis so that it only needs to
+  be done once when you specify -a and -r.
 
-2001-12-13 GDR Improved speed while recording. Portable between Python 1.5.2
-and 2.1.1.
+- 2001-12-10: Open cache file as binary on Windows. Allow simultaneous -e and
+  -x, or -a and -r.
 
-2002-01-03 GDR Module-level functions work correctly.
+- 2001-12-09: Moved design and interface to separate documents.
 
-2002-01-07 GDR Update sys.path when running a file with the -x option, so that
-it matches the value the program would get if it were run on its own.
+- 2001-12-06: Added command-line interface and source code annotation.
+
+- 2001-12-04: Created.
