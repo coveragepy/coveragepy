@@ -23,6 +23,11 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
+- Fix: in the HTML report with ``show_contexts`` enabled, a context label
+  containing ``</script>`` (for example a parametrized pytest node id) could
+  close the inline ``<script>`` element in a file page early, injecting markup.
+  Context labels are now fully escaped. Thanks, `Rajath Mohare <pull 2224_>`_.
+
 - A number of performance improvements thanks to Paul Kehrer, in pull requests
   `2213 <pull 2213_>`_, `2214 <pull 2214_>`_, `2215 <pull 2215_>`_, `2216
   <pull 2216_>`_, and `2218 <pull 2218_>`_.
@@ -32,6 +37,7 @@ Unreleased
 .. _pull 2215: https://github.com/coveragepy/coveragepy/pull/2215
 .. _pull 2216: https://github.com/coveragepy/coveragepy/pull/2216
 .. _pull 2218: https://github.com/coveragepy/coveragepy/pull/2218
+.. _pull 2224: https://github.com/coveragepy/coveragepy/pull/2224
 
 .. start-releases
 
