@@ -492,9 +492,9 @@ class HtmlReporter:
                     {encode_int(v): k for (k, v) in context_codes.items()},
                     indent=2,
                 )
-                .replace("<", "\\u003c")
-                .replace(">", "\\u003e")
-                .replace("&", "\\u0026")
+                .replace("<", r"\u003c")
+                .replace(">", r"\u003e")
+                .replace("&", r"\u0026")
             )
         else:
             contexts_json = None
