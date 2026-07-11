@@ -25,6 +25,7 @@ import coverage.html
 from coverage import env, Coverage
 from coverage.exceptions import NoDataError, NotPython, NoSource
 from coverage.files import abs_file, flat_rootname
+from coverage.misc import import_local_file
 from coverage.report_core import get_analysis_to_report
 from coverage.types import TLineNo, TMorf
 
@@ -1549,17 +1550,13 @@ class HtmlWithContextsTest(HtmlTestHelpers, CoverageTest):
         # switch_context takes an arbitrary string (pytest-cov passes test node
         # ids), so a label can contain "</script>".  It's dropped into an inline
         # <script> block in the file page, and must not close the element early.
-        from coverage.misc import import_local_file
-
         label = "</script><img src=x onerror=alert(1)>"
         self.make_file("two_tests.py", self.SOURCE)
         cov = coverage.Coverage(source=["."])
         cov.set_option("html:show_contexts", True)
-        cov.start()
-        cov.switch_context(label)
-        mod = import_local_file("two_tests")
-        cov.stop()
-        cov.save()
+        with cov.collect():
+            cov.switch_context(label)
+            mod = import_local_file("two_tests")
         cov.html_report(mod, directory="htmlcov")
 
         html = self.get_html_report_content("two_tests.py")
