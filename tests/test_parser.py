@@ -1412,17 +1412,73 @@ class MultilineMapTest(CoverageTest):
     @pytest.mark.parametrize(
         "text",
         [
-            "a = 1\nb = 2\n",
-            "x = (\n    1 +\n    2\n)\ny = 5\n",
-            "def f(\n    a,\n    b=[1,\n        2],\n):\n    return (a +\n        b)\n",
-            "@decorator(\n    arg,\n)\ndef f():\n    pass\n",
-            "if (a and\n        b):\n    c = (1,\n        2)\n",
-            "with (open('a') as fa,\n        open('b') as fb):\n    pass\n",
-            "s = f'''one {x\n    + 1} two\nthree'''\nt = 4\n",
-            "class C(\n    Base,\n):\n    attr = 1\n",
-            "result = [x\n    for x in items\n    if x > 0\n]\n",
-            "match (command,\n        arg):\n    case (1, 2):\n        pass\n",
-            "total = 1 + \\\n    2 + \\\n    3\n",
+            """\
+                a = 1
+                b = 2
+                """,
+            """\
+                x = (
+                    1 +
+                    2
+                )
+                y = 5
+                """,
+            """\
+                def f(
+                    a,
+                    b=[1,
+                        2],
+                ):
+                    return (a +
+                        b)
+                """,
+            """\
+                @decorator(
+                    arg,
+                )
+                def f():
+                    pass
+                """,
+            """\
+                if (a and
+                        b):
+                    c = (1,
+                        2)
+                """,
+            """\
+                with (open('a') as fa,
+                        open('b') as fb):
+                    pass
+                """,
+            """\
+                s = f'''one {x
+                    + 1} two
+                three'''
+                t = 4
+                """,
+            """\
+                class C(
+                    Base,
+                ):
+                    attr = 1
+                """,
+            """\
+                result = [x
+                    for x in items
+                    if x > 0
+                ]
+                """,
+            """\
+                match (command,
+                        arg):
+                    case (1, 2):
+                        pass
+                """,
+            """\
+                total = 1 + \\
+                    2 + \\
+                    3
+                """,
         ],
     )
     def test_agrees_with_python_parser(self, text: str) -> None:
@@ -1430,6 +1486,6 @@ class MultilineMapTest(CoverageTest):
         # but through a different path (tokenizing to a list first).  The two
         # must never drift apart: the sys.monitoring core uses this map to
         # attribute branch arcs to the lines that reports are keyed by.
-        parser = PythonParser(text=text)
+        parser = PythonParser(text=textwrap.dedent(text))
         parser.parse_source()
         assert multiline_map_from_text(text) == parser.multiline_map
