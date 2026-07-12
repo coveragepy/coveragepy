@@ -23,6 +23,12 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
+- Fix: the LCOV report wrote file names and other fields into its
+  line-oriented records without neutralizing control characters. A measured
+  file whose name contained a newline (legal on POSIX) could forge extra
+  records, inflating the coverage seen by tools that read the report. Control
+  characters in a field are now replaced.
+
 - Fix: in the HTML report with ``show_contexts`` enabled, a context label
   containing ``</script>`` (for example a parametrized pytest node id) could
   close the inline ``<script>`` element in a file page early, injecting markup.
