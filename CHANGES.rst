@@ -28,8 +28,16 @@ Unreleased
   and prev/next links, so it could close the attribute early and inject markup.
   Page URLs are now escaped. Thanks, `Rajath Mohare <pull 2227_>`_.
 
+- Fix: the LCOV report wrote file names and other fields into its
+  line-oriented records without neutralizing control characters. A measured
+  file whose name contained a newline (legal on POSIX) could forge extra
+  records, inflating the coverage seen by tools that read the report. Control
+  characters in a field are now replaced. Thanks, `Rajath Mohare <pull
+  2226_>`_.
+
 - Wheels are now provided for Python 3.15.
 
+.. _pull 2226: https://github.com/coveragepy/coveragepy/pull/2226
 .. _pull 2227: https://github.com/coveragepy/coveragepy/pull/2227
 
 

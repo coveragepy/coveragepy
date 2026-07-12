@@ -6,9 +6,13 @@
 from __future__ import annotations
 
 import math
+import os
 import textwrap
 
+import pytest
+
 import coverage
+from coverage import env
 
 from tests.coveragetest import CoverageTest
 
@@ -124,6 +128,27 @@ class LcovTest(CoverageTest):
             """)
         actual_result = self.get_lcov_report_content()
         assert expected_result == actual_result
+
+    @pytest.mark.skipif(env.WINDOWS, reason="Newlines are disallowed in Windows filenames.")
+    def test_newline_in_filename_does_not_inject_records(self) -> None:
+        # A POSIX file name may contain a newline. Written verbatim into the
+        # line-oriented LCOV format it would forge extra records (a fake file,
+        # inflated hit counts), so control characters in a field are replaced.
+        evil = "a\nLH:9999\nSF:injected.py\nend_of_record\nreal.py"
+        self.make_file(evil, "a = 1\nb = 2\n")
+        self.make_data_file(lines={os.path.abspath(evil): [1, 2]})
+        cov = coverage.Coverage()
+        cov.load()
+        cov.lcov_report()
+        expected_result = textwrap.dedent("""\
+            SF:a?LH:9999?SF:injected.py?end_of_record?real.py
+            DA:1,1
+            DA:2,1
+            LF:2
+            LH:2
+            end_of_record
+            """)
+        assert expected_result == self.get_lcov_report_content()
 
     def test_simple_line_coverage_two_files(self) -> None:
         # Test that line coverage is created when coverage is run,
