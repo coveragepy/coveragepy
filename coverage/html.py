@@ -483,9 +483,18 @@ class HtmlReporter:
         contexts = collections.Counter(c for cline in file_data.lines for c in cline.contexts)
         context_codes = {y: i for (i, y) in enumerate(x[0] for x in contexts.most_common())}
         if context_codes:
-            contexts_json = json.dumps(
-                {encode_int(v): k for (k, v) in context_codes.items()},
-                indent=2,
+            # This JSON is dropped straight into an inline <script> element, so
+            # the HTML-significant characters have to be escaped as \uXXXX to keep
+            # a context label like "</script>" from closing the element early.
+            # The escapes are still valid JSON, so the parsed values are unchanged.
+            contexts_json = (
+                json.dumps(
+                    {encode_int(v): k for (k, v) in context_codes.items()},
+                    indent=2,
+                )
+                .replace("<", r"\u003c")
+                .replace(">", r"\u003e")
+                .replace("&", r"\u0026")
             )
         else:
             contexts_json = None
