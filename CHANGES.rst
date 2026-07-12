@@ -30,7 +30,8 @@ Unreleased
 
 - A number of performance improvements thanks to Paul Kehrer, in pull requests
   `2213 <pull 2213_>`_, `2214 <pull 2214_>`_, `2215 <pull 2215_>`_, `2216
-  <pull 2216_>`_, `2218 <pull 2218_>`_, and `2220 <pull 2220_>`_.
+  <pull 2216_>`_, `2218 <pull 2218_>`_, `2220 <pull 2220_>`_, and `2221 <pull
+  2221_>`_.
 
 .. _pull 2213: https://github.com/coveragepy/coveragepy/pull/2213
 .. _pull 2214: https://github.com/coveragepy/coveragepy/pull/2214
@@ -38,6 +39,7 @@ Unreleased
 .. _pull 2216: https://github.com/coveragepy/coveragepy/pull/2216
 .. _pull 2218: https://github.com/coveragepy/coveragepy/pull/2218
 .. _pull 2220: https://github.com/coveragepy/coveragepy/pull/2220
+.. _pull 2221: https://github.com/coveragepy/coveragepy/pull/2221
 .. _pull 2224: https://github.com/coveragepy/coveragepy/pull/2224
 
 .. start-releases
