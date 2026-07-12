@@ -26,6 +26,45 @@ from coverage.types import TArc, TLineNo
 os = isolate_module(os)
 
 
+def multiline_map_from_tokens(tokens: Iterable[tokenize.TokenInfo]) -> dict[TLineNo, TLineNo]:
+    """Compute the multiline map from a stream of tokens.
+
+    The result maps line numbers in multi-line statements to the first line
+    number of their statement.  This is the only place the map is computed:
+    `PythonParser._raw_parse` uses it for parsing and reporting, and the
+    sys.monitoring core uses `multiline_map_from_text` to get the map without
+    paying for a full parse during measurement.
+
+    """
+    multiline_map: dict[TLineNo, TLineNo] = {}
+    # The line number of the first line in a multi-line statement.
+    first_line = 0
+    for toktype, ttext, (slineno, _), (elineno, _), _ in tokens:
+        if toktype == token.NEWLINE:
+            if first_line and elineno != first_line:
+                # We're at the end of a line, and we've ended on a
+                # different line than the first line of the statement,
+                # so record a multi-line range.
+                for l in range(first_line, elineno + 1):
+                    multiline_map[l] = first_line
+            first_line = 0
+        if ttext.strip() and toktype != tokenize.COMMENT:
+            # A non-white-space token, the first in a statement.
+            if not first_line:
+                first_line = slineno
+    return multiline_map
+
+
+def multiline_map_from_text(text: str) -> dict[TLineNo, TLineNo]:
+    """Compute just the multiline map for `text`, without a full parse.
+
+    Can raise tokenize.TokenError, IndentationError, or SyntaxError if the
+    text isn't parsable as Python.
+
+    """
+    return multiline_map_from_tokens(generate_tokens(text))
+
+
 class PythonParser:
     """Parse code to find executable lines, excluded lines, etc.
 
@@ -148,8 +187,9 @@ class PythonParser:
         nesting: int = 0
 
         assert self.text is not None
-        tokgen = generate_tokens(self.text)
-        for toktype, ttext, (slineno, _), (elineno, _), ltext in tokgen:
+        tokens = list(generate_tokens(self.text))
+        self.multiline_map = multiline_map_from_tokens(tokens)
+        for toktype, ttext, (slineno, _), (elineno, _), ltext in tokens:
             if self.show_tokens:  # pragma: debugging
                 print(
                     "%10s %5s %-20r %r"
@@ -179,12 +219,9 @@ class PythonParser:
                 elif ttext in ")]}":
                     nesting -= 1
             elif toktype == token.NEWLINE:
-                if first_line and elineno != first_line:
-                    # We're at the end of a line, and we've ended on a
-                    # different line than the first line of the statement,
-                    # so record a multi-line range.
-                    for l in range(first_line, elineno + 1):
-                        self.multiline_map[l] = first_line
+                # multiline_map_from_tokens() has already recorded this
+                # statement's lines; we only track first_line here for the
+                # exclusion logic.
                 first_line = 0
 
             if ttext.strip() and toktype != tokenize.COMMENT:
