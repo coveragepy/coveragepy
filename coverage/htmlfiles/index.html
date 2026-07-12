@@ -120,9 +120,9 @@
         <tbody>
             {% for region in regions %}
             <tr class="region">
-                <td class="name"><a href="{{region.url}}">{{region.file|escape|pretty_file}}</a></td>
+                <td class="name"><a href="{{region.url|escape_url}}">{{region.file|escape|pretty_file}}</a></td>
                 {% if region_noun %}
-                <td class="name"><a href="{{region.url}}">{{region.description}}</a></td>
+                <td class="name"><a href="{{region.url|escape_url}}">{{region.description}}</a></td>
                 {% endif %}
                 <td class="spacer">&nbsp;</td>
                 {% if has_arcs %}
@@ -187,8 +187,8 @@
         </p>
     </div>
     <aside class="hidden">
-        <a id="prevFileLink" class="nav" href="{{ final_html }}"></a>
-        <a id="nextFileLink" class="nav" href="{{ first_html }}"></a>
+        <a id="prevFileLink" class="nav" href="{{ final_html|escape_url }}"></a>
+        <a id="nextFileLink" class="nav" href="{{ first_html|escape_url }}"></a>
         <button type="button" class="button_prev_file" data-shortcut="["></button>
         <button type="button" class="button_next_file" data-shortcut="]"></button>
         <button type="button" class="button_show_hide_help" data-shortcut="?"></button>

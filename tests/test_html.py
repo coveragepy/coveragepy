@@ -188,6 +188,22 @@ class HtmlReportParser(HTMLParser):
         return ["".join(l).rstrip() for l in self.lines]
 
 
+class EventHandlerCollector(HTMLParser):
+    """Collect any ``on*`` event-handler attributes the report emitted.
+
+    Used to detect markup injected by breaking out of an attribute value.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.handlers: list[tuple[str, str]] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        for attr_name, _ in attrs:
+            if attr_name.startswith("on"):
+                self.handlers.append((tag, attr_name))
+
+
 class FileWriteTracker:
     """A fake object to track how `open` is used to write files."""
 
@@ -1439,6 +1455,24 @@ assert len(math) == 18
             + "</a>"
         )
         assert expected % os.sep in index
+
+    @pytest.mark.skipif(env.WINDOWS, reason="Windows filenames can't contain quotes")
+    def test_filename_cant_break_out_of_href(self) -> None:
+        # Source file names are dropped into href="..." attributes on the index
+        # and file pages.  A name with a double quote (legal on POSIX) must not
+        # close the attribute early and inject an event handler.
+        name = 'a" onmouseover="alert(1).py'
+        self.make_file(name, "print('hi')")
+        self.make_data_file(lines={abs_file(name): [1]})
+        cov = coverage.Coverage()
+        cov.load()
+        cov.html_report()
+
+        for page in glob.glob("htmlcov/*.html"):
+            with open(page, encoding="utf-8") as f:
+                parser = EventHandlerCollector()
+                parser.feed(f.read())
+            assert parser.handlers == [], f"Injected handler in {page}: {parser.handlers}"
 
 
 @pytest.mark.skipif(not testenv.DYN_CONTEXTS, reason="No dynamic contexts with this core.")
