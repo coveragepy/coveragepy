@@ -20,8 +20,12 @@ upgrading your version of coverage.py.
     ..  Version 9.8.1 — 2027-07-27
     ..  --------------------------
 
-Unreleased
-----------
+.. start-releases
+
+.. _changes_7-15-1:
+
+Version 7.15.1 — 2026-07-12
+---------------------------
 
 - Fix: in the HTML report with ``show_contexts`` enabled, a context label
   containing ``</script>`` (for example a parametrized pytest node id) could
@@ -41,8 +45,6 @@ Unreleased
 .. _pull 2220: https://github.com/coveragepy/coveragepy/pull/2220
 .. _pull 2221: https://github.com/coveragepy/coveragepy/pull/2221
 .. _pull 2224: https://github.com/coveragepy/coveragepy/pull/2224
-
-.. start-releases
 
 .. _changes_7-15-0:
 
