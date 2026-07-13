@@ -707,6 +707,17 @@ See :ref:`cmd_combine_remapping` and :ref:`source_glob` for more information.
 Settings common to many kinds of reporting.
 
 
+.. _config_report_analysis_cache_size:
+
+[report] analysis_cache_size
+............................
+
+(integer, default 256) The maximum number of files to hold in the analysis
+caches while reporting.  Larger values can speed up repeated reports at the
+cost of more memory.  Can also be set with the ``COVERAGE_ANALYSIS_CACHE_SIZE``
+environment variable, which takes precedence over the configuration file.
+
+
 .. _config_report_exclude_also:
 
 [report] exclude_also

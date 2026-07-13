@@ -22,6 +22,19 @@ upgrading your version of coverage.py.
 
 .. start-releases
 
+Unreleased
+----------
+
+- Fix: reporting on projects with many files used far more memory in 7.15.1
+  than in 7.15.0, as described in `issue 2229`_.  The reporting caches
+  introduced in 7.15.1 are now bounded, and parsers release their ASTs once
+  arc analysis is complete.  The size of the caches can be adjusted with the
+  new :ref:`analysis_cache_size <config_report_analysis_cache_size>` setting,
+  or the ``COVERAGE_ANALYSIS_CACHE_SIZE`` environment variable, which defaults
+  to 256 files.
+
+.. _issue 2229: https://github.com/coveragepy/coveragepy/issues/2229
+
 .. _changes_7-15-1:
 
 Version 7.15.1 — 2026-07-12

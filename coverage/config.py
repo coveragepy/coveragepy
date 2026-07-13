@@ -218,6 +218,7 @@ class CoverageConfig(TConfigurable, TPluginConfig):
         self._crash: str | None = None
 
         # Defaults for [report]
+        self.analysis_cache_size = 256
         self.exclude_list = DEFAULT_EXCLUDE[:]
         self.exclude_also: list[str] = []
         self.fail_under = 0.0
@@ -428,6 +429,7 @@ class CoverageConfig(TConfigurable, TPluginConfig):
         ("_crash", "run:_crash"),
         #
         # [report]
+        ("analysis_cache_size", "report:analysis_cache_size", "int"),
         ("exclude_list", "report:exclude_lines", "regexlist"),
         ("exclude_also", "report:exclude_also", "regexlist"),
         ("fail_under", "report:fail_under", "float"),
@@ -705,6 +707,11 @@ def read_coverage_config(
     env_data_file = os.getenv("COVERAGE_FILE")
     if env_data_file:
         config.data_file = env_data_file
+
+    # $set_env.py: COVERAGE_ANALYSIS_CACHE_SIZE - Max files held in the reporting caches.
+    env_cache_size = os.getenv("COVERAGE_ANALYSIS_CACHE_SIZE")
+    if env_cache_size:
+        config.analysis_cache_size = int(env_cache_size)
 
     # $set_env.py: COVERAGE_DEBUG - Debug options: https://coverage.rtfd.io/cmd.html#debug
     debugs = os.getenv("COVERAGE_DEBUG")

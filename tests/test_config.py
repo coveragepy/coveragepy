@@ -172,6 +172,23 @@ class ConfigTest(CoverageTest):
         cov = coverage.Coverage(data_file="fromarg.dat")
         assert cov.config.data_file == "fromarg.dat"
 
+    def test_analysis_cache_size_from_environment(self) -> None:
+        cov = coverage.Coverage()
+        assert cov.config.analysis_cache_size == 256
+        self.make_file(
+            ".coveragerc",
+            """\
+            [report]
+            analysis_cache_size = 512
+            """,
+        )
+        cov = coverage.Coverage()
+        assert cov.config.analysis_cache_size == 512
+        # The environment variable overrides the config file.
+        self.set_environ("COVERAGE_ANALYSIS_CACHE_SIZE", "17")
+        cov = coverage.Coverage()
+        assert cov.config.analysis_cache_size == 17
+
     def test_debug_from_environment(self) -> None:
         self.make_file(
             ".coveragerc",

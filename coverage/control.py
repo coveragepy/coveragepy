@@ -1017,8 +1017,14 @@ class Coverage(TConfigurable):
         file_reporter = self._get_file_reporter(morf)
         filename = self._file_mapper(file_reporter.filename)
         analysis = analysis_from_file_reporter(data, self.config.precision, file_reporter, filename)
-        self._analysis_cache[morf] = analysis
+        self._cache_put(self._analysis_cache, morf, analysis)
         return analysis
+
+    def _cache_put(self, cache: dict[TMorf, Any], morf: TMorf, value: Any) -> None:
+        """Add to a bounded cache, evicting the oldest entry if it's full."""
+        cache[morf] = value
+        if len(cache) > self.config.analysis_cache_size:
+            del cache[next(iter(cache))]
 
     def _clear_analysis_caches(self) -> None:
         """Forget cached analyses and file reporters, because data changed."""
@@ -1068,7 +1074,7 @@ class Coverage(TConfigurable):
             file_reporter = PythonFileReporter(morf, self)
 
         assert isinstance(file_reporter, FileReporter)
-        self._file_reporter_cache[morf] = file_reporter
+        self._cache_put(self._file_reporter_cache, morf, file_reporter)
         return file_reporter
 
     def _get_file_reporters(

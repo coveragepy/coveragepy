@@ -93,6 +93,29 @@ class ApiTest(CoverageTest):
         assert statements == [1]
         assert missing == [1]
 
+    def test_analysis_caches_are_bounded(self) -> None:
+        # Reporting caches analyses and file reporters so that sweeping the
+        # file list twice doesn't redo the work, but the caches must not grow
+        # without bound when reporting on many files (issue 2229).
+        self.make_file("mymain.py", "import mod0, mod1, mod2\na = 1\n")
+        for i in range(3):
+            self.make_file(f"mod{i}.py", "x = 17\n")
+
+        cov = coverage.Coverage()
+        self.start_import_stop(cov, "mymain")
+
+        cov.set_option("report:analysis_cache_size", 2)
+        for name in ["mymain.py", "mod0.py", "mod1.py", "mod2.py"]:
+            cov.analysis2(name)
+        assert len(cov._analysis_cache) == 2
+        assert len(cov._file_reporter_cache) == 2
+        # mymain.py was the first analyzed, so it has been evicted.  Analyzing
+        # it again recomputes it correctly.
+        assert "mymain.py" not in cov._analysis_cache
+        _, statements, _, missing, _ = cov.analysis2("mymain.py")
+        assert statements == [1, 2]
+        assert missing == []
+
     def test_filenames(self) -> None:
         self.make_file(
             "mymain.py",

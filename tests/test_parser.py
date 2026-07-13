@@ -61,6 +61,24 @@ class PythonParserTest(PythonParserTestBase):
             10: 1,
         }
 
+    def test_ast_is_released_after_arc_analysis(self) -> None:
+        # The AST is by far the largest thing a parser holds.  Once the arcs
+        # have been computed, it should be released so that long-lived parsers
+        # don't balloon memory (issue 2229).
+        parser = self.parse_text("""\
+            def foo(a):
+                if a:
+                    return 5
+                return 7
+            """)
+        ast_root_before = parser._ast_root
+        assert ast_root_before is not None
+        arcs = parser.arcs()
+        assert parser._ast_root is None
+        # The memoized results are still available and stable.
+        assert parser.arcs() == arcs
+        assert parser.exit_counts() == {1: 1, 2: 2, 3: 1, 4: 1}
+
     def test_try_except(self) -> None:
         parser = self.parse_text("""\
             try:
