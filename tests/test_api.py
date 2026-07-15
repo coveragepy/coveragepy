@@ -735,6 +735,19 @@ class ApiTest(CoverageTest):
             d = dict(cov.sys_info())
         assert cast(str, d["data_file"]).endswith(".coverage")
 
+    @pytest.mark.skipif(not testenv.SYS_MON, reason="Only sysmon drops dynamic contexts.")
+    def test_switch_context_sysmon_warning(self) -> None:
+        cov = coverage.Coverage(config_file=False)
+        with cov.collect():
+            with pytest.warns(Warning) as warns:
+                cov.switch_context("test_a")
+                cov.switch_context("test_b")
+        assert_coverage_warnings(
+            warns,
+            "switch_context() is not supported with core=sysmon; "
+            "context data may be incomplete (no-sysmon-context)",
+        )
+
 
 @pytest.mark.skipif(not testenv.DYN_CONTEXTS, reason="No dynamic contexts with this core.")
 class SwitchContextTest(CoverageTest):
