@@ -20,8 +20,12 @@ upgrading your version of coverage.py.
     ..  Version 9.8.1 — 2027-07-27
     ..  --------------------------
 
-Unreleased
-----------
+.. start-releases
+
+.. _changes_7-15-2:
+
+Version 7.15.2 — 2026-07-15
+---------------------------
 
 - Fix: one of the performance improvements in 7.15.1 (pull 2215) dramatically
   increased memory use during reporting for large projects. Now we use a
@@ -30,8 +34,6 @@ Unreleased
 
 .. _issue 2229:  https://github.com/coveragepy/coveragepy/issues/2229
 
-
-.. start-releases
 
 .. _changes_7-15-1:
 
