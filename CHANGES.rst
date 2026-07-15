@@ -23,7 +23,12 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
-Nothing yet.
+- Fix: one of the performance improvements in 7.15.1 (pull 2215) dramatically
+  increased memory use during reporting for large projects. Now we use a
+  different approach that is both faster and slimmer than 7.15.0. Fixes `issue
+  2229`_.
+
+.. _issue 2229:  https://github.com/coveragepy/coveragepy/issues/2229
 
 
 .. start-releases
