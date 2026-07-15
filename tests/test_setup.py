@@ -54,6 +54,8 @@ class SetupPyTest(CoverageTest):
         assert "Programming Language :: Python :: %d" % sys.version_info[:1] in classifiers
         assert "Programming Language :: Python :: %d.%d" % sys.version_info[:2] in classifiers
 
+        assert setup_args["license_files"] == ["LICENSE.txt", "NOTICE.txt"]
+
         long_description = cast(str, setup_args["long_description"]).splitlines()
         assert len(long_description) > 7
         assert long_description[0].strip() != ""
