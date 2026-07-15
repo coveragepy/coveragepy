@@ -336,8 +336,10 @@ class PythonParser:
         `_all_arcs` is the set of arcs in the code.
 
         """
-        assert self._ast_root is not None
-        aaa = AstArcAnalyzer(self.filename, self._ast_root, self.raw_statements, self.multiline_map)
+        ast_root = self._ast_root
+        if ast_root is None:
+            ast_root = ast.parse(self.text)
+        aaa = AstArcAnalyzer(self.filename, ast_root, self.raw_statements, self.multiline_map)
         aaa.analyze()
         arcs = aaa.arcs
         self._with_jump_fixers = aaa.with_jump_fixers()
@@ -352,6 +354,10 @@ class PythonParser:
                 self._all_arcs.add((fl1, fl2))
 
         self._missing_arc_fragments = aaa.missing_arc_fragments
+
+        # The AST is large and no longer needed: everything derived from it is
+        # memoized above.  Release it so long-lived parsers don't hold it.
+        self._ast_root = None
 
     def fix_with_jumps(self, arcs: Iterable[TArc]) -> set[TArc]:
         """Adjust arcs to fix jumps leaving `with` statements.

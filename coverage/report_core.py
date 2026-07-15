@@ -93,9 +93,15 @@ def get_analysis_to_report(
     if not fr_morfs:
         raise NoDataError("No data to report.")
 
-    for fr, morf in sorted(fr_morfs):
+    # fr_morfs is a complete list of all files. FileReporters start very small,
+    # but when you use one, it becomes large. We don't want to hold onto them
+    # longer than we need to, so instead of a for loop, we'll pop and discard
+    # the file reporters as we go.
+    fr_morfs.sort(reverse=True)
+    while fr_morfs:
+        fr, morf = fr_morfs.pop()
         try:
-            analysis = coverage._analyze(morf)
+            analysis = coverage._analyze(morf, file_reporter=fr)
         except NotPython:
             # Only report errors for .py files, and only if we didn't
             # explicitly suppress those errors.

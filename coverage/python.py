@@ -172,7 +172,6 @@ class PythonFileReporter(FileReporter):
 
         self._source: str | None = None
         self._parser: PythonParser | None = None
-        self._excluded = None
 
     def __repr__(self) -> str:
         return f"<PythonFileReporter {self.filename!r}>"
