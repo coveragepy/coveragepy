@@ -422,6 +422,18 @@ class ApiTest(CoverageTest):
         cov.clear_data()
         assert cov.get_data().measured_files() == set()
 
+    def test_clear_data_doesnt_accumulate_data_objects(self) -> None:
+        # clear_data() closes the old CoverageData and makes a fresh one, but
+        # it shouldn't leave the closed objects piling up in _data_to_close
+        # for the life of the process.
+        cov = coverage.Coverage(data_file=None)
+        cov.start()
+        cov.stop()
+        before = len(cov._data_to_close)
+        for _ in range(10):
+            cov.clear_data()
+        assert len(cov._data_to_close) == before
+
     def test_empty_reporting(self) -> None:
         # empty summary reports raise exception, just like the xml report
         cov = coverage.Coverage()

@@ -788,7 +788,7 @@ class Coverage(TConfigurable):
         only a fresh slate of data is needed between cycles, with no change
         in configuration.
 
-        .. versionadded:: ???
+        .. versionadded:: 7.16
 
         """
         self._init()
@@ -805,6 +805,8 @@ class Coverage(TConfigurable):
         """Close our current `CoverageData`, if any, and forget it."""
         if self._data is not None:
             self._data.close(force=True)
+            if self._data in self._data_to_close:
+                self._data_to_close.remove(self._data)
             self._data = None
 
     def switch_context(self, new_context: str) -> None:
