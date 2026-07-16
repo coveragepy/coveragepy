@@ -56,12 +56,20 @@ Unreleased
   Windows.  The original extension is now restored on the annotated copy (`pull
   2265`_).
 
+- Added :meth:`Coverage.clear_data <coverage.Coverage.clear_data>`, a
+  lighter-weight alternative to :meth:`~coverage.Coverage.erase` for clearing
+  collected data between measurement cycles. Unlike ``erase()``, it doesn't
+  force the next ``start()`` to redo the collector/tracer setup, which makes
+  repeated start/stop/clear loops on the same ``Coverage`` object much
+  cheaper. Closes `issue 2139`_.
+
 .. _pull 2261: https://github.com/coveragepy/coveragepy/pull/2261
 .. _pull 2262: https://github.com/coveragepy/coveragepy/pull/2262
 .. _pull 2263: https://github.com/coveragepy/coveragepy/pull/2263
 .. _pull 2265: https://github.com/coveragepy/coveragepy/pull/2265
 .. _issue 2266: https://github.com/coveragepy/coveragepy/issues/2266
 .. _pull 2268: https://github.com/coveragepy/coveragepy/pull/2268
+.. _issue 2139: https://github.com/coveragepy/coveragepy/issues/2139
 
 
 .. start-releases
