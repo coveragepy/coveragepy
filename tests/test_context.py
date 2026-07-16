@@ -232,6 +232,14 @@ class Parent:
     def a_property(self) -> str | None:
         return get_qualname()
 
+    @staticmethod
+    def a_static_method() -> str | None:
+        return get_qualname()
+
+    @classmethod
+    def a_class_method(cls) -> str | None:
+        return get_qualname()
+
 
 class Child(Parent):
     pass
@@ -292,6 +300,20 @@ class QualnameTest(CoverageTest):
 
     def test_property(self) -> None:
         assert Parent().a_property == "tests.test_context.Parent.a_property"
+
+    def test_static_method(self) -> None:
+        assert Parent.a_static_method() == "tests.test_context.Parent.a_static_method"
+        assert Parent().a_static_method() == "tests.test_context.Parent.a_static_method"
+
+    def test_class_method(self) -> None:
+        assert Parent.a_class_method() == "tests.test_context.Parent.a_class_method"
+        assert Parent().a_class_method() == "tests.test_context.Parent.a_class_method"
+
+    def test_inherited_static_method(self) -> None:
+        assert Child.a_static_method() == "tests.test_context.Parent.a_static_method"
+
+    def test_inherited_class_method(self) -> None:
+        assert Child.a_class_method() == "tests.test_context.Parent.a_class_method"
 
     def test_changeling(self) -> None:
         c = Child()

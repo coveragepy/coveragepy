@@ -23,7 +23,12 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
-Nothing yet.
+- Fix: with ``dynamic_context = test_function``, tests written as
+  ``@staticmethod`` or ``@classmethod`` were not getting their own dynamic
+  context, so their coverage was attributed to no context at all. This now
+  works correctly. Fixes `issue 1923`_.
+
+.. _issue 1923: https://github.com/coveragepy/coveragepy/issues/1923
 
 
 .. start-releases

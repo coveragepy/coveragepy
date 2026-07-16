@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+import inspect
+
 from collections.abc import Sequence
 from types import FrameType
 
@@ -56,19 +58,31 @@ def qualname_from_frame(frame: FrameType) -> str | None:
     co = frame.f_code
     fname = co.co_name
     method = None
-    if co.co_argcount and co.co_varnames[0] == "self":
-        self = frame.f_locals.get("self", None)
-        method = getattr(self, fname, None)
+    if co.co_argcount and co.co_varnames[0] in ("self", "cls"):
+        first_arg = frame.f_locals.get(co.co_varnames[0], None)
+        method = getattr(first_arg, fname, None)
 
     if method is None:
         func = frame.f_globals.get(fname)
         if func is None:
+            # `frame` might be a plain function or a static method, neither of
+            # which will be found in f_globals if they are nested inside a
+            # class (or another function).  Code objects for functions are
+            # marked as "optimized" (they use fast locals), while code
+            # objects for module and class bodies are not.  Use that to tell
+            # a genuine (but unreachable-by-name) function apart from a
+            # class body executing a function-like statement, which is the
+            # case `test_bug_829` guards against.
+            if co.co_flags & inspect.CO_OPTIMIZED:
+                module = frame.f_globals.get("__name__", "")
+                qualname = co.co_qualname if hasattr(co, "co_qualname") else fname
+                return f"{module}.{qualname}" if module else qualname
             return None
         return f"{func.__module__}.{fname}"
 
     func = getattr(method, "__func__", None)
     if func is None:
-        cls = self.__class__
+        cls = first_arg if isinstance(first_arg, type) else first_arg.__class__
         return f"{cls.__module__}.{cls.__name__}.{fname}"
 
     return f"{func.__module__}.{func.__qualname__}"
