@@ -778,6 +778,35 @@ class Coverage(TConfigurable):
         self._data = None
         self._inited_for_start = False
 
+    def clear_data(self) -> None:
+        """Clear collected coverage data, without discarding start() setup.
+
+        Unlike :meth:`erase`, this does not force the next :meth:`start` to
+        redo the (potentially expensive) initialization performed by the
+        first :meth:`start`. This is useful when repeatedly starting and
+        stopping measurement with the same :class:`Coverage` object, and
+        only a fresh slate of data is needed between cycles, with no change
+        in configuration.
+
+        .. versionadded:: ???
+
+        """
+        self._init()
+        self._post_init()
+        if self._collector is not None:
+            self._collector.reset()
+        self._close_data()
+        self._init_data(suffix=None)
+        assert self._data is not None
+        if self._collector is not None:
+            self._collector.use_data(self._data, self.config.context)
+
+    def _close_data(self) -> None:
+        """Close our current `CoverageData`, if any, and forget it."""
+        if self._data is not None:
+            self._data.close(force=True)
+            self._data = None
+
     def switch_context(self, new_context: str) -> None:
         """Switch to a new dynamic context.
 

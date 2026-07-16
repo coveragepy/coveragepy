@@ -367,6 +367,61 @@ class ApiTest(CoverageTest):
         self.assert_doesnt_exist(".coverage")
         assert os.listdir(".") == []
 
+    def test_clear_data(self) -> None:
+        # https://github.com/coveragepy/coveragepy/issues/2139
+        cov = coverage.Coverage(data_file=None)
+
+        def f1() -> None:  # pragma: nested
+            a = 1  # pylint: disable=unused-variable
+
+        one_line_number = f1.__code__.co_firstlineno + 1
+        lines = []
+
+        def run_one_function(f: Callable[[], None]) -> None:
+            cov.clear_data()
+            with cov.collect():
+                f()
+
+            fs = cov.get_data().measured_files()
+            lines.append(cov.get_data().lines(list(fs)[0]))
+
+        run_one_function(f1)
+        run_one_function(f1)
+        run_one_function(f1)
+        assert lines == [[one_line_number]] * 3
+        self.assert_doesnt_exist(".coverage")
+        assert os.listdir(".") == []
+
+    def test_clear_data_keeps_start_setup(self) -> None:
+        # clear_data() shouldn't force re-running _init_for_start(): the
+        # collector/core/inorout objects built by the first start() should
+        # still be in use after a clear_data() + start() cycle.
+        cov = coverage.Coverage(data_file=None)
+        cov.start()
+        cov.stop()
+        collector_before = cov._collector
+        core_before = cov._core
+        inorout_before = cov._inorout
+        assert cov._inited_for_start
+
+        cov.clear_data()
+        assert cov._inited_for_start
+
+        cov.start()
+        cov.stop()
+        assert cov._collector is collector_before
+        assert cov._core is core_before
+        assert cov._inorout is inorout_before
+
+    def test_clear_data_gives_fresh_data(self) -> None:
+        self.make_file("clear_data_1.py", "a = 1\nb = 2\n")
+        cov = coverage.Coverage(data_file=None)
+        self.start_import_stop(cov, "clear_data_1")
+        assert cov.get_data().measured_files()
+
+        cov.clear_data()
+        assert cov.get_data().measured_files() == set()
+
     def test_empty_reporting(self) -> None:
         # empty summary reports raise exception, just like the xml report
         cov = coverage.Coverage()
