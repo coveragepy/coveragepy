@@ -23,6 +23,13 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
+- Added :meth:`Coverage.clear_data <coverage.Coverage.clear_data>`, a
+  lighter-weight alternative to :meth:`~coverage.Coverage.erase` for clearing
+  collected data between measurement cycles. Unlike ``erase()``, it doesn't
+  force the next ``start()`` to redo the collector/tracer setup, which makes
+  repeated start/stop/clear loops on the same ``Coverage`` object much
+  cheaper. Closes `issue 2139`_.
+
 - Fix: when the body of an irrefutable ``case`` (like ``case _:``) is entirely
   excluded, the ``case`` line is now excluded too, just as an excluded
   ``else:`` body removes the ``else:`` line.  Previously the ``case`` line was
@@ -31,6 +38,7 @@ Unreleased
 - Fix: using :meth:`.CoverageData.update` twice on an in-memory database would
   fail, as described in `issue 2279`_. This is now fixed.
 
+.. _issue 2139: https://github.com/coveragepy/coveragepy/issues/2139
 .. _issue 1563: https://github.com/coveragepy/coveragepy/issues/1563
 .. _pull 2269: https://github.com/coveragepy/coveragepy/pull/2269
 .. _issue 2279: https://github.com/coveragepy/coveragepy/issues/2279
