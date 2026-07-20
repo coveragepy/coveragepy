@@ -795,6 +795,14 @@ class Coverage(TConfigurable):
             raise CoverageException("Cannot switch context, coverage is not started")
 
         assert self._collector is not None
+        assert self._core is not None
+        if not self._core.supports_dynamic_contexts:
+            self._warn(
+                "switch_context() is not supported with core=sysmon; "
+                "context data may be incomplete",
+                slug="no-sysmon-context",
+                once=True,
+            )
         if self._collector.should_start_context:
             self._warn("Conflicting dynamic contexts", slug="dynamic-conflict", once=True)
 
