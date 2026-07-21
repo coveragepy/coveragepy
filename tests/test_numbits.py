@@ -23,6 +23,7 @@ from coverage.numbits import (
     num_in_numbits,
     register_sqlite_functions,
 )
+from coverage.sqldata import NumbitsUnionAgg
 
 from tests.coveragetest import CoverageTest
 
@@ -112,6 +113,7 @@ class NumbitsSqliteFunctionTest(CoverageTest):
         conn = sqlite3.connect(":memory:")
         register_sqlite_functions(conn)
         self.cursor = conn.cursor()
+        conn.create_aggregate("numbits_union_agg", 1, NumbitsUnionAgg)
         self.cursor.execute("create table data (id int, numbits blob)")
         self.cursor.executemany(
             "insert into data (id, numbits) values (?, ?)",
@@ -153,6 +155,14 @@ class NumbitsSqliteFunctionTest(CoverageTest):
             99,
         ]
         answer = numbits_to_nums(list(res)[0][0])
+        assert expected == answer
+
+    def test_numbits_union_aggregate(self) -> None:
+        res = self.cursor.execute(
+            "select numbits_union_agg(numbits) from data where id in (7, 9)",
+        )
+        expected = set(range(7, 100, 7)) | set(range(9, 100, 9))
+        answer = set(numbits_to_nums(list(res)[0][0]))
         assert expected == answer
 
     def test_numbits_intersection(self) -> None:

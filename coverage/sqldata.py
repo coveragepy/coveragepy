@@ -132,15 +132,20 @@ class NumbitsUnionAgg:
     """SQLite aggregate function for computing union of numbits."""
 
     def __init__(self) -> None:
-        self.result = b""
+        self.result = 0
+        self.result_nbytes = 0
 
     def step(self, value: bytes) -> None:
         """Process one value in the aggregation."""
-        self.result = numbits_union(self.result, value)
+        self.result |= int.from_bytes(value, "little")
+        if len(value) > self.result_nbytes:
+            self.result_nbytes = len(value)
 
     def finalize(self) -> bytes:
         """Return the final aggregated result."""
-        return self.result
+        if not self.result_nbytes:
+            return b""
+        return self.result.to_bytes(self.result_nbytes, "little")
 
 
 class CoverageData:
