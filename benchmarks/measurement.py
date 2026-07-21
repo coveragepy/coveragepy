@@ -62,13 +62,9 @@ class TimePersistence:
         assert line_collector is not None
         assert arc_collector is not None
         self.line_data = {
-            fname: linenos.copy()
-            for fname, linenos in line_collector.data.copy().items()
+            fname: linenos.copy() for fname, linenos in line_collector.data.copy().items()
         }
-        self.arc_data = {
-            fname: arcs.copy()
-            for fname, arcs in arc_collector.data.copy().items()
-        }
+        self.arc_data = {fname: arcs.copy() for fname, arcs in arc_collector.data.copy().items()}
         self.line_db = self.workspace / ".coverage.lines.bench"
         self.arc_db = self.workspace / ".coverage.arcs.bench"
 

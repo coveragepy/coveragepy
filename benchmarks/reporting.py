@@ -120,7 +120,9 @@ class TimeLargeHtml:
 
     def setup(self) -> None:
         self.workspace = make_workspace(large_module=True)
-        measured = collect_data(self.workspace, core="pytrace", branch=True, rounds=REPORT_ROUNDS, loops=40)
+        measured = collect_data(
+            self.workspace, core="pytrace", branch=True, rounds=REPORT_ROUNDS, loops=40
+        )
         measured.save()
         self.cov = make_coverage(
             self.workspace,

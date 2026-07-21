@@ -75,8 +75,7 @@ def sys_path_entry(path: pathlib.Path) -> Iterator[None]:
 def clear_package_modules() -> None:
     """Forget generated benchmark modules so workloads can be re-imported."""
     doomed = [
-        name for name in sys.modules
-        if name == PACKAGE_NAME or name.startswith(f"{PACKAGE_NAME}.")
+        name for name in sys.modules if name == PACKAGE_NAME or name.startswith(f"{PACKAGE_NAME}.")
     ]
     for name in doomed:
         sys.modules.pop(name, None)
