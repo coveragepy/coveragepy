@@ -138,8 +138,7 @@ class NumbitsUnionAgg:
     def step(self, value: bytes) -> None:
         """Process one value in the aggregation."""
         self.result |= int.from_bytes(value, "little")
-        if len(value) > self.result_nbytes:
-            self.result_nbytes = len(value)
+        self.result_nbytes = max(self.result_nbytes, len(value))
 
     def finalize(self) -> bytes:
         """Return the final aggregated result."""
