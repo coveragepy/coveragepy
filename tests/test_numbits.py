@@ -113,8 +113,10 @@ class NumbitsSqliteFunctionTest(CoverageTest):
         conn = sqlite3.connect(":memory:")
         register_sqlite_functions(conn)
         self.cursor = conn.cursor()
-        conn.create_aggregate(  # type: ignore[arg-type]
-            "numbits_union_agg", 1, NumbitsUnionAgg
+        conn.create_aggregate(
+            "numbits_union_agg",
+            1,
+            NumbitsUnionAgg,  # type: ignore[arg-type]
         )
         self.cursor.execute("create table data (id int, numbits blob)")
         self.cursor.executemany(
