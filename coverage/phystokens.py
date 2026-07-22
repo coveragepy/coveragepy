@@ -8,7 +8,6 @@ from __future__ import annotations
 import ast
 import io
 import keyword
-import re
 import sys
 import token
 import tokenize
@@ -17,7 +16,8 @@ from collections.abc import Iterable
 from coverage import env
 from coverage.types import TLineNo, TSourceTokenLines
 
-TokenInfos = Iterable[tokenize.TokenInfo]
+TToken = tuple[int, str, tuple[int, int], tuple[int, int], str]
+TokenInfos = Iterable[TToken]
 
 
 def _phys_tokens(toks: TokenInfos) -> TokenInfos:
@@ -74,19 +74,14 @@ def _phys_tokens(toks: TokenInfos) -> TokenInfos:
                     inject_backslash = False
                 if inject_backslash:
                     # Figure out what column the backslash is in.
-                    ccol = len(last_line.split("\n")[-2]) - 1
+                    line_start = last_line.rfind("\n", 0, len(last_line) - 1) + 1
+                    ccol = len(last_line) - 2 - line_start
                     # Yield the token, with a fake token type.
-                    yield tokenize.TokenInfo(
-                        99999,
-                        "\\\n",
-                        (slineno, ccol),
-                        (slineno, ccol + 2),
-                        last_line,
-                    )
+                    yield (99999, "\\\n", (slineno, ccol), (slineno, ccol + 2), last_line)
             last_line = ltext
         if ttype not in (tokenize.NEWLINE, tokenize.NL):
             last_ttext = ttext
-        yield tokenize.TokenInfo(ttype, ttext, (slineno, scol), (elineno, ecol), ltext)
+        yield (ttype, ttext, (slineno, scol), (elineno, ecol), ltext)
         last_lineno = elineno
 
 
@@ -127,6 +122,10 @@ def source_token_lines(source: str) -> TSourceTokenLines:
     """
 
     ws_tokens = {token.INDENT, token.DEDENT, token.NEWLINE, tokenize.NL}
+    tok_name_get = tokenize.tok_name.get
+    iskeyword = keyword.iskeyword
+    issoftkeyword = keyword.issoftkeyword
+    fstring_syntax = env.PYBEHAVIOR.fstring_syntax
     line: list[tuple[str, str]] = []
     col = 0
 
@@ -136,9 +135,59 @@ def source_token_lines(source: str) -> TSourceTokenLines:
     soft_key_lines = find_soft_key_lines(source)
 
     for ttype, ttext, (sline, scol), (_, ecol), _ in _phys_tokens(tokgen):
+        if "\n" not in ttext:
+            if ttext and ttype not in ws_tokens:
+                part = ttext
+                if fstring_syntax and ttype == token.FSTRING_MIDDLE:
+                    part = part.replace("{", "{{").replace("}", "}}")
+                    ecol = scol + len(part)
+                if scol > col:
+                    line.append(("ws", " " * (scol - col)))
+                tok_class = tok_name_get(ttype, "xx").lower()[:3]
+                if ttype == token.NAME:
+                    if iskeyword(ttext):
+                        tok_class = "key"
+                    elif issoftkeyword(ttext):
+                        is_start_of_line = not line or (len(line) == 1 and line[0][0] == "ws")
+                        if is_start_of_line and sline in soft_key_lines:
+                            tok_class = "key"
+                line.append((tok_class, part))
+                col = ecol
+            continue
+
         mark_start = True
-        for part in re.split("(\n)", ttext):
+        parts = ttext.splitlines(keepends=True)
+        for part in parts:
             if part == "\n":
+                yield line
+                line = []
+                col = 0
+                mark_end = False
+            elif part.endswith("\n"):
+                part = part[:-1]
+                if part:
+                    if ttype in ws_tokens:
+                        mark_end = False
+                    else:
+                        if fstring_syntax and ttype == token.FSTRING_MIDDLE:
+                            part = part.replace("{", "{{").replace("}", "}}")
+                            ecol = scol + len(part)
+                        if mark_start and scol > col:
+                            line.append(("ws", " " * (scol - col)))
+                            mark_start = False
+                        tok_class = tok_name_get(ttype, "xx").lower()[:3]
+                        if ttype == token.NAME:
+                            if iskeyword(ttext):
+                                tok_class = "key"
+                            elif issoftkeyword(ttext):
+                                is_start_of_line = not line or (
+                                    len(line) == 1 and line[0][0] == "ws"
+                                )
+                                if is_start_of_line and sline in soft_key_lines:
+                                    tok_class = "key"
+                        line.append((tok_class, part))
+                        mark_end = True
+                    scol = 0
                 yield line
                 line = []
                 col = 0
@@ -148,18 +197,18 @@ def source_token_lines(source: str) -> TSourceTokenLines:
             elif ttype in ws_tokens:
                 mark_end = False
             else:
-                if env.PYBEHAVIOR.fstring_syntax and ttype == token.FSTRING_MIDDLE:
+                if fstring_syntax and ttype == token.FSTRING_MIDDLE:
                     part = part.replace("{", "{{").replace("}", "}}")
                     ecol = scol + len(part)
                 if mark_start and scol > col:
                     line.append(("ws", " " * (scol - col)))
                     mark_start = False
-                tok_class = tokenize.tok_name.get(ttype, "xx").lower()[:3]
+                tok_class = tok_name_get(ttype, "xx").lower()[:3]
                 if ttype == token.NAME:
-                    if keyword.iskeyword(ttext):
+                    if iskeyword(ttext):
                         # Hard keywords are always keywords.
                         tok_class = "key"
-                    elif keyword.issoftkeyword(ttext):
+                    elif issoftkeyword(ttext):
                         # Soft keywords appear at the start of their line.
                         if len(line) == 0:
                             is_start_of_line = True
