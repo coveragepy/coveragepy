@@ -312,6 +312,7 @@ class HtmlReporter:
         self.template_globals = {
             # Functions available in the templates.
             "escape": escape,
+            "escape_url": escape_url,
             "pair": pair,
             "pretty_file": pretty_file,
             # Constants for this report.
@@ -857,6 +858,18 @@ def escape(t: str) -> str:
     """
     # Convert HTML special chars into HTML entities.
     return t.replace("&", "&amp;").replace("<", "&lt;")
+
+
+def escape_url(url: str) -> str:
+    """HTML-escape a page URL for a double-quoted ``href`` attribute.
+
+    Page URLs are built from source file names, which can contain characters
+    like a double quote (legal on POSIX) that would otherwise let the value
+    break out of the attribute and inject markup.
+    """
+    return (
+        url.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
+    )
 
 
 def pair(ratio: tuple[int, int]) -> str:

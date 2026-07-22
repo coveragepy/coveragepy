@@ -83,9 +83,9 @@
         </h2>
 
         <p class="text">
-            <a id="prevFileLink" class="nav" href="{{ prev_html }}">&#xab; prev</a> &nbsp; &nbsp;
+            <a id="prevFileLink" class="nav" href="{{ prev_html|escape_url }}">&#xab; prev</a> &nbsp; &nbsp;
             <a id="indexLink" class="nav" href="index.html">&Hat; index</a> &nbsp; &nbsp;
-            <a id="nextFileLink" class="nav" href="{{ next_html }}">&#xbb; next</a>
+            <a id="nextFileLink" class="nav" href="{{ next_html|escape_url }}">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="{{__url__}}">coverage.py v{{__version__}}</a>,
             created at {{ time_stamp }}
@@ -135,9 +135,9 @@
 <footer>
     <div class="content">
         <p>
-            <a class="nav" href="{{ prev_html }}">&#xab; prev</a> &nbsp; &nbsp;
+            <a class="nav" href="{{ prev_html|escape_url }}">&#xab; prev</a> &nbsp; &nbsp;
             <a class="nav" href="index.html">&Hat; index</a> &nbsp; &nbsp;
-            <a class="nav" href="{{ next_html }}">&#xbb; next</a>
+            <a class="nav" href="{{ next_html|escape_url }}">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="{{__url__}}">coverage.py v{{__version__}}</a>,
             created at {{ time_stamp }}
