@@ -1542,6 +1542,42 @@ class CmdLineDebugDataTest(BaseCmdLineTest):
             """)
 
 
+class CmdLineLocalPluginTest(CoverageTest):
+    """Command-line tests for importing local plugins from the current directory."""
+
+    run_in_temp_dir = True
+
+    def test_combine_imports_local_plugin(self) -> None:
+        self.make_file(
+            "pyproject.toml",
+            """\
+            [tool.coverage.run]
+            plugins = ["my_local_plugin"]
+            parallel = true
+            """,
+        )
+        self.make_file(
+            "my_local_plugin.py",
+            """\
+            def coverage_init(reg, options):
+                pass
+            """,
+        )
+        self.make_file("foo.py", "x = 1\n")
+
+        self.command_line("run foo.py")
+        self.assert_file_count(".coverage.*", 1)
+
+        self.command_line("combine")
+        assert "Combined 1 file" in self.stderr()
+        assert os.path.exists(".coverage")
+
+        cov = coverage.Coverage()
+        cov.load()
+        measured = cov.get_data().measured_files()
+        assert any(filename.endswith("foo.py") for filename in measured)
+
+
 class CmdLineStdoutTest(BaseCmdLineTest):
     """Test the command line with real stdout output."""
 
