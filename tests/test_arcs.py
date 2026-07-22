@@ -217,6 +217,23 @@ class SimpleArcTest(CoverageTest):
         )
         assert self.stdout() == "5\n"
 
+    def test_bug_2168(self) -> None:
+        self.check_coverage(
+            """\
+            def foo(*x):
+                for i in x:
+                    if i:
+                        break
+                pass
+
+            foo()
+            foo(0)
+            foo(1)
+            """,
+            branchz="23 25 32 34",
+            branchz_missing="",
+        )
+
     def test_bug_576(self) -> None:
         self.check_coverage(
             """\
