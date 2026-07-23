@@ -23,7 +23,7 @@ import textwrap
 import threading
 import uuid
 import zlib
-from collections.abc import Callable, Collection, Mapping, Sequence
+from collections.abc import Callable, Collection, Iterator, Mapping, Sequence
 from typing import Any, cast
 
 from coverage.debug import NoDebugging, auto_repr, file_summary
