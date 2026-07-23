@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import base64
 import collections
+import contextlib
 import datetime
 import functools
 import glob
@@ -22,7 +23,7 @@ import textwrap
 import threading
 import uuid
 import zlib
-from collections.abc import Callable, Collection, Mapping, Sequence
+from collections.abc import Callable, Collection, Iterator, Mapping, Sequence
 from typing import Any, cast
 
 from coverage.debug import NoDebugging, auto_repr, file_summary
@@ -310,6 +311,20 @@ class CoverageData:
         for db in self._dbs.values():
             db.close(force=force)
         self._dbs = {}
+
+    @contextlib.contextmanager
+    def keep_db_open(self) -> Iterator[None]:
+        """Keep the reporting database connection open for a block."""
+        db = self._connect()
+        db.keep_open = True
+        with db:
+            pass
+        try:
+            yield
+        finally:
+            db.keep_open = False
+            if not self._no_disk:
+                self.close(force=True)
 
     def _open_db(self) -> None:
         """Open an existing db file, and read its metadata."""

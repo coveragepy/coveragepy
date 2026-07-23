@@ -1252,7 +1252,9 @@ class Coverage(TConfigurable):
             precision=precision,
         ):
             reporter = HtmlReporter(self)
-            return reporter.report(morfs)
+            assert self._data is not None
+            with self._data.keep_db_open():
+                return reporter.report(morfs)
 
     def xml_report(
         self,
