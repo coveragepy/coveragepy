@@ -323,7 +323,8 @@ class CoverageData:
             yield
         finally:
             db.keep_open = False
-            self.close(force=True)
+            if not self._no_disk:
+                self.close(force=True)
 
     def _open_db(self) -> None:
         """Open an existing db file, and read its metadata."""
