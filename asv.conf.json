@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "project": "coverage.py",
+  "repo": ".",
+  "branches": [
+    "main"
+  ],
+  "environment_type": "uv",
+  "pythons": [
+    "3.14"
+  ],
+  "benchmark_dir": "benchmarks",
+  "matrix": {},
+  "env_dir": ".asv/env",
+  "results_dir": ".asv/results",
+  "html_dir": ".asv/html",
+  "hash_length": 8,
+  "show_commit_url": "https://github.com/nedbat/coveragepy/commit/"
+}

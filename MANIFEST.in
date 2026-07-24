@@ -22,6 +22,7 @@ include Makefile
 include NOTICE.txt
 include README.rst
 include __main__.py
+include asv.conf.json
 include howto.txt
 include igor.py
 include metacov.ini
@@ -41,6 +42,7 @@ prune doc/_build
 prune doc/_spell
 
 recursive-include requirements *.in *.pip
+recursive-include benchmarks *.md *.py
 
 recursive-include tests *.py *.tok
 recursive-include tests/gold *
