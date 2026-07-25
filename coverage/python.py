@@ -187,6 +187,7 @@ class PythonFileReporter(FileReporter):
             self._parser = PythonParser(
                 filename=self.filename,
                 exclude=self.coverage._exclude_regex("exclude"),
+                retain_ast=True,
             )
             self._parser.parse_source()
         return self._parser
@@ -262,7 +263,11 @@ class PythonFileReporter(FileReporter):
         return source_token_lines(self.source())
 
     def code_regions(self) -> Iterable[CodeRegion]:
-        return code_regions(self.source())
+        if self._parser is None:
+            return code_regions(self.source())
+        regions = self.parser.code_regions()
+        self._parser.release_ast()
+        return regions
 
     def code_region_kinds(self) -> Iterable[tuple[str, str]]:
         return [
