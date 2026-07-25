@@ -35,7 +35,6 @@ class SqliteDb:
         self.no_disk = no_disk
         self.nest = 0
         self.con: sqlite3.Connection | None = None
-        self.keep_open = False
 
     __repr__ = auto_repr
 
@@ -106,8 +105,7 @@ class SqliteDb:
             try:
                 assert self.con is not None
                 self.con.__exit__(exc_type, exc_value, traceback)
-                if not self.keep_open:
-                    self.close()
+                self.close()
             except Exception as exc:
                 if self.debug.should("sql"):
                     self.debug.write(f"EXCEPTION from __exit__: {exc_one_line(exc)}")

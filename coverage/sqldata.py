@@ -316,13 +316,10 @@ class CoverageData:
     def keep_db_open(self) -> Iterator[None]:
         """Keep the reporting database connection open for a block."""
         db = self._connect()
-        db.keep_open = True
-        with db:
-            pass
         try:
-            yield
+            with db:
+                yield
         finally:
-            db.keep_open = False
             if not self._no_disk:
                 self.close(force=True)
 
