@@ -336,10 +336,8 @@ class PythonParser:
         `_all_arcs` is the set of arcs in the code.
 
         """
-        ast_root = self._ast_root
-        if ast_root is None:
-            ast_root = ast.parse(self.text)
-        aaa = AstArcAnalyzer(self.filename, ast_root, self.raw_statements, self.multiline_map)
+        assert self._ast_root is not None
+        aaa = AstArcAnalyzer(self.filename, self._ast_root, self.raw_statements, self.multiline_map)
         aaa.analyze()
         arcs = aaa.arcs
         self._with_jump_fixers = aaa.with_jump_fixers()
