@@ -244,6 +244,7 @@ jobs:
           echo '```' >> "$GITHUB_STEP_SUMMARY"
           python -m coverage report -m --skip-covered >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
+          cat "$GITHUB_STEP_SUMMARY"
 
       - name: "Get total"
         id: total
@@ -256,8 +257,14 @@ jobs:
           python -m pip install wcmatch
           # Very crude check that nothing catastrophic has happened.
           python lab/goals.py --group 90 "coverage/*.py" "tests/*.py"
+          if [[ $? -eq 0 ]]; then
+              echo "Total coverage is less than 90%!"
+          fi
           # Absolutely all of our test code should be covered.
           python lab/goals.py --file 100 "tests/test_*.py"
+          if [[ $? -eq 0 ]]; then
+              echo "Coverage of test files must be 100%!"
+          fi
 
   publish:
     name: "Publish coverage report"
