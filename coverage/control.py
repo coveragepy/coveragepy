@@ -797,7 +797,8 @@ class Coverage(TConfigurable):
         assert self._core is not None
         if not self._core.supports_dynamic_contexts:
             self._warn(
-                "Dynamic contexts aren't supported with core=sysmon; context data may be incomplete",
+                "Dynamic contexts aren't supported with core=sysmon; "
+                + "context data may be incomplete",
                 slug="no-sysmon-context",
                 once=True,
             )
