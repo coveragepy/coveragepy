@@ -261,7 +261,7 @@ class PythonFileReporter(FileReporter):
         return False
 
     def source_token_lines(self) -> TSourceTokenLines:
-        return source_token_lines(self.source())
+        return source_token_lines(self.source(), soft_key_lines=self.parser.soft_key_lines)
 
     def code_regions(self) -> Iterable[CodeRegion]:
         if self._code_regions is None:

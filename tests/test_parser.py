@@ -38,6 +38,14 @@ class PythonParserTestBase(CoverageTest):
 class PythonParserTest(PythonParserTestBase):
     """Tests of coverage.parser."""
 
+    def test_soft_key_lines(self) -> None:
+        parser = self.parse_text("""
+            match value:
+                case 1:
+                    pass
+            """)
+        assert parser.soft_key_lines == {2, 3}
+
     def test_exit_counts(self) -> None:
         parser = self.parse_text("""\
             # check some basic branch counting

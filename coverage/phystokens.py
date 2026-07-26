@@ -110,7 +110,11 @@ def find_soft_key_lines(source: str) -> set[TLineNo]:
     return soft_key_lines
 
 
-def source_token_lines(source: str) -> TSourceTokenLines:
+def source_token_lines(
+    source: str,
+    *,
+    soft_key_lines: set[TLineNo] | None = None,
+) -> TSourceTokenLines:
     """Generate a series of lines, one for each line in `source`.
 
     Each line is a list of pairs, each pair is a token::
@@ -133,7 +137,8 @@ def source_token_lines(source: str) -> TSourceTokenLines:
     source = source.expandtabs(8).replace("\r\n", "\n")
     tokgen = generate_tokens(source)
 
-    soft_key_lines = find_soft_key_lines(source)
+    if soft_key_lines is None:
+        soft_key_lines = find_soft_key_lines(source)
 
     for ttype, ttext, (sline, scol), (_, ecol), _ in _phys_tokens(tokgen):
         mark_start = True
