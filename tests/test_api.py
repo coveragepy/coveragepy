@@ -744,8 +744,7 @@ class ApiTest(CoverageTest):
                 cov.switch_context("test_b")
         assert_coverage_warnings(
             warns,
-            "switch_context() is not supported with core=sysmon; "
-            "context data may be incomplete (no-sysmon-context)",
+            "Dynamic contexts aren't supported with core=sysmon; context data may be incomplete (no-sysmon-context)",
         )
 
 

@@ -155,9 +155,16 @@ Can't use core=sysmon: it doesn't yet support dynamic contexts, using default co
   instead.
 
 Can't use core=sysmon: it doesn't support concurrency=ZZZ, using default core (no-sysmon)
-  Your requested the sys.monitoring measurement core and also a particular
+  You requested the sys.monitoring measurement core and also a particular
   concurrency setting, but that combination isn't supported.  A default core
   will be used instead.
+
+.. _warning_no_sysmon_context:
+
+Dynamic contexts aren't supported with core=sysmon; context data may be incomplete (no-sysmon-context)
+  You are using the sys.monitoring measurement core, and are changing the
+  dynamic context. Those two features are incompatible. Context data will be
+  lost. Change your configuration to use the ctrace core.
 
 
 Disabling warnings

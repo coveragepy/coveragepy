@@ -20,6 +20,19 @@ upgrading your version of coverage.py.
     ..  Version 9.8.1 — 2027-07-27
     ..  --------------------------
 
+Unreleased
+----------
+
+- Fix: the sysmon core is incompatible with dynamic contexts. Previously, the
+  combination would be prevented when read from the coverage.py configuration.
+  But using the context API as pytest-cov does, contexts would be silently
+  dropped. Now a warning is issued, thanks to `Jisang Han <pull 2234_>`_.
+  Closes `issue 2200`_.
+
+.. _issue 2200: https://github.com/coveragepy/coveragepy/issues/2200
+.. _pull 2234: https://github.com/coveragepy/coveragepy/pull/2234
+
+
 .. start-releases
 
 .. _changes_7-15-2:
