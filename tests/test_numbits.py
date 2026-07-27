@@ -20,7 +20,6 @@ from coverage.numbits import (
     num_in_numbits,
     register_sqlite_functions,
 )
-from coverage.sqldata import NumbitsUnionAgg
 
 from tests.coveragetest import CoverageTest
 from tests.hypo import example, given, settings
@@ -113,11 +112,6 @@ class NumbitsSqliteFunctionTest(CoverageTest):
         conn = sqlite3.connect(":memory:")
         register_sqlite_functions(conn)
         self.cursor = conn.cursor()
-        conn.create_aggregate(
-            "numbits_union_agg",
-            1,
-            NumbitsUnionAgg,  # type: ignore[arg-type]
-        )
         self.cursor.execute("create table data (id int, numbits blob)")
         self.cursor.executemany(
             "insert into data (id, numbits) values (?, ?)",
