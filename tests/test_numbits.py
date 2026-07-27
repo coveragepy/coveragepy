@@ -10,9 +10,6 @@ import sqlite3
 
 from collections.abc import Iterable
 
-from hypothesis import example, given, settings
-from hypothesis.strategies import sets, integers
-
 from coverage import env
 from coverage.numbits import (
     nums_to_numbits,
@@ -26,6 +23,9 @@ from coverage.numbits import (
 from coverage.sqldata import NumbitsUnionAgg
 
 from tests.coveragetest import CoverageTest
+from tests.hypo import example, given, settings
+from tests.hypo import sets, integers
+
 
 # Hypothesis-generated line number data
 line_numbers = integers(min_value=1, max_value=9999)
