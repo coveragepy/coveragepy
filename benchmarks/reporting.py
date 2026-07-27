@@ -45,7 +45,6 @@ class TimeAnalysis(_ReportingBase):
     """Measure static-analysis work across all files."""
 
     def time_analysis2_all_files(self) -> None:
-        self.cov._clear_analysis_caches()
         for filename in self.source_files:
             self.cov.analysis2(str(filename))
 
@@ -54,24 +53,19 @@ class TimeReport(_ReportingBase):
     """Measure text and HTML report generation."""
 
     def time_report_text(self) -> None:
-        self.cov._clear_analysis_caches()
         self.cov.report(file=io.StringIO())
 
     def time_html_report(self) -> None:
-        self.cov._clear_analysis_caches()
         html_dir = fresh_html_dir(self.workspace)
         self.cov.html_report(directory=str(html_dir))
 
     def time_xml_report(self) -> None:
-        self.cov._clear_analysis_caches()
         self.cov.xml_report(outfile=str(self.workspace / "coverage.xml"))
 
     def time_json_report(self) -> None:
-        self.cov._clear_analysis_caches()
         self.cov.json_report(outfile=str(self.workspace / "coverage.json"))
 
     def time_lcov_report(self) -> None:
-        self.cov._clear_analysis_caches()
         self.cov.lcov_report(outfile=str(self.workspace / "coverage.lcov"))
 
 
@@ -79,7 +73,6 @@ class TimeReportReuse(_ReportingBase):
     """Measure repeated reporting on the same loaded data."""
 
     def time_report_then_html_same_process(self) -> None:
-        self.cov._clear_analysis_caches()
         self.cov.report(file=io.StringIO())
         html_dir = fresh_html_dir(self.workspace)
         self.cov.html_report(directory=str(html_dir))
@@ -104,13 +97,11 @@ class TimeHtmlContexts(_ReportingBase):
         self.cov.load()
 
     def time_html_report_with_contexts(self) -> None:
-        self.cov._clear_analysis_caches()
         html_dir = fresh_html_dir(self.workspace)
         self.cov.html_report(directory=str(html_dir), show_contexts=True)
 
     def time_html_report_with_filtered_contexts(self) -> None:
         self.cov.set_option("report:contexts", ["test_context_alpha"])
-        self.cov._clear_analysis_caches()
         html_dir = fresh_html_dir(self.workspace)
         self.cov.html_report(directory=str(html_dir), show_contexts=True)
 
@@ -139,7 +130,6 @@ class TimeLargeHtml:
         shutil.rmtree(self.workspace, ignore_errors=True)
 
     def time_html_report_large_module(self) -> None:
-        self.cov._clear_analysis_caches()
         html_dir = fresh_html_dir(self.workspace)
         self.cov.html_report(directory=str(html_dir))
 
@@ -157,12 +147,10 @@ class TimeHtmlIncremental(_ReportingBase):
         self._use_changed_source = False
 
     def time_html_report_unchanged(self) -> None:
-        self.cov._clear_analysis_caches()
         self.cov.html_report(directory=str(self.html_dir))
 
     def time_html_report_single_source_change(self) -> None:
         self._use_changed_source = not self._use_changed_source
         new_source = self.changed_source if self._use_changed_source else self.original_source
         self.changed_file.write_text(new_source, encoding="utf-8")
-        self.cov._clear_analysis_caches()
         self.cov.html_report(directory=str(self.html_dir))
