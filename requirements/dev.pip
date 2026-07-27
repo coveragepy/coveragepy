@@ -323,9 +323,9 @@ execnet==2.1.2 \
     --hash=sha256:63d83bfdd9a23e35b9c6a3261412324f964c2ec8dcd8d3c6916ee9373e0befcd \
     --hash=sha256:67fba928dd5a544b783f6056f449e5e3931a5c378b128bc18501f7ea79e296ec
     # via pytest-xdist
-filelock==3.30.1 \
-    --hash=sha256:69b98bab51bed4c86b141ef338f85ca07937573e8a7798f7fe6a31ccd94b9338 \
-    --hash=sha256:6ad1b1ec6a5e2c91e02979b7d1096e5e964d83ad8a55679bacd1d96f917fda6e
+filelock==3.30.2 \
+    --hash=sha256:1ea7c857465c897a4a6e64c1aace28ff6b83f5bc66c1c06ea148efa65bc2ec5d \
+    --hash=sha256:a64b58f75048ec39589983e97f5117163f822261dcb6ba843e098f05aac9663f
     # via
     #   python-discovery
     #   tox
@@ -415,7 +415,7 @@ greenlet==3.5.3 \
     --hash=sha256:fad5aec764399f1b5cc347ad250a59660f20c8f8888ea6bae1f93b769cce1154 \
     --hash=sha256:fd2e02fa07485778536a036222d616ab957b1d533f36b3ed98ce725d9c9d3117
     # via -r requirements/dev.in
-hypothesis==6.156.6 \
+hypothesis==6.156.6 ; python_full_version >= '3.11' or platform_python_implementation != 'PyPy' \
     --hash=sha256:01bb8270c46b3ef53b0c2d23ff613ea506d609d06f936d823ea57c58b66b05f7 \
     --hash=sha256:02accb187617ebaebb120da931f799a3cb0df7c38706f97f9d022441d4faf533 \
     --hash=sha256:050c8c0815f88d47dd0875a92698d20d61639b7b721ee043a6d687c7f14ff7d8 \
@@ -802,7 +802,7 @@ setuptools==83.0.0 \
     # via
     #   -r requirements/pip.in
     #   check-manifest
-sortedcontainers==2.4.0 \
+sortedcontainers==2.4.0 ; python_full_version >= '3.11' or platform_python_implementation != 'PyPy' \
     --hash=sha256:25caa5a06cc30b6b83d11423433f65d1f9d76c4c6a0c90e3379eaa43b9bfdb88 \
     --hash=sha256:a163dcaede0f1c021485e957a39245190e74249897e2ae4b2aa38595db237ee0
     # via hypothesis
@@ -865,9 +865,9 @@ tomli-w==1.2.0 \
     --hash=sha256:188306098d013b691fcadc011abd66727d3c414c571bb01b1a174ba8c983cf90 \
     --hash=sha256:2dd14fac5a47c27be9cd4c976af5a12d87fb1f0b4512f81d69cce3b35ae25021
     # via tox
-tomlkit==0.15.0 \
-    --hash=sha256:4dbc8f0fc024412b57ced8757ac7461305126a648ff8c2c807fcb8e133a78738 \
-    --hash=sha256:7d1a9ecba3086638211b13814ea79c90dd54dd11993564376f3aa92271f5c7a3
+tomlkit==0.15.1 \
+    --hash=sha256:177a05aece5a8ca5266fd3c448abb47b8d352f09d477d3ca8332db4d89b24304 \
+    --hash=sha256:e25bbf38843005246210a12982776f27f99cb9be67160e14434d0c0d21ee1e97
     # via pylint
 tox==4.56.4 \
     --hash=sha256:53bac88382b9638a5ce40fbaddd6076e1c8f638751af7bf8e759392c953df2f0 \
