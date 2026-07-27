@@ -742,11 +742,11 @@ class ApiTest(CoverageTest):
             with pytest.warns(Warning) as warns:
                 cov.switch_context("test_a")
                 cov.switch_context("test_b")
-        assert_coverage_warnings(
-            warns,
-            "Dynamic contexts aren't supported with core=sysmon; "
-            + "context data may be incomplete (no-sysmon-context)",
-        )
+            assert_coverage_warnings(
+                warns,
+                "Dynamic contexts aren't supported with core=sysmon; "
+                + "context data may be incomplete (no-sysmon-context)",
+            )
 
 
 @pytest.mark.skipif(not testenv.DYN_CONTEXTS, reason="No dynamic contexts with this core.")
