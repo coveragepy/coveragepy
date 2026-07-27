@@ -256,11 +256,15 @@ jobs:
           # Maybe someday goals will be a real feature
           python -m pip install wcmatch
           # Very crude check that nothing catastrophic has happened.
-          python lab/goals.py --group 90 "coverage/*.py" "tests/*.py" || \
+          if ! python lab/goals.py --group 90 "coverage/*.py" "tests/*.py"; then
               echo '***** Total coverage is less than 90%!'
+              exit 1
+          fi
           # Absolutely all of our test code should be covered.
-          python lab/goals.py --file 100 "tests/test_*.py" || \
+          if ! python lab/goals.py --file 100 "tests/test_*.py"; then
               echo '***** Coverage of test files must be 100%!'
+              exit 1
+          fi
 
   publish:
     name: "Publish coverage report"
