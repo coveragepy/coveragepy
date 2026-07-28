@@ -123,8 +123,6 @@ class NumbitsUnionAgg:
 
     def finalize(self) -> bytes:
         """Return the final aggregated result."""
-        if not self.result_nbytes:
-            return b""
         return self.result.to_bytes(self.result_nbytes, "little")
 
 

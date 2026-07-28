@@ -378,7 +378,7 @@ class CoverageData:
                     self._debug.write(f"Reaping dead thread's data file: {db!r}")
                 try:
                     db.close(force=True)
-                except Exception:
+                except Exception:  # pragma: cant happen
                     # Closing is best-effort; a failure here must not break
                     # collection. The entry has already been dropped.
                     pass
