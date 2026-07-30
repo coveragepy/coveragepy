@@ -92,7 +92,9 @@ def _phys_tokens(toks: TokenInfos) -> TokenInfos:
 
 def find_soft_key_lines(source: str) -> set[TLineNo]:
     """Helper for finding lines with soft keywords, like match/case lines."""
-    if "match" not in source and "case" not in source:
+    # Do a quick check first, to eliminate files with no possibility of soft keywords.
+    # match/case is only a soft keyword if both words are in the source.
+    if "match" not in source or "case" not in source:
         if sys.version_info < (3, 12) or "type" not in source:
             if sys.version_info < (3, 15) or "lazy" not in source:
                 return set()
