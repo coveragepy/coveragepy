@@ -51,6 +51,7 @@ class Core:
     tracer_kwargs: dict[str, Any]
     file_disposition_class: type[TFileDisposition]
     supports_plugins: bool
+    supports_dynamic_contexts: bool
     packed_arcs: bool
     systrace: bool
 
@@ -116,18 +117,21 @@ class Core:
             self.tracer_class = SysMonitor
             self.file_disposition_class = FileDisposition
             self.supports_plugins = False
+            self.supports_dynamic_contexts = False
             self.packed_arcs = False
             self.systrace = False
         elif core_name == "ctrace":
             self.tracer_class = coverage.tracer.CTracer
             self.file_disposition_class = coverage.tracer.CFileDisposition
             self.supports_plugins = True
+            self.supports_dynamic_contexts = True
             self.packed_arcs = True
             self.systrace = True
         elif core_name == "pytrace":
             self.tracer_class = PyTracer
             self.file_disposition_class = FileDisposition
             self.supports_plugins = False
+            self.supports_dynamic_contexts = True
             self.packed_arcs = False
             self.systrace = True
         else:

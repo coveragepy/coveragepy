@@ -15,7 +15,6 @@ import warnings
 
 from collections.abc import Iterable
 
-import hypothesis
 import pytest
 
 from coverage.files import set_relative_directory
@@ -35,13 +34,16 @@ pytest_plugins = [
     "tests.select_plugin",
 ]
 
-# Control the Hypothesis settings.
-# $set_env.py: HYPOTHESIS_PROFILE - "slow": 25k examples; "250k"
-hypothesis.settings.register_profile("slow", max_examples=25_000)
-hypothesis.settings.register_profile("250k", max_examples=250_000)
-# In CI, using the database makes the first draw take more than a second.
-hypothesis.settings.register_profile("ci", database=None, max_examples=1000)
-hypothesis.settings.load_profile(os.getenv("HYPOTHESIS_PROFILE", "default"))
+if testenv.USE_HYPOTHESIS:
+    import hypothesis
+
+    # Control the Hypothesis settings.
+    # $set_env.py: HYPOTHESIS_PROFILE - "slow": 25k examples; "250k"
+    hypothesis.settings.register_profile("slow", max_examples=25_000)
+    hypothesis.settings.register_profile("250k", max_examples=250_000)
+    # In CI, using the database makes the first draw take more than a second.
+    hypothesis.settings.register_profile("ci", database=None, max_examples=1000)
+    hypothesis.settings.load_profile(os.getenv("HYPOTHESIS_PROFILE", "default"))
 
 
 @pytest.fixture(autouse=True)

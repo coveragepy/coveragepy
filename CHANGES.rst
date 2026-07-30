@@ -23,7 +23,18 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
-Nothing yet.
+- Fix: the sysmon core is incompatible with dynamic contexts. Previously, the
+  combination would be prevented when read from the coverage.py configuration.
+  But using the context API as pytest-cov does, contexts would be silently
+  dropped. Now a warning is issued, thanks to `Jisang Han <pull 2234_>`_.
+  Closes `issue 2200`_.
+
+- A performance improvement in the low-level line number bookkeeping when
+  combining data files, thanks to `Kevin Turcios <pull 2239_>`_.
+
+.. _issue 2200: https://github.com/coveragepy/coveragepy/issues/2200
+.. _pull 2234: https://github.com/coveragepy/coveragepy/pull/2234
+.. _pull 2239: https://github.com/coveragepy/coveragepy/pull/2239
 
 
 .. start-releases
