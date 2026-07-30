@@ -32,9 +32,13 @@ Unreleased
 - A performance improvement in the low-level line number bookkeeping when
   combining data files, thanks to `Kevin Turcios <pull 2239_>`_.
 
+- Performance improvement in HTML reporting by reducing the number of times
+  files have to be parsed, thanks to `Kevin Turcios <pull 2240_>`_.
+
 .. _issue 2200: https://github.com/coveragepy/coveragepy/issues/2200
 .. _pull 2234: https://github.com/coveragepy/coveragepy/pull/2234
 .. _pull 2239: https://github.com/coveragepy/coveragepy/pull/2239
+.. _pull 2240: https://github.com/coveragepy/coveragepy/pull/2240
 
 
 .. start-releases
