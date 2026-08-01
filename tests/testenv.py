@@ -41,3 +41,7 @@ CAN_MEASURE_THREADS = not SYS_MON
 
 # Can we measure branches?
 CAN_MEASURE_BRANCHES = env.PYBEHAVIOR.branch_right_left
+
+# Can we use Hypothesis?
+# As of 6.156.0, PyPy 3.10 is no longer supported.
+USE_HYPOTHESIS = env.PYVERSION >= (3, 11) or env.CPYTHON

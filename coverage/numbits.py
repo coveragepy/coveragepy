@@ -109,6 +109,23 @@ def num_in_numbits(num: int, numbits: bytes) -> bool:
     return bool(numbits[nbyte] & (1 << nbit))
 
 
+class NumbitsUnionAgg:
+    """SQLite aggregate function for computing union of numbits."""
+
+    def __init__(self) -> None:
+        self.result = 0
+        self.result_nbytes = 0
+
+    def step(self, value: bytes) -> None:
+        """Process one value in the aggregation."""
+        self.result |= int.from_bytes(value, "little")
+        self.result_nbytes = max(self.result_nbytes, len(value))
+
+    def finalize(self) -> bytes:
+        """Return the final aggregated result."""
+        return self.result.to_bytes(self.result_nbytes, "little")
+
+
 def register_sqlite_functions(connection: sqlite3.Connection) -> None:
     """
     Define numbits functions in a SQLite connection.
@@ -144,3 +161,4 @@ def register_sqlite_functions(connection: sqlite3.Connection) -> None:
     connection.create_function("numbits_any_intersection", 2, numbits_any_intersection)
     connection.create_function("num_in_numbits", 2, num_in_numbits)
     connection.create_function("numbits_to_nums", 1, lambda b: json.dumps(numbits_to_nums(b)))
+    connection.create_aggregate("numbits_union_agg", 1, NumbitsUnionAgg)  # type: ignore[arg-type]

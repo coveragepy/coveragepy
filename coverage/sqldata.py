@@ -28,7 +28,12 @@ from typing import Any, cast
 from coverage.debug import NoDebugging, auto_repr, file_summary
 from coverage.exceptions import CoverageException, DataError
 from coverage.misc import Hasher, file_be_gone, isolate_module
-from coverage.numbits import numbits_to_nums, numbits_union, nums_to_numbits
+from coverage.numbits import (
+    numbits_to_nums,
+    numbits_union,
+    nums_to_numbits,
+    register_sqlite_functions,
+)
 from coverage.sqlitedb import SqliteDb
 from coverage.types import AnyCallable, FilePath, TArc, TDebugCtl, TLineNo, TWarnFn
 from coverage.version import __version__
@@ -126,21 +131,6 @@ def _locked(method: AnyCallable) -> AnyCallable:
             return method(self, *args, **kwargs)
 
     return _wrapped
-
-
-class NumbitsUnionAgg:
-    """SQLite aggregate function for computing union of numbits."""
-
-    def __init__(self) -> None:
-        self.result = b""
-
-    def step(self, value: bytes) -> None:
-        """Process one value in the aggregation."""
-        self.result = numbits_union(self.result, value)
-
-    def finalize(self) -> bytes:
-        """Return the final aggregated result."""
-        return self.result
 
 
 class CoverageData:
@@ -388,7 +378,7 @@ class CoverageData:
                     self._debug.write(f"Reaping dead thread's data file: {db!r}")
                 try:
                     db.close(force=True)
-                except Exception:
+                except Exception:  # pragma: cant happen
                     # Closing is best-effort; a failure here must not break
                     # collection. The entry has already been dropped.
                     pass
@@ -746,13 +736,8 @@ class CoverageData:
             con.con.isolation_level = "IMMEDIATE"
 
             # Register functions for SQLite
-            con.con.create_function("numbits_union", 2, numbits_union)
+            register_sqlite_functions(con.con)
             con.con.create_function("map_path", 1, map_path)
-            con.con.create_aggregate(
-                "numbits_union_agg",
-                1,
-                NumbitsUnionAgg,  # type: ignore[arg-type]
-            )
 
             # Attach the other database
             con.execute_void("ATTACH DATABASE ? AS other_db", (other_data.data_filename(),))

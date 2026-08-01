@@ -10,9 +10,6 @@ import sqlite3
 
 from collections.abc import Iterable
 
-from hypothesis import example, given, settings
-from hypothesis.strategies import sets, integers
-
 from coverage import env
 from coverage.numbits import (
     nums_to_numbits,
@@ -25,6 +22,9 @@ from coverage.numbits import (
 )
 
 from tests.coveragetest import CoverageTest
+from tests.hypo import example, given, settings
+from tests.hypo import sets, integers
+
 
 # Hypothesis-generated line number data
 line_numbers = integers(min_value=1, max_value=9999)
@@ -153,6 +153,14 @@ class NumbitsSqliteFunctionTest(CoverageTest):
             99,
         ]
         answer = numbits_to_nums(list(res)[0][0])
+        assert expected == answer
+
+    def test_numbits_union_aggregate(self) -> None:
+        res = self.cursor.execute(
+            "select numbits_union_agg(numbits) from data where id in (7, 9)",
+        )
+        expected = set(range(7, 100, 7)) | set(range(9, 100, 9))
+        answer = set(numbits_to_nums(list(res)[0][0]))
         assert expected == answer
 
     def test_numbits_intersection(self) -> None:
