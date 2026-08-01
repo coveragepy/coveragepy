@@ -12,6 +12,7 @@ import json
 import os
 import os.path
 import re
+import sqlite3
 import sys
 
 from html.parser import HTMLParser
@@ -599,6 +600,53 @@ class HtmlWithUnparsableFilesTest(HtmlTestHelpers, CoverageTest):
 
 class HtmlTest(HtmlTestHelpers, CoverageTest):
     """Moar HTML tests."""
+
+    def test_html_report_reuses_and_closes_connection(self) -> None:
+        """HTML reporting uses one disk connection, then closes it."""
+        self.create_initial_files()
+        self.make_data_file(lines={abs_file("main_file.py"): [1]})
+
+        # Use a fresh Coverage object, as a caller would when reporting saved
+        # data.  Loading the data leaves the SqliteDb object cached, but not
+        # its physical connection, so html_report must open one connection.
+        cov = coverage.Coverage()
+        cov.load()
+        assert cov._data is not None
+
+        connections: list[sqlite3.Connection] = []
+        connect = sqlite3.connect
+
+        def connect_and_remember(*args: Any, **kwargs: Any) -> sqlite3.Connection:
+            con = connect(*args, **kwargs)
+            connections.append(con)
+            return con
+
+        with mock.patch("coverage.sqlitedb.sqlite3.connect", side_effect=connect_and_remember):
+            cov.html_report()
+
+        assert len(connections) == 1
+        with pytest.raises(sqlite3.ProgrammingError):
+            connections[0].execute("select 1")
+        assert cov._data._dbs == {}
+
+    def test_html_report_closes_connection_on_error(self) -> None:
+        """HTML reporting closes its disk connection when reporting fails."""
+        self.create_initial_files()
+        self.make_data_file(lines={abs_file("main_file.py"): [1]})
+
+        cov = coverage.Coverage()
+        cov.load()
+        assert cov._data is not None
+
+        with (
+            mock.patch("coverage.sqlitedb.sqlite3.connect", wraps=sqlite3.connect) as connect,
+            mock.patch.object(coverage.html.HtmlReporter, "report", side_effect=RuntimeError),
+            pytest.raises(RuntimeError),
+        ):
+            cov.html_report()
+
+        assert connect.call_count == 1
+        assert cov._data._dbs == {}
 
     def test_missing_source_file_incorrect_message(self) -> None:
         # https://github.com/coveragepy/coveragepy/issues/60
