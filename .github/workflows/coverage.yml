@@ -244,6 +244,7 @@ jobs:
           echo '```' >> "$GITHUB_STEP_SUMMARY"
           python -m coverage report -m --skip-covered >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
+          cat "$GITHUB_STEP_SUMMARY"
 
       - name: "Get total"
         id: total
@@ -255,9 +256,15 @@ jobs:
           # Maybe someday goals will be a real feature
           python -m pip install wcmatch
           # Very crude check that nothing catastrophic has happened.
-          python lab/goals.py --group 90 "coverage/*.py" "tests/*.py"
+          if ! python lab/goals.py --group 90 "coverage/*.py" "tests/*.py"; then
+              echo '***** Total coverage is less than 90%!'
+              exit 1
+          fi
           # Absolutely all of our test code should be covered.
-          python lab/goals.py --file 100 "tests/test_*.py"
+          if ! python lab/goals.py --file 100 "tests/test_*.py"; then
+              echo '***** Coverage of test files must be 100%!'
+              exit 1
+          fi
 
   publish:
     name: "Publish coverage report"
@@ -343,7 +350,7 @@ jobs:
           github.repository_owner == 'coveragepy'
           && github.ref == 'refs/heads/main'
         # https://gist.githubusercontent.com/nedbat/8c6980f77988a327348f9b02bbaf67f5
-        uses: schneegans/dynamic-badges-action@0e50b8bad39e7e1afd3e4e9c2b7dd145fad07501 # v1.8.0
+        uses: schneegans/dynamic-badges-action@28b0fa8bdeb46170ac397105ece0c1fe58f68910 # v1.9.0
         with:
           # Personal access token: gist access
           auth: ${{ secrets.METACOV_GIST_SECRET }}
