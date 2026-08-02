@@ -20,8 +20,12 @@ upgrading your version of coverage.py.
     ..  Version 9.8.1 — 2027-07-27
     ..  --------------------------
 
-Unreleased
-----------
+.. start-releases
+
+.. _changes_7-15-3:
+
+Version 7.15.3 — 2026-08-02
+---------------------------
 
 - Fix: the sysmon core is incompatible with dynamic contexts. Previously, the
   combination would be prevented when read from the coverage.py configuration.
@@ -40,8 +44,6 @@ Unreleased
 .. _pull 2239: https://github.com/coveragepy/coveragepy/pull/2239
 .. _pull 2240: https://github.com/coveragepy/coveragepy/pull/2240
 
-
-.. start-releases
 
 .. _changes_7-15-2:
 
