@@ -15,6 +15,7 @@ import re
 import string
 from collections.abc import Iterable
 from dataclasses import dataclass, field
+from html import escape
 from typing import TYPE_CHECKING, Any
 
 import coverage
@@ -312,7 +313,6 @@ class HtmlReporter:
         self.template_globals = {
             # Functions available in the templates.
             "escape": escape,
-            "escape_url": escape_url,
             "pair": pair,
             "pretty_file": pretty_file,
             # Constants for this report.
@@ -848,28 +848,6 @@ class IncrementalChecker:
 
 
 # Helpers for templates and generating HTML
-
-
-def escape(t: str) -> str:
-    """HTML-escape the text in `t`.
-
-    This is only suitable for HTML text, not attributes.
-
-    """
-    # Convert HTML special chars into HTML entities.
-    return t.replace("&", "&amp;").replace("<", "&lt;")
-
-
-def escape_url(url: str) -> str:
-    """HTML-escape a page URL for a double-quoted ``href`` attribute.
-
-    Page URLs are built from source file names, which can contain characters
-    like a double quote (legal on POSIX) that would otherwise let the value
-    break out of the attribute and inject markup.
-    """
-    return (
-        url.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
-    )
 
 
 def pair(ratio: tuple[int, int]) -> str:

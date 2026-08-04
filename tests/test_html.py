@@ -564,7 +564,7 @@ class HtmlWithUnparsableFilesTest(HtmlTestHelpers, CoverageTest):
         cov.html_report()
 
         html_report = self.get_html_report_content("sub/not_ascii.py")
-        expected = "# Isn't this great?&#65533;!"
+        expected = "# Isn&#x27;t this great?&#65533;!"
         assert expected in html_report
 
     def test_formfeeds(self) -> None:
@@ -609,8 +609,8 @@ class HtmlWithUnparsableFilesTest(HtmlTestHelpers, CoverageTest):
 
         # Check that the lines are properly decoded and reported...
         html_lines = the_html.split("\n")
-        assert any(re.search(r'id="t2".*"this is line 2"', line) for line in html_lines)
-        assert any(re.search(r'id="t9".*"this is line 9"', line) for line in html_lines)
+        assert any(re.search(r'id="t2".*&quot;this is line 2&quot;', line) for line in html_lines)
+        assert any(re.search(r'id="t9".*&quot;this is line 9&quot;', line) for line in html_lines)
 
 
 class HtmlTest(HtmlTestHelpers, CoverageTest):
@@ -974,7 +974,7 @@ assert len(math.encode('utf-8')) == 21
         compare_html(gold_path("html/bom"), "out/bom")
         contains(
             "out/bom/bom_py.html",
-            '<span class="str">"3&#215;4 = 12, &#247;2 = 6&#177;0"</span>',
+            '<span class="str">&quot;3&#215;4 = 12, &#247;2 = 6&#177;0&quot;</span>',
         )
 
     def test_isolatin1(self) -> None:
@@ -996,7 +996,7 @@ assert len(math) == 18
         compare_html(gold_path("html/isolatin1"), "out/isolatin1")
         contains(
             "out/isolatin1/isolatin1_py.html",
-            '<span class="str">"3&#215;4 = 12, &#247;2 = 6&#177;0"</span>',
+            '<span class="str">&quot;3&#215;4 = 12, &#247;2 = 6&#177;0&quot;</span>',
         )
 
     def make_main_etc(self) -> None:
@@ -1329,10 +1329,10 @@ assert len(math) == 18
             "htmlcov/backslashes_py.html",
             # line 2 is `"bbb \`
             r'<a id="t2" href="#t2">2</a></span>'
-            + r'<span class="t">     <span class="str">"bbb \</span>',
+            + r'<span class="t">     <span class="str">&quot;bbb \</span>',
             # line 3 is `ccc"]`
             r'<a id="t3" href="#t3">3</a></span>'
-            + r'<span class="t"><span class="str">     ccc"</span><span class="op">]</span>',
+            + r'<span class="t"><span class="str">     ccc&quot;</span><span class="op">]</span>',
         )
 
         assert self.get_html_report_text_lines("backslashes.py") == [
@@ -1414,13 +1414,13 @@ assert len(math) == 18
         compare_html(gold_path("html/unicode"), "out/unicode")
         contains(
             "out/unicode/unicode_py.html",
-            '<span class="str">"&#654;d&#729;&#477;b&#592;&#633;&#477;&#652;o&#596;"</span>',
+            '<span class="str">&quot;&#654;d&#729;&#477;b&#592;&#633;&#477;&#652;o&#596;&quot;</span>',
         )
 
         contains_any(
             "out/unicode/unicode_py.html",
-            '<span class="str">"db40,dd00: x&#56128;&#56576;"</span>',
-            '<span class="str">"db40,dd00: x&#917760;"</span>',
+            '<span class="str">&quot;db40,dd00: x&#56128;&#56576;&quot;</span>',
+            '<span class="str">&quot;db40,dd00: x&#917760;&quot;</span>',
         )
 
     def test_accented_dot_py(self) -> None:
