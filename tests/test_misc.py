@@ -184,8 +184,8 @@ class SysModulesSavedTest(CoverageTest):
         proceed = threading.Event()
         release_saver = threading.Event()
         control = types.ModuleType(control_name)
-        control.started = started
-        control.proceed = proceed
+        setattr(control, "started", started)
+        setattr(control, "proceed", proceed)
         sys.modules[control_name] = control
         self.make_file(
             f"{module_name}.py",
