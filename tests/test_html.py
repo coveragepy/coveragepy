@@ -201,7 +201,7 @@ class EventHandlerCollector(HTMLParser):
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         for attr_name, _ in attrs:
             if attr_name.startswith("on"):
-                self.handlers.append((tag, attr_name))
+                self.handlers.append((tag, attr_name))  # pragma: only failure
 
 
 class FileWriteTracker:
@@ -1414,7 +1414,10 @@ assert len(math) == 18
         compare_html(gold_path("html/unicode"), "out/unicode")
         contains(
             "out/unicode/unicode_py.html",
-            '<span class="str">&quot;&#654;d&#729;&#477;b&#592;&#633;&#477;&#652;o&#596;&quot;</span>',
+            (
+                '<span class="str">&quot;&#654;d&#729;&#477;b'
+                + "&#592;&#633;&#477;&#652;o&#596;&quot;</span>"
+            ),
         )
 
         contains_any(
