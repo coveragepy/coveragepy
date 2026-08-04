@@ -188,6 +188,22 @@ class HtmlReportParser(HTMLParser):
         return ["".join(l).rstrip() for l in self.lines]
 
 
+class EventHandlerCollector(HTMLParser):
+    """Collect any ``on*`` event-handler attributes the report emitted.
+
+    Used to detect markup injected by breaking out of an attribute value.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.handlers: list[tuple[str, str]] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        for attr_name, _ in attrs:
+            if attr_name.startswith("on"):
+                self.handlers.append((tag, attr_name))  # pragma: only failure
+
+
 class FileWriteTracker:
     """A fake object to track how `open` is used to write files."""
 
@@ -548,7 +564,7 @@ class HtmlWithUnparsableFilesTest(HtmlTestHelpers, CoverageTest):
         cov.html_report()
 
         html_report = self.get_html_report_content("sub/not_ascii.py")
-        expected = "# Isn't this great?&#65533;!"
+        expected = "# Isn&#x27;t this great?&#65533;!"
         assert expected in html_report
 
     def test_formfeeds(self) -> None:
@@ -593,8 +609,8 @@ class HtmlWithUnparsableFilesTest(HtmlTestHelpers, CoverageTest):
 
         # Check that the lines are properly decoded and reported...
         html_lines = the_html.split("\n")
-        assert any(re.search(r'id="t2".*"this is line 2"', line) for line in html_lines)
-        assert any(re.search(r'id="t9".*"this is line 9"', line) for line in html_lines)
+        assert any(re.search(r'id="t2".*&quot;this is line 2&quot;', line) for line in html_lines)
+        assert any(re.search(r'id="t9".*&quot;this is line 9&quot;', line) for line in html_lines)
 
 
 class HtmlTest(HtmlTestHelpers, CoverageTest):
@@ -958,7 +974,7 @@ assert len(math.encode('utf-8')) == 21
         compare_html(gold_path("html/bom"), "out/bom")
         contains(
             "out/bom/bom_py.html",
-            '<span class="str">"3&#215;4 = 12, &#247;2 = 6&#177;0"</span>',
+            '<span class="str">&quot;3&#215;4 = 12, &#247;2 = 6&#177;0&quot;</span>',
         )
 
     def test_isolatin1(self) -> None:
@@ -980,7 +996,7 @@ assert len(math) == 18
         compare_html(gold_path("html/isolatin1"), "out/isolatin1")
         contains(
             "out/isolatin1/isolatin1_py.html",
-            '<span class="str">"3&#215;4 = 12, &#247;2 = 6&#177;0"</span>',
+            '<span class="str">&quot;3&#215;4 = 12, &#247;2 = 6&#177;0&quot;</span>',
         )
 
     def make_main_etc(self) -> None:
@@ -1313,10 +1329,10 @@ assert len(math) == 18
             "htmlcov/backslashes_py.html",
             # line 2 is `"bbb \`
             r'<a id="t2" href="#t2">2</a></span>'
-            + r'<span class="t">     <span class="str">"bbb \</span>',
+            + r'<span class="t">     <span class="str">&quot;bbb \</span>',
             # line 3 is `ccc"]`
             r'<a id="t3" href="#t3">3</a></span>'
-            + r'<span class="t"><span class="str">     ccc"</span><span class="op">]</span>',
+            + r'<span class="t"><span class="str">     ccc&quot;</span><span class="op">]</span>',
         )
 
         assert self.get_html_report_text_lines("backslashes.py") == [
@@ -1398,13 +1414,16 @@ assert len(math) == 18
         compare_html(gold_path("html/unicode"), "out/unicode")
         contains(
             "out/unicode/unicode_py.html",
-            '<span class="str">"&#654;d&#729;&#477;b&#592;&#633;&#477;&#652;o&#596;"</span>',
+            (
+                '<span class="str">&quot;&#654;d&#729;&#477;b'
+                + "&#592;&#633;&#477;&#652;o&#596;&quot;</span>"
+            ),
         )
 
         contains_any(
             "out/unicode/unicode_py.html",
-            '<span class="str">"db40,dd00: x&#56128;&#56576;"</span>',
-            '<span class="str">"db40,dd00: x&#917760;"</span>',
+            '<span class="str">&quot;db40,dd00: x&#56128;&#56576;&quot;</span>',
+            '<span class="str">&quot;db40,dd00: x&#917760;&quot;</span>',
         )
 
     def test_accented_dot_py(self) -> None:
@@ -1439,6 +1458,24 @@ assert len(math) == 18
             + "</a>"
         )
         assert expected % os.sep in index
+
+    @pytest.mark.skipif(env.WINDOWS, reason="Windows filenames can't contain quotes")
+    def test_filename_cant_break_out_of_href(self) -> None:
+        # Source file names are dropped into href="..." attributes on the index
+        # and file pages.  A name with a double quote (legal on POSIX) must not
+        # close the attribute early and inject an event handler.
+        name = 'a" onmouseover="alert(1).py'
+        self.make_file(name, "print('hi')")
+        self.make_data_file(lines={abs_file(name): [1]})
+        cov = coverage.Coverage()
+        cov.load()
+        cov.html_report()
+
+        for page in glob.glob("htmlcov/*.html"):
+            with open(page, encoding="utf-8") as f:
+                parser = EventHandlerCollector()
+                parser.feed(f.read())
+            assert parser.handlers == [], f"Injected handler in {page}: {parser.handlers}"
 
 
 @pytest.mark.skipif(not testenv.DYN_CONTEXTS, reason="No dynamic contexts with this core.")
