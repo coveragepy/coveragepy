@@ -28,6 +28,8 @@ Unreleased
   and prev/next links, so it could close the attribute early and inject markup.
   Page URLs are now escaped. Thanks, `Rajath Mohare <pull 2227_>`_.
 
+- Wheels are now provided for Python 3.15.
+
 .. _pull 2227: https://github.com/coveragepy/coveragepy/pull/2227
 
 

@@ -49,7 +49,7 @@ FREE_THREADED = bool(sysconfig.get_config_var("Py_GIL_DISABLED"))
 
 # Do we ship compiled coveragepy wheels for this version?
 SHIPPING_WHEELS = (
-    CPYTHON and PYVERSION[:2] <= (3, 14) and not (FREE_THREADED and PYVERSION[:2] == (3, 13))
+    CPYTHON and PYVERSION[:2] <= (3, 15) and not (FREE_THREADED and PYVERSION[:2] == (3, 13))
 )
 
 # Should we default to sys.monitoring?
