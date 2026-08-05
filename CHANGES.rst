@@ -23,7 +23,12 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
-Nothing yet.
+- Fix: in the HTML report, a source file name containing a double quote (legal
+  on POSIX) wasn't escaped where it's dropped into the ``href`` of the index
+  and prev/next links, so it could close the attribute early and inject markup.
+  Page URLs are now escaped. Thanks, `Rajath Mohare <pull 2227_>`_.
+
+.. _pull 2227: https://github.com/coveragepy/coveragepy/pull/2227
 
 
 .. start-releases
@@ -74,11 +79,6 @@ Version 7.15.1 — 2026-07-12
   close the inline ``<script>`` element in a file page early, injecting markup.
   Context labels are now fully escaped. Thanks, `Rajath Mohare <pull 2224_>`_.
 
-- Fix: in the HTML report, a source file name containing a double quote (legal
-  on POSIX) wasn't escaped where it's dropped into the ``href`` of the index
-  and prev/next links, so it could close the attribute early and inject markup.
-  Page URLs are now escaped. Thanks, `Rajath Mohare <pull 2227_>`_.
-
 - A number of performance improvements thanks to Paul Kehrer, in pull requests
   `2213 <pull 2213_>`_, `2214 <pull 2214_>`_, `2215 <pull 2215_>`_, `2216
   <pull 2216_>`_, `2218 <pull 2218_>`_, `2220 <pull 2220_>`_, and `2221 <pull
@@ -92,7 +92,6 @@ Version 7.15.1 — 2026-07-12
 .. _pull 2220: https://github.com/coveragepy/coveragepy/pull/2220
 .. _pull 2221: https://github.com/coveragepy/coveragepy/pull/2221
 .. _pull 2224: https://github.com/coveragepy/coveragepy/pull/2224
-.. _pull 2227: https://github.com/coveragepy/coveragepy/pull/2227
 
 .. _changes_7-15-0:
 
