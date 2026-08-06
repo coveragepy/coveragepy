@@ -13,7 +13,7 @@ import token
 import tokenize
 from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
-from typing import Optional, Protocol, cast
+from typing import Protocol, cast
 
 from coverage import env
 from coverage.bytecode import ByteParser
@@ -521,7 +521,7 @@ class TAddArcFn(Protocol):
         """
 
 
-TArcFragments = dict[TArc, list[tuple[Optional[str], Optional[str]]]]
+TArcFragments = dict[TArc, list[tuple[str | None, str | None]]]
 
 
 class Block:

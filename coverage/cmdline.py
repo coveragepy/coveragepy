@@ -432,8 +432,6 @@ class CoverageOptionParser(optparse.OptionParser):
     class OptionParserError(Exception):
         """Used to stop the optparse error handler ending the process."""
 
-        pass
-
     def parse_args_ok(self, args: list[str]) -> tuple[bool, optparse.Values | None, list[str]]:
         """Call optparse.parse_args, but return a triple:
 
@@ -753,8 +751,7 @@ def show_help(
         # coverage-3.5-script.py.  argv[0] is the .py file, but we want to
         # get back to the original form.
         auto_suffix = "-script.py"
-        if program_name.endswith(auto_suffix):
-            program_name = program_name[: -len(auto_suffix)]
+        program_name = program_name.removesuffix(auto_suffix)
 
     help_params = dict(coverage.__dict__)
     help_params["__url__"] = __url__

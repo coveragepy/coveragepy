@@ -1945,7 +1945,7 @@ class MiscArcTest(CoverageTest):
         )
 
     def test_failing_open(self) -> None:
-        with mock.patch.object(coverage.python, "open", side_effect=IOError("Nope")):
+        with mock.patch.object(coverage.python, "open", side_effect=OSError("Nope")):
             self.make_file(
                 "some_branches.py",
                 """\

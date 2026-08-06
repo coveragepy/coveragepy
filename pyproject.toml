@@ -92,6 +92,7 @@ disable = [
     "too-many-positional-arguments",
     # Formatting stuff
     "superfluous-parens",
+    "line-too-long",
     # Messages that are noisy for now, eventually maybe we'll turn them on:
     "invalid-name",
     "protected-access",
@@ -167,18 +168,22 @@ target-version = "py310"  # Can't use [project]
 line-length = 100
 
 [tool.ruff.lint]
-select = ["ALL"]
 ignore = [
-    "ANN401",       # any-type
-    "C901",         # complex structure
-    "COM812",       # missing-trailing-comma
-    "D203",         # incorrect-blank-line-before-class
-    "D213",         # multi-line-summary-second-line
-    "EM101",        # Exception must not use a string literal, assign to variable first
-    "EM102",        # Exception must not use an f-string literal, assign to variable first
-    "ERA001",       # Found commented-out code
-    "PLR0913",      # Too many arguments in function definition
-    "S101",         # Use of `assert` detected
-    "TRY003",       # Avoid specifying long messages outside the exception class
+    # Temporary while we gradually fix ruff concerns
+    "I001",     # TEMP: import order
+    "UP031",    # TEMP: Use format specifiers instead of percent format
+
+    # Rules I want to suppress. I know when I have done these things.
+    "BLE001",   # Do not catch blind exception: `Exception`
+    "C408",     # Unnecessary `dict()` call (rewrite as a literal)
+    "SIM",      # Many "simplifying" rules that mask my intent.
+    "S102",     # Use of `exec` detected
 ]
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?)|[a-zA-Z0-9_]+_unused)$"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**.py" = [
+    "PT031",    # `pytest.warns()` block should contain a single simple statement
+    # Lots of tests have global lists of expected values
+    "RUF012",   # Mutable default value for class attribute
+]

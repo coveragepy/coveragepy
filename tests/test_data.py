@@ -1113,10 +1113,7 @@ class DumpsLoadsTest(CoverageTest):
     def test_misfed_serialization(self) -> None:
         covdata = CoverageData(no_disk=True)
         bad_data = b"Hello, world!\x07 " + b"z" * 100
-        msg = r"Unrecognized serialization: {} \(head of {} bytes\)".format(
-            re.escape(repr(bad_data[:40])),
-            len(bad_data),
-        )
+        msg = rf"Unrecognized serialization: {re.escape(repr(bad_data[:40]))} \(head of {len(bad_data)} bytes\)"
         with pytest.raises(DataError, match=msg):
             covdata.loads(bad_data)
 

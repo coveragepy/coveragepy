@@ -110,7 +110,7 @@ if LOG:  # pragma: debugging
                 try:
                     print(f"{pid}:{tslug}: {msg}", file=f, flush=True)
                 except UnicodeError:
-                    print(f"{pid}:{tslug}: {ascii(msg)}", file=f, flush=True)
+                    print(f"{pid}:{tslug}: {msg!a}", file=f, flush=True)
 
     def arg_repr(arg: Any) -> str:
         """Make a customized repr for logged values."""

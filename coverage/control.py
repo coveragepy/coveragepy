@@ -1048,10 +1048,7 @@ class Coverage(TConfigurable):
                     file_reporter = plugin.file_reporter(mapped_morf)
                     if file_reporter is None:
                         raise PluginError(
-                            "Plugin {!r} did not provide a file reporter for {!r}.".format(
-                                plugin._coverage_plugin_name,
-                                morf,
-                            ),
+                            f"Plugin {plugin._coverage_plugin_name!r} did not provide a file reporter for {morf!r}.",
                         )
 
         if file_reporter == "python":

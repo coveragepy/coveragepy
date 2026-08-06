@@ -148,10 +148,7 @@ class Collector:
 
         if self.concur_id_func and not hasattr(core.tracer_class, "concur_id_func"):
             raise ConfigError(
-                "Can't support concurrency={} with {}, only threads are supported.".format(
-                    tried,
-                    self.tracer_name(),
-                ),
+                f"Can't support concurrency={tried} with {self.tracer_name()}, only threads are supported.",
             )
 
         if do_threading or not concurrency:

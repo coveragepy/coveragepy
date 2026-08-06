@@ -29,8 +29,6 @@ else:
 class TomlDecodeError(Exception):
     """An exception class that exists even when toml isn't installed."""
 
-    pass
-
 
 TWant = TypeVar("TWant")
 

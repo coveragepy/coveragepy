@@ -226,11 +226,7 @@ class DebugFileTracerWrapper(FileTracer):
     def dynamic_source_filename(self, filename: str, frame: FrameType) -> str | None:
         dyn = self.tracer.dynamic_source_filename(filename, frame)
         self.debug.write(
-            "dynamic_source_filename({!r}, {}) --> {!r}".format(
-                filename,
-                self._show_frame(frame),
-                dyn,
-            )
+            f"dynamic_source_filename({filename!r}, {self._show_frame(frame)}) --> {dyn!r}"
         )
         return dyn
 

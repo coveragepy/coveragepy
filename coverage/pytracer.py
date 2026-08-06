@@ -130,10 +130,7 @@ class PyTracer(Tracer):
             f.write(f"{marker} {self.id}[{len(self.data_stack)}]")
             if 0:  # if you want thread ids..
                 f.write(  # type: ignore[unreachable]
-                    ".{:x}.{:x}".format(
-                        self.thread.ident,
-                        self.threading.current_thread().ident,
-                    )
+                    f".{self.thread.ident:x}.{self.threading.current_thread().ident:x}"
                 )
             f.write(" {}".format(" ".join(map(str, args))))
             if 0:  # if you want callers..

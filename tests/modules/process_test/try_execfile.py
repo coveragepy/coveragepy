@@ -27,7 +27,7 @@ import json
 import os
 import sys
 
-from typing import Any, List
+from typing import Any
 
 # sys.path varies by execution environments.  Some installation libraries
 # removes duplicate entries from sys.path.  So we do that too, since the extra
@@ -50,9 +50,9 @@ def same_file(p1: str, p2: str) -> bool:
         return norm1 == norm2
 
 
-def without_same_files(filenames: List[str]) -> List[str]:
+def without_same_files(filenames: list[str]) -> list[str]:
     """Return the list `filenames` with duplicates (by same_file) removed."""
-    reduced: List[str] = []
+    reduced: list[str] = []
     for filename in filenames:
         if not any(same_file(filename, other) for other in reduced):
             reduced.append(filename)

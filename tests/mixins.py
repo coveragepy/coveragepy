@@ -40,7 +40,6 @@ class PytestBase:
 
     def setUp(self) -> None:
         """Per-test initialization. Override this as you wish."""
-        pass
 
     def addCleanup(self, fn: Callable[..., None], *args: Any) -> None:
         """Like unittest's addCleanup: code to call when the test is done."""

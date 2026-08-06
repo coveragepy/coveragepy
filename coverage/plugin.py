@@ -237,7 +237,6 @@ class CoveragePlugin:
         methods on the `config` object.
 
         """
-        pass
 
     def sys_info(self) -> Iterable[tuple[str, Any]]:
         """Get a list of information useful for debugging.
@@ -607,7 +606,7 @@ class FileReporter(CoveragePluginBase):
         """
         return []
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         return isinstance(other, FileReporter) and self.filename == other.filename
 
     def __lt__(self, other: Any) -> bool:

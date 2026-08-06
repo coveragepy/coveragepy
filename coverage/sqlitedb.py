@@ -212,10 +212,7 @@ class SqliteDb:
         """Same as :meth:`python:sqlite3.Connection.executescript`."""
         if self.debug.should("sql"):
             self.debug.write(
-                "Executing script with {} chars: {}".format(
-                    len(script),
-                    clipped_repr(script, 100),
-                )
+                f"Executing script with {len(script)} chars: {clipped_repr(script, 100)}"
             )
         assert self.con is not None
         self.con.executescript(script).close()
