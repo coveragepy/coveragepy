@@ -314,6 +314,37 @@ class PluginTest(CoverageTest):
         out = self.run_command("coverage html -q")  # sneak in a test of -q
         assert out == ""
 
+    def test_local_files_are_importable_for_erase_and_combine(self) -> None:
+        # https://github.com/coveragepy/coveragepy/issues/1726
+        self.make_file(
+            "importing_plugin.py",
+            """\
+            from coverage import CoveragePlugin
+            import local_module
+            class MyPlugin(CoveragePlugin):
+                pass
+            def coverage_init(reg, options):
+                reg.add_noop(MyPlugin())
+            """,
+        )
+        self.make_file("local_module.py", "CONST = 1")
+        self.make_file(
+            ".coveragerc",
+            """\
+            [run]
+            plugins = importing_plugin
+            parallel = True
+            """,
+        )
+        self.make_file("main_file.py", "print('MAIN')")
+
+        out = self.run_command("coverage run main_file.py")
+        assert out == "MAIN\n"
+        out = self.run_command("coverage combine")
+        assert "ModuleNotFoundError" not in out
+        out = self.run_command("coverage erase")
+        assert out == ""
+
     def test_coverage_init_plugins(self) -> None:
         called = False
 
