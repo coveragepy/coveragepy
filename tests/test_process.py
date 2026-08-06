@@ -1327,6 +1327,22 @@ class FailUnderNoFilesTest(CoverageTest):
         assert st == 1
 
 
+class ReportOnlyCleanupTest(CoverageTest):
+    """Test that a report-only run closes its in-memory data."""
+
+    def test_no_unclosed_database_warning(self) -> None:
+        # https://github.com/coveragepy/coveragepy/issues/2251
+        # With [paths] configured, reporting maps data through an in-memory
+        # CoverageData.  A Coverage that only reports never called start(), so
+        # nothing used to drain _data_to_close, and the connection was still
+        # open at interpreter shutdown.
+        self.make_file(".coveragerc", "[paths]\nsource =\n    dummy\n")
+        st, out = self.run_command_status("python -Werror -m coverage report")
+        assert "unclosed database" not in out
+        assert "No data to report." in out
+        assert st == 1
+
+
 class FailUnderEmptyFilesTest(CoverageTest):
     """Test that empty files produce the proper fail_under exit status."""
 
