@@ -20,8 +20,12 @@ upgrading your version of coverage.py.
     ..  Version 9.8.1 — 2027-07-27
     ..  --------------------------
 
-Unreleased
-----------
+.. start-releases
+
+.. _changes_7-15-4:
+
+Version 7.15.4 — 2026-08-06
+---------------------------
 
 - Fix: in the HTML report, a source file name containing a double quote (legal
   on POSIX) wasn't escaped where it's dropped into the ``href`` of the index
@@ -40,8 +44,6 @@ Unreleased
 .. _pull 2226: https://github.com/coveragepy/coveragepy/pull/2226
 .. _pull 2227: https://github.com/coveragepy/coveragepy/pull/2227
 
-
-.. start-releases
 
 .. _changes_7-15-3:
 
