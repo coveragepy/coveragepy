@@ -9,6 +9,7 @@ import ast
 import collections
 import os
 import re
+import sys
 import token
 import tokenize
 from collections.abc import Callable, Iterable, Sequence
@@ -21,6 +22,7 @@ from coverage.debug import short_stack
 from coverage.exceptions import NoSource, NotPython
 from coverage.misc import isolate_module, nice_pair
 from coverage.phystokens import generate_tokens
+from coverage.plugin import CodeRegion
 from coverage.types import TArc, TLineNo
 
 os = isolate_module(os)
@@ -78,6 +80,7 @@ class PythonParser:
         text: str | None = None,
         filename: str | None = None,
         exclude: str | None = None,
+        retain_ast: bool = False,
     ) -> None:
         """
         Source can be provided as `text`, the text itself, or `filename`, from
@@ -98,9 +101,13 @@ class PythonParser:
                 raise NoSource(f"No source for code: '{self.filename}': {err}") from err
 
         self.exclude = exclude
+        self.retain_ast = retain_ast
 
         # The parsed AST of the text.
         self._ast_root: ast.AST | None = None
+
+        # The lines containing soft keywords, as found in the parsed AST.
+        self.soft_key_lines: set[TLineNo] = set()
 
         # The normalized line numbers of the statements in the code. Exclusions
         # are taken into account, and statements are adjusted to their first
@@ -247,6 +254,16 @@ class PythonParser:
         # functions and classes.
         assert self._ast_root is not None
         for node in walk_statement_nodes(self._ast_root):
+            if isinstance(node, ast.Match):
+                self.soft_key_lines.add(node.lineno)
+                for case in node.cases:
+                    self.soft_key_lines.add(case.pattern.lineno)
+            elif sys.version_info >= (3, 12) and isinstance(node, ast.TypeAlias):
+                self.soft_key_lines.add(node.lineno)
+            elif sys.version_info >= (3, 15) and isinstance(node, (ast.Import, ast.ImportFrom)):
+                if node.is_lazy:
+                    self.soft_key_lines.add(node.lineno)
+
             # Find docstrings.
             if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef, ast.Module)):
                 if node.body:
@@ -355,7 +372,24 @@ class PythonParser:
 
         # The AST is large and no longer needed: everything derived from it is
         # memoized above.  Release it so long-lived parsers don't hold it.
-        self._ast_root = None
+        if not self.retain_ast:
+            self._ast_root = None
+
+    def code_regions(self) -> list[CodeRegion]:
+        """Find code regions using the parsed AST, when available."""
+        if self._ast_root is None:
+            from coverage.regions import code_regions
+
+            return code_regions(self.text)
+
+        from coverage.regions import code_regions_from_ast
+
+        return code_regions_from_ast(self._ast_root)
+
+    def release_ast(self) -> None:
+        """Release a retained AST after all derived data has been computed."""
+        if self._all_arcs is not None:
+            self._ast_root = None
 
     def fix_with_jumps(self, arcs: Iterable[TArc]) -> set[TArc]:
         """Adjust arcs to fix jumps leaving `with` statements.
