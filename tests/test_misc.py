@@ -5,7 +5,10 @@
 
 from __future__ import annotations
 
+import importlib
 import sys
+import threading
+import types
 from typing import Any
 from unittest import mock
 
@@ -13,7 +16,7 @@ import pytest
 
 from coverage.exceptions import CoverageException
 from coverage.misc import file_be_gone
-from coverage.misc import Hasher, substitute_variables, import_third_party
+from coverage.misc import Hasher, substitute_variables, import_third_party, sys_modules_saved
 from coverage.misc import human_sorted, human_sorted_items, stdout_link
 
 from tests import testenv
@@ -164,6 +167,49 @@ class ImportThirdPartyTest(CoverageTest):
         _, has = import_third_party("xyzzy")
         assert not has
         assert "xyzzy" not in sys.modules
+
+
+class SysModulesSavedTest(CoverageTest):
+    """Test saving sys.modules around imports."""
+
+    def test_doesnt_interrupt_another_thread_importing(self) -> None:
+        module_name = "slow_import"
+        control_name = "slow_import_control"
+        started = threading.Event()
+        proceed = threading.Event()
+        release_saver = threading.Event()
+        control = types.ModuleType(control_name)
+        setattr(control, "started", started)
+        setattr(control, "proceed", proceed)
+        sys.modules[control_name] = control
+        self.make_file(
+            f"{module_name}.py",
+            f"import {control_name}\n{control_name}.started.set()\n{control_name}.proceed.wait()\n",
+        )
+        sys.path.insert(0, str(self.temp_dir))
+
+        saver_started = threading.Event()
+
+        def save_modules() -> None:
+            with sys_modules_saved():
+                saver_started.set()
+                release_saver.wait()
+
+        saver = threading.Thread(target=save_modules)
+        importer = threading.Thread(target=importlib.import_module, args=(module_name,))
+        try:
+            saver.start()
+            assert saver_started.wait(1)
+            importer.start()
+            assert not started.wait(0.1)
+        finally:
+            proceed.set()
+            release_saver.set()
+            saver.join()
+            importer.join()
+            sys.path.pop(0)
+            sys.modules.pop(module_name, None)
+            sys.modules.pop(control_name, None)
 
 
 HUMAN_DATA = [
