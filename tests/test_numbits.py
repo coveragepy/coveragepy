@@ -101,6 +101,37 @@ class NumbitsOpTest(CoverageTest):
         is_in = num_in_numbits(num, numbits)
         assert (num in nums) == is_in
 
+    def test_conversion_empty(self) -> None:
+        numbits = nums_to_numbits([])
+        assert numbits == b""
+        assert numbits_to_nums(numbits) == []
+
+    def test_conversion_single_line(self) -> None:
+        numbits = nums_to_numbits([42])
+        good_numbits(numbits)
+        assert numbits_to_nums(numbits) == [42]
+
+    def test_conversion_large_line_numbers(self) -> None:
+        numbits = nums_to_numbits([1000, 10000])
+        good_numbits(numbits)
+        assert numbits_to_nums(numbits) == [1000, 10000]
+
+    def test_conversion_idempotency(self) -> None:
+        original = [1, 7, 15, 100]
+        numbits = nums_to_numbits(original)
+        nums = numbits_to_nums(numbits)
+        assert nums_to_numbits(nums) == numbits
+
+    def test_any_intersection_disjoint(self) -> None:
+        nb1 = nums_to_numbits([1, 2, 3])
+        nb2 = nums_to_numbits([4, 5, 6])
+        assert numbits_any_intersection(nb1, nb2) is False
+
+    def test_any_intersection_overlapping(self) -> None:
+        nb1 = nums_to_numbits([1, 2, 3])
+        nb2 = nums_to_numbits([3, 4, 5])
+        assert numbits_any_intersection(nb1, nb2) is True
+
 
 class NumbitsSqliteFunctionTest(CoverageTest):
     """Tests of the SQLite integration for numbits functions."""
