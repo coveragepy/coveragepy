@@ -688,6 +688,14 @@ class PathAliasesTest(CoverageTest):
             r"project\module\tests\file.py",
         )
 
+    def test_implicit_relative_path_uses_existing_suffix(self) -> None:
+        # https://github.com/coveragepy/coveragepy/issues/2195
+        aliases = PathAliases(relative=True)
+        filename = os_sep("work/project/project/src/pkg/module.py")
+        expected = os_sep("src/pkg/module.py")
+
+        assert aliases.map(filename, exists=lambda path: path == expected) == expected
+
     def test_multiple_wildcard(self, rel_yn: bool) -> None:
         aliases = PathAliases(relative=rel_yn)
         aliases.add("/home/jenkins/*/a/*/b/*/django", "./django")
