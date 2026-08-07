@@ -239,6 +239,45 @@ class SimpleArcTest(CoverageTest):
         )
         assert self.stdout() == "Done\n"
 
+    def test_bug_2167(self) -> None:
+        # A one-line class body followed by another statement was reported as
+        # missing the fall-through branch ("line 1 didn't jump to line 4") with
+        # the sys.monitoring core, because the class body's exit arc gives the
+        # class line a second destination that defeated the resolution of the
+        # sequential fall-through.  The class line is fully covered.
+        self.check_coverage(
+            """\
+            class Foo: ...
+
+
+            pass
+            """,
+            branchz="1. 14",
+            branchz_missing="",
+        )
+        # It happens for any one-line class body, not just `...`.
+        self.check_coverage(
+            """\
+            class Foo: x = 1
+
+
+            pass
+            """,
+            branchz="1. 14",
+            branchz_missing="",
+        )
+        # And when the following statement is itself a branch.
+        self.check_coverage(
+            """\
+            class A: ...
+            if len([]) == 0:
+                x = 1
+            print(x)
+            """,
+            branchz="1. 12 23 24",
+            branchz_missing="24",
+        )
+
 
 class WithTest(CoverageTest):
     """Arc-measuring tests involving context managers."""
