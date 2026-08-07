@@ -298,6 +298,7 @@ class Coverage(TConfigurable):
         self._plugin_override = cast(Iterable[TCoverageInit] | None, plugins)
         self._data: CoverageData | None = None
         self._data_to_close: list[CoverageData] = []
+        self._atexit_registered = False
         self._core: Core | None = None
         self._collector: Collector | None = None
 
@@ -651,7 +652,9 @@ class Coverage(TConfigurable):
         self._should_write_debug = True
 
         # Register our clean-up handlers.
-        atexit.register(self._atexit)
+        if not self._atexit_registered:
+            atexit.register(self._atexit)
+            self._atexit_registered = True
         if self.config.sigterm:
             is_main = (threading.current_thread() == threading.main_thread())  # fmt: skip
             if is_main and not env.WINDOWS:
@@ -1089,6 +1092,14 @@ class Coverage(TConfigurable):
                 mapped_data.update(self._data, map_path=self._make_aliases().map)
             self._data = mapped_data
             self._data_to_close.append(mapped_data)
+            if not self._atexit_registered:
+                # A Coverage object that only reports never went through
+                # _init_for_start, so nothing has registered a handler to drain
+                # _data_to_close.  These no_disk connections are only closed by
+                # close(force=True), so without this they leak to interpreter
+                # shutdown as "ResourceWarning: unclosed database".
+                atexit.register(self._atexit)
+                self._atexit_registered = True
 
     def report(
         self,
