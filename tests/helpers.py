@@ -209,12 +209,12 @@ def re_lines(pat: str, text: str, match: bool = True) -> list[str]:
 
     """
     assert len(pat) < 200, "It's super-easy to swap the arguments to re_lines"
-    return [l for l in text.splitlines() if bool(re.search(pat, l)) == match]
+    return [line for line in text.splitlines() if bool(re.search(pat, line)) == match]
 
 
 def re_lines_text(pat: str, text: str, match: bool = True) -> str:
     """Return the multi-line text of lines selected by `pat`."""
-    return "".join(l + "\n" for l in re_lines(pat, text, match=match))
+    return "".join(line + "\n" for line in re_lines(pat, text, match=match))
 
 
 def re_line(pat: str, text: str) -> str:

@@ -123,11 +123,11 @@ class TempliteTest(CoverageTest):
         )
 
         # Loop iterables can be filtered.
-        def rev(l: list[int]) -> list[int]:
-            """Return the reverse of `l`."""
-            l = l[:]
-            l.reverse()
-            return l
+        def rev(nums: list[int]) -> list[int]:
+            """Return the reverse of `nums`."""
+            nums = nums[:]
+            nums.reverse()
+            return nums
 
         self.try_render(
             "Look: {% for n in nums|rev %}{{n}}, {% endfor %}done.",

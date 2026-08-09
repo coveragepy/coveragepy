@@ -479,7 +479,7 @@ class CoverageTest(
     def squeezed_lines(self, report: str) -> list[str]:
         """Return a list of the lines in report, with the spaces squeezed."""
         lines = self.report_lines(report)
-        return [re.sub(r"\s+", " ", l.strip()) for l in lines]
+        return [re.sub(r"\s+", " ", line.strip()) for line in lines]
 
     def last_line_squeezed(self, report: str) -> str:
         """Return the last line of `report` with the spaces squeezed down."""

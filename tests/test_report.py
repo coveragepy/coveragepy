@@ -1220,7 +1220,7 @@ class SummaryReporterConfigurationTest(CoverageTest):
         # TOTAL        586    386    34%
         lines = report.splitlines()[2:-2]
         assert len(lines) == 3
-        nums = [list(map(int, l.replace("%", "").split()[1:])) for l in lines]
+        nums = [list(map(int, line.replace("%", "").split()[1:])) for line in lines]
         # [
         #  [339, 155, 54],
         #  [ 13,   3, 77],

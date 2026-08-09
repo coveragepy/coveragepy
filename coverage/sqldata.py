@@ -1031,7 +1031,7 @@ class CoverageData:
             arcs = self.arcs(filename)
             if arcs is not None:
                 all_lines = itertools.chain.from_iterable(arcs)
-                return list({l for l in all_lines if l > 0})
+                return list({lineno for lineno in all_lines if lineno > 0})
 
         with self._connect() as con:
             file_id = self._file_id(filename)

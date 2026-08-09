@@ -1065,7 +1065,8 @@ class CoverageDataFilesTest(CoverageTest):
             files_lines[f"more_code_{c}.py"] = list(range(1, 10, 2))
             if arcs:
                 files_arcs = {
-                    fname: [(l, 1000) for l in lines] for fname, lines in files_lines.items()
+                    fname: [(lineno, 1000) for lineno in lines]
+                    for fname, lines in files_lines.items()
                 }
                 kwargs: dict[str, Any] = {"arcs": files_arcs}
             else:

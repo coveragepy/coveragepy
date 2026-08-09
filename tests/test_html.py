@@ -185,7 +185,7 @@ class HtmlReportParser(HTMLParser):
 
     def text(self) -> list[str]:
         """Get the rendered text as a list of strings, one per line."""
-        return ["".join(l).rstrip() for l in self.lines]
+        return ["".join(line).rstrip() for line in self.lines]
 
 
 class EventHandlerCollector(HTMLParser):

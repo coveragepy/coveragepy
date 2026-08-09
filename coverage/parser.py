@@ -45,8 +45,8 @@ def multiline_map_from_tokens(tokens: Iterable[tokenize.TokenInfo]) -> dict[TLin
                 # We're at the end of a line, and we've ended on a
                 # different line than the first line of the statement,
                 # so record a multi-line range.
-                for l in range(first_line, elineno + 1):
-                    multiline_map[l] = first_line
+                for lineno in range(first_line, elineno + 1):
+                    multiline_map[lineno] = first_line
             first_line = 0
         if ttext.strip() and toktype != tokenize.COMMENT:
             # A non-white-space token, the first in a statement.
@@ -284,7 +284,7 @@ class PythonParser:
         Returns a set of the first lines.
 
         """
-        return {self.first_line(l) for l in linenos}
+        return {self.first_line(lineno) for lineno in linenos}
 
     def translate_lines(self, lines: Iterable[TLineNo]) -> set[TLineNo]:
         """Implement `FileReporter.translate_lines`."""
@@ -703,7 +703,7 @@ class AstArcAnalyzer:
     ) -> None:
         self.filename = filename
         self.root_node = root_node
-        self.statements = {multiline.get(l, l) for l in statements}
+        self.statements = {multiline.get(lineno, lineno) for lineno in statements}
         self.multiline = multiline
 
         # Turn on AST dumps with an environment variable.

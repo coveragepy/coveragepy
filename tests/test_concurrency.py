@@ -45,17 +45,17 @@ except ImportError:
     greenlet = None
 
 
-def measurable_line(l: str) -> bool:
+def measurable_line(line: str) -> bool:
     """Is this a line of code coverage will measure?
 
     Not blank, not a comment, and not "else"
     """
-    l = l.strip()
-    if not l:
+    line = line.strip()
+    if not line:
         return False
-    if l.startswith("#"):
+    if line.startswith("#"):
         return False
-    if l.startswith("else:"):
+    if line.startswith("else:"):
         return False
     return True
 
