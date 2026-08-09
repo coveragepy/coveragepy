@@ -2,7 +2,7 @@
 # For details: https://github.com/coveragepy/coveragepy/blob/main/NOTICE.txt
 
 """
-.. versionadded:: 4.0
+.. version-added:: 4.0
 
 Plug-in interfaces for coverage.py.
 
@@ -76,7 +76,7 @@ register your file tracer.
 Configurers
 ===========
 
-.. versionadded:: 4.5
+.. version-added:: 4.5
 
 Configurers modify the configuration of coverage.py during start-up.
 Configurers implement the :meth:`~coverage.CoveragePlugin.configure` method to
@@ -91,7 +91,7 @@ register your configurer.
 Dynamic Context Switchers
 =========================
 
-.. versionadded:: 5.0
+.. version-added:: 5.0
 
 Dynamic context switcher plugins implement the
 :meth:`~coverage.CoveragePlugin.dynamic_context` method to dynamically compute

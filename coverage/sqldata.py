@@ -414,7 +414,7 @@ class CoverageData:
         Returns:
             A byte string of serialized data.
 
-        .. versionadded:: 5.0
+        .. version-added:: 5.0
 
         """
         self._debug_dataio("Dumping data from data file", self._filename)
@@ -434,7 +434,7 @@ class CoverageData:
         Arguments:
             data: A byte string of serialized data produced by :meth:`dumps`.
 
-        .. versionadded:: 5.0
+        .. version-added:: 5.0
 
         """
         self._debug_dataio("Loading data into data file", self._filename)
@@ -482,7 +482,7 @@ class CoverageData:
         `context` is a str, the name of the context to use for the next data
         additions.  The context persists until the next :meth:`set_context`.
 
-        .. versionadded:: 5.0
+        .. version-added:: 5.0
 
         """
         if self._debug.should("dataop"):
@@ -506,7 +506,7 @@ class CoverageData:
     def base_filename(self) -> str:
         """The base filename for storing data.
 
-        .. versionadded:: 5.0
+        .. version-added:: 5.0
 
         """
         return self._basename
@@ -514,7 +514,7 @@ class CoverageData:
     def data_filename(self) -> str:
         """Where is the data stored?
 
-        .. versionadded:: 5.0
+        .. version-added:: 5.0
 
         """
         return self._filename
@@ -677,7 +677,7 @@ class CoverageData:
     def purge_files(self, filenames: Collection[str]) -> None:
         """Purge any existing coverage data for the given `filenames`.
 
-        .. versionadded:: 7.2
+        .. version-added:: 7.2
 
         """
         if self._debug.should("dataop"):
@@ -940,7 +940,7 @@ class CoverageData:
     def measured_contexts(self) -> set[str]:
         """A set of all contexts that have been measured.
 
-        .. versionadded:: 5.0
+        .. version-added:: 5.0
 
         """
         self._start_using()
@@ -975,7 +975,7 @@ class CoverageData:
         must match a context exactly.  If it does not, no exception is raised,
         but queries will return no data.
 
-        .. versionadded:: 5.0
+        .. version-added:: 5.0
 
         """
         self._start_using()
@@ -992,7 +992,7 @@ class CoverageData:
         :func:`re.search <python:re.search>`.  Data will be included in query
         results if they are part of any of the contexts matched.
 
-        .. versionadded:: 5.0
+        .. version-added:: 5.0
 
         """
         self._start_using()
@@ -1077,7 +1077,7 @@ class CoverageData:
         Returns:
             A dict mapping line numbers to a list of context names.
 
-        .. versionadded:: 5.0
+        .. version-added:: 5.0
 
         """
         self._start_using()
