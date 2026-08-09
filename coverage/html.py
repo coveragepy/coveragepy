@@ -275,12 +275,12 @@ class HtmlReporter:
 
     # These files will be copied from the htmlfiles directory to the output
     # directory.
-    STATIC_FILES = [
+    STATIC_FILES = (
         "style.css",
         "coverage_html.js",
         "keybd_closed.png",
         "favicon_32.png",
-    ]
+    )
 
     def __init__(self, cov: Coverage) -> None:
         self.coverage = cov

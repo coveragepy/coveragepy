@@ -18,7 +18,7 @@ import time
 import warnings
 from collections.abc import Callable, Iterable, Iterator
 from types import FrameType
-from typing import IO, Any, cast
+from typing import Any, ClassVar, IO, cast
 
 from coverage import env
 from coverage.annotate import AnnotateReporter
@@ -123,7 +123,7 @@ class Coverage(TConfigurable):
     """
 
     # The stack of started Coverage instances.
-    _instances: list[Coverage] = []
+    _instances: ClassVar[list[Coverage]] = []
 
     @classmethod
     def current(cls) -> Coverage | None:

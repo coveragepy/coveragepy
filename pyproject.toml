@@ -176,6 +176,7 @@ ignore = [
     # Rules I want to suppress. I know when I have done these things.
     "BLE001",   # Do not catch blind exception: `Exception`
     "C408",     # Unnecessary `dict()` call (rewrite as a literal)
+    "PLC0414",  # Import alias does not rename original package
     "SIM",      # Many "simplifying" rules that mask my intent.
     "S102",     # Use of `exec` detected
 ]

@@ -878,19 +878,21 @@ class AstArcAnalyzer:
         return 1
 
     # The node types that just flow to the next node with no complications.
-    OK_TO_DEFAULT = {
-        "AnnAssign",
-        "Assign",
-        "Assert",
-        "AugAssign",
-        "Delete",
-        "Expr",
-        "Global",
-        "Import",
-        "ImportFrom",
-        "Nonlocal",
-        "Pass",
-    }
+    OK_TO_DEFAULT = frozenset(
+        (
+            "AnnAssign",
+            "Assign",
+            "Assert",
+            "AugAssign",
+            "Delete",
+            "Expr",
+            "Global",
+            "Import",
+            "ImportFrom",
+            "Nonlocal",
+            "Pass",
+        )
+    )
 
     def node_exits(self, node: ast.AST) -> set[ArcStart]:
         """Find the set of arc starts that exit this node.
