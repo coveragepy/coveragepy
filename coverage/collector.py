@@ -385,7 +385,7 @@ class Collector:
         """
         return any(tracer.activity() for tracer in self.tracers)
 
-    def switch_context(self, new_context: str | None) -> None:
+    def switch_context(self, new_context: str | None) -> str | None:
         """Switch to a new dynamic context."""
         context: str | None
         self.flush_data()
@@ -395,7 +395,7 @@ class Collector:
                 context += "|" + new_context
         else:
             context = new_context
-        self.covdata.set_context(context)
+        return self.covdata.set_context(context)
 
     def disable_plugin(self, disposition: TFileDisposition) -> None:
         """Disable the plugin mentioned in `disposition`."""

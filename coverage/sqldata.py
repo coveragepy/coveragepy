@@ -23,7 +23,7 @@ import threading
 import uuid
 import zlib
 from collections.abc import Callable, Collection, Mapping, Sequence
-from typing import Any, cast
+from typing import Any, Concatenate, ParamSpec, TypeAlias, TypeVar, cast
 
 from coverage.debug import NoDebugging, auto_repr, file_summary
 from coverage.exceptions import CoverageException, DataError
@@ -35,7 +35,7 @@ from coverage.numbits import (
     register_sqlite_functions,
 )
 from coverage.sqlitedb import SqliteDb
-from coverage.types import AnyCallable, FilePath, TArc, TDebugCtl, TLineNo, TWarnFn
+from coverage.types import FilePath, TArc, TDebugCtl, TLineNo, TWarnFn
 from coverage.version import __version__
 
 os = isolate_module(os)
@@ -118,11 +118,16 @@ SCHEMA = textwrap.dedent("""\
     """)
 
 
-def _locked(method: AnyCallable) -> AnyCallable:
+P = ParamSpec("P")
+R = TypeVar("R")
+S = TypeVar("S", bound="CoverageData")
+CovDataMethod: TypeAlias = Callable[Concatenate[S, P], R]
+
+
+def _locked(method: CovDataMethod[S, P, R]) -> CovDataMethod[S, P, R]:
     """A decorator for methods that should hold self._lock."""
 
-    @functools.wraps(method)
-    def _wrapped(self: CoverageData, *args: Any, **kwargs: Any) -> Any:
+    def _wrapped(self: S, /, *args: P.args, **kwargs: P.kwargs) -> R:
         if self._debug.should("lock"):
             self._debug.write(f"Locking {self._lock!r} for {method.__name__}")
         with self._lock:
@@ -130,6 +135,7 @@ def _locked(method: AnyCallable) -> AnyCallable:
                 self._debug.write(f"Locked {self._lock!r} for {method.__name__}")
             return method(self, *args, **kwargs)
 
+    functools.update_wrapper(_wrapped, method)
     return _wrapped
 
 
@@ -476,20 +482,26 @@ class CoverageData:
                 return None
 
     @_locked
-    def set_context(self, context: str | None) -> None:
+    def set_context(self, context: str | None) -> str | None:
         """Set the current context for future :meth:`add_lines` etc.
 
         `context` is a str, the name of the context to use for the next data
         additions.  The context persists until the next :meth:`set_context`.
 
+        Returns the previous context.
+
         .. version-added:: 5.0
+        .. version-changed:: 7.16
+           Now returns the previous context.
 
         """
         if self._debug.should("dataop"):
             self._debug.write(f"Setting coverage context: {context!r}")
+        old_context = self._current_context
         self._current_context = context
         self._current_context_id = None
         self._hasher.update(context)
+        return old_context
 
     def _set_context_id(self) -> None:
         """Use the _current_context to set _current_context_id."""

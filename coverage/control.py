@@ -778,7 +778,7 @@ class Coverage(TConfigurable):
         self._data = None
         self._inited_for_start = False
 
-    def switch_context(self, new_context: str) -> None:
+    def switch_context(self, new_context: str) -> str | None:
         """Switch to a new dynamic context.
 
         `new_context` is a string to use as the :ref:`dynamic context
@@ -806,7 +806,7 @@ class Coverage(TConfigurable):
         if self._collector.should_start_context:
             self._warn("Conflicting dynamic contexts", slug="dynamic-conflict", once=True)
 
-        self._collector.switch_context(new_context)
+        return self._collector.switch_context(new_context)
 
     def clear_exclude(self, which: str = "exclude") -> None:
         """Clear the exclude list."""

@@ -91,7 +91,7 @@ class Tracer(Protocol):
     should_trace: TShouldTraceFn
     should_trace_cache: Mapping[str, TFileDisposition | None]
     should_start_context: TShouldStartContextFn | None
-    switch_context: Callable[[str | None], None] | None
+    switch_context: Callable[[str | None], str | None] | None
     lock_data: Callable[[], None]
     unlock_data: Callable[[], None]
     warn: TWarnFn

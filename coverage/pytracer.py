@@ -84,7 +84,7 @@ class PyTracer(Tracer):
         self.should_trace: TShouldTraceFn
         self.should_trace_cache: dict[str, TFileDisposition | None]
         self.should_start_context: TShouldStartContextFn | None = None
-        self.switch_context: Callable[[str | None], None] | None = None
+        self.switch_context: Callable[[str | None], str | None] | None = None
         self.lock_data: Callable[[], None]
         self.unlock_data: Callable[[], None]
         self.warn: TWarnFn

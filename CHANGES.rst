@@ -23,7 +23,7 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
-Nothing yet.
+- The :meth:`.Coverage.switch_context` method now returns the previous context.
 
 
 .. start-releases
