@@ -788,7 +788,11 @@ class Coverage(TConfigurable):
 
         Coverage collection must be started already.
 
+        Returns the previous context.
+
         .. version-added:: 5.0
+        .. version-changed:: 7.16.0
+           Now returns the previous context.
 
         """
         if not self._started:  # pragma: part started

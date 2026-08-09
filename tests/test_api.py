@@ -781,11 +781,13 @@ class SwitchContextTest(CoverageTest):
             suite = import_local_file("testsuite")
 
             # Measures test case 1
-            cov.switch_context("multiply_zero")
+            prev = cov.switch_context("multiply_zero")
+            assert prev is None
             suite.test_multiply_zero()
 
             # Measures test case 2
-            cov.switch_context("multiply_six")
+            prev = cov.switch_context("multiply_six")
+            assert prev == "multiply_zero"
             suite.test_multiply_six()
 
             # Runner finishes
@@ -816,11 +818,13 @@ class SwitchContextTest(CoverageTest):
             suite = import_local_file("testsuite")
 
             # Measures test case 1
-            cov.switch_context("multiply_zero")
+            prev = cov.switch_context("multiply_zero")
+            assert prev == "mysuite"
             suite.test_multiply_zero()
 
             # Measures test case 2
-            cov.switch_context("multiply_six")
+            prev = cov.switch_context("multiply_six")
+            assert prev == "mysuite|multiply_zero"
             suite.test_multiply_six()
 
             # Runner finishes
