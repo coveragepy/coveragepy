@@ -142,6 +142,7 @@ coverage.wire_up_filter = function () {
 
     const footer = table.tFoot.rows[0];
     const ratio_columns = Array.from(footer.cells).map(cell => Boolean(cell.dataset.ratio));
+    const footer_cells = Array.from(footer.cells).filter(cell => Boolean(cell.dataset.ratio));
 
     // Observe filter keyevents.
     const filter_handler = (event => {
@@ -149,6 +150,17 @@ coverage.wire_up_filter = function () {
         const totals = ratio_columns.map(
             is_ratio => is_ratio ? {"numer": 0, "denom": 0} : 0
         );
+
+        // What the server rendered, captured once. When nothing is filtered out we
+        // put these back verbatim instead of recomputing, so the footer cannot
+        // disagree with the <h1> above it (which is rendered from the same
+        // Python total and is never touched by JS).
+        footer_cells.forEach(cell => {
+            if (cell.dataset.serverText === undefined) {
+                cell.dataset.serverText = cell.textContent;
+                cell.dataset.serverRatio = cell.dataset.ratio || "";
+            }
+        });
 
         var text = document.getElementById("filter").value;
         // Store filter value
@@ -221,6 +233,9 @@ coverage.wire_up_filter = function () {
         no_rows.style.display = null;
         table.style.display = null;
 
+        // Is anything actually filtered out? totals[0] counts the shown rows.
+        const filtering = totals[0] !== table_body_rows.length;
+
         // Calculate new dynamic sum values based on visible rows.
         for (let column = 0; column < totals.length; column++) {
             // Get footer cell element.
@@ -231,15 +246,22 @@ coverage.wire_up_filter = function () {
 
             // Set value into dynamic footer cell element.
             if (ratio_columns[column]) {
+                if (!filtering) {
+                    // Nothing is hidden, so the server's own total is the right
+                    // answer. Restore it rather than recomputing a second opinion.
+                    cell.textContent = cell.dataset.serverText;
+                    cell.dataset.ratio = cell.dataset.serverRatio;
+                    continue;
+                }
                 // Percentage column uses the numerator and denominator,
                 // and adapts to the number of decimal places.
-                const match = /\.([0-9]+)/.exec(cell.textContent);
+                const match = /\.([0-9]+)/.exec(cell.dataset.serverText);
                 const places = match ? match[1].length : 0;
                 const { numer, denom } = totals[column];  // nosemgrep: eslint.detect-object-injection
                 cell.dataset.ratio = `${numer} ${denom}`;
                 // Check denom to prevent NaN if filtered files contain no statements
                 cell.textContent = denom
-                    ? `${(numer * 100 / denom).toFixed(places)}%`
+                    ? `${display_covered(numer * 100 / denom, places)}%`
                     : `${(100).toFixed(places)}%`;
             }
             else {
@@ -299,6 +321,26 @@ coverage.wire_up_sorting = function () {
 
 coverage.INDEX_SORT_STORAGE = "COVERAGE_INDEX_SORT_2";
 coverage.SORTED_BY_REGION = "COVERAGE_SORT_REGION";
+
+// Mirror of display_covered() in coverage/results.py, which is the canonical
+// definition: "0" is only shown when the value is truly zero and "100" only when
+// it is truly 100 -- rounding must never produce either. toFixed() alone has no
+// such clamp, so a filtered subset missing one statement out of 250 displayed as
+// "100%".
+function display_covered(pc, precision) {
+    const near0 = 1 / Math.pow(10, precision);
+    let v;
+    if (pc > 0 && pc < near0) {
+        v = near0;
+    }
+    else if (pc > 100 - near0 && pc < 100) {
+        v = 100 - near0;
+    }
+    else {
+        v = pc;
+    }
+    return v.toFixed(precision);
+}
 
 // Loaded on index.html
 coverage.index_ready = function () {
