@@ -251,7 +251,12 @@ class XmlReporter:
             branch_rate = "0"
         xclass.setAttribute("branch-rate", branch_rate)
 
-        package.elements[rel_name] = xclass
+        # Key on the absolute filename, not `rel_name`. Two source roots can each
+        # hold a package of the same name, and their files then have the same
+        # name relative to their own root, so keying on `rel_name` dropped one of
+        # them while still counting its lines below. That produced an XML report
+        # whose `lines-valid` did not match the `<line>` elements it contained.
+        package.elements[filename] = xclass
         package.hits += class_hits
         package.lines += class_lines
         package.br_hits += class_br_hits

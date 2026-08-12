@@ -384,6 +384,28 @@ def unbackslash(v: Any) -> Any:
 class XmlPackageStructureTest(XmlTestHelpers, CoverageTest):
     """Tests about the package structure reported in the coverage.xml file."""
 
+    def test_same_package_name_in_two_source_roots(self) -> None:
+        # Two source roots can each hold a package with the same name. Their files
+        # then have identical names relative to their own root, and the XML writer
+        # keyed classes on that relative name, so the second file replaced the
+        # first while its lines were still counted, leaving a report that claimed
+        # more lines than it contained. https://github.com/nedbat/coveragepy/issues/1291
+        self.make_file("project/settings/__init__.py", "A = 1\nB = 2\nC = 3\n")
+        self.make_file("testing/settings/__init__.py", "D = 4\nE = 5\nF = 6\n")
+        self.make_file("main.py", "import project.settings\nimport testing.settings\n")
+        self.make_file(".coveragerc", "[run]\nsource = project, testing/\n")
+
+        cov = coverage.Coverage()
+        self.start_import_stop(cov, "main")
+        cov.xml_report()
+
+        dom = ElementTree.parse("coverage.xml")
+        assert len(dom.findall(".//class")) == 2
+        # the header must agree with what the document actually contains
+        lines_valid = dom.getroot().get("lines-valid")
+        assert lines_valid is not None
+        assert int(lines_valid) == len(dom.findall(".//line"))
+
     def package_and_class_tags(self, cov: Coverage) -> Iterable[tuple[str, dict[str, Any]]]:
         """Run an XML report on `cov`, and get the package and class tags."""
         cov.xml_report()

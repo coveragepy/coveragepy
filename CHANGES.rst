@@ -25,6 +25,13 @@ Unreleased
 
 - The :meth:`.Coverage.switch_context` method now returns the previous context.
 
+- Fixed: when two source roots each contained a package with the same name, the
+  XML report kept only one of the same-named files while still counting the
+  lines of both, so ``lines-valid`` disagreed with the ``<line>`` elements in
+  the document.  Closes `issue 1291`_.
+
+.. _issue 1291: https://github.com/nedbat/coveragepy/issues/1291
+
 
 .. start-releases
 
