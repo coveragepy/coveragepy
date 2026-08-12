@@ -64,6 +64,11 @@ Unreleased
   Windows.  The original extension is now restored on the annotated copy (`pull
   2265`_).
 
+- Fixed: when two source roots each contained a package with the same name, the
+  XML report kept only one of the same-named files while still counting the
+  lines of both, so ``lines-valid`` disagreed with the ``<line>`` elements in
+  the document.  Closes `issue 1291`_.
+
 .. _pull 2261: https://github.com/coveragepy/coveragepy/pull/2261
 .. _pull 2262: https://github.com/coveragepy/coveragepy/pull/2262
 .. _pull 2263: https://github.com/coveragepy/coveragepy/pull/2263
@@ -71,6 +76,7 @@ Unreleased
 .. _issue 2266: https://github.com/coveragepy/coveragepy/issues/2266
 .. _pull 2268: https://github.com/coveragepy/coveragepy/pull/2268
 .. _pull 2270: https://github.com/coveragepy/coveragepy/pull/2270
+.. _issue 1291: https://github.com/nedbat/coveragepy/issues/1291
 
 
 .. start-releases
