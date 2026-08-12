@@ -400,7 +400,9 @@ class XmlPackageStructureTest(XmlTestHelpers, CoverageTest):
         dom = ElementTree.parse("coverage.xml")
         assert len(dom.findall(".//class")) == 2
         # the header must agree with what the document actually contains
-        assert int(dom.getroot().get("lines-valid")) == len(dom.findall(".//line"))
+        lines_valid = dom.getroot().get("lines-valid")
+        assert lines_valid is not None
+        assert int(lines_valid) == len(dom.findall(".//line"))
 
     def package_and_class_tags(self, cov: Coverage) -> Iterable[tuple[str, dict[str, Any]]]:
         """Run an XML report on `cov`, and get the package and class tags."""
