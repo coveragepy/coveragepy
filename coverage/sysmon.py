@@ -87,30 +87,39 @@ if LOG:  # pragma: debugging
         frame_ids=True,
     )
     seen_threads: set[int] = set()
+    _log_busy = threading.local()
 
     def log(msg: str) -> None:
         """Write a message to our detailed debugging log(s)."""
-        # Thread ids are reused across processes?
-        # Make a shorter number more likely to be unique.
-        pid = os.getpid()
-        tid = cast(int, threading.current_thread().ident)
-        tslug = f"{(pid * tid) % 9_999_991:07d}"
-        if tid not in seen_threads:
-            seen_threads.add(tid)
-            log(f"New thread {tid} {tslug}:\n{short_stack()}")
-        # log_seq = int(os.getenv("PANSEQ", "0"))
-        # root = f"/tmp/pan.{log_seq:03d}"
-        for filename in [
-            "/tmp/foo.out",
-            # f"{root}.out",
-            # f"{root}-{pid}.out",
-            # f"{root}-{pid}-{tslug}.out",
-        ]:
-            with open(filename, "a", encoding="utf-8") as f:
-                try:
-                    print(f"{pid}:{tslug}: {msg}", file=f, flush=True)
-                except UnicodeError:
-                    print(f"{pid}:{tslug}: {msg!a}", file=f, flush=True)
+        # File I/O and stack walks here re-enter sys.monitoring. Without a
+        # guard, covering the stdlib (test_stdlib[True]) deadlocks. #2087
+        if getattr(_log_busy, "on", False):
+            return
+        _log_busy.on = True
+        try:
+            # Thread ids are reused across processes?
+            # Make a shorter number more likely to be unique.
+            pid = os.getpid()
+            tid = cast(int, threading.current_thread().ident)
+            tslug = f"{(pid * tid) % 9_999_991:07d}"
+            if tid not in seen_threads:
+                seen_threads.add(tid)
+                msg = f"New thread {tid} {tslug}:\n{short_stack()}\n{msg}"
+            # log_seq = int(os.getenv("PANSEQ", "0"))
+            # root = f"/tmp/pan.{log_seq:03d}"
+            for filename in [
+                "/tmp/foo.out",
+                # f"{root}.out",
+                # f"{root}-{pid}.out",
+                # f"{root}-{pid}-{tslug}.out",
+            ]:
+                with open(filename, "a", encoding="utf-8") as f:
+                    try:
+                        print(f"{pid}:{tslug}: {msg}", file=f, flush=True)
+                    except UnicodeError:
+                        print(f"{pid}:{tslug}: {msg!a}", file=f, flush=True)
+        finally:
+            _log_busy.on = False
 
     def arg_repr(arg: Any) -> str:
         """Make a customized repr for logged values."""
