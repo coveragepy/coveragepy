@@ -652,9 +652,7 @@ class Coverage(TConfigurable):
         self._should_write_debug = True
 
         # Register our clean-up handlers.
-        if not self._atexit_registered:
-            atexit.register(self._atexit)
-            self._atexit_registered = True
+        self._register_atexit()
         if self.config.sigterm:
             is_main = (threading.current_thread() == threading.main_thread())  # fmt: skip
             if is_main and not env.WINDOWS:
@@ -755,6 +753,12 @@ class Coverage(TConfigurable):
             self.save()
         for d in self._data_to_close:
             d.close(force=True)
+
+    def _register_atexit(self) -> None:
+        """Register the process-shutdown cleanup handler once."""
+        if not self._atexit_registered:
+            atexit.register(self._atexit)
+            self._atexit_registered = True
 
     def _on_sigterm(self, signum_unused: int, frame_unused: FrameType | None) -> None:
         """A handler for signal.SIGTERM."""
@@ -1092,14 +1096,12 @@ class Coverage(TConfigurable):
                 mapped_data.update(self._data, map_path=self._make_aliases().map)
             self._data = mapped_data
             self._data_to_close.append(mapped_data)
-            if not self._atexit_registered:
-                # A Coverage object that only reports never went through
-                # _init_for_start, so nothing has registered a handler to drain
-                # _data_to_close.  These no_disk connections are only closed by
-                # close(force=True), so without this they leak to interpreter
-                # shutdown as "ResourceWarning: unclosed database".
-                atexit.register(self._atexit)
-                self._atexit_registered = True
+            # A Coverage object that only reports never went through
+            # _init_for_start, so nothing has registered a handler to drain
+            # _data_to_close.  These no_disk connections are only closed by
+            # close(force=True), so without this they leak to interpreter
+            # shutdown as "ResourceWarning: unclosed database".
+            self._register_atexit()
 
     def report(
         self,
