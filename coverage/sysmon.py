@@ -237,7 +237,11 @@ class SysMonitor(Tracer):
         self.multiline_maps: dict[str, dict[TLineNo, TLineNo]] = {}
 
         self.sysmon_on = False
-        self.lock = threading.Lock()
+        # An RLock, not a Lock: with COVERAGE_SYSMON_LOG=1, logging a
+        # sys.monitoring call (e.g. set_events in start()) triggers PY_START
+        # events, and the callback re-enters this lock in the same thread
+        # (issue 2087).
+        self.lock = threading.RLock()
 
         self.stats: dict[str, int] | None = None
         if COLLECT_STATS:
