@@ -10,6 +10,7 @@ import functools
 import inspect
 import os
 import os.path
+import tempfile
 import sys
 import threading
 import tokenize
@@ -115,7 +116,9 @@ if LOG:  # pragma: debugging
             # log_seq = int(os.getenv("PANSEQ", "0"))
             # root = f"/tmp/pan.{log_seq:03d}"
             for filename in [
-                "/tmp/foo.out",
+                # A real path on POSIX; on Windows tempfile resolves to
+                # %TEMP%, which always exists (issue 2087).
+                os.path.join(tempfile.gettempdir(), "foo.out"),
                 # f"{root}.out",
                 # f"{root}-{pid}.out",
                 # f"{root}-{pid}-{tslug}.out",
