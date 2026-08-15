@@ -18,7 +18,7 @@ import time
 import warnings
 from collections.abc import Callable, Iterable, Iterator
 from types import FrameType
-from typing import Any, ClassVar, IO, cast
+from typing import IO, Any, ClassVar, cast
 
 from coverage import env
 from coverage.annotate import AnnotateReporter
@@ -1370,6 +1370,7 @@ class Coverage(TConfigurable):
         import glob
         import platform
         import site
+
         import coverage as covmod
 
         self._init()

@@ -14,7 +14,6 @@ import py_compile
 import re
 import string
 
-
 import pytest
 
 import coverage
@@ -25,8 +24,7 @@ from coverage.exceptions import ConfigError, NoDataError, NotPython
 from coverage.files import abs_file
 from coverage.report import SummaryReporter
 from coverage.types import TConfigValueIn
-
-from tests.coveragetest import CoverageTest, TESTS_DIR, UsingModulesMixin
+from tests.coveragetest import TESTS_DIR, CoverageTest, UsingModulesMixin
 from tests.helpers import assert_coverage_warnings
 
 

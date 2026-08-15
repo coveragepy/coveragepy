@@ -5,7 +5,6 @@
 
 from __future__ import annotations
 
-
 import gc
 import glob
 import os
@@ -13,23 +12,25 @@ import os.path
 import re
 import sqlite3
 import threading
-
 from collections.abc import Callable, Collection, Iterable, Mapping
 from typing import Any, TypeVar
 from unittest import mock
 
 import pytest
 
-from coverage.data import CoverageData, DataFileClassifier, combine_parallel_data
-from coverage.data import add_data_to_hash, line_counts
+from coverage.data import (
+    CoverageData,
+    DataFileClassifier,
+    add_data_to_hash,
+    combine_parallel_data,
+    line_counts,
+)
 from coverage.exceptions import DataError, NoDataError
 from coverage.files import PathAliases, canonical_filename
 from coverage.types import FilePathClasses, FilePathType, TArc, TLineNo
-
 from tests import osinfo
 from tests.coveragetest import CoverageTest
 from tests.helpers import DebugControlString, assert_count_equal
-
 
 LINES_1 = {
     "a.py": {1, 2},

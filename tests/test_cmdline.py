@@ -11,7 +11,6 @@ import pprint
 import re
 import sys
 import textwrap
-
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
@@ -22,14 +21,13 @@ import pytest
 import coverage
 import coverage.cmdline
 from coverage import env
-from coverage.control import DEFAULT_DATAFILE
 from coverage.config import CoverageConfig
+from coverage.control import DEFAULT_DATAFILE
 from coverage.exceptions import _ExceptionDuringRun
 from coverage.types import TConfigValueIn, TConfigValueOut
 from coverage.version import __url__
-
 from tests import testenv
-from tests.coveragetest import CoverageTest, OK, ERR, command_line
+from tests.coveragetest import ERR, OK, CoverageTest, command_line
 from tests.helpers import os_sep, re_line, re_lines
 
 

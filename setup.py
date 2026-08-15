@@ -6,14 +6,13 @@
 # Setuptools setup for coverage.py
 # This file is used unchanged under all versions of Python.
 
-import re
 import os
 import os.path
 import platform
+import re
 import sys
 import textwrap
 import zipfile
-
 from pathlib import Path
 from typing import Any
 

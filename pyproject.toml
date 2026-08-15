@@ -170,7 +170,6 @@ line-length = 100
 [tool.ruff.lint]
 ignore = [
     # Temporary while we gradually fix ruff concerns
-    "I001",     # TEMP: import order
     "UP031",    # TEMP: Use format specifiers instead of percent format
 
     # Rules I want to suppress. I know when I have done these things.

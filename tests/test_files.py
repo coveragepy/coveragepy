@@ -9,9 +9,8 @@ import itertools
 import os
 import os.path
 import re
-
-from typing import Any
 from collections.abc import Iterable
+from typing import Any
 from unittest import mock
 
 import pytest
@@ -30,7 +29,6 @@ from coverage.files import (
     flat_rootname,
     globs_to_regex,
 )
-
 from tests.coveragetest import CoverageTest
 from tests.helpers import os_sep
 

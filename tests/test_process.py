@@ -17,7 +17,6 @@ import signal
 import stat
 import sys
 import textwrap
-
 from pathlib import Path
 from typing import Any
 
@@ -28,9 +27,8 @@ from coverage import env
 from coverage.data import line_counts
 from coverage.files import abs_file, python_reported_file
 from coverage.sqldata import good_filename_match
-
 from tests import testenv
-from tests.coveragetest import CoverageTest, TESTS_DIR
+from tests.coveragetest import TESTS_DIR, CoverageTest
 from tests.helpers import change_dir, re_lines, re_lines_text
 
 

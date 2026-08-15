@@ -7,24 +7,20 @@ from __future__ import annotations
 
 import json
 import sqlite3
-
 from collections.abc import Iterable
 
 from coverage import env
 from coverage.numbits import (
-    nums_to_numbits,
+    num_in_numbits,
+    numbits_any_intersection,
+    numbits_intersection,
     numbits_to_nums,
     numbits_union,
-    numbits_intersection,
-    numbits_any_intersection,
-    num_in_numbits,
+    nums_to_numbits,
     register_sqlite_functions,
 )
-
 from tests.coveragetest import CoverageTest
-from tests.hypo import example, given, settings
-from tests.hypo import sets, integers
-
+from tests.hypo import example, given, integers, sets, settings
 
 # Hypothesis-generated line number data
 line_numbers = integers(min_value=1, max_value=9999)

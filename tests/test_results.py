@@ -6,16 +6,14 @@
 from __future__ import annotations
 
 import math
-
-from typing import cast
 from collections.abc import Iterable
+from typing import cast
 
 import pytest
 
 from coverage.exceptions import ConfigError
 from coverage.results import Numbers, display_covered, format_lines, should_fail_under
 from coverage.types import TLineNo
-
 from tests.coveragetest import CoverageTest
 
 

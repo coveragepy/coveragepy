@@ -6,8 +6,8 @@
 from __future__ import annotations
 
 import ast
-from typing import cast
 from dataclasses import dataclass
+from typing import cast
 
 from coverage.plugin import CodeRegion
 

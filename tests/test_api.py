@@ -14,7 +14,6 @@ import re
 import shutil
 import sys
 import textwrap
-
 from collections.abc import Callable, Iterable
 from typing import cast
 from unittest import mock
@@ -28,9 +27,8 @@ from coverage.exceptions import ConfigError, CoverageException, NoDataError, NoS
 from coverage.files import abs_file, relative_filename
 from coverage.misc import import_local_file
 from coverage.types import FilePathClasses, FilePathType, TCovKwargs
-
 from tests import testenv
-from tests.coveragetest import CoverageTest, TESTS_DIR, UsingModulesMixin
+from tests.coveragetest import TESTS_DIR, CoverageTest, UsingModulesMixin
 from tests.helpers import (
     assert_count_equal,
     assert_coverage_warnings,

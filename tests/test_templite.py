@@ -6,14 +6,12 @@
 from __future__ import annotations
 
 import re
-
 from types import SimpleNamespace
 from typing import Any, ContextManager
 
 import pytest
 
 from coverage.templite import Templite, TempliteSyntaxError, TempliteValueError
-
 from tests.coveragetest import CoverageTest
 
 # pylint: disable=possibly-unused-variable

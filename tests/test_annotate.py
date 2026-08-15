@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import coverage
-
 from tests.coveragetest import CoverageTest
 from tests.goldtest import compare, gold_path
 

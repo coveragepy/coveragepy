@@ -13,26 +13,23 @@ import os
 import os.path
 import re
 import sys
-
 from html.parser import HTMLParser
-from typing import Any, IO
+from typing import IO, Any
 from unittest import mock
 
 import pytest
 
 import coverage
 import coverage.html
-from coverage import env, Coverage
-from coverage.exceptions import NoDataError, NotPython, NoSource
+from coverage import Coverage, env
+from coverage.exceptions import NoDataError, NoSource, NotPython
 from coverage.files import abs_file, flat_rootname
 from coverage.misc import import_local_file
 from coverage.report_core import get_analysis_to_report
 from coverage.types import TLineNo, TMorf
-
 from tests import testenv
-from tests.coveragetest import CoverageTest, TESTS_DIR
-from tests.goldtest import gold_path
-from tests.goldtest import compare, contains, contains_rx, doesnt_contain, contains_any
+from tests.coveragetest import TESTS_DIR, CoverageTest
+from tests.goldtest import compare, contains, contains_any, contains_rx, doesnt_contain, gold_path
 from tests.helpers import assert_coverage_warnings, change_dir
 
 

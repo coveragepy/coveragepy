@@ -10,9 +10,8 @@ import re
 
 import pytest
 
-from tests.coveragetest import CoverageTest, TESTS_DIR
-from tests.goldtest import compare, gold_path
-from tests.goldtest import contains, contains_any, contains_rx, doesnt_contain
+from tests.coveragetest import TESTS_DIR, CoverageTest
+from tests.goldtest import compare, contains, contains_any, contains_rx, doesnt_contain, gold_path
 from tests.helpers import os_sep, re_line, remove_tree
 
 GOOD_GETTY = """\

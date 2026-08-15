@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import json
 import os
-
 from datetime import datetime
 from typing import Any
 
@@ -15,8 +14,7 @@ import pytest
 
 import coverage
 from coverage import Coverage
-
-from tests.coveragetest import UsingModulesMixin, CoverageTest
+from tests.coveragetest import CoverageTest, UsingModulesMixin
 
 
 class JsonReportTest(UsingModulesMixin, CoverageTest):

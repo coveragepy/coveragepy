@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import os
 import tempfile
-
 from pathlib import Path
 from unittest import mock
 
@@ -21,7 +20,6 @@ from coverage.config import CoverageConfig, HandyConfigParser
 from coverage.exceptions import ConfigError, CoverageWarning
 from coverage.tomlconfig import TomlConfigParser
 from coverage.types import FilePathClasses, FilePathType
-
 from tests.coveragetest import CoverageTest, UsingModulesMixin
 
 

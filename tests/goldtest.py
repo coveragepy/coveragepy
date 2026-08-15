@@ -12,7 +12,6 @@ import os
 import os.path
 import re
 import xml.etree.ElementTree
-
 from collections.abc import Iterable
 
 from tests.coveragetest import TESTS_DIR
