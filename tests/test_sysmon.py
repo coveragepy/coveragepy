@@ -74,3 +74,33 @@ class MultilineMapCacheTest(CoverageTest):
         self.make_file("multi.py", "x = 1\ny = (2 +\n    3)\n")
         assert tracer.get_multiline_map("multi.py") == MULTI_MAP  # cached
         assert SysMonitor().get_multiline_map("multi.py") == {2: 2, 3: 2}
+
+
+@pytest.mark.skipif(not env.PYBEHAVIOR.pep669, reason="SysMonitor needs sys.monitoring")
+class SysmonLogReentrancyTest(CoverageTest):
+    """COVERAGE_SYSMON_LOG=1 must not deadlock when covering the stdlib."""
+
+    def test_sysmon_log_does_not_deadlock_on_stdlib(self) -> None:
+        # Issue 2087: log() used file I/O that re-entered sys.monitoring.
+        self.make_file(
+            "mymain.py",
+            """\
+            import os
+            os.listdir(".")
+            """,
+        )
+        self.make_file(
+            "runit.py",
+            """\
+            import coverage
+            cov = coverage.Coverage(cover_pylib=True)
+            cov.start()
+            import mymain
+            cov.stop()
+            print("done")
+            """,
+        )
+        self.set_environ("COVERAGE_SYSMON_LOG", "1")
+        self.set_environ("COVERAGE_CORE", "sysmon")
+        out = self.run_command("python runit.py")
+        assert "done" in out
