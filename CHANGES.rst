@@ -25,6 +25,11 @@ Unreleased
 
 - The :meth:`.Coverage.switch_context` method now returns the previous context.
 
+- fix: negative precision settings now always cause useful error messages
+  (`pull 2261`_).
+
+.. _pull 2261: https://github.com/coveragepy/coveragepy/pull/2261
+
 
 .. start-releases
 

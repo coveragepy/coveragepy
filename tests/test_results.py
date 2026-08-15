@@ -81,7 +81,7 @@ class NumbersTest(CoverageTest):
 
     @pytest.mark.parametrize("prec", [-1, -2])
     def test_display_covered_negative_precision(self, prec: int) -> None:
-        with pytest.raises(ConfigError, match=r"precision=-\d is invalid"):
+        with pytest.raises(ConfigError, match=rf"precision={prec} is invalid"):
             display_covered(47.87, prec)
 
     def test_covered_ratio(self) -> None:
