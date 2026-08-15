@@ -70,10 +70,17 @@ if LOG:  # pragma: debugging
             self.wrapped = wrapped
             self.namespace = namespace
 
-        def __getattr__(self, name: str) -> Callable[..., Any]:
+        def __getattr__(self, name: str) -> Any:
+            real_attr = getattr(self.wrapped, name)
+            if not callable(real_attr):
+                # Constants (COVERAGE_ID, DISABLE, …) must keep their value:
+                # wrapping them as functions breaks code that reads them, e.g.
+                # `self.myid = sys_monitoring.COVERAGE_ID` (#2260).
+                return real_attr
+
             def _wrapped(*args: Any, **kwargs: Any) -> Any:
                 log(f"{self.namespace}.{name}{args}{kwargs}")
-                return getattr(self.wrapped, name)(*args, **kwargs)
+                return real_attr(*args, **kwargs)
 
             return _wrapped
 
