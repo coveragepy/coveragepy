@@ -81,9 +81,7 @@ $ deopvars
 ### Pushing changes to pull requests
 
 withop github gh pr checkout 2206
-    opvars github
-    gh pr checkout 2206
 .. edit files..
 g ci -am "etc"
-git -c credential.helper='!gh auth git-credential' push
+withop github git -c credential.helper='!gh auth git-credential' push
 g ma; g brdel-
