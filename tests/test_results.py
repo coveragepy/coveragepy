@@ -79,6 +79,11 @@ class NumbersTest(CoverageTest):
     def test_display_covered(self, prec: int, pc: float, res: str) -> None:
         assert display_covered(pc, prec) == res
 
+    @pytest.mark.parametrize("prec", [-1, -2])
+    def test_display_covered_negative_precision(self, prec: int) -> None:
+        with pytest.raises(ConfigError, match=rf"precision={prec} is invalid"):
+            display_covered(47.87, prec)
+
     def test_covered_ratio(self) -> None:
         n = Numbers(n_files=1, n_statements=200, n_missing=47)
         assert n.ratio_covered == (153, 200)

@@ -408,6 +408,9 @@ def display_covered(pc: float, precision: int) -> str:
     result in either "0" or "100".
 
     """
+    if precision < 0:
+        raise ConfigError(f"precision={precision} is invalid. Must not be negative.")
+
     near0 = 1.0 / 10**precision
     if 0 < pc < near0:
         pc = near0
