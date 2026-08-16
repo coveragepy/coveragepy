@@ -1714,7 +1714,7 @@ class ProcessStartupWithSourceTest(CoverageTest):
         def fullname(modname: str) -> str:
             """What is the full module name for `modname` for this test?"""
             if package and dashm:
-                return ".".join((package, modname))
+                return f"{package}.{modname}"
             else:
                 return modname
 
