@@ -28,6 +28,11 @@ Unreleased
 - fix: negative precision settings now always cause useful error messages
   (`pull 2261`_).
 
+- fix: an invalid regex in the ``--contexts`` option (or the ``[report]
+  contexts`` setting) reported a confusing "Couldn't use data file ...:
+  user-defined function raised exception" error. Now it raises a proper
+  configuration error naming the bad regex, like other regex settings do.
+
 .. _pull 2261: https://github.com/coveragepy/coveragepy/pull/2261
 
 

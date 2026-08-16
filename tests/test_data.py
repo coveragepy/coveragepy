@@ -25,7 +25,7 @@ from coverage.data import (
     combine_parallel_data,
     line_counts,
 )
-from coverage.exceptions import DataError, NoDataError
+from coverage.exceptions import ConfigError, DataError, NoDataError
 from coverage.files import PathAliases, canonical_filename
 from coverage.types import FilePathClasses, FilePathType, TArc, TLineNo
 from tests import osinfo
@@ -242,6 +242,14 @@ class CoverageDataTest(CoverageTest):
         assert covdata.lines("a.py") == [1, 2]
         covdata.set_query_contexts(["other"])
         assert covdata.lines("a.py") == []
+
+    def test_set_query_contexts_bad_regex(self) -> None:
+        covdata = DebugCoverageData()
+        covdata.set_context("test_a")
+        covdata.add_lines(LINES_1)
+        msg = r"Invalid context regex 'foo\(': missing \)"
+        with pytest.raises(ConfigError, match=msg):
+            covdata.set_query_contexts(["foo("])
 
     def test_no_lines_vs_unmeasured_file(self) -> None:
         covdata = DebugCoverageData()
