@@ -1480,7 +1480,7 @@ class CmdLineDebugDataTest(BaseCmdLineTest):
         self.command_line(f"debug data {ddarg}")
         assert self.stdout() == textwrap.dedent(f"""\
             -- data ------------------------------------------------------
-            path: {Path(".").resolve() / filename}
+            path: {Path.cwd() / filename}
             No data collected: file doesn't exist
             """)
 
