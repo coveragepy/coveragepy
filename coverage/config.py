@@ -353,9 +353,12 @@ class CoverageConfig(TConfigurable, TPluginConfig):
 
         # [paths] is special
         if cp.has_section("paths"):
-            for option in cp.options("paths"):
-                self.paths[option] = cp.getlist("paths", option)
-                any_set = True
+            try:
+                for option in cp.options("paths"):
+                    self.paths[option] = cp.getlist("paths", option)
+                    any_set = True
+            except ValueError as err:
+                raise ConfigError(f"Couldn't read config file {filename}: {err}") from err
 
         # plugins can have options
         for plugin in self.plugins:
