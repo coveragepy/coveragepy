@@ -5,9 +5,10 @@
 
 from __future__ import annotations
 
+import contextlib
 import re
 from types import SimpleNamespace
-from typing import Any, ContextManager
+from typing import Any
 
 import pytest
 
@@ -40,7 +41,7 @@ class TempliteTest(CoverageTest):
         assert result is not None
         assert actual == result
 
-    def assertSynErr(self, msg: str) -> ContextManager[None]:
+    def assertSynErr(self, msg: str) -> contextlib.AbstractContextManager[None]:
         """Assert that a `TempliteSyntaxError` will happen.
 
         A context manager, and the message should be `msg`.
