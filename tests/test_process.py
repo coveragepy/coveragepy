@@ -26,6 +26,7 @@ import coverage
 from coverage import env
 from coverage.data import line_counts
 from coverage.files import abs_file, python_reported_file
+from coverage.misc import first
 from coverage.sqldata import good_filename_match
 from tests import testenv
 from tests.coveragetest import TESTS_DIR, CoverageTest
@@ -269,10 +270,10 @@ class ProcessTest(CoverageTest):
         data.read()
         summary = line_counts(data, fullpath=True)
         assert len(summary) == 1
-        actual = abs_file(list(summary.keys())[0])
+        actual = abs_file(first(summary.keys()))
         expected = abs_file("src/x.py")
         assert expected == actual
-        assert list(summary.values())[0] == 6
+        assert first(summary.values()) == 6
 
     def test_erase_parallel(self) -> None:
         self.make_file(

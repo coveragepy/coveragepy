@@ -27,6 +27,7 @@ from coverage.data import (
 )
 from coverage.exceptions import DataError, NoDataError
 from coverage.files import PathAliases, canonical_filename
+from coverage.misc import first
 from coverage.types import FilePathClasses, FilePathType, TArc, TLineNo
 from tests import osinfo
 from tests.coveragetest import CoverageTest
@@ -729,7 +730,7 @@ class CoverageDataInTempDirTest(CoverageTest):
             covdata = klass("flaked.dat")
             covdata.add_lines(LINES_1)
             # I don't know how to make a real error, so let's fake one.
-            sqldb = list(covdata._dbs.values())[0]
+            sqldb = first(covdata._dbs.values())
             sqldb.close = lambda: 1 / 0  # type: ignore
             covdata.add_lines(LINES_1)
 
