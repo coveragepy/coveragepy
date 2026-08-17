@@ -43,14 +43,20 @@ def read_python_source(path: Path) -> bytes:
 
 def get_python_source(filename: str) -> str:
     """Return the source code, as unicode."""
+
+    print(f"Trying to read file: {filename}")
     path = Path(filename)
 
     if not path.parent.exists():
         # Path not found try other encoding
         if env.WINDOWS:
+            print("On Windows but got Posix path")
             path = Path(PurePosixPath(filename))
         else:
+            print("On Posix but got Windows path")
             path = Path(PureWindowsPath(filename))
+
+    print(f"Converted to path: {path}")
 
     ext = path.suffix
     if ext == ".py" and env.WINDOWS:
