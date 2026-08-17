@@ -10,7 +10,7 @@ import types
 import zipimport
 from collections.abc import Iterable
 from typing import TYPE_CHECKING
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 from coverage import env
 from coverage.exceptions import CoverageException, NoSource
@@ -44,6 +44,13 @@ def read_python_source(path: Path) -> bytes:
 def get_python_source(filename: str) -> str:
     """Return the source code, as unicode."""
     path = Path(filename)
+
+    if not path.parent.exists():
+        # Path not found try other encoding
+        if env.WINDOWS:
+            path = Path(PurePosixPath(filename))
+        else:
+            path = Path(PureWindowsPath(filename))
 
     ext = path.suffix
     if ext == ".py" and env.WINDOWS:
