@@ -10,6 +10,7 @@ import types
 import zipimport
 from collections.abc import Iterable
 from typing import TYPE_CHECKING
+from pathlib import Path
 
 from coverage import env
 from coverage.exceptions import CoverageException, NoSource
@@ -30,21 +31,21 @@ os = isolate_module(os)
 open = open  # pylint: disable=redefined-builtin
 
 
-def read_python_source(filename: str) -> bytes:
+def read_python_source(path: Path) -> bytes:
     """Read the Python source text from `filename`.
 
     Returns bytes.
 
     """
-    with open(filename, "rb") as f:
-        source = f.read()
-
+    source = path.read_bytes()
     return source.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
 
 
 def get_python_source(filename: str) -> str:
     """Return the source code, as unicode."""
-    base, ext = os.path.splitext(filename)
+    path = Path(filename)
+
+    ext = path.suffix
     if ext == ".py" and env.WINDOWS:
         exts = [".py", ".pyw"]
     else:
@@ -52,14 +53,14 @@ def get_python_source(filename: str) -> str:
 
     source_bytes: bytes | None
     for ext in exts:
-        try_filename = base + ext
-        if os.path.exists(try_filename):
-            # A regular text file: open it.
-            source_bytes = read_python_source(try_filename)
+        try_path = path.with_suffix(ext)
+        if try_path.exists():
+            # A regular text file: read it.
+            source_bytes = read_python_source(try_path)
             break
 
         # Maybe it's in a zip file?
-        source_bytes = get_zip_bytes(try_filename)
+        source_bytes = get_zip_bytes(str(try_path))
         if source_bytes is not None:
             break
     else:
