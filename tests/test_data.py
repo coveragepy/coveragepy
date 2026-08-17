@@ -31,7 +31,7 @@ from coverage.misc import first
 from coverage.types import FilePathClasses, FilePathType, TArc, TLineNo
 from tests import osinfo
 from tests.coveragetest import CoverageTest
-from tests.helpers import DebugControlString, assert_count_equal
+from tests.helpers import DebugControlString, assert_count_equal, os_sep
 
 LINES_1 = {
     "a.py": {1, 2},
@@ -926,6 +926,49 @@ class CoverageDataFilesTest(CoverageTest):
         apy = canonical_filename("./a.py")
         sub_bpy = canonical_filename("./sub/b.py")
         template_html = canonical_filename("./template.html")
+
+        assert_line_counts(covdata3, {apy: 4, sub_bpy: 2, template_html: 1}, fullpath=True)
+        assert_measured_files(covdata3, [apy, sub_bpy, template_html])
+        assert covdata3.file_tracer(template_html) == "html.plugin"
+
+    def test_combining_autofixes_slashes(self) -> None:
+        covdata1 = DebugCoverageData(suffix="1")
+        covdata1.add_lines(
+            {
+                "src/a.py": {1, 2},
+                "src/sub/b.py": {3},
+                "src/template.html": {10},
+            }
+        )
+        covdata1.add_file_tracers(
+            {
+                "src/template.html": "html.plugin",
+            }
+        )
+        covdata1.write()
+
+        covdata2 = DebugCoverageData(suffix="2")
+        covdata2.add_lines(
+            {
+                r"src\a.py": {4, 5},
+                r"src\sub\b.py": {3, 6},
+            }
+        )
+        covdata2.write()
+
+        self.assert_file_count(".coverage.*", 2)
+
+        self.make_file("src/a.py", "")
+        self.make_file("src/sub/b.py", "")
+        self.make_file("template.html", "")
+        covdata3 = DebugCoverageData()
+        combine_parallel_data(covdata3)
+        self.assert_file_count(".coverage.*", 0)
+        self.assert_exists(".coverage")
+
+        apy = os_sep("src/a.py")
+        sub_bpy = os_sep("src/sub/b.py")
+        template_html = os_sep("src/template.html")
 
         assert_line_counts(covdata3, {apy: 4, sub_bpy: 2, template_html: 1}, fullpath=True)
         assert_measured_files(covdata3, [apy, sub_bpy, template_html])

@@ -23,12 +23,18 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
+- When combining files, now path separator slashes will automatically be
+  converted to the local file system style. This makes it less necessary to
+  define ``[paths]`` configuration to combine data across operating systems.
+  Fixes `issue 2266`_.
+
 - The :meth:`.Coverage.switch_context` method now returns the previous context.
 
-- fix: negative precision settings now always cause useful error messages
+- Fix: negative precision settings now always cause useful error messages
   (`pull 2261`_).
 
 .. _pull 2261: https://github.com/coveragepy/coveragepy/pull/2261
+.. _issue 2266: https://github.com/coveragepy/coveragepy/issues/2266
 
 
 .. start-releases

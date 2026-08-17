@@ -733,8 +733,6 @@ class CoverageData:
                 "Can't combine statement coverage data with branch data", slug="cant-combine"
             )
 
-        map_path = map_path or (lambda p: p)
-
         # Force the database we're writing to to exist before we start nesting contexts.
         self._start_using()
         other_data.read()
@@ -749,7 +747,14 @@ class CoverageData:
 
             # Register functions for SQLite
             register_sqlite_functions(con.con)
-            con.con.create_function("map_path", 1, map_path)
+
+            def map_with_fixed_slashes(p: str) -> str:
+                if map_path is not None:
+                    p = map_path(p)
+                p = re.sub(r"[/\\]", re.escape(os.sep), p)
+                return p
+
+            con.con.create_function("map_path", 1, map_with_fixed_slashes)
 
             # Attach the other database
             con.execute_void("ATTACH DATABASE ? AS other_db", (other_data.data_filename(),))
