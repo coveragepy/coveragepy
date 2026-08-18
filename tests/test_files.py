@@ -530,7 +530,7 @@ class PathAliasesTest(CoverageTest):
         self.assert_mapped(
             aliases,
             "/ci/src/vendor/ci/src/a.py",
-            os_sep("./mysrc/vendor/ci/src/a.py"),
+            "./mysrc/vendor/ci/src/a.py",
         )
 
     def test_no_map_if_not_exist(self, rel_yn: bool) -> None:
