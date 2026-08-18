@@ -53,7 +53,7 @@ Unreleased
   entire option value, so ``--concurrency=multiprocessing,thread --branch``
   slipped through and failed later with "Can't combine statement coverage data
   with branch data".  Each named concurrency library is now considered (`pull
-  PLACEHOLDER`_).
+  2270`_).
 
 - Fix: ``coverage annotate -d DIR`` raised an ``AssertionError`` if any
   measured file had an extension other than ``.py``, such as a ``.pyw`` file on
@@ -64,6 +64,7 @@ Unreleased
 .. _pull 2262: https://github.com/coveragepy/coveragepy/pull/2262
 .. _pull 2263: https://github.com/coveragepy/coveragepy/pull/2263
 .. _pull 2265: https://github.com/coveragepy/coveragepy/pull/2265
+.. _pull 2270: https://github.com/coveragepy/coveragepy/pull/2270
 .. _issue 2266: https://github.com/coveragepy/coveragepy/issues/2266
 
 
