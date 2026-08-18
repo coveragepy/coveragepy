@@ -181,14 +181,21 @@ class TomlConfigParser:
         return self._check_type(name, option, value, bool, bool_strings.__getitem__, "a boolean")
 
     def getfile(self, section: str, option: str) -> str:
-        _, value = self._get_single(section, option)
+        name, value = self._get_single(section, option)
+        value = self._check_type(name, option, value, str, None, "a string")
         return config.process_file_value(value)
 
     def _get_list(self, section: str, option: str) -> tuple[str, list[str]]:
         """Get a list of strings, substituting environment variables in the elements."""
         name, values = self._get(section, option)
         values = self._check_type(name, option, values, list, None, "a list")
-        values = [substitute_variables(value, os.environ) for value in values]
+        values = [
+            substitute_variables(
+                self._check_type(name, option, value, str, None, "a list of strings"),
+                os.environ,
+            )
+            for value in values
+        ]
         return name, values
 
     def getlist(self, section: str, option: str) -> list[str]:

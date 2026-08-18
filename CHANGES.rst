@@ -23,12 +23,31 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
+- When combining files, now path separator slashes will automatically be
+  converted to the local file system style. This makes it less necessary to
+  define ``[paths]`` configuration to combine data across operating systems.
+  Fixes `issue 2266`_.
+
 - The :meth:`.Coverage.switch_context` method now returns the previous context.
 
-- fix: negative precision settings now always cause useful error messages
+- Fix: negative precision settings now always cause useful error messages
   (`pull 2261`_).
 
+- fix: an invalid regex in the ``--contexts`` option (or the ``[report]
+  contexts`` setting) reported a confusing "Couldn't use data file ...:
+  user-defined function raised exception" error. Now it raises a proper
+  configuration error naming the bad regex, like other regex settings do.
+
 .. _pull 2261: https://github.com/coveragepy/coveragepy/pull/2261
+.. _issue 2266: https://github.com/coveragepy/coveragepy/issues/2266
+
+- fix: non-string values in TOML configuration settings now produce a helpful
+  error message instead of a traceback.  This affects list settings whose
+  elements aren't strings (like ``omit``, ``exclude_lines``, or a ``[paths]``
+  entry), file settings like ``data_file``, and any wrong-typed value in the
+  ``[paths]`` section (`pull 2263`_).
+
+.. _pull 2263: https://github.com/coveragepy/coveragepy/pull/2263
 
 
 .. start-releases
