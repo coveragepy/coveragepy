@@ -39,6 +39,7 @@ Unreleased
   (`pull 2265`_).
 
 .. _pull 2265: https://github.com/coveragepy/coveragepy/pull/2265
+
 - fix: an invalid regex in the ``--contexts`` option (or the ``[report]
   contexts`` setting) reported a confusing "Couldn't use data file ...:
   user-defined function raised exception" error. Now it raises a proper
