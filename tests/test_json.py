@@ -50,15 +50,13 @@ class JsonReportTest(UsingModulesMixin, CoverageTest):
             "num_statements": statements,
             "percent_covered": percent_covered,
             "percent_covered_display": (
-                f"{percent_covered:.{precision}f}"
-                if precision > 0
-                else str(int(round(percent_covered)))
+                f"{percent_covered:.{precision}f}" if precision > 0 else str(round(percent_covered))
             ),
             "percent_statements_covered": percent_statements_covered,
             "percent_statements_covered_display": (
                 f"{percent_statements_covered:.{precision}f}"
                 if precision > 0
-                else str(int(round(percent_statements_covered)))
+                else str(round(percent_statements_covered))
             ),
         }
 
@@ -79,7 +77,7 @@ class JsonReportTest(UsingModulesMixin, CoverageTest):
                     "percent_branches_covered_display": (
                         f"{percent_branches_covered:.{precision}f}"
                         if precision > 0
-                        else str(int(round(percent_branches_covered)))
+                        else str(round(percent_branches_covered))
                     ),
                 }
             )

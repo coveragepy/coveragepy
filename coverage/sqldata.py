@@ -26,7 +26,7 @@ from collections.abc import Callable, Collection, Mapping, Sequence
 from typing import Any, Concatenate, ParamSpec, TypeAlias, TypeVar, cast
 
 from coverage.debug import NoDebugging, auto_repr, file_summary
-from coverage.exceptions import CoverageException, DataError
+from coverage.exceptions import ConfigError, CoverageException, DataError
 from coverage.misc import Hasher, file_be_gone, isolate_module
 from coverage.numbits import (
     numbits_to_nums,
@@ -733,8 +733,6 @@ class CoverageData:
                 "Can't combine statement coverage data with branch data", slug="cant-combine"
             )
 
-        map_path = map_path or (lambda p: p)
-
         # Force the database we're writing to to exist before we start nesting contexts.
         self._start_using()
         other_data.read()
@@ -749,7 +747,14 @@ class CoverageData:
 
             # Register functions for SQLite
             register_sqlite_functions(con.con)
-            con.con.create_function("map_path", 1, map_path)
+
+            def map_with_fixed_slashes(p: str) -> str:
+                if map_path is not None:
+                    p = map_path(p)
+                p = re.sub(r"[/\\]", re.escape(os.sep), p)
+                return p
+
+            con.con.create_function("map_path", 1, map_with_fixed_slashes)
 
             # Attach the other database
             con.execute_void("ATTACH DATABASE ? AS other_db", (other_data.data_filename(),))
@@ -1009,6 +1014,11 @@ class CoverageData:
         """
         self._start_using()
         if contexts:
+            for context in contexts:
+                try:
+                    re.compile(context)
+                except re.error as e:
+                    raise ConfigError(f"Invalid context regex {context!r}: {e}") from e
             with self._connect() as con:
                 context_clause = " or ".join(["context REGEXP ?"] * len(contexts))
                 with con.execute("SELECT id FROM context WHERE " + context_clause, contexts) as cur:
