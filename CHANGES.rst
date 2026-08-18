@@ -33,6 +33,13 @@ Unreleased
 - Fix: negative precision settings now always cause useful error messages
   (`pull 2261`_).
 
+- Fix: ``coverage annotate -d DIR`` raised an ``AssertionError`` if any
+  measured file had an extension other than ``.py``, such as a ``.pyw`` file
+  on Windows.  The original extension is now restored on the annotated copy
+  (`pull 2265`_).
+
+.. _pull 2265: https://github.com/coveragepy/coveragepy/pull/2265
+
 - fix: an invalid regex in the ``--contexts`` option (or the ``[report]
   contexts`` setting) reported a confusing "Couldn't use data file ...:
   user-defined function raised exception" error. Now it raises a proper
