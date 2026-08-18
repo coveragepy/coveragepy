@@ -26,7 +26,7 @@ from collections.abc import Callable, Collection, Mapping, Sequence
 from typing import Any, Concatenate, ParamSpec, TypeAlias, TypeVar, cast
 
 from coverage.debug import NoDebugging, auto_repr, file_summary
-from coverage.exceptions import CoverageException, DataError
+from coverage.exceptions import ConfigError, CoverageException, DataError
 from coverage.misc import Hasher, file_be_gone, isolate_module
 from coverage.numbits import (
     numbits_to_nums,
@@ -1014,6 +1014,11 @@ class CoverageData:
         """
         self._start_using()
         if contexts:
+            for context in contexts:
+                try:
+                    re.compile(context)
+                except re.error as e:
+                    raise ConfigError(f"Invalid context regex {context!r}: {e}") from e
             with self._connect() as con:
                 context_clause = " or ".join(["context REGEXP ?"] * len(contexts))
                 with con.execute("SELECT id FROM context WHERE " + context_clause, contexts) as cur:
