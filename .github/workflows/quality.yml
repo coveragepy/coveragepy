@@ -52,6 +52,7 @@ jobs:
             docs:
               - "doc/**"
               - "coverage/**.py"
+              - "*.rst"
             actions:
               - ".github/workflows/**"
             workflow:
