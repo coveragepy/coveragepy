@@ -30,6 +30,10 @@ Unreleased
 
 - The :meth:`.Coverage.switch_context` method now returns the previous context.
 
+- Fix: previously, a ``[paths]`` pattern would be replaced everywhere in a file
+  path when it was only meant to be replaced once, in the leading portion of
+  the path. This is now fixed, in `pull 2268`_.
+
 - Fixes to validation of options and configuration settings:
 
   - Negative precision settings now always cause useful error messages (`pull
@@ -57,6 +61,7 @@ Unreleased
 .. _pull 2263: https://github.com/coveragepy/coveragepy/pull/2263
 .. _pull 2265: https://github.com/coveragepy/coveragepy/pull/2265
 .. _issue 2266: https://github.com/coveragepy/coveragepy/issues/2266
+.. _pull 2268: https://github.com/coveragepy/coveragepy/pull/2268
 
 
 .. start-releases
