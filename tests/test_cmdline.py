@@ -1181,6 +1181,18 @@ class CmdLineTest(BaseCmdLineTest):
         assert msg in err
         assert "Remove --branch from the command line." in err
 
+    def test_multiprocessing_in_a_list_needs_config_file(self) -> None:
+        # The check has to consider each concurrency value, not just compare
+        # the whole option to "multiprocessing".
+        self.cmd_help(
+            "run --concurrency=multiprocessing,thread --branch foo.py",
+            help_msg=(
+                "Options affecting multiprocessing must only be specified "
+                + "in a configuration file.\n"
+                + "Remove --branch from the command line."
+            ),
+        )
+
     def test_run_debug(self) -> None:
         self.cmd_executes(
             "run --debug=opt1 foo.py",
