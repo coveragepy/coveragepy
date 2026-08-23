@@ -51,6 +51,14 @@ Unreleased
     entry), file settings like ``data_file``, and any wrong-typed value in the
     ``[paths]`` section (`pull 2263`_).
 
+- Fix: ``coverage run`` refuses run-affecting command-line options like
+  ``--branch`` alongside ``--concurrency=multiprocessing``, since they can't
+  reach the subprocesses.  The check only recognized ``multiprocessing`` as the
+  entire option value, so ``--concurrency=multiprocessing,thread --branch``
+  slipped through and failed later with "Can't combine statement coverage data
+  with branch data".  Each named concurrency library is now considered (`pull
+  2270`_).
+
 - Fix: ``coverage annotate -d DIR`` raised an ``AssertionError`` if any
   measured file had an extension other than ``.py``, such as a ``.pyw`` file on
   Windows.  The original extension is now restored on the annotated copy (`pull
@@ -60,6 +68,7 @@ Unreleased
 .. _pull 2262: https://github.com/coveragepy/coveragepy/pull/2262
 .. _pull 2263: https://github.com/coveragepy/coveragepy/pull/2263
 .. _pull 2265: https://github.com/coveragepy/coveragepy/pull/2265
+.. _pull 2270: https://github.com/coveragepy/coveragepy/pull/2270
 .. _issue 2266: https://github.com/coveragepy/coveragepy/issues/2266
 .. _pull 2268: https://github.com/coveragepy/coveragepy/pull/2268
 
