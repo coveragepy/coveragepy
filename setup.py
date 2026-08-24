@@ -6,14 +6,13 @@
 # Setuptools setup for coverage.py
 # This file is used unchanged under all versions of Python.
 
-import re
 import os
 import os.path
 import platform
+import re
 import sys
 import textwrap
 import zipfile
-
 from pathlib import Path
 from typing import Any
 
@@ -209,7 +208,7 @@ setup_args = dict(
     long_description_content_type="text/x-rst",
     keywords="code coverage testing",
     license="Apache-2.0",
-    license_files=["LICENSE.txt"],
+    license_files=["LICENSE.txt", "NOTICE.txt"],
     classifiers=CLASSIFIERS,
     url="https://github.com/coveragepy/coveragepy",
     project_urls={

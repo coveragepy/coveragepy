@@ -11,14 +11,12 @@ import re
 import sys
 import warnings
 
-
 import pytest
 
 import coverage
 from coverage.exceptions import CoverageWarning
 from coverage.files import actual_path
 from coverage.types import TArc
-
 from tests.coveragetest import CoverageTest
 from tests.helpers import (
     CheckUniqueFilenames,
@@ -27,9 +25,9 @@ from tests.helpers import (
     arcz_to_arcs,
     assert_count_equal,
     assert_coverage_warnings,
+    re_line,
     re_lines,
     re_lines_text,
-    re_line,
 )
 
 

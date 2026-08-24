@@ -3,8 +3,8 @@
 
 """Be able to execute coverage.py by pointing Python at a working tree."""
 
-import runpy
 import os
+import runpy
 
 PKG = "coverage"
 

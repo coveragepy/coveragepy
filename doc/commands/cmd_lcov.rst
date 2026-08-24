@@ -54,4 +54,4 @@ The **lcov** command writes coverage data to a "coverage.lcov" file.
 Common reporting options are described above in :ref:`cmd_reporting`.
 Also see :ref:`Configuration: [lcov] <config_lcov>`.
 
-.. versionadded:: 6.3
+.. version-added:: 6.3

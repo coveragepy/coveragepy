@@ -17,7 +17,7 @@ import traceback
 from collections.abc import Callable
 from dataclasses import dataclass
 from types import CodeType
-from typing import Any, NewType, Optional, cast
+from typing import Any, NewType, cast
 
 from coverage import env
 from coverage.bytecode import BranchArcResolver, bytes_to_lines
@@ -57,7 +57,7 @@ COLLECT_STATS = bool(int(os.getenv("COVERAGE_SYSMON_STATS", 0)))
 sys_monitoring = getattr(sys, "monitoring", None)
 
 DISABLE_TYPE = NewType("DISABLE_TYPE", object)
-MonitorReturn = Optional[DISABLE_TYPE]
+MonitorReturn = DISABLE_TYPE | None
 DISABLE = cast(MonitorReturn, getattr(sys_monitoring, "DISABLE", None))
 
 
@@ -110,7 +110,7 @@ if LOG:  # pragma: debugging
                 try:
                     print(f"{pid}:{tslug}: {msg}", file=f, flush=True)
                 except UnicodeError:
-                    print(f"{pid}:{tslug}: {ascii(msg)}", file=f, flush=True)
+                    print(f"{pid}:{tslug}: {msg!a}", file=f, flush=True)
 
     def arg_repr(arg: Any) -> str:
         """Make a customized repr for logged values."""

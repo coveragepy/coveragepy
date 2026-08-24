@@ -23,17 +23,103 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
+- When combining files, now path separator slashes will automatically be
+  converted to the local file system style. This makes it less necessary to
+  define ``[paths]`` configuration to combine data across operating systems.
+  Fixes `issue 2266`_.
+
+- The :meth:`.Coverage.switch_context` method now returns the previous context.
+
+- Fix: previously, a ``[paths]`` pattern would be replaced everywhere in a file
+  path when it was only meant to be replaced once, in the leading portion of
+  the path. This is now fixed, in `pull 2268`_.
+
+- Fixes to validation of options and configuration settings:
+
+  - Negative precision settings now always cause useful error messages (`pull
+    2261`_).
+
+  - An invalid regex in the ``--contexts`` option (or the ``[report]
+    contexts`` setting) reported a confusing "Couldn't use data file ...:
+    user-defined function raised exception" error. Now it raises a proper
+    configuration error naming the bad regex, like other regex settings do
+    (`pull 2262`_).
+
+  - Non-string values in TOML configuration settings now produce a helpful
+    error message instead of a traceback.  This affects list settings whose
+    elements aren't strings (like ``omit``, ``exclude_lines``, or a ``[paths]``
+    entry), file settings like ``data_file``, and any wrong-typed value in the
+    ``[paths]`` section (`pull 2263`_).
+
+  - ``coverage run`` refuses run-affecting command-line options like
+    ``--branch`` alongside ``--concurrency=multiprocessing``, since they can't
+    reach the subprocesses.  The check only recognized ``multiprocessing`` as
+    the entire option value, so ``--concurrency=multiprocessing,thread``
+    slipped through and failed later with "Can't combine statement coverage
+    data with branch data".  Each named concurrency library is now properly
+    considered (`pull 2270`_).
+
+- Fix: ``coverage annotate -d DIR`` raised an ``AssertionError`` if any
+  measured file had an extension other than ``.py``, such as a ``.pyw`` file on
+  Windows.  The original extension is now restored on the annotated copy (`pull
+  2265`_).
+
+.. _pull 2261: https://github.com/coveragepy/coveragepy/pull/2261
+.. _pull 2262: https://github.com/coveragepy/coveragepy/pull/2262
+.. _pull 2263: https://github.com/coveragepy/coveragepy/pull/2263
+.. _pull 2265: https://github.com/coveragepy/coveragepy/pull/2265
+.. _issue 2266: https://github.com/coveragepy/coveragepy/issues/2266
+.. _pull 2268: https://github.com/coveragepy/coveragepy/pull/2268
+.. _pull 2270: https://github.com/coveragepy/coveragepy/pull/2270
+
+
+.. start-releases
+
+.. _changes_7-15-4:
+
+Version 7.15.4 — 2026-08-06
+---------------------------
+
+- Fix: in the HTML report, a source file name containing a double quote (legal
+  on POSIX) wasn't escaped where it's dropped into the ``href`` of the index
+  and prev/next links, so it could close the attribute early and inject markup.
+  Page URLs are now escaped. Thanks, `Rajath Mohare <pull 2227_>`_.
+
+- Fix: the LCOV report wrote file names and other fields into its
+  line-oriented records without neutralizing control characters. A measured
+  file whose name contained a newline (legal on POSIX) could forge extra
+  records, inflating the coverage seen by tools that read the report. Control
+  characters in a field are now replaced. Thanks, `Rajath Mohare <pull
+  2226_>`_.
+
+- Wheels are now provided for Python 3.15.
+
+.. _pull 2226: https://github.com/coveragepy/coveragepy/pull/2226
+.. _pull 2227: https://github.com/coveragepy/coveragepy/pull/2227
+
+
+.. _changes_7-15-3:
+
+Version 7.15.3 — 2026-08-02
+---------------------------
+
 - Fix: the sysmon core is incompatible with dynamic contexts. Previously, the
   combination would be prevented when read from the coverage.py configuration.
   But using the context API as pytest-cov does, contexts would be silently
   dropped. Now a warning is issued, thanks to `Jisang Han <pull 2234_>`_.
   Closes `issue 2200`_.
 
+- A performance improvement in the low-level line number bookkeeping when
+  combining data files, thanks to `Kevin Turcios <pull 2239_>`_.
+
+- Performance improvement in HTML reporting by reducing the number of times
+  files have to be parsed, thanks to `Kevin Turcios <pull 2240_>`_.
+
 .. _issue 2200: https://github.com/coveragepy/coveragepy/issues/2200
 .. _pull 2234: https://github.com/coveragepy/coveragepy/pull/2234
+.. _pull 2239: https://github.com/coveragepy/coveragepy/pull/2239
+.. _pull 2240: https://github.com/coveragepy/coveragepy/pull/2240
 
-
-.. start-releases
 
 .. _changes_7-15-2:
 

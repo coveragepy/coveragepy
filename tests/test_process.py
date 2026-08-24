@@ -17,7 +17,6 @@ import signal
 import stat
 import sys
 import textwrap
-
 from pathlib import Path
 from typing import Any
 
@@ -27,10 +26,10 @@ import coverage
 from coverage import env
 from coverage.data import line_counts
 from coverage.files import abs_file, python_reported_file
+from coverage.misc import first
 from coverage.sqldata import good_filename_match
-
 from tests import testenv
-from tests.coveragetest import CoverageTest, TESTS_DIR
+from tests.coveragetest import TESTS_DIR, CoverageTest
 from tests.helpers import change_dir, re_lines, re_lines_text
 
 
@@ -271,10 +270,10 @@ class ProcessTest(CoverageTest):
         data.read()
         summary = line_counts(data, fullpath=True)
         assert len(summary) == 1
-        actual = abs_file(list(summary.keys())[0])
+        actual = abs_file(first(summary.keys()))
         expected = abs_file("src/x.py")
         assert expected == actual
-        assert list(summary.values())[0] == 6
+        assert first(summary.values()) == 6
 
     def test_erase_parallel(self) -> None:
         self.make_file(
@@ -1715,7 +1714,7 @@ class ProcessStartupWithSourceTest(CoverageTest):
         def fullname(modname: str) -> str:
             """What is the full module name for `modname` for this test?"""
             if package and dashm:
-                return ".".join((package, modname))
+                return f"{package}.{modname}"
             else:
                 return modname
 

@@ -10,7 +10,6 @@ import pytest
 import coverage
 from coverage import env
 from coverage.exceptions import ConfigError
-
 from tests import testenv
 from tests.coveragetest import CoverageTest
 from tests.helpers import re_line, re_lines

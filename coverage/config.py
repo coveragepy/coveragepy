@@ -263,27 +263,31 @@ class CoverageConfig(TConfigurable, TPluginConfig):
         # Options for plugins
         self.plugin_options: dict[str, TConfigSectionOut] = {}
 
-    MUST_BE_LIST = {
-        "debug",
-        "concurrency",
-        "plugins",
-        "report_omit",
-        "report_include",
-        "run_omit",
-        "run_include",
-        "patch",
-    }
+    MUST_BE_LIST = frozenset(
+        (
+            "debug",
+            "concurrency",
+            "plugins",
+            "report_omit",
+            "report_include",
+            "run_omit",
+            "run_include",
+            "patch",
+        )
+    )
 
     # File paths to make absolute during serialization.
     # The pairs are (config_key, must_exist).
-    SERIALIZE_ABSPATH = {
-        ("data_file", False),
-        ("debug_file", False),
-        # `source` can be directories or modules, so don't abspath it if it
-        # doesn't exist.
-        ("source", True),
-        ("source_dirs", False),
-    }
+    SERIALIZE_ABSPATH = frozenset(
+        (
+            ("data_file", False),
+            ("debug_file", False),
+            # `source` can be directories or modules, so don't abspath it if it
+            # doesn't exist.
+            ("source", True),
+            ("source_dirs", False),
+        )
+    )
 
     def from_args(self, **kwargs: TConfigValueIn) -> None:
         """Read config values from `kwargs`."""
@@ -344,18 +348,17 @@ class CoverageConfig(TConfigurable, TPluginConfig):
             if real_section:
                 for unknown in set(cp.options(section)) - options:
                     warn(
-                        "Unrecognized option '[{}] {}=' in config file {}".format(
-                            real_section,
-                            unknown,
-                            filename,
-                        ),
+                        f"Unrecognized option '[{real_section}] {unknown}=' in config file {filename}",
                     )
 
         # [paths] is special
         if cp.has_section("paths"):
-            for option in cp.options("paths"):
-                self.paths[option] = cp.getlist("paths", option)
-                any_set = True
+            try:
+                for option in cp.options("paths"):
+                    self.paths[option] = cp.getlist("paths", option)
+                    any_set = True
+            except ValueError as err:
+                raise ConfigError(f"Couldn't read config file {filename}: {err}") from err
 
         # plugins can have options
         for plugin in self.plugins:
@@ -391,9 +394,9 @@ class CoverageConfig(TConfigurable, TPluginConfig):
     }
 
     # Mutually exclusive concurrency settings.
-    LIGHT_THREADS = {"greenlet", "eventlet", "gevent"}
+    LIGHT_THREADS = frozenset(("greenlet", "eventlet", "gevent"))
 
-    CONFIG_FILE_OPTIONS = [
+    CONFIG_FILE_OPTIONS = (
         # These are *args for _set_attr_from_config_option:
         #   (attr, where, type_="")
         #
@@ -466,7 +469,7 @@ class CoverageConfig(TConfigurable, TPluginConfig):
         # [lcov]
         ("lcov_output", "lcov:output", "file"),
         ("lcov_line_checksums", "lcov:line_checksums", "boolean"),
-    ]
+    )
 
     def _set_attr_from_config_option(
         self,

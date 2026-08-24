@@ -10,14 +10,13 @@ from unittest import mock
 
 import pytest
 
-from tests.coveragetest import CoverageTest
-from tests.helpers import assert_count_equal
-
 import coverage
 import coverage.python
 from coverage import env
 from coverage.data import sorted_lines
 from coverage.files import abs_file
+from tests.coveragetest import CoverageTest
+from tests.helpers import assert_count_equal
 
 
 class SimpleArcTest(CoverageTest):
@@ -1945,7 +1944,7 @@ class MiscArcTest(CoverageTest):
         )
 
     def test_failing_open(self) -> None:
-        with mock.patch.object(coverage.python, "open", side_effect=IOError("Nope")):
+        with mock.patch.object(coverage.python, "open", side_effect=OSError("Nope")):
             self.make_file(
                 "some_branches.py",
                 """\

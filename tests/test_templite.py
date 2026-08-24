@@ -5,15 +5,14 @@
 
 from __future__ import annotations
 
+import contextlib
 import re
-
 from types import SimpleNamespace
-from typing import Any, ContextManager
+from typing import Any
 
 import pytest
 
 from coverage.templite import Templite, TempliteSyntaxError, TempliteValueError
-
 from tests.coveragetest import CoverageTest
 
 # pylint: disable=possibly-unused-variable
@@ -42,7 +41,7 @@ class TempliteTest(CoverageTest):
         assert result is not None
         assert actual == result
 
-    def assertSynErr(self, msg: str) -> ContextManager[None]:
+    def assertSynErr(self, msg: str) -> contextlib.AbstractContextManager[None]:
         """Assert that a `TempliteSyntaxError` will happen.
 
         A context manager, and the message should be `msg`.
@@ -123,11 +122,11 @@ class TempliteTest(CoverageTest):
         )
 
         # Loop iterables can be filtered.
-        def rev(l: list[int]) -> list[int]:
-            """Return the reverse of `l`."""
-            l = l[:]
-            l.reverse()
-            return l
+        def rev(nums: list[int]) -> list[int]:
+            """Return the reverse of `nums`."""
+            nums = nums[:]
+            nums.reverse()
+            return nums
 
         self.try_render(
             "Look: {% for n in nums|rev %}{{n}}, {% endfor %}done.",

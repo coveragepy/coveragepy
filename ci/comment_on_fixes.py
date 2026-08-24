@@ -7,7 +7,6 @@ import re
 import sys
 
 from scriv.scriv import Scriv
-
 from session import get_session
 
 scriv = Scriv()

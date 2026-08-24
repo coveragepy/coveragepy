@@ -6,13 +6,11 @@
 from __future__ import annotations
 
 import dis
-
 from textwrap import dedent
-
-from tests.coveragetest import CoverageTest
 
 from coverage import env
 from coverage.bytecode import ByteParser, op_set
+from tests.coveragetest import CoverageTest
 
 
 class BytecodeTest(CoverageTest):

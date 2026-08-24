@@ -85,7 +85,7 @@
     <p class="pln"><span class="n"><a id="t1" href="#t1">1</a></span><span class="t"><span class="com"># partial branches and excluded lines</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t2" href="#t2">2</a></span><span class="t"><span class="nam">a</span> <span class="op">=</span> <span class="num">2</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t3" href="#t3">3</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
-    <p class="par run show_par"><span class="n"><a id="t4" href="#t4">4</a></span><span class="t"><span class="key">while</span> <span class="str">"no peephole"</span><span class="op">.</span><span class="nam">upper</span><span class="op">(</span><span class="op">)</span><span class="op">:</span>        <span class="com"># t4</span>&nbsp;</span><span class="r"><span class="annotate short">4&#x202F;&#x219B;&#x202F;7</span><span class="annotate long">line 4 didn't jump to line 7 because the condition on line 4 was always true</span></span></p>
+    <p class="par run show_par"><span class="n"><a id="t4" href="#t4">4</a></span><span class="t"><span class="key">while</span> <span class="str">&quot;no peephole&quot;</span><span class="op">.</span><span class="nam">upper</span><span class="op">(</span><span class="op">)</span><span class="op">:</span>        <span class="com"># t4</span>&nbsp;</span><span class="r"><span class="annotate short">4&#x202F;&#x219B;&#x202F;7</span><span class="annotate long">line 4 didn't jump to line 7 because the condition on line 4 was always true</span></span></p>
     <p class="run"><span class="n"><a id="t5" href="#t5">5</a></span><span class="t">    <span class="key">break</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t6" href="#t6">6</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t7" href="#t7">7</a></span><span class="t"><span class="key">while</span> <span class="nam">a</span><span class="op">:</span>        <span class="com"># pragma: no branch</span>&nbsp;</span><span class="r"></span></p>
@@ -98,7 +98,7 @@
     <p class="run"><span class="n"><a id="t14" href="#t14">14</a></span><span class="t">    <span class="nam">a</span> <span class="op">=</span> <span class="num">14</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t15" href="#t15">15</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t16" href="#t16">16</a></span><span class="t"><span class="key">if</span> <span class="nam">a</span> <span class="op">==</span> <span class="num">16</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
-    <p class="exc show_exc"><span class="n"><a id="t17" href="#t17">17</a></span><span class="t">    <span class="key">raise</span> <span class="nam">ZeroDivisionError</span><span class="op">(</span><span class="str">"17"</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="exc show_exc"><span class="n"><a id="t17" href="#t17">17</a></span><span class="t">    <span class="key">raise</span> <span class="nam">ZeroDivisionError</span><span class="op">(</span><span class="str">&quot;17&quot;</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
 </main>
 <footer>
     <div class="content">

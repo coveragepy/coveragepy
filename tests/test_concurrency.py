@@ -14,9 +14,8 @@ import re
 import sys
 import threading
 import time
-
-from types import ModuleType
 from collections.abc import Iterable
+from types import ModuleType
 
 import pytest
 
@@ -27,10 +26,8 @@ from coverage.exceptions import ConfigError
 from coverage.files import abs_file
 from coverage.misc import import_local_file
 from coverage.sqldata import SUFFIX_PATTERN
-
 from tests import testenv
 from tests.coveragetest import CoverageTest
-
 
 # These libraries aren't always available, we'll skip tests if they aren't.
 
@@ -45,17 +42,17 @@ except ImportError:
     greenlet = None
 
 
-def measurable_line(l: str) -> bool:
+def measurable_line(line: str) -> bool:
     """Is this a line of code coverage will measure?
 
     Not blank, not a comment, and not "else"
     """
-    l = l.strip()
-    if not l:
+    line = line.strip()
+    if not line:
         return False
-    if l.startswith("#"):
+    if line.startswith("#"):
         return False
-    if l.startswith("else:"):
+    if line.startswith("else:"):
         return False
     return True
 

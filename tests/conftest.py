@@ -12,15 +12,12 @@ from __future__ import annotations
 import os
 import sys
 import warnings
-
 from collections.abc import Iterable
 
 import pytest
 
 from coverage.files import set_relative_directory
-
 from tests import testenv
-
 
 # Pytest will rewrite assertions in test modules, but not elsewhere.
 # This tells pytest to also rewrite assertions in these files:

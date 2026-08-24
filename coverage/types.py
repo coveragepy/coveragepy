@@ -11,7 +11,7 @@ import os
 import pathlib
 from collections.abc import Callable, Iterable, Mapping
 from types import FrameType, ModuleType
-from typing import TYPE_CHECKING, Any, Optional, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
 if TYPE_CHECKING:
     from coverage.plugin import FileTracer
@@ -91,7 +91,7 @@ class Tracer(Protocol):
     should_trace: TShouldTraceFn
     should_trace_cache: Mapping[str, TFileDisposition | None]
     should_start_context: TShouldStartContextFn | None
-    switch_context: Callable[[str | None], None] | None
+    switch_context: Callable[[str | None], str | None] | None
     lock_data: Callable[[], None]
     unlock_data: Callable[[], None]
     warn: TWarnFn
@@ -123,8 +123,8 @@ TCovKwargs = Any
 ## Configuration
 
 # One value read from a config file.
-TConfigValueIn = Optional[bool | int | float | str | Iterable[str] | Mapping[str, Iterable[str]]]
-TConfigValueOut = Optional[bool | int | float | str | list[str] | dict[str, list[str]]]
+TConfigValueIn = bool | int | float | str | Iterable[str] | Mapping[str, Iterable[str]] | None
+TConfigValueOut = bool | int | float | str | list[str] | dict[str, list[str]] | None
 # An entire config section, mapping option names to values.
 TConfigSectionIn = Mapping[str, TConfigValueIn]
 TConfigSectionOut = Mapping[str, TConfigValueOut]

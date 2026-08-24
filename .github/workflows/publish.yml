@@ -17,7 +17,7 @@ defaults:
 env:
   # PYVERSIONS: changing the list of versions will change the number of
   # expected distributions. This must match the same number in kit.yml.
-  EXPECTED: 91
+  EXPECTED: 121
 
 permissions:
   contents: read
@@ -86,12 +86,12 @@ jobs:
           files=$(find dist/* 2>/dev/null | wc -l) && [ "$files" -eq "$EXPECTED" ] || exit 1
 
       - name: "Generate attestations"
-        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-path: "dist/*"
 
       - name: "Publish dists to Test PyPI"
-        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # v1.14.0
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
         with:
           repository-url: https://test.pypi.org/legacy/
 
@@ -127,9 +127,9 @@ jobs:
           files=$(find dist/* 2>/dev/null | wc -l) && [ "$files" -eq "$EXPECTED" ] || exit 1
 
       - name: "Generate attestations"
-        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-path: "dist/*"
 
       - name: "Publish dists to PyPI"
-        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # v1.14.0
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
