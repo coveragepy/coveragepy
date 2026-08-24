@@ -10,7 +10,6 @@ import io
 import os
 import re
 import sys
-
 from collections.abc import Callable, Iterable
 from typing import Any
 
@@ -28,12 +27,11 @@ from coverage.debug import (
     info_formatter,
     info_header,
     relevant_environment_display,
-    short_id,
     short_filename,
+    short_id,
     short_stack,
 )
 from coverage.exceptions import DataError
-
 from tests import testenv
 from tests.coveragetest import CoverageTest
 from tests.helpers import DebugControlString, re_line, re_lines, re_lines_text

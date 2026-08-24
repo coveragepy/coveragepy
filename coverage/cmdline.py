@@ -24,7 +24,7 @@ from coverage.control import DEFAULT_DATAFILE
 from coverage.core import CTRACER_FILE
 from coverage.data import CoverageData, combinable_files, debug_data_file
 from coverage.debug import info_header, short_stack, write_formatted_info
-from coverage.exceptions import NoSource, CoverageException, _ExceptionDuringRun
+from coverage.exceptions import CoverageException, NoSource, _ExceptionDuringRun
 from coverage.execfile import PyRunner
 from coverage.results import display_covered, should_fail_under
 from coverage.version import __url__
@@ -1017,7 +1017,7 @@ class CoverageScript:
             show_help("Can't append to data files in parallel mode.")
             return ERR
 
-        if options.concurrency == "multiprocessing":
+        if "multiprocessing" in (options.concurrency or "").split(","):
             # Can't set other run-affecting command line options with
             # multiprocessing.
             for opt_name in ["branch", "include", "omit", "pylib", "source", "timid"]:

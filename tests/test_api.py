@@ -14,7 +14,6 @@ import re
 import shutil
 import sys
 import textwrap
-
 from collections.abc import Callable, Iterable
 from typing import cast
 from unittest import mock
@@ -26,11 +25,10 @@ from coverage import Coverage, env
 from coverage.data import line_counts, sorted_lines
 from coverage.exceptions import ConfigError, CoverageException, NoDataError, NoSource
 from coverage.files import abs_file, relative_filename
-from coverage.misc import import_local_file
+from coverage.misc import first, import_local_file
 from coverage.types import FilePathClasses, FilePathType, TCovKwargs
-
 from tests import testenv
-from tests.coveragetest import CoverageTest, TESTS_DIR, UsingModulesMixin
+from tests.coveragetest import TESTS_DIR, CoverageTest, UsingModulesMixin
 from tests.helpers import (
     assert_count_equal,
     assert_coverage_warnings,
@@ -358,7 +356,7 @@ class ApiTest(CoverageTest):
                 f()
 
             fs = cov.get_data().measured_files()
-            lines.append(cov.get_data().lines(list(fs)[0]))
+            lines.append(cov.get_data().lines(first(fs)))
 
         run_one_function(f1)
         run_one_function(f1)

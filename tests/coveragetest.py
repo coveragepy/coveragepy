@@ -16,7 +16,6 @@ import random
 import re
 import shlex
 import sys
-
 from collections.abc import Collection, Iterable, Iterator, Mapping, Sequence
 from types import ModuleType
 from typing import Any
@@ -27,11 +26,8 @@ from coverage.cmdline import CoverageScript
 from coverage.data import CoverageData
 from coverage.misc import import_local_file
 from coverage.types import TArc, TLineNo
-
-from tests.helpers import arcz_to_arcs, assert_count_equal
-from tests.helpers import nice_file, run_command
-from tests.mixins import PytestBase, StdStreamCapturingMixin, RestoreModulesMixin, TempDirMixin
-
+from tests.helpers import arcz_to_arcs, assert_count_equal, nice_file, run_command
+from tests.mixins import PytestBase, RestoreModulesMixin, StdStreamCapturingMixin, TempDirMixin
 
 # Status returns for the command line.
 OK, ERR = 0, 1

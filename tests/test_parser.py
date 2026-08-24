@@ -17,7 +17,6 @@ from coverage import env
 from coverage.exceptions import NoSource, NotPython
 from coverage.parser import PythonParser, is_constant_test_expr, multiline_map_from_text
 from coverage.types import TLineNo
-
 from tests.coveragetest import CoverageTest
 from tests.helpers import arcz_to_arcs
 

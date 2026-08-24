@@ -11,7 +11,6 @@ import pytest
 
 from coverage.exceptions import DataError
 from coverage.sqlitedb import SqliteDb
-
 from tests.coveragetest import CoverageTest
 from tests.helpers import DebugControlString, FailingProxy
 

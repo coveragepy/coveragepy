@@ -170,7 +170,6 @@ line-length = 100
 [tool.ruff.lint]
 ignore = [
     # Temporary while we gradually fix ruff concerns
-    "I001",     # TEMP: import order
     "UP031",    # TEMP: Use format specifiers instead of percent format
 
     # Rules I want to suppress. I know when I have done these things.
@@ -179,6 +178,7 @@ ignore = [
     "PLC0414",  # Import alias does not rename original package
     "SIM",      # Many "simplifying" rules that mask my intent.
     "S102",     # Use of `exec` detected
+    "YTT201",   # Checking `sys.version_info[0] == 3`
 ]
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?)|[a-zA-Z0-9_]+_unused)$"
 
@@ -187,4 +187,5 @@ dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?)|[a-zA-Z0-9_]+_unused)$
     "PT031",    # `pytest.warns()` block should contain a single simple statement
     # Lots of tests have global lists of expected values
     "RUF012",   # Mutable default value for class attribute
+    "RUF024",   # Do not pass mutable objects as values to `dict.fromkeys`
 ]

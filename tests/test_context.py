@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import inspect
 import os.path
-
 from typing import Any
 from unittest import mock
 
@@ -17,7 +16,6 @@ import coverage
 from coverage.context import qualname_from_frame
 from coverage.data import CoverageData, sorted_lines
 from coverage.types import TArc, TCovKwargs, TLineNo
-
 from tests import testenv
 from tests.coveragetest import CoverageTest
 from tests.helpers import assert_count_equal

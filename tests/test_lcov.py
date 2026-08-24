@@ -13,7 +13,6 @@ import pytest
 
 import coverage
 from coverage import env
-
 from tests.coveragetest import CoverageTest
 
 

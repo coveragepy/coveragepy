@@ -506,7 +506,7 @@ class PathAliases:
 
         for original_pattern, regex, result in self.aliases:
             if m := regex.match(path):
-                new = path.replace(m[0], result)
+                new = path.replace(m[0], result, 1)
                 new = new.replace(sep(path), sep(result))
                 if not self.relative:
                     new = canonical_filename(new)

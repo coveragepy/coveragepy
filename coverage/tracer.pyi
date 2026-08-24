@@ -5,7 +5,7 @@
 
 from typing import Any
 
-from coverage.types import TFileDisposition, TTraceData, TTraceFn, Tracer
+from coverage.types import TFileDisposition, Tracer, TTraceData, TTraceFn
 
 class CFileDisposition(TFileDisposition):
     """CFileDisposition is in ctracer/filedisp.c"""

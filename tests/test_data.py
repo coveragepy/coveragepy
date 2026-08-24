@@ -5,7 +5,6 @@
 
 from __future__ import annotations
 
-
 import gc
 import glob
 import os
@@ -13,23 +12,26 @@ import os.path
 import re
 import sqlite3
 import threading
-
 from collections.abc import Callable, Collection, Iterable, Mapping
 from typing import Any, TypeVar
 from unittest import mock
 
 import pytest
 
-from coverage.data import CoverageData, DataFileClassifier, combine_parallel_data
-from coverage.data import add_data_to_hash, line_counts
-from coverage.exceptions import DataError, NoDataError
+from coverage.data import (
+    CoverageData,
+    DataFileClassifier,
+    add_data_to_hash,
+    combine_parallel_data,
+    line_counts,
+)
+from coverage.exceptions import ConfigError, DataError, NoDataError
 from coverage.files import PathAliases, canonical_filename
+from coverage.misc import first
 from coverage.types import FilePathClasses, FilePathType, TArc, TLineNo
-
 from tests import osinfo
 from tests.coveragetest import CoverageTest
-from tests.helpers import DebugControlString, assert_count_equal
-
+from tests.helpers import DebugControlString, assert_count_equal, os_sep
 
 LINES_1 = {
     "a.py": {1, 2},
@@ -241,6 +243,14 @@ class CoverageDataTest(CoverageTest):
         assert covdata.lines("a.py") == [1, 2]
         covdata.set_query_contexts(["other"])
         assert covdata.lines("a.py") == []
+
+    def test_set_query_contexts_bad_regex(self) -> None:
+        covdata = DebugCoverageData()
+        covdata.set_context("test_a")
+        covdata.add_lines(LINES_1)
+        msg = r"Invalid context regex 'foo\(': missing \)"
+        with pytest.raises(ConfigError, match=msg):
+            covdata.set_query_contexts(["foo("])
 
     def test_no_lines_vs_unmeasured_file(self) -> None:
         covdata = DebugCoverageData()
@@ -728,7 +738,7 @@ class CoverageDataInTempDirTest(CoverageTest):
             covdata = klass("flaked.dat")
             covdata.add_lines(LINES_1)
             # I don't know how to make a real error, so let's fake one.
-            sqldb = list(covdata._dbs.values())[0]
+            sqldb = first(covdata._dbs.values())
             sqldb.close = lambda: 1 / 0  # type: ignore
             covdata.add_lines(LINES_1)
 
@@ -924,6 +934,49 @@ class CoverageDataFilesTest(CoverageTest):
         apy = canonical_filename("./a.py")
         sub_bpy = canonical_filename("./sub/b.py")
         template_html = canonical_filename("./template.html")
+
+        assert_line_counts(covdata3, {apy: 4, sub_bpy: 2, template_html: 1}, fullpath=True)
+        assert_measured_files(covdata3, [apy, sub_bpy, template_html])
+        assert covdata3.file_tracer(template_html) == "html.plugin"
+
+    def test_combining_autofixes_slashes(self) -> None:
+        covdata1 = DebugCoverageData(suffix="1")
+        covdata1.add_lines(
+            {
+                "src/a.py": {1, 2},
+                "src/sub/b.py": {3},
+                "src/template.html": {10},
+            }
+        )
+        covdata1.add_file_tracers(
+            {
+                "src/template.html": "html.plugin",
+            }
+        )
+        covdata1.write()
+
+        covdata2 = DebugCoverageData(suffix="2")
+        covdata2.add_lines(
+            {
+                r"src\a.py": {4, 5},
+                r"src\sub\b.py": {3, 6},
+            }
+        )
+        covdata2.write()
+
+        self.assert_file_count(".coverage.*", 2)
+
+        self.make_file("src/a.py", "")
+        self.make_file("src/sub/b.py", "")
+        self.make_file("template.html", "")
+        covdata3 = DebugCoverageData()
+        combine_parallel_data(covdata3)
+        self.assert_file_count(".coverage.*", 0)
+        self.assert_exists(".coverage")
+
+        apy = os_sep("src/a.py")
+        sub_bpy = os_sep("src/sub/b.py")
+        template_html = os_sep("src/template.html")
 
         assert_line_counts(covdata3, {apy: 4, sub_bpy: 2, template_html: 1}, fullpath=True)
         assert_measured_files(covdata3, [apy, sub_bpy, template_html])

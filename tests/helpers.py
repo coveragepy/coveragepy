@@ -18,7 +18,6 @@ import subprocess
 import sys
 import textwrap
 import warnings
-
 from collections.abc import Callable, Iterable, Iterator
 from pathlib import Path
 from typing import Any, NoReturn, TypeVar, cast

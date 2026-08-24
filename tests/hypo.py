@@ -17,11 +17,17 @@ from tests import testenv
 if testenv.USE_HYPOTHESIS:
     from hypothesis import (
         example as example,
+    )
+    from hypothesis import (
         given as given,
+    )
+    from hypothesis import (
         settings as settings,
     )
     from hypothesis.strategies import (
         integers as integers,
+    )
+    from hypothesis.strategies import (
         sets as sets,
     )
 else:

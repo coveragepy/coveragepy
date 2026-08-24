@@ -13,7 +13,6 @@ import pytest
 
 from coverage.plugin import CodeRegion
 from coverage.regions import code_regions
-
 from tests.helpers import all_our_source_files
 
 

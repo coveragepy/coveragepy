@@ -17,7 +17,6 @@ from coverage import env
 from coverage.data import sorted_lines
 from coverage.files import abs_file
 from coverage.misc import import_local_file
-
 from tests import osinfo, testenv
 from tests.coveragetest import CoverageTest
 from tests.helpers import swallow_warnings

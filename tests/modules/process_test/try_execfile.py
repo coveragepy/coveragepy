@@ -26,7 +26,6 @@ import itertools
 import json
 import os
 import sys
-
 from typing import Any
 
 # sys.path varies by execution environments.  Some installation libraries

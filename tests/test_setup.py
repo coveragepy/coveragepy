@@ -6,14 +6,12 @@
 from __future__ import annotations
 
 import sys
-
 from typing import cast
 
 import pytest
 
 import coverage
 from coverage import env
-
 from tests.coveragetest import CoverageTest
 
 

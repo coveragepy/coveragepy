@@ -10,7 +10,6 @@ import pytest
 import coverage
 from coverage import env
 from coverage.exceptions import NoDataError
-
 from tests.coveragetest import CoverageTest
 
 

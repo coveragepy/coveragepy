@@ -14,11 +14,9 @@ import warnings
 import pytest
 
 from coverage import env
-from coverage.phystokens import source_token_lines, source_encoding
+from coverage.phystokens import source_encoding, source_token_lines
 from coverage.python import get_python_source
-
-from tests.coveragetest import CoverageTest, TESTS_DIR
-
+from tests.coveragetest import TESTS_DIR, CoverageTest
 
 # A simple program and its token stream.
 SIMPLE = """\

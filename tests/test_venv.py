@@ -8,19 +8,16 @@ from __future__ import annotations
 import os
 import os.path
 import shutil
-
+from collections.abc import Iterable
 from pathlib import Path
 from typing import cast
-from collections.abc import Iterable
 
 import pytest
 
 from coverage import env
-
 from tests import testenv
-from tests.coveragetest import CoverageTest, COVERAGE_INSTALL_ARGS
-from tests.helpers import change_dir, make_file
-from tests.helpers import re_lines, run_command
+from tests.coveragetest import COVERAGE_INSTALL_ARGS, CoverageTest
+from tests.helpers import change_dir, make_file, re_lines, run_command
 
 
 def run_in_venv(cmd: str) -> str:

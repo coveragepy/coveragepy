@@ -8,8 +8,7 @@ from __future__ import annotations
 import pytest
 
 from coverage.misc import import_local_file
-
-from tests.mixins import TempDirMixin, RestoreModulesMixin
+from tests.mixins import RestoreModulesMixin, TempDirMixin
 
 
 class TempDirMixinTest(TempDirMixin):

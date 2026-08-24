@@ -13,17 +13,15 @@ import pathlib
 import py_compile
 import re
 import sys
-
-from typing import Any
 from collections.abc import Iterator
+from typing import Any
 
 import pytest
 
 from coverage.exceptions import NoCode, NoSource, _ExceptionDuringRun
 from coverage.execfile import run_python_file, run_python_module
 from coverage.files import python_reported_file
-
-from tests.coveragetest import CoverageTest, TESTS_DIR, UsingModulesMixin
+from tests.coveragetest import TESTS_DIR, CoverageTest, UsingModulesMixin
 
 TRY_EXECFILE = os.path.join(TESTS_DIR, "modules/process_test/try_execfile.py")
 

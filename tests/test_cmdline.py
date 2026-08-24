@@ -11,7 +11,6 @@ import pprint
 import re
 import sys
 import textwrap
-
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
@@ -22,14 +21,13 @@ import pytest
 import coverage
 import coverage.cmdline
 from coverage import env
-from coverage.control import DEFAULT_DATAFILE
 from coverage.config import CoverageConfig
+from coverage.control import DEFAULT_DATAFILE
 from coverage.exceptions import _ExceptionDuringRun
 from coverage.types import TConfigValueIn, TConfigValueOut
 from coverage.version import __url__
-
 from tests import testenv
-from tests.coveragetest import CoverageTest, OK, ERR, command_line
+from tests.coveragetest import ERR, OK, CoverageTest, command_line
 from tests.helpers import os_sep, re_line, re_lines
 
 
@@ -1183,6 +1181,18 @@ class CmdLineTest(BaseCmdLineTest):
         assert msg in err
         assert "Remove --branch from the command line." in err
 
+    def test_multiprocessing_in_a_list_needs_config_file(self) -> None:
+        # The check has to consider each concurrency value, not just compare
+        # the whole option to "multiprocessing".
+        self.cmd_help(
+            "run --concurrency=multiprocessing,thread --branch foo.py",
+            help_msg=(
+                "Options affecting multiprocessing must only be specified "
+                + "in a configuration file.\n"
+                + "Remove --branch from the command line."
+            ),
+        )
+
     def test_run_debug(self) -> None:
         self.cmd_executes(
             "run --debug=opt1 foo.py",
@@ -1482,7 +1492,7 @@ class CmdLineDebugDataTest(BaseCmdLineTest):
         self.command_line(f"debug data {ddarg}")
         assert self.stdout() == textwrap.dedent(f"""\
             -- data ------------------------------------------------------
-            path: {Path(".").resolve() / filename}
+            path: {Path.cwd() / filename}
             No data collected: file doesn't exist
             """)
 

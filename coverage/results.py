@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from coverage.exceptions import ConfigError
-from coverage.misc import nice_pair
+from coverage.misc import first, nice_pair
 from coverage.types import TArc, TLineNo
 
 if TYPE_CHECKING:
@@ -40,9 +40,7 @@ def analysis_from_file_reporter(
         dests = collections.defaultdict(set)
         for fromno, tono in arc_possibilities_set:
             dests[fromno].add(tono)
-        single_dests = {
-            fromno: list(tonos)[0] for fromno, tonos in dests.items() if len(tonos) == 1
-        }
+        single_dests = {fromno: first(tonos) for fromno, tonos in dests.items() if len(tonos) == 1}
         new_arcs = set()
         for fromno, tono in arcs:
             if fromno != tono:
@@ -408,6 +406,9 @@ def display_covered(pc: float, precision: int) -> str:
     result in either "0" or "100".
 
     """
+    if precision < 0:
+        raise ConfigError(f"precision={precision} is invalid. Must not be negative.")
+
     near0 = 1.0 / 10**precision
     if 0 < pc < near0:
         pc = near0

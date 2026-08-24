@@ -9,7 +9,6 @@ import sys
 
 from coverage.plugin import FileReporter
 from coverage.python import PythonFileReporter
-
 from tests.coveragetest import CoverageTest, UsingModulesMixin
 from tests.helpers import os_sep
 
