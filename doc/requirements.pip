@@ -250,10 +250,6 @@ jinja2==3.1.6 \
     # via
     #   scriv
     #   sphinx
-linklint==1.0.1 \
-    --hash=sha256:10201b4366edecfbeb3281883aff857dbe77d40bb56f16f212d372f597342d5f \
-    --hash=sha256:c931f110482f1d17808aa2df78b116adc44d7a14e9e79922c57bf9a7cba40a2d
-    # via -r doc/requirements.in
 markdown-it-py==4.2.0 \
     --hash=sha256:04a21681d6fbb623de53f6f364d352309d4094dd4194040a10fd51833e418d49 \
     --hash=sha256:9f7ebbcd14fe59494226453aed97c1070d83f8d24b6fc3a3bcf9a38092641c4a
@@ -519,9 +515,9 @@ sphinx==9.1.0 \
     --hash=sha256:c84fdd4e782504495fe4f2c0b3413d6c2bf388589bb352d439b2a3bb99991978
     # via
     #   -r doc/requirements.in
-    #   linklint
     #   sphinx-autobuild
     #   sphinx-code-tabs
+    #   sphinx-linklint
     #   sphinx-rtd-theme
     #   sphinxcontrib-jquery
     #   sphinxcontrib-restbuilder
@@ -534,6 +530,10 @@ sphinx-autobuild==2025.8.25 \
 sphinx-code-tabs==0.5.5 \
     --hash=sha256:150acc5190ce3b3d2378af02dc3fb651d32cbfb924a5ed37681418aa7520acea \
     --hash=sha256:e2cabdcc02b5897b399f6bca36557ce050d2fb7d095c01292b41ad34f1ce2ef0
+    # via -r doc/requirements.in
+sphinx-linklint==2.0.0 \
+    --hash=sha256:12aa64f3b3faaa6e8a979a7d1f2c38617866652b670e3d19fa0f60a6ce3657ef \
+    --hash=sha256:e7ea4d3b1bd83665e9c2ab9fd92c6c645c805956d2e8ca6b0f528f3a9638910d
     # via -r doc/requirements.in
 sphinx-lint==1.0.2 \
     --hash=sha256:4e7fc12f44f750b0006eaad237d7db9b1d8aba92adda9c838af891654b371d35 \
