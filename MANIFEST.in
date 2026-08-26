@@ -10,6 +10,7 @@
 
 include .editorconfig
 include .git-blame-ignore-revs
+include .gitignore
 include .ignore
 include .pre-commit-config.yaml
 include .readthedocs.yaml
