@@ -2,7 +2,7 @@
 /* For details: https://github.com/coveragepy/coveragepy/blob/main/NOTICE.txt */
 
 // Tests of coverage.py HTML report chunk navigation.
-/*global coverage, jQuery, $ */
+/*global QUnit, coverage */
 
 // Test helpers
 
@@ -15,21 +15,33 @@ function raw_selection_is(assert, sel, check_highlight) {
     assert.equal(coverage.sel_begin, beg);
     assert.equal(coverage.sel_end, end);
     if (check_highlight) {
-        assert.equal($(".linenos .highlight").length, end-beg);
+        assert.equal(document.querySelectorAll("#source .n.highlight").length, end-beg);
     }
 }
 
 // The spec is a list of "rbw" letters, indicating colors of successive lines.
 // We set the show_r and show_b classes for r and b.
 function build_fixture(spec) {
-    var i, data;
-    $("#fixture-template").tmpl().appendTo("#qunit-fixture");
-    for (i = 0; i < spec.length; i++) {
-        data = {number: i+1, klass: spec.substr(i, 1)};
-        $("#lineno-template").tmpl(data).appendTo("#qunit-fixture .linenos");
-        $("#text-template").tmpl(data).appendTo("#qunit-fixture .text");
+    const fixture = document.getElementById("source");
+    fixture.replaceChildren();
+
+    for (let i = 0; i < spec.length; i++) {
+        const number = i + 1;
+        const line = document.createElement("p");
+        const klass = spec[i];
+        line.className = klass === "w" ? klass : `${klass} show_${klass}`;
+
+        const line_number = document.createElement("span");
+        line_number.className = "n";
+        const link = document.createElement("a");
+        link.id = `t${number}`;
+        link.href = `#t${number}`;
+        link.textContent = number;
+        line_number.append(link);
+        line.append(line_number);
+        fixture.append(line);
     }
-    coverage.pyfile_ready(jQuery);
+    coverage.set_sel(0);
 }
 
 // Tests
@@ -55,13 +67,13 @@ QUnit.test("No first chunk to select", function (assert) {
 
 // One-chunk tests
 
-$.each([
+[
     ['rrrrr', [1,6]],
     ['r', [1,2]],
     ['wwrrrr', [3,7]],
     ['wwrrrrww', [3,7]],
     ['rrrrww', [1,5]]
-], function (i, params) {
+].forEach(function (params) {
 
     // Each of these tests uses a fixture with one highlighted chunks.
     var id = params[0];
@@ -98,14 +110,14 @@ $.each([
 
 // Two-chunk tests
 
-$.each([
+[
     ['rrwwrrrr', [1,3], [5,9]],
     ['rb', [1,2], [2,3]],
     ['rbbbbbbbbbb', [1,2], [2,12]],
     ['rrrrrrrrrrb', [1,11], [11,12]],
     ['wrrwrrrrw', [2,4], [5,9]],
     ['rrrbbb', [1,4], [4,7]]
-], function (i, params) {
+].forEach(function (params) {
 
     // Each of these tests uses a fixture with two highlighted chunks.
     var id = params[0];
@@ -176,7 +188,7 @@ QUnit.test("Jump from a line selected", function (assert) {
 
 // Tests of select_line_or_chunk.
 
-$.each([
+[
     // The data for each test: a spec for the fixture to build, and an array
     // of the selection that will be selected by select_line_or_chunk for
     // each line in the fixture.
@@ -188,7 +200,7 @@ $.each([
     ['wwwrrr', [[1,2], [2,3], [3,4], [4,7], [4,7], [4,7]]],
     ['rrrwww', [[1,4], [1,4], [1,4], [4,5], [5,6], [6,7]]],
     ['rrrbbb', [[1,4], [1,4], [1,4], [4,7], [4,7], [4,7]]]
-], function (i, params) {
+].forEach(function (params) {
 
     // Each of these tests uses a fixture with two highlighted chunks.
     var id = params[0];
@@ -200,10 +212,10 @@ $.each([
         }
     });
 
-    $.each(sels, function (i, sel) {
-        i++;
-        QUnit.test("Select line " + i, function (assert) {
-            coverage.select_line_or_chunk(i);
+    sels.forEach(function (sel, i) {
+        const line_number = i + 1;
+        QUnit.test("Select line " + line_number, function (assert) {
+            coverage.select_line_or_chunk(line_number);
             raw_selection_is(assert, sel);
         });
     });
