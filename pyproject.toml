@@ -159,6 +159,21 @@ ghrel_template = """
 
 """
 
+## CHECK-MANIFEST
+
+[tool.check-manifest]
+# Use our own explicit rules.
+ignore-default-rules = true
+ignore = [
+    # Files that package building creates and aren't expected in git.
+    "PKG-INFO",
+    "*.egg-info",
+    "*.egg-info/*",
+    "setup.cfg",
+    # Files that we create during packaging.
+    "a1_coverage.pth",
+]
+
 ## RUFF
 # We are using ruff for formatting, but not for linting.
 
