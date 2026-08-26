@@ -58,7 +58,7 @@ clean: debug_clean _clean_platform	#- Remove artifacts of test execution, instal
 	@rm -f .tox/*/lib/*/site-packages/a0_metacov.pth
 	@rm -f */.coverage */*/.coverage */*/*/.coverage */*/*/*/.coverage */*/*/*/*/.coverage */*/*/*/*/*/.coverage
 	@rm -f tests/covmain.zip tests/zipmods.zip tests/zip1.zip
-	@rm -rf doc/_build doc/_spell doc/sample_html_beta
+	@rm -rf doc/_build doc/_spell doc/sample_html doc/sample_html_beta
 	@rm -rf tmp
 	@rm -rf a1_coverage.pth
 	@rm -rf .*cache */.*cache */*/.*cache */*/*/.*cache .hypothesis
@@ -208,7 +208,7 @@ sample_html_beta: _sample_cog_html	#- Generate sample HTML report for a beta rel
 
 ### Kitting: making releases
 
-.PHONY: release_version edit_for_release cheats relbranch relcommit1 relcommit2
+.PHONY: release_version edit_for_release cheats relbranch relcommit1
 .PHONY: kit pypi_upload test_upload build_kits update_rtd
 .PHONY: _check_github_auth download_kits
 .PHONY: tag bump_version
@@ -230,10 +230,6 @@ relbranch:				# Create the branch for releasing (see howto.txt).
 
 relcommit1:				# Commit the first release changes (see howto.txt).
 	git commit -am "docs: prep for $$(python setup.py --version)"
-
-relcommit2:				# Commit the latest sample HTML report (see howto.txt).
-	git add doc/sample_html
-	git commit -am "docs: sample HTML for $$(python setup.py --version)"
 
 kit:					#- Make a source distribution and some wheels.
 	@# Makes sdist and binary wheel for current Python version and platform:

@@ -35,9 +35,9 @@
     $ make relcommit1
 - Generate new sample_html to get the latest, incl footer version number:
     - IF PRE-RELEASE:
-        $ make sample_html_beta relcommit2 install
+        $ make sample_html_beta install
     - IF NOT PRE-RELEASE:
-        $ make sample_html relcommit2 install
+        $ make sample_html install
 - Build and publish docs:
     - IF PRE-RELEASE:
         $ make publishbeta
