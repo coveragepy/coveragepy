@@ -1,4 +1,11 @@
-"""Shared helpers for ASV benchmarks."""
+# Licensed under the Apache License: http://www.apache.org/licenses/LICENSE-2.0
+# For details: https://github.com/coveragepy/coveragepy/blob/main/NOTICE.txt
+
+"""Shared helpers for the coverage.py benchmarks.
+
+These build synthetic Python packages at runtime so the benchmarks exercise the
+same code paths on every machine, without depending on any third-party project.
+"""
 
 from __future__ import annotations
 
@@ -8,68 +15,25 @@ import pathlib
 import shutil
 import subprocess
 import sys
-import tempfile
-from contextlib import contextmanager
-from typing import Iterator
+from types import ModuleType
 
 from coverage import Coverage
-from coverage.core import CTRACER_FILE
-from coverage.sqldata import CoverageData
+from coverage.data import CoverageData
 
 PACKAGE_NAME = "benchpkg"
 MODULE_COUNT = 80
 CALLS_PER_MODULE = 80
-MEASUREMENT_ROUNDS = 20
-REPORT_ROUNDS = 28
+# How many times the synthetic workload loops. Not to be confused with
+# pytest-benchmark's "rounds", which is how many times a benchmark is timed.
+WORKLOAD_ROUNDS = 20
+REPORT_WORKLOAD_ROUNDS = 28
 LARGE_FUNCTION_COUNT = 320
 LARGE_UNUSED_FILE_COUNT = 800
 COMBINE_FILE_COUNT = 48
 COMBINE_CONTEXT_COUNT = 24
 MULTIPROC_WORKERS = 8
 MULTIPROC_TASKS = 32
-REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
-
-
-def core_available(core: str) -> bool:
-    """Whether `core` can be used in this environment."""
-    if core == "ctrace":
-        return CTRACER_FILE is not None
-    if core == "sysmon":
-        return sys.version_info >= (3, 12)
-    return True
-
-
-@contextmanager
-def set_env(**values: str | None) -> Iterator[None]:
-    """Temporarily set environment variables."""
-    old = {name: os.environ.get(name) for name in values}
-    try:
-        for name, value in values.items():
-            if value is None:
-                os.environ.pop(name, None)
-            else:
-                os.environ[name] = value
-        yield
-    finally:
-        for name, value in old.items():
-            if value is None:
-                os.environ.pop(name, None)
-            else:
-                os.environ[name] = value
-
-
-@contextmanager
-def sys_path_entry(path: pathlib.Path) -> Iterator[None]:
-    """Temporarily put `path` at the front of sys.path."""
-    path_str = str(path)
-    sys.path.insert(0, path_str)
-    try:
-        yield
-    finally:
-        try:
-            sys.path.remove(path_str)
-        except ValueError:
-            pass
+REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 
 
 def clear_package_modules() -> None:
@@ -79,9 +43,30 @@ def clear_package_modules() -> None:
     ]
     for name in doomed:
         sys.modules.pop(name, None)
+    importlib.invalidate_caches()
+
+
+def import_workload(workspace: pathlib.Path) -> ModuleType:
+    """Freshly import the synthetic workload package from `workspace`.
+
+    `sys.path` is left as it was found, so this is safe to call from a
+    session-scoped fixture.
+
+    """
+    clear_package_modules()
+    path_str = str(workspace)
+    sys.path.insert(0, path_str)
+    try:
+        return importlib.import_module(f"{PACKAGE_NAME}.workload")
+    finally:
+        try:
+            sys.path.remove(path_str)
+        except ValueError:
+            pass
 
 
 def _module_source(calls_per_module: int) -> str:
+    """Source for one small synthetic module of branchy code."""
     return "\n".join(
         [
             f"def compute(seed: int, loops: int = {calls_per_module}) -> int:",
@@ -108,10 +93,11 @@ def _workload_source(
     *,
     calls_per_module: int,
 ) -> str:
+    """Source for the module that drives all the others."""
     workload_lines = [
         *imported,
         "",
-        f"def main(rounds: int = {MEASUREMENT_ROUNDS}, loops: int = {calls_per_module}) -> int:",
+        f"def main(rounds: int = {WORKLOAD_ROUNDS}, loops: int = {calls_per_module}) -> int:",
         "    total = 0",
         "    for seed in range(rounds):",
         *call_lines,
@@ -134,6 +120,7 @@ def _workload_source(
 
 
 def _large_module_source(function_count: int) -> str:
+    """Source for one very large module, for report-time benchmarks."""
     lines = [
         '"""Large synthetic module for report-time benchmarks."""',
         "",
@@ -180,6 +167,7 @@ def _large_module_source(function_count: int) -> str:
 
 
 def make_workspace(
+    root: pathlib.Path,
     *,
     module_count: int = MODULE_COUNT,
     calls_per_module: int = CALLS_PER_MODULE,
@@ -187,13 +175,12 @@ def make_workspace(
     large_function_count: int = LARGE_FUNCTION_COUNT,
     unused_file_count: int = 0,
 ) -> pathlib.Path:
-    """Create a synthetic project for ASV benchmarks."""
-    root = pathlib.Path(tempfile.mkdtemp(prefix="coveragepy-asv-"))
+    """Create a synthetic project under `root`, and return `root`."""
     pkg = root / PACKAGE_NAME
     pkg.mkdir()
 
     (pkg / "__init__.py").write_text(
-        '"""Synthetic package for ASV benchmarks."""\n',
+        '"""Synthetic package for coverage.py benchmarks."""\n',
         encoding="utf-8",
     )
 
@@ -209,7 +196,7 @@ def make_workspace(
                 [
                     "from . import large_module",
                     "",
-                    f"def main(rounds: int = {REPORT_ROUNDS}, loops: int = 40) -> int:",
+                    f"def main(rounds: int = {REPORT_WORKLOAD_ROUNDS}, loops: int = 40) -> int:",
                     "    del loops",
                     "    return large_module.main(rounds)",
                     "",
@@ -274,17 +261,41 @@ def make_coverage(
     branch: bool = True,
     data_suffix: str = "bench",
     source: list[str] | None = None,
+    dynamic_context: str | None = None,
 ) -> Coverage:
-    """Construct a Coverage object aimed at the synthetic project."""
+    """Construct a Coverage object aimed at the synthetic project.
+
+    The core is chosen with the ``run:core`` option rather than the
+    ``COVERAGE_CORE`` environment variable, so that whatever core the test suite
+    happens to be running under can't leak in here.
+
+    """
     data_file = workspace / f".coverage.{data_suffix}"
-    with set_env(COVERAGE_CORE=core, COVERAGE_FILE=str(data_file)):
-        cov = Coverage(
-            data_file=str(data_file),
-            config_file=False,
-            source=[str(workspace / PACKAGE_NAME)] if source is None else source,
-            branch=branch,
-        )
+    cov = Coverage(
+        data_file=str(data_file),
+        config_file=False,
+        source=[str(workspace / PACKAGE_NAME)] if source is None else source,
+        branch=branch,
+    )
+    cov.set_option("run:core", core)
+    if dynamic_context is not None:
+        cov.set_option("run:dynamic_context", dynamic_context)
     return cov
+
+
+def measure_workload(
+    cov: Coverage,
+    workload: ModuleType,
+    *,
+    rounds: int = WORKLOAD_ROUNDS,
+    loops: int = CALLS_PER_MODULE,
+) -> None:
+    """Run an already-imported workload under `cov`. This is a timed region."""
+    cov.start()
+    try:
+        workload.main(rounds=rounds, loops=loops)
+    finally:
+        cov.stop()
 
 
 def collect_data(
@@ -292,13 +303,15 @@ def collect_data(
     *,
     core: str = "pytrace",
     branch: bool = True,
-    rounds: int = MEASUREMENT_ROUNDS,
+    rounds: int = WORKLOAD_ROUNDS,
     loops: int = CALLS_PER_MODULE,
 ) -> Coverage:
-    """Run the synthetic workload under coverage and return the Coverage."""
-    if not core_available(core):
-        raise NotImplementedError(f"core={core!r} is not available here")
+    """Run the synthetic workload under coverage and return the Coverage.
 
+    The workload is imported while measurement is running, so the collected data
+    covers module-level code too.
+
+    """
     cov = make_coverage(
         workspace,
         core=core,
@@ -306,34 +319,39 @@ def collect_data(
         data_suffix=f"{core}-{'branch' if branch else 'line'}",
     )
     clear_package_modules()
-    with sys_path_entry(workspace):
+    path_str = str(workspace)
+    sys.path.insert(0, path_str)
+    try:
         cov.start()
         try:
             workload = importlib.import_module(f"{PACKAGE_NAME}.workload")
             workload.main(rounds=rounds, loops=loops)
         finally:
             cov.stop()
+    finally:
+        try:
+            sys.path.remove(path_str)
+        except ValueError:
+            pass
     clear_package_modules()
     return cov
 
 
-def collect_context_data(workspace: pathlib.Path) -> Coverage:
+def collect_context_data(workspace: pathlib.Path, *, core: str = "pytrace") -> Coverage:
     """Collect data using dynamic contexts."""
-    measured = Coverage(
-        data_file=str(workspace / ".coverage.contexts"),
-        config_file=False,
-        source=[str(workspace / PACKAGE_NAME)],
+    measured = make_coverage(
+        workspace,
+        core=core,
         branch=True,
+        data_suffix="contexts",
+        dynamic_context="test_function",
     )
-    measured.set_option("run:dynamic_context", "test_function")
-    clear_package_modules()
-    with sys_path_entry(workspace):
-        workload = __import__(f"{PACKAGE_NAME}.workload", fromlist=["main"])
-        measured.start()
-        try:
-            workload.run_contexts()
-        finally:
-            measured.stop()
+    workload = import_workload(workspace)
+    measured.start()
+    try:
+        workload.run_contexts()
+    finally:
+        measured.stop()
     clear_package_modules()
     return measured
 
@@ -383,7 +401,13 @@ def make_parallel_data_files(
 
 
 def fresh_html_dir(workspace: pathlib.Path) -> pathlib.Path:
-    """Create an empty HTML output directory."""
+    """Create an empty HTML output directory.
+
+    Only ever call this from a fixture or a ``benchmark.pedantic`` setup: an HTML
+    report into a populated directory takes the incremental path, and the
+    ``rmtree`` here is not something we want to time.
+
+    """
     html_dir = workspace / "htmlcov"
     shutil.rmtree(html_dir, ignore_errors=True)
     html_dir.mkdir()
@@ -438,26 +462,23 @@ def make_multiprocessing_project(
     return rcfile, script
 
 
-def run_coverage_subprocess(
-    workspace: pathlib.Path,
-    args: list[str],
-    *,
-    env: dict[str, str] | None = None,
-) -> None:
-    """Run `python -m coverage ...` inside `workspace`."""
-    base_env = os.environ.copy()
-    existing_pythonpath = base_env.get("PYTHONPATH")
-    repo_pythonpath = str(REPO_ROOT)
-    if existing_pythonpath:
-        base_env["PYTHONPATH"] = os.pathsep.join([repo_pythonpath, existing_pythonpath])
-    else:
-        base_env["PYTHONPATH"] = repo_pythonpath
-    if env:
-        base_env.update(env)
+def run_coverage_subprocess(workspace: pathlib.Path, args: list[str]) -> None:
+    """Run `python -m coverage ...` inside `workspace`.
+
+    The child's environment is scrubbed of the variables our own test suite sets,
+    so a benchmark measures plain coverage.py and never inherits metacov's
+    ``COVERAGE_PROCESS_START`` or the core the suite happens to be testing.
+
+    """
+    env = os.environ.copy()
+    for name in ["COVERAGE_PROCESS_START", "COVERAGE_TESTING", "COVERAGE_CORE", "COVERAGE_FILE"]:
+        env.pop(name, None)
+    # So that `python -m coverage` finds this checkout even if it isn't installed.
+    env["PYTHONPATH"] = os.pathsep.join(filter(None, [str(REPO_ROOT), env.get("PYTHONPATH")]))
     subprocess.run(
         [sys.executable, "-m", "coverage", *args],
         cwd=workspace,
-        env=base_env,
+        env=env,
         check=True,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,

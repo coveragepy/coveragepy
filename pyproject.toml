@@ -121,9 +121,19 @@ addopts = [
     "--no-flaky-report",
     "-rfEX",
     "--failed-first",
+    # The benchmarks in tests/benchmarks are not part of the test suite. They
+    # also need --benchmarks to be collected at all; see their README.
+    "-m", "not benchmark",
 ]
 python_classes = ["*Test"]
 strict = true
+
+# We register "benchmark" ourselves even though pytest-benchmark also does, so
+# that the suite still works when that plugin isn't installed.
+markers = [
+    "benchmark: a performance benchmark, only run by `make bench`",
+    "slow: a benchmark slow enough to leave out of the default benchmark run",
+]
 
 ### pytest.mark.xdist_group() values, and why:
 # "virtualenv_test": because of an expensive session-scoped fixture
