@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import pathlib
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import pytest
 
@@ -16,6 +16,7 @@ from coverage.data import CoverageData, combine_parallel_data
 from tests import testenv
 from tests.benchmarks.conftest import assert_core
 from tests.benchmarks.helpers import (
+    Benchmark,
     CALLS_PER_MODULE,
     WORKLOAD_ROUNDS,
     clear_package_modules,
@@ -25,9 +26,6 @@ from tests.benchmarks.helpers import (
     measure_workload,
     run_coverage_subprocess,
 )
-
-if TYPE_CHECKING:
-    from pytest_benchmark.fixture import BenchmarkFixture
 
 pytestmark = [pytest.mark.benchmark]
 
@@ -45,7 +43,7 @@ CORES = [
 @pytest.mark.parametrize("branch", [False, True], ids=["lines", "arcs"])
 @pytest.mark.parametrize("core", CORES)
 def test_collect(
-    benchmark: BenchmarkFixture,
+    benchmark: Benchmark,
     bench_ws: pathlib.Path,
     core: str,
     branch: bool,
@@ -77,7 +75,7 @@ def test_collect(
 @pytest.mark.benchmark(group="persist")
 @pytest.mark.parametrize("branch", [False, True], ids=["lines", "arcs"])
 def test_add_data(
-    benchmark: BenchmarkFixture,
+    benchmark: Benchmark,
     bench_ws: pathlib.Path,
     tmp_path: pathlib.Path,
     branch: bool,
@@ -106,7 +104,7 @@ def test_add_data(
 
 @pytest.mark.benchmark(group="measure")
 def test_collect_with_large_unused_source_tree(
-    benchmark: BenchmarkFixture,
+    benchmark: Benchmark,
     unused_ws: pathlib.Path,
 ) -> None:
     def setup() -> tuple[tuple[Any, ...], dict[str, Any]]:
@@ -124,7 +122,7 @@ def test_collect_with_large_unused_source_tree(
 
 @pytest.mark.benchmark(group="measure")
 def test_collect_test_function_contexts(
-    benchmark: BenchmarkFixture,
+    benchmark: Benchmark,
     bench_ws: pathlib.Path,
 ) -> None:
     def setup() -> tuple[tuple[Any, ...], dict[str, Any]]:
@@ -151,7 +149,7 @@ def test_collect_test_function_contexts(
 @pytest.mark.benchmark(group="combine")
 @pytest.mark.parametrize("branch", [False, True], ids=["lines", "arcs"])
 def test_combine_many_files(
-    benchmark: BenchmarkFixture,
+    benchmark: Benchmark,
     combine_ws: pathlib.Path,
     branch: bool,
 ) -> None:
@@ -174,7 +172,7 @@ def test_combine_many_files(
 @pytest.mark.benchmark(group="multiprocessing")
 @pytest.mark.parametrize("combine", [False, True], ids=["run", "run_and_combine"])
 def test_multiprocessing(
-    benchmark: BenchmarkFixture,
+    benchmark: Benchmark,
     mproc_ws: pathlib.Path,
     combine: bool,
 ) -> None:

@@ -15,10 +15,39 @@ import pathlib
 import shutil
 import subprocess
 import sys
+from collections.abc import Callable
 from types import ModuleType
+from typing import Any, Protocol
 
 from coverage import Coverage
 from coverage.data import CoverageData
+
+
+class Benchmark(Protocol):
+    """The part of pytest-benchmark's fixture that we use.
+
+    pytest-benchmark ships py.typed but leaves BenchmarkFixture itself
+    unannotated, so mypy --strict rejects every call into it.  Describing the
+    two entry points we use keeps our call sites checked, and doesn't go stale
+    whenever upstream does or doesn't get around to annotating them.
+
+    """
+
+    def __call__(self, function_to_benchmark: Callable[..., Any], /) -> Any: ...
+
+    def pedantic(
+        self,
+        target: Callable[..., Any],
+        args: tuple[Any, ...] = (),
+        kwargs: dict[str, Any] | None = None,
+        setup: Callable[[], Any] | None = None,
+        teardown: Callable[..., Any] | None = None,
+        rounds: int = 1,
+        warmup_rounds: int = 0,
+        iterations: int = 1,
+    ) -> Any:
+        """Time `target`, re-running `setup` untimed before each round."""
+
 
 PACKAGE_NAME = "benchpkg"
 MODULE_COUNT = 80

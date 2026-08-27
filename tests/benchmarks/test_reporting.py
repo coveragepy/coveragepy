@@ -9,16 +9,13 @@ import io
 import itertools
 import pathlib
 from collections.abc import Iterator
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import pytest
 
 from coverage import Coverage
 
-from tests.benchmarks.helpers import fresh_html_dir
-
-if TYPE_CHECKING:
-    from pytest_benchmark.fixture import BenchmarkFixture
+from tests.benchmarks.helpers import Benchmark, fresh_html_dir
 
 pytestmark = [pytest.mark.benchmark]
 
@@ -39,7 +36,7 @@ def _html_setup(workspace: pathlib.Path) -> Any:
 
 @pytest.mark.benchmark(group="analysis", warmup=True)
 def test_analysis2_all_files(
-    benchmark: BenchmarkFixture,
+    benchmark: Benchmark,
     report_cov: Coverage,
     source_files: list[pathlib.Path],
 ) -> None:
@@ -51,13 +48,13 @@ def test_analysis2_all_files(
 
 
 @pytest.mark.benchmark(group="report")
-def test_report_text(benchmark: BenchmarkFixture, report_cov: Coverage) -> None:
+def test_report_text(benchmark: Benchmark, report_cov: Coverage) -> None:
     benchmark(lambda: report_cov.report(file=io.StringIO()))
 
 
 @pytest.mark.benchmark(group="report")
 def test_xml_report(
-    benchmark: BenchmarkFixture,
+    benchmark: Benchmark,
     report_cov: Coverage,
     tmp_path: pathlib.Path,
 ) -> None:
@@ -66,7 +63,7 @@ def test_xml_report(
 
 @pytest.mark.benchmark(group="report")
 def test_json_report(
-    benchmark: BenchmarkFixture,
+    benchmark: Benchmark,
     report_cov: Coverage,
     tmp_path: pathlib.Path,
 ) -> None:
@@ -75,7 +72,7 @@ def test_json_report(
 
 @pytest.mark.benchmark(group="report")
 def test_lcov_report(
-    benchmark: BenchmarkFixture,
+    benchmark: Benchmark,
     report_cov: Coverage,
     tmp_path: pathlib.Path,
 ) -> None:
@@ -84,7 +81,7 @@ def test_lcov_report(
 
 @pytest.mark.benchmark(group="html")
 def test_html_report(
-    benchmark: BenchmarkFixture,
+    benchmark: Benchmark,
     report_cov: Coverage,
     tmp_path: pathlib.Path,
 ) -> None:
@@ -96,7 +93,7 @@ def test_html_report(
 
 @pytest.mark.benchmark(group="report")
 def test_report_then_html_same_process(
-    benchmark: BenchmarkFixture,
+    benchmark: Benchmark,
     report_cov: Coverage,
     tmp_path: pathlib.Path,
 ) -> None:
@@ -111,7 +108,7 @@ def test_report_then_html_same_process(
 
 @pytest.mark.benchmark(group="html")
 def test_html_report_with_contexts(
-    benchmark: BenchmarkFixture,
+    benchmark: Benchmark,
     contexts_cov: Coverage,
     tmp_path: pathlib.Path,
 ) -> None:
@@ -123,7 +120,7 @@ def test_html_report_with_contexts(
 
 @pytest.mark.benchmark(group="html")
 def test_html_report_with_filtered_contexts(
-    benchmark: BenchmarkFixture,
+    benchmark: Benchmark,
     contexts_cov: Coverage,
     tmp_path: pathlib.Path,
 ) -> None:
@@ -139,7 +136,7 @@ def test_html_report_with_filtered_contexts(
 
 @pytest.mark.benchmark(group="html")
 def test_html_report_large_module(
-    benchmark: BenchmarkFixture,
+    benchmark: Benchmark,
     large_cov: Coverage,
     tmp_path: pathlib.Path,
 ) -> None:
@@ -159,7 +156,7 @@ def warm_html_directory(report_cov: Coverage, tmp_path: pathlib.Path) -> pathlib
 
 @pytest.mark.benchmark(group="html")
 def test_html_report_unchanged(
-    benchmark: BenchmarkFixture,
+    benchmark: Benchmark,
     report_cov: Coverage,
     warm_html_dir: pathlib.Path,
 ) -> None:
@@ -181,7 +178,7 @@ def changing_source_file(source_files: list[pathlib.Path]) -> Iterator[pathlib.P
 
 @pytest.mark.benchmark(group="html")
 def test_html_report_single_source_change(
-    benchmark: BenchmarkFixture,
+    benchmark: Benchmark,
     report_cov: Coverage,
     warm_html_dir: pathlib.Path,
     changing_source: pathlib.Path,

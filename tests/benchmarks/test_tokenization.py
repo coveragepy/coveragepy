@@ -11,16 +11,13 @@ which is what the HTML report has to tokenize in practice.
 from __future__ import annotations
 
 import pathlib
-from typing import TYPE_CHECKING
 
 import pytest
 
 from coverage.phystokens import source_token_lines
 
+from tests.benchmarks.helpers import Benchmark
 from tests.helpers import all_our_source_files
-
-if TYPE_CHECKING:
-    from pytest_benchmark.fixture import BenchmarkFixture
 
 pytestmark = [pytest.mark.benchmark]
 
@@ -49,7 +46,7 @@ def corpus_source(request: pytest.FixtureRequest) -> list[str]:
 
 @pytest.mark.benchmark(group="tokenize")
 @pytest.mark.parametrize("corpus", CORPORA, indirect=True)
-def test_source_token_lines(benchmark: BenchmarkFixture, corpus: list[str]) -> None:
+def test_source_token_lines(benchmark: Benchmark, corpus: list[str]) -> None:
     def tokenize_all() -> None:
         for source in corpus:
             for _ in source_token_lines(source):

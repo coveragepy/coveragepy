@@ -88,9 +88,18 @@ jobs:
           python -c "from coverage.core import CTRACER_FILE; assert CTRACER_FILE, 'no CTracer'"
 
       - name: "Run the benchmarks"
+        env:
+          # Via the environment, not an inline expansion, so that the value
+          # can't be expanded into the script itself.
+          SLOW: ${{ inputs.slow }}
         run: |
+          if [[ "$SLOW" == "true" ]]; then
+            markers="benchmark"
+          else
+            markers="benchmark and not slow"
+          fi
           python -m pytest -n0 --benchmarks \
-            -m "benchmark${{ inputs.slow && '' || ' and not slow' }}" \
+            -m "$markers" \
             tests/benchmarks \
             --benchmark-json=benchmark.json \
             --benchmark-columns=min,median,ops,rounds \
