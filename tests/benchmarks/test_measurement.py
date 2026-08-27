@@ -25,6 +25,7 @@ from tests.benchmarks.helpers import (
     make_coverage,
     measure_workload,
     run_coverage_subprocess,
+    subprocess_env,
 )
 
 pytestmark = [pytest.mark.benchmark]
@@ -176,14 +177,18 @@ def test_multiprocessing(
     mproc_ws: pathlib.Path,
     combine: bool,
 ) -> None:
+    # Built once: scrubbing a large environment is harness work, not the
+    # multiprocessing cost we're measuring.
+    env = subprocess_env()
+
     def setup() -> tuple[tuple[Any, ...], dict[str, Any]]:
         for path in mproc_ws.glob(".coverage.mproc*"):
             path.unlink(missing_ok=True)
         return (), {}
 
     def run() -> None:
-        run_coverage_subprocess(mproc_ws, ["run", "--rcfile=.coveragerc", "run_multiproc.py"])
+        run_coverage_subprocess(mproc_ws, ["run", "--rcfile=.coveragerc", "run_multiproc.py"], env)
         if combine:
-            run_coverage_subprocess(mproc_ws, ["combine", "--rcfile=.coveragerc"])
+            run_coverage_subprocess(mproc_ws, ["combine", "--rcfile=.coveragerc"], env)
 
     benchmark.pedantic(run, setup=setup, rounds=2, iterations=1)

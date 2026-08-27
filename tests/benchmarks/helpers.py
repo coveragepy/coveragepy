@@ -491,12 +491,13 @@ def make_multiprocessing_project(
     return rcfile, script
 
 
-def run_coverage_subprocess(workspace: pathlib.Path, args: list[str]) -> None:
-    """Run `python -m coverage ...` inside `workspace`.
+def subprocess_env() -> dict[str, str]:
+    """The environment for a benchmarked `python -m coverage` child.
 
-    The child's environment is scrubbed of the variables our own test suite sets,
-    so a benchmark measures plain coverage.py and never inherits metacov's
-    ``COVERAGE_PROCESS_START`` or the core the suite happens to be testing.
+    Scrubbed of the variables our own test suite sets, so a benchmark measures
+    plain coverage.py and never inherits metacov's ``COVERAGE_PROCESS_START`` or
+    the core the suite happens to be testing.  Build this outside the timed
+    region: copying a large environment isn't the thing being measured.
 
     """
     env = os.environ.copy()
@@ -504,6 +505,15 @@ def run_coverage_subprocess(workspace: pathlib.Path, args: list[str]) -> None:
         env.pop(name, None)
     # So that `python -m coverage` finds this checkout even if it isn't installed.
     env["PYTHONPATH"] = os.pathsep.join(filter(None, [str(REPO_ROOT), env.get("PYTHONPATH")]))
+    return env
+
+
+def run_coverage_subprocess(
+    workspace: pathlib.Path,
+    args: list[str],
+    env: dict[str, str],
+) -> None:
+    """Run `python -m coverage ...` inside `workspace` with `env`."""
     subprocess.run(
         [sys.executable, "-m", "coverage", *args],
         cwd=workspace,

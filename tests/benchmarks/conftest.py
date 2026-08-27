@@ -39,6 +39,26 @@ def pytest_ignore_collect(collection_path: pathlib.Path, config: pytest.Config) 
     return True if not config.getoption("--benchmarks") else None
 
 
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
+    """Drop benchmarks that got collected by being named on the command line.
+
+    pytest doesn't consult pytest_ignore_collect for a path given as an initial
+    argument, so `pytest -m benchmark tests/benchmarks/test_thing.py` would slip
+    past the hook above and run without --benchmarks.
+
+    """
+    if config.getoption("--benchmarks"):
+        return
+    here = pathlib.Path(__file__).parent
+    keeping: list[pytest.Item] = []
+    dropping: list[pytest.Item] = []
+    for item in items:
+        (dropping if here in pathlib.Path(item.path).parents else keeping).append(item)
+    if dropping:
+        config.hook.pytest_deselected(items=dropping)
+        items[:] = keeping
+
+
 def assert_core(cov: Coverage, core: str) -> None:
     """Fail loudly if coverage.py quietly fell back to a different core.
 
