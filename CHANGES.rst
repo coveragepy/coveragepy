@@ -20,8 +20,12 @@ upgrading your version of coverage.py.
     ..  Version 9.8.1 — 2027-07-27
     ..  --------------------------
 
-Unreleased
-----------
+.. start-releases
+
+.. _changes_7-16-0:
+
+Version 7.16.0 — 2026-08-28
+---------------------------
 
 - When combining files, now path separator slashes will automatically be
   converted to the local file system style. This makes it less necessary to
@@ -72,8 +76,6 @@ Unreleased
 .. _pull 2268: https://github.com/coveragepy/coveragepy/pull/2268
 .. _pull 2270: https://github.com/coveragepy/coveragepy/pull/2270
 
-
-.. start-releases
 
 .. _changes_7-15-4:
 
