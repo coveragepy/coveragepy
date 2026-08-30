@@ -6,6 +6,7 @@
 # The pytest specifics used by coverage.py
 # "make upgrade" turns this into requirements/pytest.pip.
 
+diff-cover
 flaky
 hypothesis; platform_python_implementation != "PyPy" or python_version != "3.10"
 pygments    # so that pytest will syntax-color.
