@@ -23,8 +23,13 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
-Nothing yet.
+- Fix: when the body of an irrefutable ``case`` (like ``case _:``) is entirely
+  excluded, the ``case`` line is now excluded too, just as an excluded
+  ``else:`` body removes the ``else:`` line.  Previously the ``case`` line was
+  left behind and reported as missing.  Closes `issue 1563`_ with `pull 2269`_.
 
+.. _issue 1563: https://github.com/coveragepy/coveragepy/issues/1563
+.. _pull 2269: https://github.com/coveragepy/coveragepy/pull/2269
 
 .. start-releases
 
@@ -81,13 +86,6 @@ Version 7.16.0 — 2026-08-28
 .. _issue 2266: https://github.com/coveragepy/coveragepy/issues/2266
 .. _pull 2268: https://github.com/coveragepy/coveragepy/pull/2268
 .. _pull 2270: https://github.com/coveragepy/coveragepy/pull/2270
-
-- Fix: when the body of an irrefutable ``case`` (like ``case _:``) is entirely
-  excluded, the ``case`` line is now excluded too, just as an excluded
-  ``else:`` body removes the ``else:`` line.  Previously the ``case`` line was
-  left behind and reported as missing.  Closes `issue 1563`_.
-
-.. _issue 1563: https://github.com/coveragepy/coveragepy/issues/1563
 
 
 .. _changes_7-15-4:
