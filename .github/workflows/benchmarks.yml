@@ -1,0 +1,125 @@
+# Licensed under the Apache License: http://www.apache.org/licenses/LICENSE-2.0
+# For details: https://github.com/coveragepy/coveragepy/blob/main/NOTICE.txt
+
+name: "Benchmarks"
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      slow:
+        description: "Also run the slow multiprocessing benchmarks"
+        type: boolean
+        default: false
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  PIP_DISABLE_PIP_VERSION_CHECK: 1
+  FORCE_COLOR: 1
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  changed:
+    name: "Check changed files"
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read   # Needed for this check to run on pull requests
+    outputs:
+      run_benchmarks: ${{ steps.filter.outputs.run_benchmarks }}
+    steps:
+      - name: "Check out the repo"
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: "Examine changed files"
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        id: filter
+        with:
+          filters: |
+            run_benchmarks:
+              - "coverage/**.py"
+              - "**.h"
+              - "**.c"
+              - "tests/benchmarks/**"
+              - ".github/workflows/benchmarks.yml"
+              - "requirements/*.pip"
+
+  benchmarks:
+    name: "Run the benchmarks"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    needs: changed
+    if: needs.changed.outputs.run_benchmarks == 'true'
+
+    steps:
+      - name: "Check out the repo"
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: "Set up Python"
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          # The newest version where sys.monitoring can measure branches, so
+          # that all three cores are actually exercised. PYVERSION
+          python-version: "3.14"
+
+      - name: "Install dependencies"
+        run: |
+          set -xe
+          python -m pip install -r requirements/pytest.pip
+          # An editable install builds the C extension in place. Without it,
+          # every ctrace benchmark would silently skip.
+          python -m pip install -e .
+          python -c "from coverage.core import CTRACER_FILE; assert CTRACER_FILE, 'no CTracer'"
+
+      - name: "Run the benchmarks"
+        env:
+          # Via the environment, not an inline expansion, so that the value
+          # can't be expanded into the script itself.
+          SLOW: ${{ inputs.slow }}
+        run: |
+          if [[ "$SLOW" == "true" ]]; then
+            markers="benchmark"
+          else
+            markers="benchmark and not slow"
+          fi
+          python -m pytest -n0 --benchmarks \
+            -m "$markers" \
+            tests/benchmarks \
+            --benchmark-json=benchmark.json \
+            --benchmark-columns=min,median,ops,rounds \
+            --benchmark-group-by=group \
+            --benchmark-sort=name \
+            | tee benchmark.txt
+
+      - name: "Summarize"
+        if: always()
+        run: |
+          {
+            echo '```'
+            cat benchmark.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: "Upload the results"
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: benchmark-results
+          path: benchmark.json
+          if-no-files-found: error

@@ -43,6 +43,10 @@ zipmods.zip
 zip1.zip
 tests/actual
 
+# Benchmark results.
+.benchmarks
+benchmark.json
+
 # Stuff in the doc directory.
 doc/_build
 doc/_spell

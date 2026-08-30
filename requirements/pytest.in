@@ -10,6 +10,7 @@ flaky
 hypothesis; platform_python_implementation != "PyPy" or python_version != "3.10"
 pygments    # so that pytest will syntax-color.
 pytest
+pytest-benchmark   # for tests/benchmarks.
 pytest-xdist
 
 # Pytest has a windows-only dependency on colorama:

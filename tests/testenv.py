@@ -8,15 +8,19 @@ from __future__ import annotations
 import os
 
 from coverage import env
+from coverage.core import CTRACER_FILE
 
 # What core are we using, either requested or defaulted?
 CORE = os.getenv("COVERAGE_CORE", "sysmon" if env.SYSMON_DEFAULT else "ctrace")
 
-TRACER_CLASS = {
+# The name each core's collector reports for itself.
+TRACER_CLASSES = {
     "ctrace": "CTracer",
     "pytrace": "PyTracer",
     "sysmon": "SysMonitor",
-}[CORE]
+}
+
+TRACER_CLASS = TRACER_CLASSES[CORE]
 
 # Are we testing the C-implemented trace function?
 C_TRACER = CORE == "ctrace"
@@ -41,6 +45,13 @@ CAN_MEASURE_THREADS = not SYS_MON
 
 # Can we measure branches?
 CAN_MEASURE_BRANCHES = env.PYBEHAVIOR.branch_right_left
+
+# Which cores could we use here?  These are about availability, not about which
+# core this run selected, so they are what the benchmarks need when they sweep
+# over all three cores in one process.
+HAVE_PYTRACE = True
+HAVE_CTRACE = CTRACER_FILE is not None
+HAVE_SYSMON = env.PYBEHAVIOR.pep669
 
 # Can we use Hypothesis?
 # As of 6.156.0, PyPy 3.10 is no longer supported.

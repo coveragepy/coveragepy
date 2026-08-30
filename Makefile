@@ -80,7 +80,7 @@ install: venv				#- Install the developer tools.
 
 ### Tests and quality checks
 
-.PHONY: lint mypy precommit quality test
+.PHONY: lint mypy precommit quality test bench
 
 lint:					#- Run linters and checkers.
 	tox -q -e lint
@@ -95,6 +95,9 @@ quality: lint mypy precommit		#- Run all the quality checks.
 
 test:					#- Run the test suite.
 	tox -q -m py
+
+bench:					#- Run the benchmarks (see tests/benchmarks/README.md).
+	python3 -m pytest -n0 --benchmarks -m "benchmark and not slow" tests/benchmarks $(ARGS)
 
 ### Metacov: coverage measurement of coverage.py itself
 # See metacov.ini for details.
