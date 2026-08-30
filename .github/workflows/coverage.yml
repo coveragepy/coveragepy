@@ -184,6 +184,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 200
 
       - name: "Set up Python"
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
@@ -206,6 +207,7 @@ jobs:
         run: |
           set -xe
           python -m pip install -e .
+          python -m pip install -r requirements/pytest.pip
           python igor.py zip_mods
 
       - name: "Download coverage data"
@@ -265,6 +267,21 @@ jobs:
               echo '***** Coverage of test files must be 100%!'
               exit 1
           fi
+
+      - name: "Check coverage on changed lines"
+        # Changed code must be fully covered, unless the PR is labeled with "missing-coverage-ok".
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          FAIL_UNDER: ${{ contains(github.event.pull_request.labels.*.name, 'missing-coverage-ok') && '0' || '100' }}
+        run: |
+          git fetch origin ${BASE_REF}
+          diff-cover coverage.xml \
+              --compare-branch "origin/${BASE_REF}" \
+              --fail-under="${FAIL_UNDER}" \
+              --format markdown:report.md \
+              || status=$?
+          cat report.md >> "$GITHUB_STEP_SUMMARY"
+          exit ${status:-0}
 
   publish:
     name: "Publish coverage report"
