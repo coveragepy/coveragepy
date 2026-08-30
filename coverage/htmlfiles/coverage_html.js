@@ -123,6 +123,58 @@ coverage.assign_shortkeys = function () {
     });
 };
 
+// Return the absolute value of `value`, scaled by 10**places and rounded to a
+// whole number, as a BigInt.  The rounding is the way Python's round() does it:
+// an exact tie rounds to the even neighbor, where Number.toFixed() always
+// rounds away from zero.  The double is split into an exact integer fraction
+// first, because scaling in floating point can nudge a value that is merely
+// close to a tie onto one, and so change the result.
+function round_half_even(value, places) {
+    const view = new DataView(new ArrayBuffer(8));
+    view.setFloat64(0, Math.abs(value));
+    const bits = view.getBigUint64(0);
+    const biased_exponent = Number((bits >> 52n) & 0x7ffn);
+    const fraction = bits & 0xfffffffffffffn;
+    // Every finite double is mantissa * 2**exponent, exactly.
+    const mantissa = (biased_exponent === 0) ? fraction : (fraction | 0x10000000000000n);
+    const exponent = (biased_exponent === 0) ? -1074 : (biased_exponent - 1075);
+
+    let numerator = mantissa * (10n ** BigInt(places));
+    let denominator = 1n;
+    if (exponent >= 0) {
+        numerator <<= BigInt(exponent);
+    }
+    else {
+        denominator = 1n << BigInt(-exponent);
+    }
+
+    let rounded = numerator / denominator;
+    const twice_remainder = 2n * (numerator % denominator);
+    if (twice_remainder > denominator || (twice_remainder === denominator && (rounded % 2n) === 1n)) {
+        rounded += 1n;
+    }
+    return rounded;
+}
+
+// Mirror coverage.results.display_covered(): "0" is only returned when the
+// value is truly zero, and "100" only when it is truly 100, so rounding can
+// never result in either "0" or "100".
+coverage.display_covered = function (pc, precision) {
+    const near0 = 1.0 / Math.pow(10, precision);
+    if (0 < pc && pc < near0) {
+        return near0.toFixed(precision);
+    }
+    if ((100.0 - near0) < pc && pc < 100.0) {
+        return (100.0 - near0).toFixed(precision);
+    }
+    // Lay out the digits ourselves rather than using toFixed(), which rounds
+    // ties away from zero instead of to even.
+    const digits = round_half_even(pc, precision).toString().padStart(precision + 1, "0");
+    const split = digits.length - precision;
+    const text = precision ? `${digits.slice(0, split)}.${digits.slice(split)}` : digits;
+    return (pc < 0 ? "-" : "") + text;
+};
+
 // Create the events for the filter box.
 coverage.wire_up_filter = function () {
     // Populate the filter and hide100 inputs if there are saved values for them.
@@ -237,10 +289,12 @@ coverage.wire_up_filter = function () {
                 const places = match ? match[1].length : 0;
                 const { numer, denom } = totals[column];  // nosemgrep: eslint.detect-object-injection
                 cell.dataset.ratio = `${numer} ${denom}`;
-                // Check denom to prevent NaN if filtered files contain no statements
-                cell.textContent = denom
-                    ? `${(numer * 100 / denom).toFixed(places)}%`
-                    : `${(100).toFixed(places)}%`;
+                // Numbers with nothing to cover report 100%, the same as
+                // Numbers._percent() does on the server.  Format the rest with
+                // display_covered() so the footer can't disagree with the
+                // server-rendered heading.
+                const pc = denom ? (numer * 100 / denom) : 100;
+                cell.textContent = `${coverage.display_covered(pc, places)}%`;
             }
             else {
                 cell.textContent = totals[column];  // nosemgrep: eslint.detect-object-injection
