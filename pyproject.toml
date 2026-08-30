@@ -174,6 +174,12 @@ ignore = [
     "a1_coverage.pth",
 ]
 
+## UV
+
+[tool.uv.exclude-newer-package]
+# We trust sphinx-linklint, so it needs no cooldown.
+sphinx-linklint = "P0D"
+
 ## RUFF
 # We are using ruff for formatting, but not for linting.
 
