@@ -23,7 +23,6 @@ function raw_selection_is(assert, sel, check_highlight) {
 // We set the show_r and show_b classes for r and b.
 function build_fixture(spec) {
     const fixture = document.getElementById("source");
-    fixture.replaceChildren();
 
     for (let i = 0; i < spec.length; i++) {
         const number = i + 1;
@@ -43,6 +42,12 @@ function build_fixture(spec) {
     }
     coverage.set_sel(0);
 }
+
+// After every test, clear out the source lines we injected with build_fixture.
+QUnit.testDone(function() {
+    const fixture = document.getElementById("source");
+    fixture.replaceChildren();
+});
 
 // Tests
 
