@@ -74,6 +74,12 @@ these steps:
 Running the tests
 -----------------
 
+Most of the tests are for the Python code, but we also have JavaScript tests
+for the JavaScript in the HTML reports.
+
+Python tests
+............
+
 .. To get the test output:
     # Use the lowest of the PYVERSIONS
     # Resize terminal width to 95
@@ -81,8 +87,10 @@ Running the tests
 
 .. with COVERAGE_ONE_CORE=
 
-The tests are written mostly as standard unittest-style tests, and are run with
-pytest running under `tox`_::
+The Python tests are a mix of unittest-style tests and pytest-style tests. They
+are run with pytest running under `tox`_. They will run automatically via
+GitHub actions when you push your changes to GitHub, but it's also a good idea
+to run them locally for faster feedback::
 
     % python3 -m tox -e py310
     py310: pip-26.0.1-py3-none-any.whl already present in /Users/ned/.cache/virtualenv/wheel/3.10/embed/3/pip.json
@@ -221,6 +229,14 @@ as a simple terminal interface to see and set them.
 Of course, run all the tests on every version of Python you have before
 submitting a change.
 
+JavaScript tests
+................
+
+The JavaScript tests are run by loading tests/js/index.html in a web browser.
+You should see nearly 100 tests, all passing. These tests are not run
+automatically, so be sure to run them if you have changed any aspect of the
+HTML reports.
+
 
 Lint, etc
 ---------
@@ -268,8 +284,9 @@ output.  The top of the file you edited will have instructions.
 Continuous integration
 ----------------------
 
-When you make a pull request, `GitHub actions`__ will run all of the tests and
-quality checks on your changes.  If any fail, either fix them or ask for help.
+When you make a pull request, `GitHub actions`__ will run all of the Python
+tests and quality checks on your changes.  If any fail, either fix them or ask
+for help.
 
 __ https://github.com/coveragepy/coveragepy/actions
 
