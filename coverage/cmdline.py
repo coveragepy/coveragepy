@@ -1017,7 +1017,7 @@ class CoverageScript:
             show_help("Can't append to data files in parallel mode.")
             return ERR
 
-        if options.concurrency == "multiprocessing":
+        if "multiprocessing" in (options.concurrency or "").split(","):
             # Can't set other run-affecting command line options with
             # multiprocessing.
             for opt_name in ["branch", "include", "omit", "pylib", "source", "timid"]:

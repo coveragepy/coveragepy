@@ -81,8 +81,7 @@ class AnnotateReporter:
             # Put the original extension back, whatever it is: .py, .pyw, or
             # something a plugin measures.
             ext = os.path.splitext(rel_fname)[1]
-            if ext:
-                dest_file = dest_file[: -len(ext)] + ext
+            dest_file = dest_file[: len(dest_file) - len(ext)] + ext
         else:
             dest_file = fr.filename
         dest_file += ",cover"

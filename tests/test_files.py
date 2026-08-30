@@ -523,6 +523,16 @@ class PathAliasesTest(CoverageTest):
         aliases.add("/home/*/src", "./mysrc")
         self.assert_unchanged(aliases, "/home/foo/srcetc")
 
+    def test_maps_only_the_matched_prefix(self, rel_yn: bool) -> None:
+        # Only the part the rule matched is replaced, not every occurrence of it.
+        aliases = PathAliases(relative=rel_yn)
+        aliases.add("/ci/src", "./mysrc")
+        self.assert_mapped(
+            aliases,
+            "/ci/src/vendor/ci/src/a.py",
+            "./mysrc/vendor/ci/src/a.py",
+        )
+
     def test_no_map_if_not_exist(self, rel_yn: bool) -> None:
         aliases = PathAliases(relative=rel_yn)
         aliases.add("/ned/home/*/src", "./mysrc")

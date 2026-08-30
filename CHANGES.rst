@@ -23,6 +23,16 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
+Nothing yet.
+
+
+.. start-releases
+
+.. _changes_7-16-0:
+
+Version 7.16.0 — 2026-08-28
+---------------------------
+
 - When combining files, now path separator slashes will automatically be
   converted to the local file system style. This makes it less necessary to
   define ``[paths]`` configuration to combine data across operating systems.
@@ -30,31 +40,47 @@ Unreleased
 
 - The :meth:`.Coverage.switch_context` method now returns the previous context.
 
-- Fix: negative precision settings now always cause useful error messages
-  (`pull 2261`_).
+- Fix: previously, a ``[paths]`` pattern would be replaced everywhere in a file
+  path when it was only meant to be replaced once, in the leading portion of
+  the path. This is now fixed, in `pull 2268`_.
+
+- Fixes to validation of options and configuration settings:
+
+  - Negative precision settings now always cause useful error messages (`pull
+    2261`_).
+
+  - An invalid regex in the ``--contexts`` option (or the ``[report]
+    contexts`` setting) reported a confusing "Couldn't use data file ...:
+    user-defined function raised exception" error. Now it raises a proper
+    configuration error naming the bad regex, like other regex settings do
+    (`pull 2262`_).
+
+  - Non-string values in TOML configuration settings now produce a helpful
+    error message instead of a traceback.  This affects list settings whose
+    elements aren't strings (like ``omit``, ``exclude_lines``, or a ``[paths]``
+    entry), file settings like ``data_file``, and any wrong-typed value in the
+    ``[paths]`` section (`pull 2263`_).
+
+  - ``coverage run`` refuses run-affecting command-line options like
+    ``--branch`` alongside ``--concurrency=multiprocessing``, since they can't
+    reach the subprocesses.  The check only recognized ``multiprocessing`` as
+    the entire option value, so ``--concurrency=multiprocessing,thread``
+    slipped through and failed later with "Can't combine statement coverage
+    data with branch data".  Each named concurrency library is now properly
+    considered (`pull 2270`_).
 
 - Fix: ``coverage annotate -d DIR`` raised an ``AssertionError`` if any
-  measured file had an extension other than ``.py``, such as a ``.pyw`` file
-  on Windows.  The original extension is now restored on the annotated copy
-  (`pull 2265`_).
-
-.. _pull 2265: https://github.com/coveragepy/coveragepy/pull/2265
-
-- fix: an invalid regex in the ``--contexts`` option (or the ``[report]
-  contexts`` setting) reported a confusing "Couldn't use data file ...:
-  user-defined function raised exception" error. Now it raises a proper
-  configuration error naming the bad regex, like other regex settings do.
+  measured file had an extension other than ``.py``, such as a ``.pyw`` file on
+  Windows.  The original extension is now restored on the annotated copy (`pull
+  2265`_).
 
 .. _pull 2261: https://github.com/coveragepy/coveragepy/pull/2261
-.. _issue 2266: https://github.com/coveragepy/coveragepy/issues/2266
-
-- fix: non-string values in TOML configuration settings now produce a helpful
-  error message instead of a traceback.  This affects list settings whose
-  elements aren't strings (like ``omit``, ``exclude_lines``, or a ``[paths]``
-  entry), file settings like ``data_file``, and any wrong-typed value in the
-  ``[paths]`` section (`pull 2263`_).
-
+.. _pull 2262: https://github.com/coveragepy/coveragepy/pull/2262
 .. _pull 2263: https://github.com/coveragepy/coveragepy/pull/2263
+.. _pull 2265: https://github.com/coveragepy/coveragepy/pull/2265
+.. _issue 2266: https://github.com/coveragepy/coveragepy/issues/2266
+.. _pull 2268: https://github.com/coveragepy/coveragepy/pull/2268
+.. _pull 2270: https://github.com/coveragepy/coveragepy/pull/2270
 
 - Fix: when the body of an irrefutable ``case`` (like ``case _:``) is entirely
   excluded, the ``case`` line is now excluded too, just as an excluded
@@ -63,8 +89,6 @@ Unreleased
 
 .. _issue 1563: https://github.com/coveragepy/coveragepy/issues/1563
 
-
-.. start-releases
 
 .. _changes_7-15-4:
 

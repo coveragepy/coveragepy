@@ -8,14 +8,14 @@
 
 cogapp
 doc8
-linklint
 pyenchant
 scriv
 sphinx
 sphinx-autobuild
-sphinx_rtd_theme
 sphinx-code-tabs
+sphinx-linklint
 sphinx-lint
+sphinx_rtd_theme
 sphinxcontrib-restbuilder
 sphinxcontrib-spelling
 sphinxext-rediraffe
