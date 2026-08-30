@@ -217,7 +217,7 @@ $.each([
 // the way Python's round() does.  See issue 2256.
 QUnit.module("Display covered");
 
-$.each([
+[
     // [pc, precision, expected]
 
     // The same cases as test_results.py's test_display_covered.
@@ -247,7 +247,7 @@ $.each([
 
     // Nothing to cover is reported as 100%, like Numbers._percent() does.
     [100, 1, "100.0"]
-], function (i, params) {
+].forEach(function (params) {
     QUnit.test(
         "display_covered " + params[0] + " at precision " + params[1],
         function (assert) {
