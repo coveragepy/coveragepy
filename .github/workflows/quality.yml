@@ -58,7 +58,7 @@ jobs:
             workflow:
               - ".github/workflows/quality.yml"
               - "tox.ini"
-              - "requirements/*.pip"
+              - "requirements/*.txt"
 
   lint:
     name: "Pylint etc"
@@ -84,11 +84,11 @@ jobs:
         with:
           python-version: "3.10" # Minimum of PYVERSIONS
           cache: pip
-          cache-dependency-path: 'requirements/*.pip'
+          cache-dependency-path: 'requirements/*.txt'
 
       - name: "Install dependencies"
         run: |
-          python -m pip install -r requirements/tox.pip
+          python -m pip install -r requirements/tox.txt
 
       - name: "Tox lint"
         run: |
@@ -114,11 +114,11 @@ jobs:
         with:
           python-version: "3.10" # Minimum of PYVERSIONS
           cache: pip
-          cache-dependency-path: 'requirements/*.pip'
+          cache-dependency-path: 'requirements/*.txt'
 
       - name: "Install dependencies"
         run: |
-          python -m pip install -r requirements/tox.pip
+          python -m pip install -r requirements/tox.txt
 
       - name: "Tox mypy"
         run: |
@@ -149,7 +149,7 @@ jobs:
         with:
           python-version: "3.12" # Doc version from PYVERSIONS
           cache: pip
-          cache-dependency-path: 'requirements/*.pip'
+          cache-dependency-path: 'requirements/*.txt'
 
       - name: "Show environment"
         run: |
@@ -161,7 +161,7 @@ jobs:
       - name: "Install dependencies"
         run: |
           set -xe
-          python -m pip install -r requirements/tox.pip
+          python -m pip install -r requirements/tox.txt
 
       - name: "Tox doc"
         run: |
@@ -185,7 +185,7 @@ jobs:
           persist-credentials: false
 
       - name: "Install uv"
-        uses: astral-sh/setup-uv@ae62891fec2bb8e7d6c99fc78c9fec3a63790f8d # v10.0.0
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           enable-cache: false
 

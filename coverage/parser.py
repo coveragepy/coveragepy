@@ -265,6 +265,16 @@ class PythonParser:
                 first_line = min((d.lineno for d in node.decorator_list), default=node.lineno)
                 if self.excluded.intersection(range(first_line, node.lineno + 1)):
                     self.excluded.update(range(first_line, cast(int, node.end_lineno) + 1))
+            # An irrefutable `case` (like `case _:`) is the `match` equivalent
+            # of an `else` clause.  If its whole body is excluded, exclude the
+            # `case` line too, so it isn't left behind as a missing statement.
+            # Refutable cases are left alone, the same way an `elif` line is
+            # still reported.  https://github.com/coveragepy/coveragepy/issues/1563
+            if isinstance(node, ast.match_case) and _case_is_irrefutable(node):
+                body_lines = range(node.body[0].lineno, cast(int, node.body[-1].end_lineno) + 1)
+                body_statements = self.raw_statements & set(body_lines)
+                if body_statements and body_statements <= self.excluded:
+                    self.excluded.update(range(node.pattern.lineno, node.pattern.end_lineno + 1))
 
     def first_line(self, lineno: TLineNo) -> TLineNo:
         """Return the first line number of the statement including `lineno`."""
@@ -645,6 +655,24 @@ def walk_statement_nodes(root: ast.AST) -> Iterable[ast.AST]:
         for child in ast.iter_child_nodes(node):
             if isinstance(child, _STMT_CONTAINERS):
                 todo.append(child)
+
+
+def _case_is_irrefutable(case: ast.match_case) -> bool:
+    """Will this `case` clause always match, like `case _:` does?
+
+    An irrefutable case has a wildcard or bare-capture pattern and no guard,
+    so anything reaching it will match.  These are the `match` equivalent of
+    an `else` clause.
+
+    """
+    if case.guard is not None:
+        return False
+    pattern = case.pattern
+    while isinstance(pattern, ast.MatchOr):
+        pattern = pattern.patterns[-1]
+    while isinstance(pattern, ast.MatchAs) and pattern.pattern is not None:
+        pattern = pattern.pattern
+    return isinstance(pattern, ast.MatchAs) and pattern.pattern is None
 
 
 def is_constant_test_expr(node: ast.AST) -> tuple[bool, bool]:
@@ -1102,14 +1130,7 @@ class AstArcAnalyzer:
             last_start = case_start
 
         # case is now the last case, check for wildcard match.
-        pattern = case.pattern  # pylint: disable=undefined-loop-variable
-        while isinstance(pattern, ast.MatchOr):
-            pattern = pattern.patterns[-1]
-        while isinstance(pattern, ast.MatchAs) and pattern.pattern is not None:
-            pattern = pattern.pattern
-        had_wildcard = (
-            isinstance(pattern, ast.MatchAs) and pattern.pattern is None and case.guard is None  # pylint: disable=undefined-loop-variable
-        )
+        had_wildcard = _case_is_irrefutable(case)  # pylint: disable=undefined-loop-variable
 
         if not had_wildcard:
             exits.add(

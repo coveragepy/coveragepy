@@ -2,9 +2,9 @@
 # For details: https://github.com/coveragepy/coveragepy/blob/main/NOTICE.txt
 
 # Requirements input for doing local development work on coverage.py.
-# "make upgrade" turns this into requirements/dev.pip.
+# "make upgrade" turns this into requirements/dev.txt.
 
--c pins.pip
+-c pins.txt
 -r pip.in
 
 # PyPI requirements for running tests.

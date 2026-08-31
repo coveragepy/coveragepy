@@ -1627,6 +1627,37 @@ class ExcludeTest(CoverageTest):
         )
 
 
+class MatchCaseExcludeTest(CoverageTest):
+    """Tests of excluding `match`/`case` suites."""
+
+    def test_excluding_irrefutable_case_suite(self) -> None:
+        # https://github.com/coveragepy/coveragepy/issues/1563
+        # Excluding the body of an irrefutable `case _:` excludes the
+        # `case _:` line too, the same way an `else:` clause disappears.  A
+        # refutable case whose body is excluded is still reported, like an
+        # `elif`.
+        self.check_coverage(
+            """\
+            a = 1
+            match a:
+                case 1:
+                    b = 4
+                case 2:
+                    b = 6           #pragma: NO COVER
+                case _:
+                    b = 8           #pragma: NO COVER
+            assert b == 4
+            """,
+            lines=[1, 2, 3, 4, 5, 9],
+            missing="5",
+            branchz="34 35 56 57",
+            # Only the refutable `case 2:` is a missing branch.  The wildcard
+            # `case _:` was excluded, so the arc into it isn't reported.
+            branchz_missing="35",
+            excludes=["#pragma: NO COVER"],
+        )
+
+
 class Py24Test(CoverageTest):
     """Tests of new syntax in Python 2.4."""
 

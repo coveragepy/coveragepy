@@ -1,11 +1,12 @@
 # Licensed under the Apache License: http://www.apache.org/licenses/LICENSE-2.0
 # For details: https://github.com/coveragepy/coveragepy/blob/main/NOTICE.txt
 
--c pins.pip
+-c pins.txt
 
 # The pytest specifics used by coverage.py
-# "make upgrade" turns this into requirements/pytest.pip.
+# "make upgrade" turns this into requirements/pytest.txt.
 
+diff-cover
 flaky
 hypothesis; platform_python_implementation != "PyPy" or python_version != "3.10"
 pygments    # so that pytest will syntax-color.

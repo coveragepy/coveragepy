@@ -1095,6 +1095,69 @@ class ExclusionParserTest(PythonParserTestBase):
         assert parser.raw_statements == {1, 3, 4, 5, 6, 8, 9}
         assert parser.statements == {1}
 
+    def test_exclude_irrefutable_case_with_excluded_body(self) -> None:
+        # https://github.com/coveragepy/coveragepy/issues/1563
+        # An irrefutable `case` (`case _:` or a bare capture) is the `match`
+        # equivalent of an `else:` clause.  When its whole body is excluded,
+        # the `case` line is excluded too.  A refutable case is left alone,
+        # the same way an `elif` line is still reported.
+        regex = "raise NotImplementedError"
+        parser = self.parse_text(
+            """\
+            match command:
+                case "go":
+                    move()
+                case "stop":
+                    raise NotImplementedError
+                case _:
+                    raise NotImplementedError
+            """,
+            regex,
+        )
+        assert parser.lines_matching(regex) == {5, 7}
+        assert parser.raw_statements == {1, 2, 3, 4, 5, 6, 7}
+        # Line 6 (`case _:`) is excluded with its body.  The refutable
+        # `case "stop":` on line 4 is still reported, like an `elif`.
+        assert parser.statements == {1, 2, 3, 4}
+
+    def test_exclude_capture_case_with_excluded_body(self) -> None:
+        # https://github.com/coveragepy/coveragepy/issues/1563
+        # A bare-capture pattern (`case other:`) is also irrefutable.
+        regex = "# nope"
+        parser = self.parse_text(
+            """\
+            match command:
+                case "go":
+                    move()
+                case other:
+                    log(other)   # nope
+            """,
+            regex,
+        )
+        assert parser.lines_matching(regex) == {5}
+        assert parser.raw_statements == {1, 2, 3, 4, 5}
+        assert parser.statements == {1, 2, 3}
+
+    def test_no_exclude_case_with_partly_excluded_body(self) -> None:
+        # https://github.com/coveragepy/coveragepy/issues/1563
+        # The `case` line is only excluded when its entire body is excluded.
+        regex = "# nope"
+        parser = self.parse_text(
+            """\
+            match command:
+                case "go":
+                    move()
+                case _:
+                    keep_me()
+                    skip_me()   # nope
+            """,
+            regex,
+        )
+        assert parser.lines_matching(regex) == {6}
+        assert parser.raw_statements == {1, 2, 3, 4, 5, 6}
+        # `case _:` (line 4) stays reported: line 5 in its body is not excluded.
+        assert parser.statements == {1, 2, 3, 4, 5}
+
 
 class ParserMissingArcDescriptionTest(PythonParserTestBase):
     """Tests for PythonParser.missing_arc_description."""
