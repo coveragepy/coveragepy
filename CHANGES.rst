@@ -28,7 +28,14 @@ Unreleased
   ``else:`` body removes the ``else:`` line.  Previously the ``case`` line was
   left behind and reported as missing.  Closes `issue 1563`_ with `pull 2269`_.
 
+- Fix: the Total row in the footer of the HTML report's index page was
+  recomputed in JavaScript with rounding that could disagree with the total
+  the server rendered in the heading, including showing ``100%`` when coverage
+  was not complete.  The footer now clamps and rounds the way the rest of the
+  report does, so the two can't disagree.  Fixes `issue 2256`_.
+
 .. _issue 1563: https://github.com/coveragepy/coveragepy/issues/1563
+.. _issue 2256: https://github.com/coveragepy/coveragepy/issues/2256
 .. _pull 2269: https://github.com/coveragepy/coveragepy/pull/2269
 
 .. start-releases
