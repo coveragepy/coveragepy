@@ -181,6 +181,10 @@ class CodeInfo:
     # first branch event in the code object.
     branch_resolver: BranchArcResolver | None
 
+    # The last line seen executing in this code object, used to record
+    # sequential fall-through arcs that aren't the result of a branch.
+    last_line: TLineNo | None = None
+
 
 class SysMonitor(Tracer):
     """Python implementation of the raw data tracer for PEP669 implementations."""
@@ -412,6 +416,11 @@ class SysMonitor(Tracer):
             arc = (last_line, -code.co_firstlineno)
             code_info.file_data.add(arc)  # type: ignore
             # log(f"adding {arc=}")
+        # This frame is ending, so the next line seen in this code object
+        # belongs to a different frame (e.g. another recursion of the same
+        # function).  Forget the last line so we don't join two frames with a
+        # bogus sequential arc.
+        code_info.last_line = None  # type: ignore
         return DISABLE
 
     @panopticon("code", "line")
@@ -438,6 +447,18 @@ class SysMonitor(Tracer):
         # wouldn't have enabled this event if they were.
         arc = (line_number, line_number)
         code_info.file_data.add(arc)  # type: ignore
+
+        # The self-arc above is later resolved to a real branch arc, but only
+        # when the line has a single possible destination.  A line with a
+        # single-line class or function body (e.g. ``class C: ...``) can fall
+        # through to the next statement while also being the source of the
+        # nested body's exit arc, giving it two possible destinations.  Record
+        # the true sequential transition between consecutive lines in this frame
+        # so that fall-through isn't misreported as a missing branch.  #2167
+        last_line = code_info.last_line
+        if last_line is not None and last_line != line_number:
+            code_info.file_data.add((last_line, line_number))  # type: ignore
+        code_info.last_line = line_number
         # log(f"adding {arc=}")
         return DISABLE
 
