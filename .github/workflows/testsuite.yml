@@ -55,7 +55,7 @@ jobs:
               - "**.c"
               - ".github/workflows/testsuite.yml"
               - "tox.ini"
-              - "requirements/*.pip"
+              - "requirements/*.txt"
               - "tests/gold/**"
 
   tests:
@@ -129,7 +129,7 @@ jobs:
           # 3.10 on Windows.  Commenting out the cache here fixed it.  Someday
           # try using the cache again.
           #cache: pip
-          #cache-dependency-path: 'requirements/*.pip'
+          #cache-dependency-path: 'requirements/*.txt'
 
       - name: "Show environment"
         run: |
@@ -149,7 +149,7 @@ jobs:
       - name: "Install dependencies"
         run: |
           set -xe
-          python -m pip install -r requirements/tox.pip
+          python -m pip install -r requirements/tox.txt
 
       - name: "Run tox for ${{ matrix.python-version }}"
         run: |

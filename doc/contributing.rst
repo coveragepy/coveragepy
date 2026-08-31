@@ -66,7 +66,7 @@ these steps:
 #.  Install the requirements with either of these commands::
 
     $ make install
-    $ python3 -m pip install -r requirements/dev.pip
+    $ python3 -m pip install -r requirements/dev.txt
 
     Note: You may need to upgrade pip to install the requirements.
 
@@ -95,7 +95,7 @@ to run them locally for faster feedback::
     % python3 -m tox -e py310
     py310: pip-26.0.1-py3-none-any.whl already present in /Users/ned/.cache/virtualenv/wheel/3.10/embed/3/pip.json
     py310: setuptools-82.0.1-py3-none-any.whl already present in /Users/ned/.cache/virtualenv/wheel/3.10/embed/3/setuptools.json
-    py310: install_deps> python -m pip install -U -r requirements/pip.pip -r requirements/pytest.pip -r requirements/light-threads.pip
+    py310: install_deps> python -m pip install -U -r requirements/pip.txt -r requirements/pytest.txt -r requirements/light-threads.txt
     .pkg: install_requires> python -I -m pip install setuptools
     .pkg: _optional_hooks> python /Users/ned/coverage/trunk/.venv/lib/python3.10/site-packages/pyproject_api/_backend.py True setuptools.build_meta
     .pkg: get_requires_for_build_sdist> python /Users/ned/coverage/trunk/.venv/lib/python3.10/site-packages/pyproject_api/_backend.py True setuptools.build_meta
@@ -299,7 +299,7 @@ that way.
 
 It has many development dependencies.  These are specified generically in the
 ``requirements/*.in`` files.  The .in files should have no versions specified
-in them.  The specific versions to use are pinned in ``requirements/*.pip``
+in them.  The specific versions to use are pinned in ``requirements/*.txt``
 files.  These are created by running ``make upgrade``.
 
 .. minimum of PYVERSIONS:
@@ -309,7 +309,7 @@ versions will work on all of the Python versions currently supported by
 coverage.py.
 
 If for some reason we need to constrain a version of a dependency, the
-constraint should be specified in the ``requirements/pins.pip`` file, with a
+constraint should be specified in the ``requirements/pins.txt`` file, with a
 detailed reason for the pin.
 
 

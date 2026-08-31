@@ -543,7 +543,7 @@ sphinx-rtd-theme==3.1.0 \
     --hash=sha256:1785824ae8e6632060490f67cf3a72d404a85d2d9fc26bce3619944de5682b89 \
     --hash=sha256:b44276f2c276e909239a4f6c955aa667aaafeb78597923b1c60babc76db78e4c
     # via
-    #   -c doc/../requirements/pins.pip
+    #   -c doc/../requirements/pins.txt
     #   -r doc/requirements.in
 sphinxcontrib-applehelp==2.0.0 \
     --hash=sha256:2f29ef331735ce958efa4734873f084941970894c6090408b079c61b2e1c06d1 \

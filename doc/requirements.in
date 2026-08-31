@@ -2,9 +2,9 @@
 # For details: https://github.com/coveragepy/coveragepy/blob/main/NOTICE.txt
 
 # PyPI requirements input for building documentation for coverage.py
-# "make upgrade" turns this into doc/requirements.pip
+# "make upgrade" turns this into doc/requirements.txt
 
--c ../requirements/pins.pip
+-c ../requirements/pins.txt
 
 cogapp
 doc8

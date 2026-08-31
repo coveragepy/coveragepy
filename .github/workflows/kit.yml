@@ -192,7 +192,7 @@ jobs:
         with:
           python-version: "${{ matrix.cipy }}"
           cache: pip
-          cache-dependency-path: 'requirements/*.pip'
+          cache-dependency-path: 'requirements/*.txt'
 
       # Rust toolchain is not currently installed on windows arm64 images.
       # We need it for nh3, needed by readme-renderer, needed by twine.
@@ -208,7 +208,7 @@ jobs:
 
       - name: "Install tools"
         run: |
-          python -m pip install -r requirements/kit.pip
+          python -m pip install -r requirements/kit.txt
 
       - name: "Set up QEMU"
         if: ${{ matrix.arch == 'riscv64' }}
@@ -257,11 +257,11 @@ jobs:
         with:
           python-version: "3.11" # PYVERSIONS: the kit-building version
           cache: pip
-          cache-dependency-path: 'requirements/*.pip'
+          cache-dependency-path: 'requirements/*.txt'
 
       - name: "Install tools"
         run: |
-          python -m pip install -r requirements/kit.pip
+          python -m pip install -r requirements/kit.txt
 
       - name: "Build non-binary artifacts"
         env:

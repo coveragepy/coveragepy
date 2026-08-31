@@ -75,7 +75,7 @@ venv: .venv				#- Create a virtualenv in .venv.
 	$(VENV)
 
 install: venv				#- Install the developer tools.
-	$(INSTALL_R) requirements/dev.pip
+	$(INSTALL_R) requirements/dev.txt
 
 
 ### Tests and quality checks
@@ -112,11 +112,11 @@ metahtml:				#- Produce meta-coverage HTML reports.
 
 # When updating requirements, a few rules to follow:
 #
-# 1) Don't install more than one .pip file at once. Always use pip-compile to
-# combine .in files onto a single .pip file that can be installed where needed.
+# 1) Don't install more than one .txt file at once. Always use pip-compile to
+# combine .in files onto a single .txt file that can be installed where needed.
 #
 # 2) Check manual pins before `make upgrade` to see if they can be removed. Look
-# in requirements/pins.pip, and search for "windows" in .in files to find pins
+# in requirements/pins.txt, and search for "windows" in .in files to find pins
 # and extra requirements that have been needed, but might be obsolete.
 
 .PHONY: upgrade upgrade_one _upgrade diff_upgrade
@@ -135,24 +135,24 @@ PIP_COMPILE = uv pip compile -q --universal --generate-hashes ${COMPILE_OPTS}
 # Limit to packages that were released more than 10 days ago.
 # https://blog.yossarian.net/2025/11/21/We-should-all-be-using-dependency-cooldowns
 upgrade: export UV_EXCLUDE_NEWER=P10D
-upgrade: 				#- Update the *.pip files with the latest packages satisfying *.in files.
+upgrade: 				#- Update the *.txt files with the latest packages satisfying *.in files.
 	$(MAKE) _upgrade COMPILE_OPTS="--upgrade"
 
 # Upgrade just one package, with no cooldown.
-upgrade_one:				#- Update the *.pip files for one package. `make upgrade_one package=...`
+upgrade_one:				#- Update the *.txt files for one package. `make upgrade_one package=...`
 	@test -n "$(package)" || { echo "\nUsage: make upgrade_one package=...\n"; exit 1; }
 	$(MAKE) _upgrade COMPILE_OPTS="--upgrade-package $(package)"
 
 _upgrade: export UV_CUSTOM_COMPILE_COMMAND=make upgrade
 _upgrade: $(DOCBIN) $(KITBIN)
-	$(PIP_COMPILE) -o requirements/pip.pip requirements/pip.in
-	$(PIP_COMPILE) -o requirements/pytest.pip requirements/pytest.in
-	$(PIP_COMPILE) -p $(KITBIN)/python3 -o requirements/kit.pip requirements/kit.in
-	$(PIP_COMPILE) -o requirements/tox.pip requirements/tox.in
-	$(PIP_COMPILE) -o requirements/dev.pip requirements/dev.in
-	$(PIP_COMPILE) -o requirements/light-threads.pip requirements/light-threads.in
-	$(PIP_COMPILE) -o requirements/mypy.pip requirements/mypy.in
-	$(PIP_COMPILE) -p $(DOCBIN)/python3 -o doc/requirements.pip doc/requirements.in
+	$(PIP_COMPILE) -o requirements/pip.txt requirements/pip.in
+	$(PIP_COMPILE) -o requirements/pytest.txt requirements/pytest.in
+	$(PIP_COMPILE) -p $(KITBIN)/python3 -o requirements/kit.txt requirements/kit.in
+	$(PIP_COMPILE) -o requirements/tox.txt requirements/tox.in
+	$(PIP_COMPILE) -o requirements/dev.txt requirements/dev.in
+	$(PIP_COMPILE) -o requirements/light-threads.txt requirements/light-threads.in
+	$(PIP_COMPILE) -o requirements/mypy.txt requirements/mypy.in
+	$(PIP_COMPILE) -p $(DOCBIN)/python3 -o doc/requirements.txt doc/requirements.in
 	PYTHONWARNDEFAULTENCODING= pre-commit autoupdate
 
 diff_upgrade:				#- Summarize the last `make upgrade`.

@@ -57,7 +57,7 @@ jobs:
               - ".github/workflows/coverage.yml"
               - "tox.ini"
               - "metacov.ini"
-              - "requirements/*.pip"
+              - "requirements/*.txt"
               - "tests/gold/**"
 
   coverage:
@@ -133,7 +133,7 @@ jobs:
           # 3.10 on Windows.  Commenting out the cache here fixed it.  Someday
           # try using the cache again.
           #cache: pip
-          #cache-dependency-path: 'requirements/*.pip'
+          #cache-dependency-path: 'requirements/*.txt'
 
       - name: "Show environment"
         run: |
@@ -146,7 +146,7 @@ jobs:
       - name: "Install dependencies"
         run: |
           set -xe
-          python -m pip install -r requirements/tox.pip
+          python -m pip install -r requirements/tox.txt
 
       - name: "Run tox coverage for ${{ matrix.python-version }}"
         env:
@@ -194,7 +194,7 @@ jobs:
           # 3.10 on Windows.  Commenting out the cache here fixed it.  Someday
           # try using the cache again.
           #cache: pip
-          #cache-dependency-path: 'requirements/*.pip'
+          #cache-dependency-path: 'requirements/*.txt'
 
       - name: "Show environment"
         run: |
@@ -207,7 +207,7 @@ jobs:
         run: |
           set -xe
           python -m pip install -e .
-          python -m pip install -r requirements/pytest.pip
+          python -m pip install -r requirements/pytest.txt
           python igor.py zip_mods
 
       - name: "Download coverage data"
