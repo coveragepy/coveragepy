@@ -237,10 +237,24 @@ coverage.wire_up_filter = function () {
                 const places = match ? match[1].length : 0;
                 const { numer, denom } = totals[column];  // nosemgrep: eslint.detect-object-injection
                 cell.dataset.ratio = `${numer} ${denom}`;
-                // Check denom to prevent NaN if filtered files contain no statements
-                cell.textContent = denom
-                    ? `${(numer * 100 / denom).toFixed(places)}%`
-                    : `${(100).toFixed(places)}%`;
+                // Check denom to prevent NaN if filtered files contain no statements.
+                // Also mirror coverage.results.display_covered's clamp so the
+                // JS-recomputed footer can never round to "0" or "100" — keeping
+                // the heading and footer from disagreeing. See issue #2256.
+                let pc = denom
+                    ? (numer * 100 / denom)
+                    : 100;
+                if (places >= 0) {
+                    const near0 = 1 / Math.pow(10, places);
+                    if (pc > 0 && pc < near0) {
+                        pc = near0;
+                    } else if (pc < 100 && pc > (100 - near0)) {
+                        pc = 100 - near0;
+                    } else {
+                        pc = Math.round(pc * Math.pow(10, places)) / Math.pow(10, places);
+                    }
+                }
+                cell.textContent = `${pc.toFixed(places)}%`;
             }
             else {
                 cell.textContent = totals[column];  // nosemgrep: eslint.detect-object-injection
