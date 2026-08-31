@@ -959,6 +959,13 @@ setuptools==84.0.0 \
     # via
     #   -r requirements/pip.in
     #   check-manifest
+shellcheck-py==0.11.0.1 \
+    --hash=sha256:1b274df81de5b000ff78db433e7328b87e52e3c38481c60f8e488c3095beef05 \
+    --hash=sha256:5c620c88901e8f1d3be5934b31ea99e3310065e1245253741eafd0a275c8c9cc \
+    --hash=sha256:6b88d0a244c82ed07e06a53e444da841f69330ca59ae15d4a66c391655dae7a0 \
+    --hash=sha256:784156289ecb17e91c692cd783ab5152333309588cabb10032a047331c63e759 \
+    --hash=sha256:b6a3fee28efda2e16e38d6e6d59faf7224300256456639727370d404730849e8
+    # via -r requirements/dev.in
 sortedcontainers==2.4.0 ; python_full_version >= '3.11' or platform_python_implementation != 'PyPy' \
     --hash=sha256:25caa5a06cc30b6b83d11423433f65d1f9d76c4c6a0c90e3379eaa43b9bfdb88 \
     --hash=sha256:a163dcaede0f1c021485e957a39245190e74249897e2ae4b2aa38595db237ee0
