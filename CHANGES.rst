@@ -79,6 +79,11 @@ Version 7.16.0 — 2026-08-28
   Windows.  The original extension is now restored on the annotated copy (`pull
   2265`_).
 
+- Fix: ``COVERAGE_SYSMON_LOG=1`` no longer deadlocks when measuring the
+  standard library. The debug logger now ignores re-entrant calls triggered
+  by its own file I/O. Closes `issue 2087`_.
+
+.. _issue 2087: https://github.com/coveragepy/coveragepy/issues/2087
 .. _pull 2261: https://github.com/coveragepy/coveragepy/pull/2261
 .. _pull 2262: https://github.com/coveragepy/coveragepy/pull/2262
 .. _pull 2263: https://github.com/coveragepy/coveragepy/pull/2263
