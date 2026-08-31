@@ -270,6 +270,7 @@ jobs:
 
       - name: "Check coverage on changed lines"
         # Changed code must be fully covered, unless the PR is labeled with "missing-coverage-ok".
+        if: github.event_name == 'pull_request'
         env:
           BASE_REF: ${{ github.event.pull_request.base.ref }}
           FAIL_UNDER: ${{ contains(github.event.pull_request.labels.*.name, 'missing-coverage-ok') && '0' || '100' }}
