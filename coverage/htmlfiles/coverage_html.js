@@ -126,28 +126,23 @@ coverage.assign_shortkeys = function () {
 // Return the absolute value of `value`, scaled by 10**places and rounded to a
 // whole number, as a BigInt.  The rounding is the way Python's round() does it:
 // an exact tie rounds to the even neighbor, where Number.toFixed() always
-// rounds away from zero.  The double is split into an exact integer fraction
-// first, because scaling in floating point can nudge a value that is merely
-// close to a tie onto one, and so change the result.
+// rounds away from zero.
+//
+// The scaling has to be done on the exact value of the double, not in floating
+// point: 0.15 is stored as a shade less than 0.15, but 0.15*10 is exactly 1.5,
+// so scaling first invents a tie that Python never sees.  Every double is
+// m/2**e for whole numbers m and e, and doubling one is exact, so the loop
+// below recovers the pair and the rounding can be done on the exact fraction.
 function round_half_even(value, places) {
-    const view = new DataView(new ArrayBuffer(8));
-    view.setFloat64(0, Math.abs(value));
-    const bits = view.getBigUint64(0);
-    const biased_exponent = Number((bits >> 52n) & 0x7ffn);
-    const fraction = bits & 0xfffffffffffffn;
-    // Every finite double is mantissa * 2**exponent, exactly.
-    const mantissa = (biased_exponent === 0) ? fraction : (fraction | 0x10000000000000n);
-    const exponent = (biased_exponent === 0) ? -1074 : (biased_exponent - 1075);
-
-    let numerator = mantissa * (10n ** BigInt(places));
-    let denominator = 1n;
-    if (exponent >= 0) {
-        numerator <<= BigInt(exponent);
-    }
-    else {
-        denominator = 1n << BigInt(-exponent);
+    let mantissa = Math.abs(value);
+    let exponent = 0;
+    while (mantissa !== Math.floor(mantissa)) {
+        mantissa *= 2;
+        exponent += 1;
     }
 
+    const numerator = BigInt(mantissa) * (10n ** BigInt(places));
+    const denominator = 1n << BigInt(exponent);
     let rounded = numerator / denominator;
     const twice_remainder = 2n * (numerator % denominator);
     if (twice_remainder > denominator || (twice_remainder === denominator && (rounded % 2n) === 1n)) {
