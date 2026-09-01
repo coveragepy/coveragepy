@@ -49,6 +49,13 @@ The coverage.py code is hosted on a GitHub repository at
 https://github.com/coveragepy/coveragepy.  To get a working environment, follow
 these steps:
 
+These steps assume you already have ``git`` and ``make`` installed.  Building
+and testing coverage.py also needs a C compiler, such as ``gcc`` or ``clang``,
+because the test suite builds the C tracer extension.  The development
+requirements install ``tox``; if you skip that step, install ``tox`` yourself
+before running tests.  Install any extra Python versions you want ``tox`` to
+test, including free-threading builds only if you are testing that support.
+
 #.  `Fork the repo`_ into your own GitHub account.  The coverage.py code will
     then be copied into a GitHub repository at
     ``https://github.com/GITHUB_USER/coveragepy`` where GITHUB_USER is your
