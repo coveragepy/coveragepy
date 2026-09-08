@@ -526,6 +526,24 @@ class CoverageDataTest(CoverageTest):
         covdata1.update(covdata2)
         assert_line_counts(covdata1, SUMMARY_3)
 
+    def test_update_lines_in_memory_twice(self) -> None:
+        combined = DebugCoverageData(no_disk=True)
+        for index in range(2):
+            source = DebugCoverageData(no_disk=True)
+            source.add_lines({"example.py": {index + 1}})
+            source.write()
+            combined.update(source)
+        assert combined.lines("example.py") == [1, 2]
+
+    def test_update_arcs_in_memory_twice(self) -> None:
+        combined = DebugCoverageData(no_disk=True)
+        for index in range(2):
+            source = DebugCoverageData(no_disk=True)
+            source.add_arcs({"example.py": {(index + 1, 10)}})
+            source.write()
+            combined.update(source)
+        assert combined.arcs("example.py") == [(1, 10), (2, 10)]
+
     def test_asking_isnt_measuring(self) -> None:
         # Asking about an unmeasured file shouldn't make it seem measured.
         covdata = DebugCoverageData()

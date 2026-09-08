@@ -19,6 +19,7 @@ greenlet
 pylint
 readme_renderer
 ruff
+shellcheck-py
 
 # for kitting.
 libsass

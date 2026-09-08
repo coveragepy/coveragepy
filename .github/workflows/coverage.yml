@@ -275,14 +275,14 @@ jobs:
           BASE_REF: ${{ github.event.pull_request.base.ref }}
           FAIL_UNDER: ${{ contains(github.event.pull_request.labels.*.name, 'missing-coverage-ok') && '0' || '100' }}
         run: |
-          git fetch origin ${BASE_REF}
+          git fetch origin "${BASE_REF}"
           diff-cover coverage.xml \
               --compare-branch "origin/${BASE_REF}" \
               --fail-under="${FAIL_UNDER}" \
               --format markdown:report.md \
               || status=$?
           cat report.md >> "$GITHUB_STEP_SUMMARY"
-          exit ${status:-0}
+          exit "${status:-0}"
 
   publish:
     name: "Publish coverage report"

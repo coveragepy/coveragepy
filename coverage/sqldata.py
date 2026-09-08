@@ -880,6 +880,13 @@ class CoverageData:
                 INNER JOIN main.file AS main_file ON other_file_mapped.mapped_path = main_file.path
             """)
 
+            # Clean up in case we'll use update() again.
+            con.execute_void("DROP TABLE other_file_mapped")
+            if has_arcs:
+                con.execute_void("DROP TABLE context_mapping")
+            con.con.commit()
+            con.execute_void("DETACH DATABASE other_db")
+
         if not self._no_disk:
             # Update all internal cache data.
             self._reset()
