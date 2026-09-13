@@ -6,14 +6,18 @@
 from __future__ import annotations
 
 import importlib
+import importlib.abc
+import importlib.machinery
 import sys
 import threading
-import types
+from collections.abc import Sequence
+from types import ModuleType
 from typing import Any
 from unittest import mock
 
 import pytest
 
+import coverage
 from coverage.exceptions import CoverageException
 from coverage.misc import (
     Hasher,
@@ -21,7 +25,6 @@ from coverage.misc import (
     human_sorted,
     human_sorted_items,
     import_third_party,
-    sys_modules_saved,
     stdout_link,
     substitute_variables,
 )
@@ -178,43 +181,88 @@ class SysModulesSavedTest(CoverageTest):
     """Test saving sys.modules around imports."""
 
     def test_doesnt_interrupt_another_thread_importing(self) -> None:
-        module_name = "slow_import"
-        control_name = "slow_import_control"
-        started = threading.Event()
-        proceed = threading.Event()
-        release_saver = threading.Event()
-        control = types.ModuleType(control_name)
-        setattr(control, "started", started)
-        setattr(control, "proceed", proceed)
-        sys.modules[control_name] = control
-        self.make_file(
-            f"{module_name}.py",
-            f"import {control_name}\n{control_name}.started.set()\n{control_name}.proceed.wait()\n",
-        )
-        sys.path.insert(0, str(self.temp_dir))
+        # coverage.py sometimes imports modules for its own purposes, and
+        # afterward removes anything new from sys.modules so the import leaves
+        # no trace. But sys.modules is process-wide: a module that another
+        # thread imported during that window is removed too, and that thread's
+        # import then fails.
+        #
+        # Three Events hold the window open and force one exact interleaving:
+        #
+        #   1. main enters coverage's window, sets `window`, and waits.
+        #   2. the victim imports victim_slow, which pauses in exec_module.
+        #   3. main leaves the window and deletes victim_slow.
+        #   4. main releases the victim; importlib then raises KeyError.
+        window, in_exec, release = (threading.Event() for _ in range(3))
+        victim_exc: BaseException | None = None
+        orig = coverage.inorout.file_and_path_for_module
 
-        saver_started = threading.Event()
+        def hooked(name: str) -> tuple[str | None, list[str]]:
+            window.set()
+            in_exec.wait(10)
+            return orig(name)
 
-        def save_modules() -> None:
-            with sys_modules_saved():
-                saver_started.set()
-                release_saver.wait()
+        class VictimLoader(importlib.abc.Loader):
+            """Loads victim_slow slowly, while it is in sys.modules."""
 
-        saver = threading.Thread(target=save_modules)
-        importer = threading.Thread(target=importlib.import_module, args=(module_name,))
+            def create_module(
+                self,
+                spec_unused: importlib.machinery.ModuleSpec,
+            ) -> ModuleType | None:
+                return None
+
+            def exec_module(self, module_unused: ModuleType) -> None:
+                in_exec.set()
+                release.wait(10)
+
+        class VictimFinder(importlib.abc.MetaPathFinder):
+            """Finds victim_slow and nothing else."""
+
+            def find_spec(
+                self,
+                fullname: str,
+                path_unused: Sequence[str] | None = None,
+                target_unused: ModuleType | None = None,
+            ) -> importlib.machinery.ModuleSpec | None:
+                if fullname == "victim_slow":
+                    return importlib.util.spec_from_loader(fullname, VictimLoader())
+                return None
+
+        def victim_import() -> None:
+            nonlocal victim_exc
+            window.wait(10)
+            try:
+                importlib.import_module("victim_slow")
+            except Exception as exc:
+                victim_exc = exc
+
+        finder = VictimFinder()
+        old_path = list(sys.path)
+        victim = threading.Thread(target=victim_import, daemon=True)
+        coverage.inorout.file_and_path_for_module = hooked  # type: ignore[assignment]
+        sys.meta_path.insert(0, finder)
         try:
-            saver.start()
-            assert saver_started.wait(1)
-            importer.start()
-            assert not started.wait(0.1)
+            victim.start()
+            cov = coverage.Coverage(source_pkgs=["some_pkg_that_does_not_exist"])
+            try:
+                cov.start()
+                cov.stop()
+                sys.path.append("/nonexistent")
+                assert cov._inorout is not None
+                cov._inorout.should_trace("/some/module.py", None)
+            finally:
+                cov.stop()
+            in_modules = "victim_slow" in sys.modules
         finally:
-            proceed.set()
-            release_saver.set()
-            saver.join()
-            importer.join()
-            sys.path.pop(0)
-            sys.modules.pop(module_name, None)
-            sys.modules.pop(control_name, None)
+            release.set()
+            victim.join(10)
+            coverage.inorout.file_and_path_for_module = orig
+            sys.meta_path.remove(finder)
+            sys.path[:] = old_path
+            sys.modules.pop("victim_slow", None)
+
+        assert victim_exc is None, f"victim thread's import raised {victim_exc!r}"
+        assert in_modules, "coverage deleted the victim thread's module"
 
 
 HUMAN_DATA = [
