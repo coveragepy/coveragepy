@@ -209,9 +209,11 @@ class SysModulesSavedTest(CoverageTest):
                 self,
                 spec_unused: importlib.machinery.ModuleSpec,
             ) -> ModuleType | None:
+                """Let importlib create the module before executing it."""
                 return None
 
             def exec_module(self, module_unused: ModuleType) -> None:
+                """Wait until coverage has removed the module."""
                 in_exec.set()
                 release.wait(10)
 
@@ -224,6 +226,7 @@ class SysModulesSavedTest(CoverageTest):
                 path_unused: Sequence[str] | None = None,
                 target_unused: ModuleType | None = None,
             ) -> importlib.machinery.ModuleSpec | None:
+                """Provide the deliberately slow victim module."""
                 if fullname == "victim_slow":
                     return importlib.util.spec_from_loader(fullname, VictimLoader())
                 return None
