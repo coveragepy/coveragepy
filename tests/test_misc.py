@@ -255,16 +255,17 @@ class SysModulesSavedTest(CoverageTest):
                 cov._inorout.should_trace("/some/module.py", None)
             finally:
                 cov.stop()
-            in_modules = "victim_slow" in sys.modules
         finally:
             release.set()
             victim.join(10)
+            in_modules = "victim_slow" in sys.modules
             coverage.inorout.file_and_path_for_module = orig
             sys.meta_path.remove(finder)
             sys.path[:] = old_path
             sys.modules.pop("victim_slow", None)
 
         assert victim_exc is None, f"victim thread's import raised {victim_exc!r}"
+        assert not victim.is_alive(), "victim thread did not finish"
         assert in_modules, "coverage deleted the victim thread's module"
 
 
