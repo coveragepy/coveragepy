@@ -23,7 +23,15 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
-Nothing yet.
+- Fix: files measured by plugins with dynamic source file names, such as
+  templates measured by django_coverage_plugin, were never recorded when the
+  source was selected with ``source_pkgs``, though ``source`` naming the same
+  package as a directory worked.  ``source_pkgs`` matched such a file by the
+  module name of the code executing it, which is the plugin's hooked code, not
+  the file.  These files are now matched by being inside one of the source
+  packages.  Closes `issue 2287`_.
+
+.. _issue 2287: https://github.com/coveragepy/coveragepy/issues/2287
 
 
 .. start-releases
