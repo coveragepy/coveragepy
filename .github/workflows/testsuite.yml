@@ -168,9 +168,14 @@ jobs:
     name: "Tests successful"
     needs:
       - tests
+    # Without this, GitHub skips this job when `tests` doesn't succeed, so the
+    # gate reports "skipped" instead of failing.  `allowed-skips` keeps the
+    # deliberate skips (-notests branches, no test-relevant files) passing.
+    if: always()
     runs-on: ubuntu-latest
     steps:
       - name: "Decide success or failure"
         uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
         with:
           jobs: ${{ toJSON(needs) }}
+          allowed-skips: tests
