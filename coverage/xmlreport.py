@@ -188,7 +188,8 @@ class XmlReporter:
                 break
         else:
             rel_name = fr.relative_filename().replace("\\", "/")
-            self.source_paths.add(fr.filename[: -len(rel_name)].rstrip(r"\/"))
+            source_path = fr.filename[: -len(rel_name)].rstrip(r"\/") or "."
+            self.source_paths.add(source_path)
 
         dirname = os.path.dirname(rel_name) or "."
         dirname = "/".join(dirname.split("/")[: self.config.xml_package_depth])

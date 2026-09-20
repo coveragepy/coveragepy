@@ -519,6 +519,21 @@ class XmlPackageStructureTest(XmlTestHelpers, CoverageTest):
         dom = ElementTree.parse("coverage.xml")
         self.assert_source(dom, "src")  # type: ignore[arg-type]
 
+    def test_relative_files_without_source(self) -> None:
+        self.make_file("src/mod.py", "print(17)")
+        cov = coverage.Coverage()
+        cov.set_option("run:relative_files", True)
+        self.start_import_stop(cov, "mod", modfile="src/mod.py")
+        cov.xml_report()
+
+        dom = ElementTree.parse("coverage.xml")
+        elts = dom.findall(".//sources/source")
+        assert [elt.text for elt in elts] == ["."]
+
+        classes = dom.findall(".//class[@name='mod.py']")
+        assert len(classes) == 1
+        assert classes[0].get("filename") == "src/mod.py"
+
     @pytest.mark.parametrize("trail", ["", "/", "\\"])
     def test_relative_source(self, trail: str) -> None:
         if trail == "\\" and not env.WINDOWS:
