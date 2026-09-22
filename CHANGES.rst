@@ -27,7 +27,12 @@ Unreleased
   function return could mistakenly report an uncovered branch. This is now
   fixed, closing `issue 2168`_.
 
+- Fix: ``--source=/`` (or any source path resolving to the filesystem root)
+  matched no files, so nothing was measured. This is now fixed, closing
+  `issue 2291`_.
+
 .. _issue 2168: https://github.com/coveragepy/coveragepy/issues/2168
+.. _issue 2291: https://github.com/coveragepy/coveragepy/issues/2291
 
 
 .. start-releases
