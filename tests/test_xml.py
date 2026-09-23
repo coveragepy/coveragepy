@@ -20,9 +20,25 @@ from coverage import Coverage, env
 from coverage.exceptions import NoDataError
 from coverage.files import abs_file
 from coverage.misc import import_local_file
+from coverage.xmlreport import rate
 from tests.coveragetest import CoverageTest
 from tests.goldtest import compare, gold_path
 from tests.helpers import assert_coverage_warnings, change_dir
+
+
+@pytest.mark.parametrize(
+    ("hit", "num", "expected"),
+    [
+        (0, 0, "1"),
+        (0, 100_000, "0"),
+        (100_000, 100_000, "1"),
+        (25_000, 25_001, "0.9999"),
+        (1, 12_000, "0.00008333"),
+        (2, 3, "0.6667"),
+    ],
+)
+def test_xml_rate(hit: int, num: int, expected: str) -> None:
+    assert rate(hit, num) == expected
 
 
 class XmlTestHelpers(CoverageTest):
