@@ -183,8 +183,10 @@ setup_args = dict(
         ],
     },
     extras_require={
-        # Enable pyproject.toml support.
-        "toml": ['tomli; python_full_version<="3.11.0a6"'],
+        # Before Python 3.11, this installed optional toml support.
+        # 3.11 doesn't need a library for toml, but we keep the empty extra so
+        # that people who were installing with it are not broken.
+        "toml": [],
     },
     cmdclass={
         "build_ext": ve_build_ext,

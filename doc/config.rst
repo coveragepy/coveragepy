@@ -43,10 +43,6 @@ order: :file:`.coveragerc.toml`, :file:`setup.cfg`, :file:`tox.ini`, or
 :file:`pyproject.toml`.  The first file found with coverage.py settings will be
 used and other files won't be consulted.
 
-Coverage.py will read from "pyproject.toml" if TOML support is available,
-either because you are running on Python 3.11 or later, or because you
-installed with the ``toml`` extra (``pip install coverage[toml]``).
-
 
 Syntax
 ------

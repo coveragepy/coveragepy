@@ -14,11 +14,12 @@ import os
 import os.path
 import re
 from collections.abc import Callable, Iterable, Mapping
+from tomllib import TOMLDecodeError
 from typing import Any, Final
 
 from coverage.exceptions import ConfigError
 from coverage.misc import human_sorted_items, isolate_module, substitute_variables
-from coverage.tomlconfig import TomlConfigParser, TomlDecodeError
+from coverage.tomlconfig import TomlConfigParser
 from coverage.types import (
     TConfigSectionIn,
     TConfigSectionOut,
@@ -322,7 +323,7 @@ class CoverageConfig(TConfigurable, TPluginConfig):
 
         try:
             files_read = cp.read(filename)
-        except (configparser.Error, TomlDecodeError) as err:
+        except (configparser.Error, TOMLDecodeError) as err:
             raise ConfigError(f"Couldn't read config file {filename}: {err}") from err
         if not files_read:
             return False
