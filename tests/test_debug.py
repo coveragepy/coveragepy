@@ -127,6 +127,19 @@ def test_clipped_repr(text: str, numchars: int, result: str) -> None:
             [lambda x: "=" + x, lambda x: x + "\ndone\n"],
             "=hello\ndone\n=bye\ndone\n",
         ),
+        # https://github.com/nedbat/coveragepy/issues/2296 -- text with
+        # unusual line separators (other than "\n") should be left alone by
+        # an identity filter, not have those characters turned into "\n" or
+        # dropped entirely.
+        ("a\x0bb", [lambda x: x], "a\x0bb"),
+        ("a\x0cb", [lambda x: x], "a\x0cb"),
+        ("a\x1cb", [lambda x: x], "a\x1cb"),
+        ("a\x1db", [lambda x: x], "a\x1db"),
+        ("a\x1eb", [lambda x: x], "a\x1eb"),
+        ("a\x85b", [lambda x: x], "a\x85b"),
+        ("a\u2028b", [lambda x: x], "a\u2028b"),
+        ("a\u2029b", [lambda x: x], "a\u2029b"),
+        ("\x0bhello", [lambda x: x], "\x0bhello"),
     ],
 )
 def test_filter_text(

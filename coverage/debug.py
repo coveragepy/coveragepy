@@ -362,6 +362,25 @@ def pp(v: Any) -> None:  # pragma: debugging
     print(ppformat(v))
 
 
+def _split_lines(text: str) -> list[str]:
+    """Split `text` into lines, splitting only on "\n".
+
+    This is like `str.splitlines`, except it does not treat other Unicode
+    line boundaries ("\v", "\f", "\x1c"-"\x1e", "\x85", "\u2028", "\u2029")
+    as line breaks, so unusual characters in debug text are preserved
+    instead of being silently turned into newlines or dropped.
+
+    """
+    if not text:
+        return []
+    lines = text.split("\n")
+    if lines[-1] == "":
+        # A trailing "\n" should not produce a trailing empty line, to
+        # match the behavior of str.splitlines().
+        lines.pop()
+    return lines
+
+
 def filter_text(text: str, filters: Iterable[Callable[[str], str]]) -> str:
     """Run `text` through a series of filters.
 
@@ -378,8 +397,8 @@ def filter_text(text: str, filters: Iterable[Callable[[str], str]]) -> str:
     text = clean_text
     for filter_fn in filters:
         lines = []
-        for line in text.splitlines():
-            lines.extend(filter_fn(line).splitlines())
+        for line in _split_lines(text):
+            lines.extend(_split_lines(filter_fn(line)))
         text = "\n".join(lines)
     return text + ending
 
