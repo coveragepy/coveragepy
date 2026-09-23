@@ -1808,7 +1808,7 @@ class FailUnderTest(CoverageTest):
                 99.999,
                 "report --fail-under=100 --precision=0",
                 2,
-                "Coverage failure: total of 99.999 is less than fail-under=100.0\n",
+                "Coverage failure: total of 99 is less than fail-under=100\n",
             ),
             (20.12339, "report --fail-under=20.1234 --precision=4", 0, ""),
         ],
