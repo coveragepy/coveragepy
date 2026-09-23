@@ -13,6 +13,7 @@ from unittest import mock
 import pytest
 
 import coverage
+from coverage import env
 from coverage.context import qualname_from_frame
 from coverage.data import CoverageData, sorted_lines
 from coverage.types import TArc, TCovKwargs, TLineNo
@@ -207,6 +208,35 @@ class DynamicContextTest(CoverageTest):
         assert_context_lines("stat|two_tests.test_one", self.TEST_ONE_LINES)
         assert_context_lines("stat|two_tests.test_two", self.TEST_TWO_LINES)
 
+    @pytest.mark.skipif(env.PYVERSION < (3, 11), reason="Needs co_qualname")
+    def test_static_and_class_methods(self) -> None:
+        # Test methods without a `self` argument also get a context, issue 1923.
+        self.make_file(
+            "class_tests.py",
+            """\
+            class TestSomething:
+                @staticmethod
+                def test_static():
+                    x = 4
+
+                @classmethod
+                def test_class(cls):
+                    x = 8
+
+            TestSomething.test_static()
+            TestSomething.test_class()
+            """,
+        )
+        cov = coverage.Coverage(source=["."])
+        cov.set_option("run:dynamic_context", "test_function")
+        self.start_import_stop(cov, "class_tests")
+        data = cov.get_data()
+
+        assert_count_equal(
+            data.measured_contexts(),
+            ["", "class_tests.TestSomething.test_static", "class_tests.TestSomething.test_class"],
+        )
+
 
 def get_qualname() -> str | None:
     """Helper to return qualname_from_frame for the caller."""
@@ -259,6 +289,16 @@ def patch_meth(self: Any) -> str | None:
     return get_qualname()
 
 
+class StaticAndClass:
+    @staticmethod
+    def a_static() -> str | None:
+        return get_qualname()
+
+    @classmethod
+    def a_class(cls) -> str | None:
+        return get_qualname()
+
+
 # pylint: enable=missing-class-docstring, missing-function-docstring, unused-argument
 
 
@@ -290,6 +330,16 @@ class QualnameTest(CoverageTest):
 
     def test_property(self) -> None:
         assert Parent().a_property == "tests.test_context.Parent.a_property"
+
+    @pytest.mark.skipif(env.PYVERSION < (3, 11), reason="Needs co_qualname")
+    def test_staticmethod(self) -> None:
+        assert StaticAndClass.a_static() == "tests.test_context.StaticAndClass.a_static"
+        assert StaticAndClass().a_static() == "tests.test_context.StaticAndClass.a_static"
+
+    @pytest.mark.skipif(env.PYVERSION < (3, 11), reason="Needs co_qualname")
+    def test_classmethod(self) -> None:
+        assert StaticAndClass.a_class() == "tests.test_context.StaticAndClass.a_class"
+        assert StaticAndClass().a_class() == "tests.test_context.StaticAndClass.a_class"
 
     def test_changeling(self) -> None:
         c = Child()
