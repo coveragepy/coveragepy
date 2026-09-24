@@ -20,13 +20,13 @@ from coverage.bytecode import ByteParser
 from coverage.debug import short_stack
 from coverage.exceptions import NoSource, NotPython
 from coverage.misc import isolate_module, nice_pair
-from coverage.phystokens import generate_tokens
+from coverage.phystokens import TToken, generate_tokens
 from coverage.types import TArc, TLineNo
 
 os = isolate_module(os)
 
 
-def multiline_map_from_tokens(tokens: Iterable[tokenize.TokenInfo]) -> dict[TLineNo, TLineNo]:
+def multiline_map_from_tokens(tokens: Iterable[TToken]) -> dict[TLineNo, TLineNo]:
     """Compute the multiline map from a stream of tokens.
 
     The result maps line numbers in multi-line statements to the first line
