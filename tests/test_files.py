@@ -405,6 +405,15 @@ class MatcherTest(CoverageTest):
         assert tm.info() == sorted(trees)
         self.assertMatches(tm, filepath, expected_match)
 
+    def test_tree_matcher_system_root(self) -> None:
+        # The system root is the only path that abs_file leaves with a trailing
+        # separator, so matching against it needs no special-casing.
+        self.make_file("sub/file1.py")
+        root = abs_file(os.sep)
+        tm = TreeMatcher([root])
+        assert tm.match(abs_file("sub/file1.py"))
+        assert tm.match(root)
+
     @pytest.mark.parametrize(
         "modulename, expected_match",
         [
