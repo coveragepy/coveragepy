@@ -2330,6 +2330,32 @@ class AsyncTest(CoverageTest):
         )
         assert self.stdout() == "0\n1\n2\nDone.\n"
 
+    # https://github.com/coveragepy/coveragepy/issues/2303
+    def test_async_for_exception(self) -> None:
+        self.check_coverage(
+            """\
+            import asyncio
+
+            async def numbers():
+                yield 1
+                raise ValueError("done")
+
+            async def consume():
+                async for n in numbers():
+                    pass
+                executed.append("after loop")   # never runs
+
+            executed = []
+            try:
+                asyncio.run(consume())
+            except ValueError:
+                pass
+            assert executed == []
+            """,
+            branchz="89 8A",
+            branchz_missing="8A",
+        )
+
 
 class AnnotationTest(CoverageTest):
     """Tests using type annotations."""

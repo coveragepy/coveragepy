@@ -28,6 +28,7 @@ from coverage.parser import multiline_map_from_text
 from coverage.python import get_python_source
 from coverage.types import (
     AnyCallable,
+    TArc,
     TFileDisposition,
     TLineNo,
     TOffset,
@@ -181,6 +182,12 @@ class CodeInfo:
     # first branch event in the code object.
     branch_resolver: BranchArcResolver | None
 
+    # Branch arcs that have been resolved, but whose destination line has not
+    # yet been seen executing.  They are added when the destination line runs,
+    # or when the frame returns normally; they are discarded if the frame
+    # unwinds.
+    pending_arcs: list[TArc] | None = None
+
 
 class SysMonitor(Tracer):
     """Python implementation of the raw data tracer for PEP669 implementations."""
@@ -254,16 +261,20 @@ class SysMonitor(Tracer):
             register = functools.partial(sys_monitoring.register_callback, self.myid)
             events = sys.monitoring.events
 
-            sys_monitoring.set_events(self.myid, events.PY_START)
+            global_events = events.PY_START
             register(events.PY_START, self.sysmon_py_start)
             if self.trace_arcs:
                 register(events.PY_RETURN, self.sysmon_py_return)
                 register(events.LINE, self.sysmon_line_arcs)
+                # PY_UNWIND can only be enabled globally, not per-code.
+                global_events |= events.PY_UNWIND
+                register(events.PY_UNWIND, self.sysmon_py_unwind)
                 if env.PYBEHAVIOR.branch_right_left:
                     register(events.BRANCH_RIGHT, self.sysmon_branch_either)
                     register(events.BRANCH_LEFT, self.sysmon_branch_either)
             else:
                 register(events.LINE, self.sysmon_line_lines)
+            sys_monitoring.set_events(self.myid, global_events)
             sys_monitoring.restart_events()
             self.sysmon_on = True
 
@@ -408,11 +419,38 @@ class SysMonitor(Tracer):
         # code_info is not None and code_info.file_data is not None, since we
         # wouldn't have enabled this event if they were.
         last_line = code_info.byte_to_line.get(instruction_offset)  # type: ignore
+        # The frame is returning normally: every jump completed, so pending
+        # branch arcs are real and can be added now.
+        if code_info.pending_arcs:  # type: ignore
+            code_info.file_data.update(code_info.pending_arcs)  # type: ignore
+            code_info.pending_arcs = None  # type: ignore
         if last_line is not None:
             arc = (last_line, -code.co_firstlineno)
             code_info.file_data.add(arc)  # type: ignore
             # log(f"adding {arc=}")
         return DISABLE
+
+    @panopticon("code", "@", None)
+    def sysmon_py_unwind(
+        self,
+        code: CodeType,
+        instruction_offset: TOffset,
+        exc: object,
+    ) -> MonitorReturn:
+        """Handle sys.monitoring.events.PY_UNWIND events for branch coverage.
+
+        A frame exiting with an exception means that any pending branch arcs
+        never reached their destination line, so they are not real: the jump
+        was interrupted before the destination ran, as when an exception
+        unwinds out of an `async for` loop (issue 2303).  Discard them.
+
+        """
+        code_info = self.code_infos.get(id(code))
+        if code_info is not None:
+            code_info.pending_arcs = None
+        # PY_UNWIND callbacks can't return DISABLE, or the callback will be
+        # removed.  Return None instead.
+        return None
 
     @panopticon("code", "line")
     def sysmon_line_lines(self, code: CodeType, line_number: TLineNo) -> MonitorReturn:
@@ -438,6 +476,13 @@ class SysMonitor(Tracer):
         # wouldn't have enabled this event if they were.
         arc = (line_number, line_number)
         code_info.file_data.add(arc)  # type: ignore
+        # A line executing means we can now add any branch arcs that ended
+        # at this line.
+        if code_info.pending_arcs:
+            added = [a for a in code_info.pending_arcs if a[1] == line_number]
+            if added:
+                code_info.file_data.update(added)  # type: ignore
+                code_info.pending_arcs = [a for a in code_info.pending_arcs if a[1] != line_number]
         # log(f"adding {arc=}")
         return DISABLE
 
@@ -463,8 +508,7 @@ class SysMonitor(Tracer):
             )
         arc = resolver.resolve(instruction_offset, destination_offset)
         if arc is not None:
-            code_info.file_data.add(arc)  # type: ignore
-            # log(f"adding {arc=}")
+            self._add_branch_arc(code_info, arc)
         else:
             # This could be an exception jumping from line to line.
             assert code_info.byte_to_line is not None
@@ -472,11 +516,28 @@ class SysMonitor(Tracer):
             if l1 is not None:
                 l2 = code_info.byte_to_line.get(destination_offset)
                 if l2 is not None and l1 != l2:
-                    arc = (l1, l2)
-                    code_info.file_data.add(arc)  # type: ignore
+                    self._add_branch_arc(code_info, (l1, l2))
                     # log(f"adding unforeseen {arc=}")
 
         return DISABLE
+
+    def _add_branch_arc(self, code_info: CodeInfo, arc: TArc) -> None:
+        """Add a branch arc, possibly deferred until its destination runs.
+
+        Branch events can jump to a line that never executes, as when an
+        exception unwinds out of an `async for` loop (#2303).  We wait for a
+        LINE event on the destination line to confirm the jump completed.
+        Pending arcs are also added on a normal return, and discarded when
+        the frame unwinds.  Arcs that leave the code object (negative
+        destination line) are added immediately.
+
+        """
+        if arc[1] < 0:
+            code_info.file_data.add(arc)  # type: ignore
+        else:
+            if code_info.pending_arcs is None:
+                code_info.pending_arcs = []
+            code_info.pending_arcs.append(arc)
 
     def get_multiline_map(self, filename: str) -> dict[TLineNo, TLineNo]:
         """Get the multiline map for `filename`, computing it at most once."""
