@@ -10,7 +10,7 @@ from unittest import mock
 import pytest
 
 from coverage import env
-from coverage.sysmon import SysMonitor, compute_multiline_map
+from coverage.sysmon import CodeInfo, SysMonitor, compute_multiline_map
 from tests.coveragetest import CoverageTest
 
 MULTI_PY = "x = (\n    1 +\n    2\n)\ny = 5\n"
@@ -73,3 +73,118 @@ class MultilineMapCacheTest(CoverageTest):
         self.make_file("multi.py", "x = 1\ny = (2 +\n    3)\n")
         assert tracer.get_multiline_map("multi.py") == MULTI_MAP  # cached
         assert SysMonitor().get_multiline_map("multi.py") == {2: 2, 3: 2}
+
+
+@pytest.mark.skipif(not env.PYBEHAVIOR.pep669, reason="SysMonitor needs sys.monitoring")
+class PendingBranchArcTest(CoverageTest):
+    """Direct unit tests for deferred branch arcs (issue 2303)."""
+
+    def make_tracer(self) -> SysMonitor:
+        tracer = SysMonitor()
+        tracer.trace_arcs = True
+        return tracer
+
+    def make_code_info(self, tracer: SysMonitor, code: object) -> CodeInfo:
+        ci = CodeInfo(
+            tracing=True,
+            file_data=set(),
+            byte_to_line={},
+            branch_resolver=None,
+        )
+        tracer.code_infos[id(code)] = ci
+        return ci
+
+    def test_add_branch_arc_negative_destination_is_immediate(self) -> None:
+        tracer = self.make_tracer()
+        ci = self.make_code_info(tracer, object())
+        tracer._add_branch_arc(ci, (8, -1))
+        assert (8, -1) in ci.file_data
+        assert ci.pending_arcs is None
+
+    def test_add_branch_arc_positive_destination_is_deferred(self) -> None:
+        tracer = self.make_tracer()
+        ci = self.make_code_info(tracer, object())
+        tracer._add_branch_arc(ci, (8, 10))
+        assert (8, 10) not in ci.file_data
+        assert ci.pending_arcs == [(8, 10)]
+        tracer._add_branch_arc(ci, (8, 12))
+        assert ci.pending_arcs == [(8, 10), (8, 12)]
+
+    def test_line_arcs_flushes_matching_destination(self) -> None:
+        tracer = self.make_tracer()
+        code = object()
+        ci = self.make_code_info(tracer, code)
+        ci.pending_arcs = [(8, 10), (9, 10), (8, 12)]
+        tracer.sysmon_line_arcs(code, 10)
+        assert (8, 10) in ci.file_data
+        assert (9, 10) in ci.file_data
+        assert (8, 12) not in ci.file_data
+        assert ci.pending_arcs == [(8, 12)]
+        # The line-identity arc is always recorded.
+        assert (10, 10) in ci.file_data
+
+    def test_line_arcs_without_pending_is_plain(self) -> None:
+        tracer = self.make_tracer()
+        code = object()
+        ci = self.make_code_info(tracer, code)
+        tracer.sysmon_line_arcs(code, 20)
+        assert ci.file_data == {(20, 20)}
+        assert ci.pending_arcs is None
+
+    def test_line_arcs_no_match_leaves_pending(self) -> None:
+        tracer = self.make_tracer()
+        code = object()
+        ci = self.make_code_info(tracer, code)
+        ci.pending_arcs = [(8, 10)]
+        tracer.sysmon_line_arcs(code, 20)
+        assert (8, 10) not in ci.file_data
+        assert ci.pending_arcs == [(8, 10)]
+
+    def test_py_return_flushes_all_pending(self) -> None:
+        tracer = self.make_tracer()
+        code = compile("x = 1", "<t>", "exec")
+        ci = self.make_code_info(tracer, code)
+        ci.byte_to_line = {100: 5}
+        ci.pending_arcs = [(8, 10), (9, 10)]
+        tracer.sysmon_py_return(code, 100, retval=None)
+        assert (8, 10) in ci.file_data
+        assert (9, 10) in ci.file_data
+        assert ci.pending_arcs is None
+        # The frame-exit arc is still recorded.
+        assert (5, -code.co_firstlineno) in ci.file_data
+
+    def test_py_return_without_pending_only_records_exit_arc(self) -> None:
+        tracer = self.make_tracer()
+        code = compile("x = 1", "<t>", "exec")
+        ci = self.make_code_info(tracer, code)
+        ci.byte_to_line = {100: 7}
+        tracer.sysmon_py_return(code, 100, retval=None)
+        assert (7, -code.co_firstlineno) in ci.file_data
+        assert ci.pending_arcs is None
+
+    def test_py_unwind_discards_pending(self) -> None:
+        tracer = self.make_tracer()
+        code = object()
+        ci = self.make_code_info(tracer, code)
+        ci.pending_arcs = [(8, 10)]
+        tracer.sysmon_py_unwind(code, 0, ValueError("boom"))
+        assert ci.pending_arcs is None
+        assert (8, 10) not in ci.file_data
+
+    def test_py_unwind_unknown_code_is_noop(self) -> None:
+        tracer = self.make_tracer()
+        tracer.sysmon_py_unwind(object(), 0, ValueError("boom"))
+
+    def test_start_registers_py_unwind_globally(self) -> None:
+        import sys
+
+        tracer = self.make_tracer()
+        with mock.patch("coverage.sysmon.sys_monitoring") as sm:
+            sm.COVERAGE_ID = 5
+            tracer.start()
+        # PY_UNWIND must be a global event: it can't be set per-code.
+        py_unwind = sys.monitoring.events.PY_UNWIND
+        _, global_events = sm.set_events.call_args.args
+        assert global_events & py_unwind
+        registered = [c.args[1] for c in sm.register_callback.call_args_list]
+        assert py_unwind in registered

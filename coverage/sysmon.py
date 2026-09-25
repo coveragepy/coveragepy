@@ -436,7 +436,7 @@ class SysMonitor(Tracer):
         code: CodeType,
         instruction_offset: TOffset,
         exc: object,
-    ) -> MonitorReturn:
+    ) -> None:
         """Handle sys.monitoring.events.PY_UNWIND events for branch coverage.
 
         A frame exiting with an exception means that any pending branch arcs
@@ -448,9 +448,8 @@ class SysMonitor(Tracer):
         code_info = self.code_infos.get(id(code))
         if code_info is not None:
             code_info.pending_arcs = None
-        # PY_UNWIND callbacks can't return DISABLE, or the callback will be
-        # removed.  Return None instead.
-        return None
+        # PY_UNWIND callbacks must not return DISABLE, or the callback is
+        # removed; falling off the end returns None, which is what we want.
 
     @panopticon("code", "line")
     def sysmon_line_lines(self, code: CodeType, line_number: TLineNo) -> MonitorReturn:
