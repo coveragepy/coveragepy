@@ -15,15 +15,6 @@ from __future__ import annotations
 # We import names as themselves to indicate that. Pylint sees it as pointless,
 # so disable its warning.
 # pylint: disable=useless-import-alias
-#
-# Keep ruff from changing the imports in this file.
-# ruff: noqa: I001
-
-from coverage.version import (
-    __version__ as __version__,
-    version_info as version_info,
-)
-
 from coverage.control import (
     Coverage as Coverage,
     process_startup as process_startup,
@@ -35,6 +26,10 @@ from coverage.plugin import (
     CoveragePlugin as CoveragePlugin,
     FileReporter as FileReporter,
     FileTracer as FileTracer,
+)
+from coverage.version import (
+    __version__ as __version__,
+    version_info as version_info,
 )
 
 # Backward compatibility.
