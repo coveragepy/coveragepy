@@ -66,7 +66,8 @@ def qualname_from_frame(frame: FrameType) -> str | None:
         if func is None:
             # Static and class methods have no `self` and aren't in the module
             # globals, but the code object knows its own qualified name.
-            qualname = getattr(co, "co_qualname", None)  # Python 3.11+
+            # PYVERSIONS: co_qualname is 3.11+
+            qualname = getattr(co, "co_qualname", None)
             if qualname and co.co_flags & CO_OPTIMIZED and "<locals>" not in qualname:
                 return f"{frame.f_globals.get('__name__')}.{qualname}"
             return None
