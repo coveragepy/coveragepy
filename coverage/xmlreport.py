@@ -11,6 +11,7 @@ import sys
 import time
 import xml.dom.minidom
 from dataclasses import dataclass
+from decimal import ROUND_DOWN, Decimal, localcontext
 from typing import IO, TYPE_CHECKING, Any
 
 from coverage import __version__, files
@@ -34,8 +35,13 @@ def rate(hit: int, num: int) -> str:
     """Return the fraction of `hit`/`num`, as a string."""
     if num == 0:
         return "1"
-    else:
-        return f"{hit / num:.4g}"
+    with localcontext() as ctx:
+        ctx.prec = 4
+        result = Decimal(hit) / Decimal(num)
+        if hit < num and result == 1:
+            ctx.rounding = ROUND_DOWN
+            result = Decimal(hit) / Decimal(num)
+    return format(result, "f")
 
 
 @dataclass
