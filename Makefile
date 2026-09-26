@@ -80,7 +80,7 @@ install: venv				#- Install the developer tools.
 
 ### Tests and quality checks
 
-.PHONY: lint mypy precommit quality test
+.PHONY: lint mypy precommit quality test bench bench-prepare bench-real
 
 lint:					#- Run linters and checkers.
 	tox -q -e lint
@@ -95,6 +95,15 @@ quality: lint mypy precommit		#- Run all the quality checks.
 
 test:					#- Run the test suite.
 	tox -q -m py
+
+bench:					#- Run the benchmarks (see tests/benchmarks/README.md).
+	python3 -m pytest -n0 --benchmarks -m "benchmark and not slow" tests/benchmarks --benchmark-min-rounds=10 --benchmark-max-time=3 $(ARGS)
+
+bench-prepare:                          #- Prepare the optional Jinja2 workload with Python 3.14.
+	python3 -m tests.benchmarks.real_project prepare
+
+bench-real:                             #- Run the prepared Jinja2 workload.
+	python3 -m pytest -n0 --benchmarks --bench-real -m "benchmark and real_project" tests/benchmarks $(ARGS)
 
 ### Metacov: coverage measurement of coverage.py itself
 # See metacov.ini for details.
@@ -147,6 +156,7 @@ _upgrade: export UV_CUSTOM_COMPILE_COMMAND=make upgrade
 _upgrade: $(DOCBIN) $(KITBIN)
 	$(PIP_COMPILE) -o requirements/pip.txt requirements/pip.in
 	$(PIP_COMPILE) -o requirements/pytest.txt requirements/pytest.in
+	$(PIP_COMPILE) --python-version=3.10 -o requirements/benchmarks-real.txt requirements/benchmarks-real.in
 	$(PIP_COMPILE) -p $(KITBIN)/python3 -o requirements/kit.txt requirements/kit.in
 	$(PIP_COMPILE) -o requirements/tox.txt requirements/tox.in
 	$(PIP_COMPILE) -o requirements/dev.txt requirements/dev.in
