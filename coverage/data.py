@@ -22,8 +22,10 @@ from typing import Literal
 from coverage.exceptions import CoverageException, NoDataError
 from coverage.files import PathAliases
 from coverage.misc import Hasher, file_be_gone, human_sorted, plural
-from coverage.sqldata import CoverageData as CoverageData  # pylint: disable=useless-import-alias
-from coverage.sqldata import filename_match
+from coverage.sqldata import (
+    CoverageData as CoverageData,  # pylint: disable=useless-import-alias
+    filename_match,
+)
 
 
 def line_counts(data: CoverageData, fullpath: bool = False) -> dict[str, int]:

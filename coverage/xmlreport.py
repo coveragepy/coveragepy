@@ -13,13 +13,13 @@ import xml.dom.minidom
 from dataclasses import dataclass
 from typing import IO, TYPE_CHECKING, Any
 
-from coverage import __version__, files
+from coverage import files
 from coverage.misc import human_sorted, human_sorted_items, isolate_module
 from coverage.plugin import FileReporter
 from coverage.report_core import get_analysis_to_report
 from coverage.results import Analysis
 from coverage.types import TMorfs
-from coverage.version import __url__
+from coverage.version import __url__, __version__
 
 if TYPE_CHECKING:
     from coverage import Coverage
