@@ -23,6 +23,10 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
+- Fix: with ``dynamic_context = test_function``, test methods written as
+  ``@staticmethod`` or ``@classmethod`` were not given a context of their own.
+  Now they are, on Python 3.11 and later.  Closes `issue 1923`_.
+
 - Fix: on Python 3.14 and later, a ``for`` loop completing immediately before a
   function return could mistakenly report an uncovered branch. This is now
   fixed, closing `issue 2168`_.
@@ -31,6 +35,7 @@ Unreleased
   a ``with`` statement could incorrectly be reported as covered when the
   ``with`` raised.  This is now fixed, closing `issue 2289`_.
 
+.. _issue 1923: https://github.com/coveragepy/coveragepy/issues/1923
 .. _issue 2168: https://github.com/coveragepy/coveragepy/issues/2168
 .. _issue 2289: https://github.com/coveragepy/coveragepy/issues/2289
 
