@@ -166,6 +166,19 @@ Dynamic contexts aren't supported with core=sysmon; context data may be incomple
   dynamic context. Those two features are incompatible. Context data will be
   lost. Change your configuration to use the ctrace core.
 
+.. _warning_greenlet_not_configured:
+
+greenlet is in use but coverage.py isn't configured for it (greenlet-not-configured)
+  Your program used `greenlet <https://greenlet.readthedocs.io>`_ (directly,
+  or indirectly through a library such as SQLAlchemy's async ORM, which uses
+  a greenlet switch internally), but coverage.py wasn't told to expect it.
+  None of the tracers follow a greenlet switch by default, so lines executed
+  after a switch can be silently missing from your report even though your
+  code definitely ran them.
+
+  Add ":ref:`[run] concurrency=greenlet <config_run_concurrency>`" to your
+  configuration if that's happening to you.
+
 
 Disabling warnings
 ------------------
