@@ -39,6 +39,13 @@ Unreleased
 .. _issue 2168: https://github.com/coveragepy/coveragepy/issues/2168
 .. _issue 2289: https://github.com/coveragepy/coveragepy/issues/2289
 
+- Fix: on Python 3.12 and later, when an exception unwound out of an ``async
+  for`` loop, the branch arcs for the loop could include a jump to a line after
+  the loop that never executed, causing that line to be reported as covered.
+  This is now fixed, closing `issue 2303`_.
+
+.. _issue 2303: https://github.com/coveragepy/coveragepy/issues/2303
+
 
 .. start-releases
 
