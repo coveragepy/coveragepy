@@ -124,8 +124,13 @@ def test_clipped_repr(text: str, numchars: int, result: str) -> None:
         ("hello\nbye\n", [lambda x: "=" + x], "=hello\n=bye\n"),
         (
             "hello\nbye\n",
-            [lambda x: "=" + x, lambda x: x + "\ndone\n"],
+            [lambda x: "=" + x, lambda x: x + "done\n"],
             "=hello\ndone\n=bye\ndone\n",
+        ),
+        (
+            "1\x0b\u3001\n2\x0chello\u2028bye\n",
+            [lambda x: "=" + x],
+            "=1\x0b=\u3001\n=2\x0c=hello\u2028=bye\n",
         ),
     ],
 )
