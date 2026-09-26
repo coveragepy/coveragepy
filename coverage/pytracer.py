@@ -40,6 +40,9 @@ set_TArc = set[TArc]
 # PYVERSIONS: RESUME is new in Python3.11
 RESUME = dis.opmap.get("RESUME")
 RETURN_VALUE = dis.opmap["RETURN_VALUE"]
+# PyPy attributes the exception-handler PUSH_EXC_INFO to the try/else line.
+# That instruction is not the else body. Skip it so the else line stays missing.
+PUSH_EXC_INFO = dis.opmap.get("PUSH_EXC_INFO")
 if RESUME is None:
     YIELD_VALUE = dis.opmap["YIELD_VALUE"]
     YIELD_FROM = dis.opmap["YIELD_FROM"]
@@ -257,6 +260,15 @@ class PyTracer(Tracer):
         elif event == "line":
             # Record an executed line.
             if self.cur_file_data is not None:
+                if PUSH_EXC_INFO is not None:
+                    lasti = frame.f_lasti
+                    code = frame.f_code.co_code
+                    if (
+                        isinstance(lasti, int)
+                        and 0 <= lasti < len(code)
+                        and code[lasti] == PUSH_EXC_INFO
+                    ):
+                        return self._cached_bound_method_trace
                 flineno: TLineNo = frame.f_lineno
 
                 if self.trace_arcs:
