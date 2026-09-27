@@ -23,7 +23,13 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
-Nothing yet.
+- Fix: lines executed after awaiting a cancelled asyncio task with caught
+  CancelledError were not tracked as covered on Python 3.11. This was due to a
+  Python 3.11 bug where CALL/LINE events are missing after exception handling
+  in async code. Coverage.py now works around this by detecting and handling
+  the missing events. Closes `issue 2124`_.
+
+.. _issue 2124: https://github.com/coveragepy/coveragepy/issues/2124
 
 
 .. start-releases
