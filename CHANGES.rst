@@ -25,6 +25,15 @@ Unreleased
 
 - Dropped support for Python 3.10.
 
+- Added :meth:`Coverage.clear_data <coverage.Coverage.clear_data>`, a
+  lighter-weight alternative to :meth:`~coverage.Coverage.erase` for clearing
+  collected data between measurement cycles. Unlike ``erase()``, it doesn't
+  force the next ``start()`` to redo the collector/tracer setup, which makes
+  repeated start/stop/clear loops on the same ``Coverage`` object much
+  cheaper. Closes `issue 2139`_.
+
+.. _issue 2139: https://github.com/coveragepy/coveragepy/issues/2139
+
 - Fix: a comment or string that merely mentioned ``if True:`` or
   ``while True:`` could mark its line as a branch that is known to be partial,
   so a branch that never ran was reported as taken.  These built-in patterns
