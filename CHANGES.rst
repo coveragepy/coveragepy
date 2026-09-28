@@ -23,7 +23,12 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
-Nothing yet.
+- Fix: with ``COVERAGE_CORE=sysmon``, starting and stopping a nested
+  ``Coverage`` object could stop an outer collection from recording lines
+  in code objects it had already seen.  Now it doesn't, closing
+  `issue 2302`_.
+
+.. _issue 2302: https://github.com/coveragepy/coveragepy/issues/2302
 
 
 .. start-releases

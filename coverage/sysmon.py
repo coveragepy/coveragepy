@@ -221,6 +221,7 @@ class SysMonitor(Tracer):
         self.multiline_maps: dict[str, dict[TLineNo, TLineNo]] = {}
 
         self.sysmon_on = False
+        self.local_events: int = 0
         self.lock = threading.Lock()
 
         self.stats: dict[str, int] | None = None
@@ -264,6 +265,17 @@ class SysMonitor(Tracer):
                     register(events.BRANCH_LEFT, self.sysmon_branch_either)
             else:
                 register(events.LINE, self.sysmon_line_lines)
+            if self.trace_arcs:
+                assert env.PYBEHAVIOR.branch_right_left
+                self.local_events = (
+                    events.LINE | events.PY_RETURN | events.BRANCH_RIGHT | events.BRANCH_LEFT
+                )
+            else:
+                self.local_events = events.LINE
+            for code in self.code_objects:
+                code_info = self.code_infos[id(code)]
+                if code_info.tracing:
+                    sys_monitoring.set_local_events(self.myid, code, self.local_events)
             sys_monitoring.restart_events()
             self.sysmon_on = True
 
@@ -374,17 +386,10 @@ class SysMonitor(Tracer):
             if tracing_code:
                 if self.stats is not None:
                     self.stats["start_tracing"] += 1
-                events = sys.monitoring.events
                 with self.lock:
                     if self.sysmon_on:
                         assert sys_monitoring is not None
-                        local_events = events.LINE
-                        if self.trace_arcs:
-                            assert env.PYBEHAVIOR.branch_right_left
-                            local_events |= (
-                                events.PY_RETURN | events.BRANCH_RIGHT | events.BRANCH_LEFT
-                            )
-                        sys_monitoring.set_local_events(self.myid, code, local_events)
+                        sys_monitoring.set_local_events(self.myid, code, self.local_events)
 
                         if LOG:  # pragma: debugging
                             if code.co_filename not in {"<string>"}:
