@@ -424,6 +424,36 @@ class ApiTest(CoverageTest):
         self.start_import_stop(cov, "code2")
         self.check_code1_code2(cov)
 
+    @pytest.mark.parametrize("branch", [False, True])
+    def test_nested_start_stop_keeps_outer_data(self, branch: bool) -> None:
+        self.make_file(
+            "classify.py",
+            """\
+            def classify(n):
+                if n < 0:
+                    return "negative"
+                elif n == 0:
+                    return "zero"
+                else:
+                    return "positive"
+            """,
+        )
+        cov = coverage.Coverage(branch=branch)
+        cov.start()
+        try:
+            mod = import_local_file("classify")
+            mod.classify(-1)
+            inner = coverage.Coverage(data_file=None)
+            inner.start()
+            inner.stop()
+            mod.classify(0)
+            mod.classify(1)
+        finally:
+            cov.stop()
+        data = cov.get_data()
+        (classify_file,) = [f for f in data.measured_files() if f.endswith("classify.py")]
+        assert sorted_lines(data, classify_file) == [1, 2, 3, 4, 5, 7]
+
     def test_start_save_stop(self) -> None:
         self.make_code1_code2()
         cov = coverage.Coverage()
