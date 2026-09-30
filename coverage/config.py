@@ -160,10 +160,11 @@ DEFAULT_PARTIAL = [
 
 # The default partial branch regexes, based on Python semantics.
 # These are any Python branching constructs that can't actually execute all
-# their branches.
+# their branches.  These match only at the start of the statement, so that a
+# comment or string mentioning a constant test doesn't excuse a real branch.
 DEFAULT_PARTIAL_ALWAYS = [
-    "while (True|1|False|0):",
-    "if (True|1|False|0):",
+    r"^\s*while (True|1|False|0):",
+    r"^\s*if (True|1|False|0):",
 ]
 
 
