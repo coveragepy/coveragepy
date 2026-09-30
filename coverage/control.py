@@ -457,11 +457,15 @@ class Coverage(TConfigurable):
     def _check_include_omit_etc(self, filename: str, frame: FrameType) -> bool:
         """Check a file name against the include/omit/etc, rules, verbosely.
 
+        The tracers call this for dynamic source file names from plugins:
+        `filename` is the file a plugin reports is really being executed,
+        and `frame` is the Python code executing it.
+
         Returns a boolean: True if the file should be traced, False if not.
 
         """
         assert self._inorout is not None
-        reason = self._inorout.check_include_omit_etc(filename, frame)
+        reason = self._inorout.check_include_omit_etc(filename, frame, dynamic=True)
         if self._debug.should("trace"):
             if not reason:
                 msg = f"Including {filename!r}"

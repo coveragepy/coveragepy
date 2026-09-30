@@ -306,6 +306,11 @@ class InOrOut:
         _add_third_party_paths(self.third_paths)
         self.third_match = TreeMatcher(self.third_paths, "third", "Third-party lib", self._debug)
 
+        # The directories of the source packages.  A file reported by a
+        # plugin's dynamic source file name has no module name to match
+        # against `source_pkgs`, so it is matched by being in one of these.
+        self.source_pkgs_paths: set[str] = set()
+
         # Check if the source we want to measure has been installed as a
         # third-party package.
         # Is the source inside a third-party area?
@@ -319,18 +324,24 @@ class InOrOut:
                     self._debug(f"Couldn't import source package {pkg!r}: {exc}")
                     continue
                 if modfile:
+                    pkg_path = canonical_path(source_for_file(modfile))
+                    self.source_pkgs_paths.add(pkg_path)
                     if self.third_match.match(modfile):
                         self._debug(
                             f"Source in third-party: source_pkg {pkg!r} at {modfile!r}",
                         )
-                        self.source_in_third_paths.add(canonical_path(source_for_file(modfile)))
+                        self.source_in_third_paths.add(pkg_path)
                 else:
                     for pathdir in path:
+                        self.source_pkgs_paths.add(pathdir)
                         if self.third_match.match(pathdir):
                             self._debug(
                                 f"Source in third-party: {pkg!r} path directory at {pathdir!r}",
                             )
                             self.source_in_third_paths.add(pathdir)
+        self.source_pkgs_paths_match = TreeMatcher(
+            self.source_pkgs_paths, "source_pkgs_paths", "Source package paths", self._debug
+        )
 
         for src in self.source_dirs:
             if self.third_match.match(src):
@@ -442,14 +453,29 @@ class InOrOut:
 
         return disp
 
-    def check_include_omit_etc(self, filename: str, frame: FrameType | None) -> str | None:
+    def check_include_omit_etc(
+        self,
+        filename: str,
+        frame: FrameType | None,
+        dynamic: bool = False,
+    ) -> str | None:
         """Check a file name against the include, omit, etc, rules.
+
+        `dynamic` is true if `filename` is a dynamic source file name from a
+        plugin: a file the plugin reports is really being executed by the
+        Python code in `frame`.
 
         Returns a string or None.  String means, don't trace, and is the reason
         why.  None means no reason found to not trace.
 
         """
-        modulename = name_for_module(filename, frame)
+        if dynamic:
+            # The frame's module name describes the code executing the file,
+            # not the file itself, so it says nothing about whether the file
+            # is in a source package.
+            modulename = None
+        else:
+            modulename = name_for_module(filename, frame)
 
         # If the user specified source or include, then that's authoritative
         # about the outer bound of what to measure and we don't have to apply
@@ -463,6 +489,11 @@ class InOrOut:
                     ok = True
                     if modulename in self.source_pkgs_unmatched:
                         self.source_pkgs_unmatched.remove(modulename)
+                elif dynamic:
+                    # With no module name to go on, a file is in a source
+                    # package if it is inside the package's directory.
+                    if self.source_pkgs_paths_match.match(filename):
+                        ok = True
                 else:
                     extra = f"module {modulename!r} "
             if not ok and self.source_match:
@@ -632,6 +663,7 @@ class InOrOut:
         matcher_names = [
             "source_match",
             "source_pkgs_match",
+            "source_pkgs_paths_match",
             "include_match",
             "omit_match",
             "coverage_match",
