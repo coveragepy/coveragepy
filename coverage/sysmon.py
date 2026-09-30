@@ -15,7 +15,7 @@ import threading
 import tokenize
 import traceback
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from types import CodeType
 from typing import Any, NewType, cast
 
@@ -28,6 +28,7 @@ from coverage.parser import multiline_map_from_text
 from coverage.python import get_python_source
 from coverage.types import (
     AnyCallable,
+    TArc,
     TFileDisposition,
     TLineNo,
     TOffset,
@@ -180,6 +181,11 @@ class CodeInfo:
     # Lazily-created resolver of branch events to arcs, created on the
     # first branch event in the code object.
     branch_resolver: BranchArcResolver | None
+    # Arcs from branch events whose destination line hasn't executed yet,
+    # waiting to be promoted when (if) the destination line runs.  Used to
+    # discard arcs from branch events that fire on exception paths, where
+    # control unwinds past the destination line without ever running it.
+    pending_arcs: dict[TLineNo, set[TLineNo]] = field(default_factory=dict)
 
 
 class SysMonitor(Tracer):
@@ -439,6 +445,52 @@ class SysMonitor(Tracer):
         arc = (line_number, line_number)
         code_info.file_data.add(arc)  # type: ignore
         # log(f"adding {arc=}")
+        if code_info.pending_arcs:
+            self._promote_pending_arcs(code_info, code, line_number)
+
+    def _promote_pending_arcs(
+        self, code_info: CodeInfo, code: CodeType, line_number: TLineNo
+    ) -> None:
+        """Promote pending branch arcs that end at `line_number`.
+
+        Branch arc destinations are de-multilined to the first line of their
+        statement, but LINE events fire with the actual line, so a
+        continuation line executing must also promote arcs pending for the
+        statement's first line.
+        """
+        assert code_info.file_data is not None
+        from_lines = code_info.pending_arcs.pop(line_number, None)
+        dest_line = line_number
+        if from_lines is None:
+            multiline_map = self.get_multiline_map(code.co_filename)
+            mapped = multiline_map.get(line_number, line_number)
+            if mapped != line_number:
+                from_lines = code_info.pending_arcs.pop(mapped, None)
+                dest_line = mapped
+        if from_lines is not None:
+            for from_line in from_lines:
+                arc = (from_line, dest_line)
+                code_info.file_data.add(arc)  # type: ignore
+                # log(f"promoting {arc=}")
+
+    def _record_branch_arc(self, code_info: CodeInfo, arc: TArc) -> None:
+        """Record an arc produced by a branch event.
+
+        Some branch events fire on exception paths: on Python 3.14, an
+        ``async for`` loop whose iterator raises still emits the loop-exit
+        branch event, even though control unwinds past the destination line
+        without running it.  The destination line of a genuine branch always
+        executes, so if the destination line hasn't run yet, hold the arc
+        until it does; if it never runs, the arc is discarded.
+        """
+        assert code_info.file_data is not None
+        dest = arc[1]
+        if dest < 0 or (dest, dest) in code_info.file_data:
+            # Exit arcs have no line that could ever vouch for them, and
+            # back-edges point at a line that has already run.
+            code_info.file_data.add(arc)  # type: ignore
+        else:
+            code_info.pending_arcs.setdefault(dest, set()).add(arc[0])
         return DISABLE
 
     @panopticon("code", "@", "@")
@@ -463,7 +515,7 @@ class SysMonitor(Tracer):
             )
         arc = resolver.resolve(instruction_offset, destination_offset)
         if arc is not None:
-            code_info.file_data.add(arc)  # type: ignore
+            self._record_branch_arc(code_info, arc)
             # log(f"adding {arc=}")
         else:
             # This could be an exception jumping from line to line.
@@ -473,7 +525,7 @@ class SysMonitor(Tracer):
                 l2 = code_info.byte_to_line.get(destination_offset)
                 if l2 is not None and l1 != l2:
                     arc = (l1, l2)
-                    code_info.file_data.add(arc)  # type: ignore
+                    self._record_branch_arc(code_info, arc)
                     # log(f"adding unforeseen {arc=}")
 
         return DISABLE
