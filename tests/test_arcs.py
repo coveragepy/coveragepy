@@ -2408,8 +2408,8 @@ class ExcludeTest(CoverageTest):
             """\
             a = 1
             if len([]):  # TODO: rewrite as "if True:" once this is fixed
-                a = 2
-            b = 3
+                a = 3
+            b = 4
             """,
             lines=[1, 2, 3, 4],
             missing="3",
@@ -2420,15 +2420,27 @@ class ExcludeTest(CoverageTest):
             """\
             a = 1
             while len([]):  # TODO: rewrite as "while True:" once this is fixed
-                a = 2
-            else:
                 a = 3
-            b = 4
+            else:
+                a = 5
+            b = 6
             """,
             lines=[1, 2, 3, 5, 6],
             missing="3",
             branchz="23 25",
             branchz_missing="23",
+        )
+        self.check_coverage(
+            """\
+            a = 1
+            if len([2]):    # good thing it's not `if TYPE_CHECKING:`!
+                a = 3
+            else:
+                a = 5
+            b = 6
+            """,
+            lines=[1, 2, 3, 5, 6],
+            missing="5",
         )
 
     def test_custom_pragmas(self) -> None:
