@@ -186,7 +186,7 @@ sphinx-linklint = "P0D"
 
 [tool.ruff]
 # PYVERSION
-target-version = "py310"  # Can't use [project]
+target-version = "py311"  # Can't use [project]
 line-length = 100
 
 [tool.ruff.lint]

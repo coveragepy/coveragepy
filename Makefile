@@ -22,7 +22,7 @@ help:					#- Show this help.
 HAS_UV := $(shell command -v uv 2>/dev/null)
 ifdef HAS_UV
 	# PYVERSIONS
-	VENV := uv venv --python=3.10 --prompt=coverage
+	VENV := uv venv --python=3.11 --prompt=coverage
 	INSTALL := uv pip install
 	INSTALL_R := uv pip sync
 	UNINSTALL := uv pip uninstall

@@ -55,7 +55,6 @@ CLASSIFIERS = textwrap.dedent("""\
     Operating System :: OS Independent
     Programming Language :: Python
     Programming Language :: Python :: 3
-    Programming Language :: Python :: 3.10
     Programming Language :: Python :: 3.11
     Programming Language :: Python :: 3.12
     Programming Language :: Python :: 3.13
@@ -214,7 +213,7 @@ setup_args = dict(
         "Mastodon": "https://hachyderm.io/@coveragepy",
         "Mastodon (nedbat)": "https://hachyderm.io/@nedbat",
     },
-    python_requires=">=3.10",  # minimum of PYVERSIONS
+    python_requires=">=3.11",  # minimum of PYVERSIONS
 )
 
 # There are a few reasons we might not be able to compile the C extension.
