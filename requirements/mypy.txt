@@ -524,6 +524,10 @@ pluggy==1.6.0 \
     # via
     #   diff-cover
     #   pytest
+py-cpuinfo2==10.1.1 \
+    --hash=sha256:7861133863663f16e06eca63b12904ef100b5760415e92372dac0162799a4771 \
+    --hash=sha256:adc53396bfb206e6498d078ec2ab407f85799ecd819584ac36a8f80a2d4d762d
+    # via pytest-benchmark
 pygments==2.21.0 \
     --hash=sha256:2363c69b61c4a97c838da3b130dcd6468f4848992b21a82f2a63ec34377137d9 \
     --hash=sha256:610ca751c9bc2492b38eb9a38a7fbc93edbbb2d7182edaf34e66ae493dee5c8c
@@ -536,7 +540,12 @@ pytest==9.1.1 \
     --hash=sha256:37a86b45efb9a47a61a36449063e8e18d0cab3161329fc099eb21783169c4f0c
     # via
     #   -r requirements/pytest.in
+    #   pytest-benchmark
     #   pytest-xdist
+pytest-benchmark==5.3.0 \
+    --hash=sha256:358444d4e89be901ee2b6404fb043ac3d7684002ad7f3563cc153fca6339c965 \
+    --hash=sha256:920ab1dfcffa718d49aa15ba144c7e357bda59216a0dc308016cc1c7236f719d
+    # via -r requirements/pytest.in
 pytest-xdist==3.8.0 \
     --hash=sha256:202ca578cfeb7370784a8c33d6d05bc6e13b4f25b5053c30a152269fd10f0b88 \
     --hash=sha256:7e578125ec9bc6050861aa93f2d59f1d8d085595d6551c2c90b6f4fad8d3a9f1
