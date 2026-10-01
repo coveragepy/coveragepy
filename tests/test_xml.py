@@ -193,6 +193,26 @@ class XmlReportTest(XmlTestHelpers, CoverageTest):
         assert len(elts) == 1
         assert elts[0].get("filename") == "sub/doit.py"
 
+    @pytest.mark.skipif(
+        env.WINDOWS, reason="Control characters are disallowed in Windows filenames."
+    )
+    def test_control_character_in_filename_is_neutralized(self) -> None:
+        # A POSIX file name may contain control characters that aren't valid in
+        # XML 1.0. Written verbatim they make the report non-well-formed, so no
+        # XML or Cobertura consumer can parse it. Control characters in a field
+        # are replaced.
+        evil = "a\x0c\x07b.py"
+        self.make_file(evil, "a = 1\n")
+        self.make_data_file(lines={abs_file(evil): [1]})
+        cov = coverage.Coverage()
+        cov.load()
+        cov.xml_report()
+        # The report is still well-formed XML (ElementTree.parse would raise
+        # otherwise), and the control characters are gone.
+        dom = ElementTree.parse("coverage.xml")
+        elts = dom.findall(".//class[@filename='a??b.py']")
+        assert len(elts) == 1
+
     def test_reporting_on_nothing(self) -> None:
         # Used to raise a zero division error:
         # https://github.com/coveragepy/coveragepy/issues/250

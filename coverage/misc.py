@@ -378,6 +378,21 @@ def plural(n: int, thing: str = "", things: str = "") -> str:
     return f"{n} {noun}"
 
 
+def neutralize_control(text: str) -> str:
+    """Make `text` safe to put in a report.
+
+    File names (and plugin names read from a data file) can contain control
+    characters: they are legal in a POSIX path but unsafe in our output.  In a
+    terminal they act as escape sequences (SGR colors, OSC title/clipboard
+    sequences, cursor moves to forge output); in XML 1.0 they make the document
+    non-well-formed.  Replace anything non-printable and leave ordinary text, so
+    valid names are unchanged.
+    """
+    if text.isprintable():
+        return text
+    return "".join(ch if ch.isprintable() else "?" for ch in text)
+
+
 def stdout_link(text: str, url: str) -> str:
     """Format text+url as a clickable link for stdout.
 
