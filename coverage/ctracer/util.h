@@ -15,10 +15,18 @@
 #endif
 
 /* Compile-time debugging helpers */
-#undef WHAT_LOG         /* Define to log the WHAT params in the trace function. */
-#undef TRACE_LOG        /* Define to log our bookkeeping. */
-#undef COLLECT_STATS    /* Collect counters: stats are printed when tracer is stopped. */
-#undef DO_NOTHING       /* Define this to make the tracer do nothing. */
+#ifndef WHAT_LOG
+#define WHAT_LOG 0          /* Set to 1 to log WHAT params in the trace function. */
+#endif
+#ifndef TRACE_LOG
+#define TRACE_LOG 0         /* Set to 1 to log our bookkeeping. */
+#endif
+#ifndef COLLECT_STATS
+#define COLLECT_STATS 0     /* Set to 1 to collect and print tracer counters. */
+#endif
+#ifndef DO_NOTHING
+#define DO_NOTHING 0        /* Set to 1 to make the tracer do nothing. */
+#endif
 
 #if PY_VERSION_HEX >= 0x030B00A0
 // 3.11 moved f_lasti into an internal structure. This is totally the wrong way
