@@ -23,7 +23,17 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
-Nothing yet.
+- Fix: a comment or string that merely mentioned ``if True:`` or
+  ``while True:`` could mark its line as a branch that is known to be partial,
+  so a branch that never ran was reported as taken.  These built-in patterns
+  now only match at the start of the statement.  Closes `issue 2314`_.
+
+.. _issue 2314: https://github.com/coveragepy/coveragepy/issues/2314
+
+- Fix: a file pattern (from ``include``, ``omit``, or a ``[paths]`` alias)
+  containing a newline sent the glob-to-regex translation into an infinite
+  loop, hanging the process.  Newlines in patterns are now handled like any
+  other character.
 
 
 .. start-releases

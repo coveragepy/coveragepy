@@ -150,7 +150,7 @@ TConfigParser = HandyConfigParser | TomlConfigParser
 DEFAULT_EXCLUDE = [
     r"#\s*(pragma|PRAGMA)[:\s]?\s*(no|NO)\s*(cover|COVER)",
     r"^\s*(((async )?def .*?)?[\])]+(\s*->.*?)?:\s*)?\.\.\.\s*(#|$)",
-    r"if (typing\.)?TYPE_CHECKING:",
+    r"^\s*if (typing\.)?TYPE_CHECKING:",
 ]
 
 # The default partial branch regexes, to be modified by the user.
@@ -160,10 +160,11 @@ DEFAULT_PARTIAL = [
 
 # The default partial branch regexes, based on Python semantics.
 # These are any Python branching constructs that can't actually execute all
-# their branches.
+# their branches.  These match only at the start of the statement, so that a
+# comment or string mentioning a constant test doesn't excuse a real branch.
 DEFAULT_PARTIAL_ALWAYS = [
-    "while (True|1|False|0):",
-    "if (True|1|False|0):",
+    r"^\s*while (True|1|False|0):",
+    r"^\s*if (True|1|False|0):",
 ]
 
 
