@@ -23,6 +23,13 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
+- Fix: the ``--fail-under`` failure message could claim something false, such
+  as "total of 1 is less than fail-under=0", when a near-zero total was
+  display-clamped and the threshold was rounded by ``precision``.  The message
+  now reports the same values used by the comparison.  Closes `issue 2295`_.
+
+.. _issue 2295: https://github.com/coveragepy/coveragepy/issues/2295
+
 - Fix: a comment or string that merely mentioned ``if True:`` or
   ``while True:`` could mark its line as a branch that is known to be partial,
   so a branch that never ran was reported as taken.  These built-in patterns

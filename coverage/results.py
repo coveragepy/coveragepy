@@ -501,3 +501,27 @@ def should_fail_under(total: float, fail_under: float, precision: int) -> bool:
         return True
 
     return round(total, precision) < fail_under
+
+
+def format_fail_under_msg(total: float, fail_under: float, precision: int) -> str:
+    """Format the fail-under failure message with values that match the check.
+
+    `should_fail_under` compares ``round(total, precision)`` to the raw
+    `fail_under` (with a special case for ``fail_under == 100``).  The message
+    must use those same numbers so it cannot claim e.g. "1 is less than 0".
+
+    """
+    if fail_under == 100.0 and total != 100.0:
+        # The 100% special case does not use round(); keep the display clamp
+        # so near-100 totals still read as "99" rather than a rounded "100".
+        shown_total = display_covered(total, precision)
+    else:
+        shown_total = f"{round(total, precision):.{precision}f}"
+
+    shown_fail_under = f"{fail_under:.{precision}f}"
+    if float(shown_fail_under) != fail_under:
+        # Precision would truncate the threshold (e.g. 0.3 at precision 0 →
+        # "0"), which contradicts the comparison.  Keep enough digits.
+        shown_fail_under = format(fail_under, "g")
+
+    return f"total of {shown_total} is less than fail-under={shown_fail_under}"
