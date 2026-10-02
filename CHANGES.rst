@@ -28,6 +28,11 @@ Unreleased
   so a branch that never ran was reported as taken.  These built-in patterns
   now only match at the start of the statement.  Closes `issue 2314`_.
 
+- Fix: with only empty files to report, the HTML, JSON, LCOV, and XML reports
+  showed 100% but ``--fail-under`` treated the total as 0% and failed.  The
+  text report was fixed for this in `issue 1470`_, now the others are too.
+
+.. _issue 1470: https://github.com/coveragepy/coveragepy/issues/1470
 .. _issue 2314: https://github.com/coveragepy/coveragepy/issues/2314
 
 - Fix: a file pattern (from ``include``, ``omit``, or a ``[paths]`` alias)
