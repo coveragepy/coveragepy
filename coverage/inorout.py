@@ -114,7 +114,9 @@ def file_and_path_for_module(modulename: str) -> tuple[str | None, list[str]]:
     path = []
     try:
         spec = importlib.util.find_spec(modulename)
-    except Exception:
+    except BaseException:
+        # C extensions can raise non-Exception crashes (e.g. Abort) that
+        # should not propagate. Also catch SystemExit etc. see #2189.
         pass
     else:
         if spec is not None:
