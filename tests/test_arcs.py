@@ -2238,6 +2238,33 @@ class AsyncTest(CoverageTest):
         )
         assert self.stdout() == "a\nb\nc\n.\n"
 
+    def test_async_for_iterator_raises(self) -> None:
+        # The loop-exit branch event fires even when an `async for` loop
+        # ends because the iterator raised, but the statement after the
+        # loop never runs, so the loop-exit arc must not be recorded.
+        # https://github.com/nedbat/coveragepy/issues/2303
+        self.check_coverage(
+            """\
+            import asyncio
+
+            async def numbers():                        # 3
+                yield 1
+                raise ValueError("done")               # 5
+
+            async def consume():                        # 7
+                async for n in numbers():               # 8
+                    pass
+                print("after the loop")                 # A
+
+            try:                                        # C
+                asyncio.run(consume())
+            except ValueError:                          # E
+                pass
+            """,
+            branchz="89 8A",
+            branchz_missing="8A",
+        )
+
     def test_async_with(self) -> None:
         self.check_coverage(
             """\
