@@ -567,7 +567,15 @@ CTracer_handle_call(CTracer *self, PyFrameObject *frame)
      * determines what kind of resume it is.
      */
     pCode = MyCode_GetCode(MyFrame_BorrowCode(frame));
-    real_call = (PyBytes_AS_STRING(pCode)[MyFrame_GetLasti(frame) + 1] == 0);
+    /* In unusual circumstances (Cython code), co_code can be the empty string,
+     * so range-check f_lasti before reading the RESUME argument byte. */
+    int call_lasti = MyFrame_GetLasti(frame);
+    if (call_lasti + 1 < PyBytes_GET_SIZE(pCode)) {
+        real_call = (PyBytes_AS_STRING(pCode)[call_lasti + 1] == 0);
+    }
+    else {
+        real_call = TRUE;
+    }
 #else
     // f_lasti is -1 for a true call, and a real byte offset for a generator re-entry.
     real_call = (MyFrame_GetLasti(frame) < 0);
@@ -751,7 +759,14 @@ CTracer_handle_return(CTracer *self, PyFrameObject *frame)
 #if ENV_LASTI_IS_YIELD
                 lasti += 2;
 #endif
-                real_return = (code_bytes[lasti] != RESUME);
+                /* In unusual circumstances (Cython code), co_code can be the
+                 * empty string, so range-check lasti before reading the byte. */
+                if (lasti < code_size) {
+                    real_return = (code_bytes[lasti] != RESUME);
+                }
+                else {
+                    real_return = TRUE;
+                }
             }
 #else
             /* Need to distinguish between RETURN_VALUE and YIELD_VALUE. Read
