@@ -979,7 +979,6 @@ class EnvironmentTest(CoverageTest):
         actual = self.run_command("coverage run link/run_me.py")
         self.assert_tryexecfile_output(expected, actual)
 
-    @pytest.mark.skipif(env.PYVERSION < (3, 11), reason="PYTHONSAFEPATH is new in 3.11")
     @pytest.mark.skipif(
         env.WINDOWS,
         reason="Windows gets this wrong: https://github.com/python/cpython/issues/131484",
@@ -991,7 +990,6 @@ class EnvironmentTest(CoverageTest):
         actual = self.run_command("coverage run run_me.py")
         self.assert_tryexecfile_output(expected, actual)
 
-    @pytest.mark.skipif(env.PYVERSION < (3, 11), reason="PYTHONSAFEPATH is new in 3.11")
     def test_pythonsafepath_dashm_runme(self) -> None:
         self.make_file("run_me.py", TRY_EXECFILE_CODE)
         self.set_environ("PYTHONSAFEPATH", "1")
@@ -1005,7 +1003,6 @@ class EnvironmentTest(CoverageTest):
         actual = self.run_command("python -Im coverage run run_me.py")
         self.assert_tryexecfile_output(expected, actual)
 
-    @pytest.mark.skipif(env.PYVERSION < (3, 11), reason="PYTHONSAFEPATH is new in 3.11")
     def test_pythonsafepath_dashm(self) -> None:
         self.make_file("with_main/__main__.py", TRY_EXECFILE_CODE)
         self.set_environ("PYTHONSAFEPATH", "1")

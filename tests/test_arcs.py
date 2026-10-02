@@ -12,7 +12,6 @@ import pytest
 
 import coverage
 import coverage.python
-from coverage import env
 from coverage.data import sorted_lines
 from coverage.files import abs_file
 from tests.coveragetest import CoverageTest
@@ -1421,7 +1420,6 @@ class ExceptionArcTest(CoverageTest):
             branchz_missing="",
         )
 
-    @pytest.mark.skipif(env.PYVERSION < (3, 11), reason="ExceptionGroup is new in Python 3.11")
     def test_exception_group(self) -> None:
         self.check_coverage(
             """\
