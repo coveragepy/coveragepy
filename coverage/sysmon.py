@@ -447,6 +447,7 @@ class SysMonitor(Tracer):
         # log(f"adding {arc=}")
         if code_info.pending_arcs:
             self._promote_pending_arcs(code_info, code, line_number)
+        return DISABLE
 
     def _promote_pending_arcs(
         self, code_info: CodeInfo, code: CodeType, line_number: TLineNo
@@ -491,7 +492,6 @@ class SysMonitor(Tracer):
             code_info.file_data.add(arc)  # type: ignore
         else:
             code_info.pending_arcs.setdefault(dest, set()).add(arc[0])
-        return DISABLE
 
     @panopticon("code", "@", "@")
     def sysmon_branch_either(
