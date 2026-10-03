@@ -91,11 +91,7 @@ class PyRunner:
         This needs to happen before any importing, and without importing anything.
         """
         path0: str | None
-        if getattr(sys.flags, "safe_path", False) or getattr(sys.flags, "isolated", False):
-            # PYVERSION
-            # Python 3.10 isolated mode predates sys.flags.safe_path.
-            # Remove the isolated fallback when coverage drops 3.10 support.
-            # See https://docs.python.org/3/using/cmdline.html#cmdoption-P
+        if sys.flags.safe_path or sys.flags.isolated:
             path0 = None
         elif self.as_module:
             path0 = os.getcwd()
