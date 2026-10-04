@@ -70,11 +70,15 @@ class SysModuleSaver:
 @contextlib.contextmanager
 def sys_modules_saved() -> Iterator[None]:
     """A context manager to remove any modules imported during a block."""
-    saver = SysModuleSaver()
-    try:
-        yield
-    finally:
-        saver.restore()
+    # Importing installs a module in sys.modules before executing it.  Hold the
+    # import lock while saving and restoring so that we can't delete a module
+    # another thread is still importing.
+    with importlib._bootstrap._ImportLockContext():  # type: ignore[attr-defined]
+        saver = SysModuleSaver()
+        try:
+            yield
+        finally:
+            saver.restore()
 
 
 def import_third_party(modname: str) -> tuple[ModuleType, bool]:
