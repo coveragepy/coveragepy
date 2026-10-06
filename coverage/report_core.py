@@ -66,7 +66,14 @@ def render_report(
         if file_to_close is not None:
             file_to_close.close()
             if delete_file:
-                file_be_gone(output_path)  # pragma: part covered (doesn't return)
+                # Issue 1804: a failed report to /dev/stdout (or another
+                # non-deletable path) used to raise PermissionError here and
+                # hide the original failure.  Other removal errors still
+                # propagate through file_be_gone.
+                try:
+                    file_be_gone(output_path)
+                except PermissionError:
+                    pass
 
 
 def get_analysis_to_report(
