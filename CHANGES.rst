@@ -37,6 +37,8 @@ Unreleased
   loop, hanging the process.  Newlines in patterns are now handled like any
   other character.
 
+- Binary wheels are now provided for iOS and Android. This allows the use of the
+  optimized C tracer on mobile platforms.
 
 .. start-releases
 
