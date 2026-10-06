@@ -37,6 +37,12 @@ Unreleased
   loop, hanging the process.  Newlines in patterns are now handled like any
   other character.
 
+- Fix: when a one-file report failed, deleting the output path could raise
+  ``PermissionError`` (as with ``/dev/stdout``) and hide the original error.
+  That cleanup now ignores ``PermissionError``.  Closes `issue 1804`_.
+
+.. _issue 1804: https://github.com/coveragepy/coveragepy/issues/1804
+
 
 .. start-releases
 

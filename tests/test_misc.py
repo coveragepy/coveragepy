@@ -5,13 +5,14 @@
 
 from __future__ import annotations
 
+import errno
 import sys
 from typing import Any
 from unittest import mock
 
 import pytest
 
-from coverage.exceptions import CoverageException
+from coverage.exceptions import CoverageException, NoDataError
 from coverage.misc import (
     Hasher,
     file_be_gone,
@@ -105,6 +106,31 @@ class RemoveFileTest(CoverageTest):
         # ". is a directory" on Unix, or "Access denied" on Windows
         with pytest.raises(OSError):
             file_be_gone(".")
+
+
+def test_failed_report_permission_error_keeps_original(tmp_path, monkeypatch) -> None:
+    """Deleting /dev/stdout after a failed report must not hide the real error.
+
+    ``render_report`` removes the output file when report generation fails.
+    ``os.remove("/dev/stdout")`` raises ``PermissionError``, which used to
+    replace the original exception.  Issue 1804.
+    """
+    from coverage.report_core import render_report
+
+    output = tmp_path / "coverage.json"
+
+    class FailingReporter:
+        report_type = "json"
+
+        def report(self, morfs: object, outfile: object) -> float:
+            raise NoDataError("No data to report.")
+
+    def deny_remove(path: str) -> None:
+        raise PermissionError(errno.EACCES, "Permission denied", path)
+
+    monkeypatch.setattr("coverage.misc.os.remove", deny_remove)
+    with pytest.raises(NoDataError, match="No data to report"):
+        render_report(str(output), FailingReporter(), None, lambda message: None)
 
 
 VARS = {
