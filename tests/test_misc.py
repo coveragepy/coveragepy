@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import errno
+import pathlib
 import sys
 from typing import Any
 from unittest import mock
@@ -108,7 +109,10 @@ class RemoveFileTest(CoverageTest):
             file_be_gone(".")
 
 
-def test_failed_report_permission_error_keeps_original(tmp_path, monkeypatch) -> None:
+def test_failed_report_permission_error_keeps_original(
+    tmp_path: pathlib.Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Deleting /dev/stdout after a failed report must not hide the real error.
 
     ``render_report`` removes the output file when report generation fails.
@@ -120,9 +124,12 @@ def test_failed_report_permission_error_keeps_original(tmp_path, monkeypatch) ->
     output = tmp_path / "coverage.json"
 
     class FailingReporter:
+        """A reporter that fails before writing output."""
+
         report_type = "json"
 
         def report(self, morfs: object, outfile: object) -> float:
+            """Raise the original report error."""
             raise NoDataError("No data to report.")
 
     def deny_remove(path: str) -> None:
