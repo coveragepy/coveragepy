@@ -531,10 +531,10 @@ class PathAliases:
             path = relative_filename(path)
 
         if self.relative and not isabs_anywhere(path):
-            # Auto-generate a pattern to implicitly match relative files
+            # Auto-generate patterns to implicitly match relative files.
             parts = re.split(r"[/\\]", path)
-            if len(parts) > 1:
-                dir1 = parts[0]
+            generated = False
+            for dir1 in parts[:-1]:
                 pattern = f"*/{dir1}"
                 regex_pat = rf"^(.*[\\/])?{re.escape(dir1)}[\\/]"
                 result = f"{dir1}{os.sep}"
@@ -544,7 +544,9 @@ class PathAliases:
                         f"Generating rule: {pattern!r} -> {result!r} using regex {regex_pat!r}",
                     )
                     self.aliases.append((pattern, re.compile(regex_pat), result))
-                    return self.map(path, exists=exists)
+                    generated = True
+            if generated:
+                return self.map(path, exists=exists)
 
         self.debugfn(f"No rules match, path {path!r} is unchanged")
         return path
