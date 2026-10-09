@@ -211,9 +211,11 @@ class PythonParser:
 
         """
         matches: set[TLineNo] = set()
-        # A match inside a string is text, not an excluded statement.  The
-        # default `...` pattern otherwise treats a YAML end-of-document marker
-        # on its own line as an ellipsis body and drops the whole assignment.
+        # A line that lies wholly inside a string literal has no code on it,
+        # so a match there is text, not an excluded statement.  The default
+        # `...` pattern otherwise treats a YAML end-of-document marker on its
+        # own line as an ellipsis body and drops the whole assignment.  A
+        # match on a line that also holds code still counts.
         # https://github.com/coveragepy/coveragepy/issues/2112
         string_spans = string_literal_spans(self.text)
 
@@ -221,7 +223,11 @@ class PythonParser:
         last_start_line = 0
         for match in re.finditer(regex, self.text, flags=re.MULTILINE):
             start, end = match.span()
-            if string_spans and _span_inside(start, end, string_spans):
+            line_begin = self.text.rfind("\n", 0, start) + 1
+            line_end = self.text.find("\n", end)
+            if line_end == -1:
+                line_end = len(self.text)
+            if string_spans and _span_inside(line_begin, line_end, string_spans):
                 # Still advance the newline cursor: the match is real text.
                 last_start_line += self.text.count("\n", last_start, start)
                 last_start = start

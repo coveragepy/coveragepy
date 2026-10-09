@@ -25,9 +25,9 @@ Unreleased
 
 - Fix: the default ``...`` exclusion matched a line of three dots inside a
   multi-line string, such as a YAML end-of-document marker, and then excluded
-  the whole statement.  Exclusion regexes now ignore matches that lie inside
-  string literals.  A real ``...`` statement and a stub function body are
-  still excluded.  Closes `issue 2112`_.
+  the whole statement.  Exclusion regexes now ignore matches on a line that lies
+  entirely inside a string literal.  A real ``...`` statement and a stub
+  function body are still excluded.  Closes `issue 2112`_.
 
 .. _issue 2112: https://github.com/coveragepy/coveragepy/issues/2112
 
