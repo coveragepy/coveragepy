@@ -65,6 +65,69 @@ def multiline_map_from_text(text: str) -> dict[TLineNo, TLineNo]:
     return multiline_map_from_tokens(generate_tokens(text))
 
 
+# Token types whose text is string data rather than code.  F-string and
+# t-string middles cover the same role as a plain STRING token: a regex match
+# that lands entirely inside one of them is not an exclusion of code.
+_STRING_TOKEN_TYPES = {token.STRING}
+for _string_token_name in ("FSTRING_MIDDLE", "TSTRING_MIDDLE"):
+    _string_token = getattr(token, _string_token_name, None)
+    if _string_token is not None:
+        _STRING_TOKEN_TYPES.add(_string_token)
+
+
+def _line_start_offsets(text: str) -> list[int]:
+    """Absolute offsets of the start of each 1-indexed source line."""
+    starts = [0]
+    i = 0
+    n = len(text)
+    while i < n:
+        ch = text[i]
+        if ch == "\n":
+            i += 1
+            starts.append(i)
+        elif ch == "\r":
+            i += 2 if i + 1 < n and text[i + 1] == "\n" else 1
+            starts.append(i)
+        else:
+            i += 1
+    return starts
+
+
+def string_literal_spans(text: str) -> list[tuple[int, int]]:
+    """Character spans of string literal text in `text`.
+
+    Includes plain strings and the middle of f-strings and t-strings.  An
+    exclusion regex match that falls entirely inside one of these spans is
+    text, not code.  Unparseable source returns no spans, so exclusion falls
+    back to matching the raw text.
+
+    """
+    try:
+        tokens = list(generate_tokens(text))
+    except (tokenize.TokenError, IndentationError, SyntaxError):
+        return []
+    starts = _line_start_offsets(text)
+    spans: list[tuple[int, int]] = []
+    for tok in tokens:
+        if tok.type not in _STRING_TOKEN_TYPES:
+            continue
+        begin = starts[tok.start[0] - 1] + tok.start[1]
+        end = starts[tok.end[0] - 1] + tok.end[1]
+        if end > begin:
+            spans.append((begin, end))
+    return spans
+
+
+def _span_inside(start: int, end: int, spans: Sequence[tuple[int, int]]) -> bool:
+    """True if `[start, end)` lies entirely inside some span."""
+    for begin, stop in spans:
+        if start >= begin and end <= stop:
+            return True
+        if begin >= end:
+            break
+    return False
+
+
 class PythonParser:
     """Parse code to find executable lines, excluded lines, etc.
 
@@ -148,11 +211,21 @@ class PythonParser:
 
         """
         matches: set[TLineNo] = set()
+        # A match inside a string is text, not an excluded statement.  The
+        # default `...` pattern otherwise treats a YAML end-of-document marker
+        # on its own line as an ellipsis body and drops the whole assignment.
+        # https://github.com/coveragepy/coveragepy/issues/2112
+        string_spans = string_literal_spans(self.text)
 
         last_start = 0
         last_start_line = 0
         for match in re.finditer(regex, self.text, flags=re.MULTILINE):
             start, end = match.span()
+            if string_spans and _span_inside(start, end, string_spans):
+                # Still advance the newline cursor: the match is real text.
+                last_start_line += self.text.count("\n", last_start, start)
+                last_start = start
+                continue
             start_line = last_start_line + self.text.count("\n", last_start, start)
             end_line = last_start_line + self.text.count("\n", last_start, end)
             matches.update(

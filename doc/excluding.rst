@@ -80,7 +80,7 @@ lines are automatically excluded:
   differences in spacing and letter case are also recognized.
 
 - Any line with only ``...`` in the code, for excluding placeholder function
-  bodies.
+  bodies.  A ``...`` inside a string literal is not code and is not excluded.
 
 For branch coverage, these kinds of branches are automatically excluded:
 
