@@ -346,7 +346,7 @@ class LcovTest(CoverageTest):
         cov = coverage.Coverage(branch=True, source=".")
         self.start_import_stop(cov, "__init__")
         pct = cov.lcov_report()
-        assert pct == 0.0
+        assert pct == 100.0
         self.assert_exists("coverage.lcov")
         expected_result = textwrap.dedent("""\
             SF:__init__.py
@@ -365,7 +365,7 @@ class LcovTest(CoverageTest):
         cov = coverage.Coverage(branch=True, source=".")
         self.start_import_stop(cov, "__init__")
         pct = cov.lcov_report()
-        assert pct == 0.0
+        assert pct == 100.0
         self.assert_exists("coverage.lcov")
         expected_result = ""
         actual_result = self.get_lcov_report_content()

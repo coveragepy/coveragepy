@@ -105,7 +105,7 @@ class JsonReporter:
             indent=(4 if self.config.json_pretty_print else None),
         )
 
-        return self.total.n_statements and self.total.pc_covered
+        return self.total.pc_covered
 
     def report_one_file(
         self, coverage_data: CoverageData, analysis: Analysis, file_reporter: FileReporter

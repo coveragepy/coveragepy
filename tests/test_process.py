@@ -1326,12 +1326,13 @@ class FailUnderNoFilesTest(CoverageTest):
 class FailUnderEmptyFilesTest(CoverageTest):
     """Test that empty files produce the proper fail_under exit status."""
 
-    def test_report(self) -> None:
+    @pytest.mark.parametrize("cmd", ["report", "html", "json", "lcov", "xml"])
+    def test_report(self, cmd: str) -> None:
         self.make_file(".coveragerc", "[report]\nfail_under = 99\n")
         self.make_file("empty.py", "")
         st, _ = self.run_command_status("coverage run empty.py")
         assert st == 0
-        st, _ = self.run_command_status("coverage report")
+        st, _ = self.run_command_status(f"coverage {cmd}")
         # An empty file is marked as 100% covered, so this is ok.
         assert st == 0
 

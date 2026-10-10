@@ -202,7 +202,7 @@ class LcovReporter:
             self.total += analysis.numbers
             self.lcov_file(fname, fr, analysis, outfile)
 
-        return self.total.n_statements and self.total.pc_covered
+        return self.total.pc_covered
 
     def lcov_file(
         self,

@@ -165,7 +165,7 @@ class XmlReporter:
         # Return the total percentage.
         denom = lnum_tot + bnum_tot
         if denom == 0:
-            pct = 0.0
+            pct = 100.0
         else:
             pct = 100.0 * (lhits_tot + bhits_tot) / denom
         return pct
