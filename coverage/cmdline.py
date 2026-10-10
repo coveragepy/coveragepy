@@ -852,6 +852,12 @@ class CoverageScript:
             messages=not options.quiet,
         )
 
+        # We need to be able to import from the current directory, because
+        # plugins may try to, for example, to read Django settings.  The "run"
+        # command is excluded: PyRunner.prepare() owns sys.path[0] there.
+        if options.action != "run":
+            sys.path.insert(0, "")
+
         if options.action == "debug":
             return self.do_debug(args)
 
@@ -878,10 +884,6 @@ class CoverageScript:
             include=include,
             contexts=contexts,
         )
-
-        # We need to be able to import from the current directory, because
-        # plugins may try to, for example, to read Django settings.
-        sys.path.insert(0, "")
 
         self.coverage.load()
         self.coverage.combine(strict=False, keep=bool(options.keep_combined))
