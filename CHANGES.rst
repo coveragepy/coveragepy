@@ -30,6 +30,13 @@ Unreleased
   so a branch that never ran was reported as taken.  These built-in patterns
   now only match at the start of the statement.  Closes `issue 2314`_.
 
+- Fix: with ``[run] sigterm = true``, a SIGTERM that arrived while coverage
+  held its data lock could deadlock, and a second SIGTERM could re-enter the
+  handler and raise out of the interrupted program.  The handler now ignores
+  a nested SIGTERM, and the data lock is reentrant while that handler is
+  installed.  Closes `issue 2310`_.
+
+.. _issue 2310: https://github.com/coveragepy/coveragepy/issues/2310
 .. _issue 2314: https://github.com/coveragepy/coveragepy/issues/2314
 
 - Fix: file names (and plugin names) can contain control characters, which are

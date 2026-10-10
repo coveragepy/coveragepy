@@ -69,6 +69,7 @@ class Collector:
         branch: bool,
         warn: TWarnFn,
         concurrency: list[str],
+        sigterm: bool = False,
     ) -> None:
         """Create a collector.
 
@@ -100,8 +101,12 @@ class Collector:
         (the default).  "thread" can be combined with one of the other three.
         Other values are ignored.
 
+        If `sigterm` is true, the data lock is reentrant so the SIGTERM
+        handler can save if the signal lands while this thread holds the lock.
+
         """
         self.core = core
+        self._reentrant_data_lock = sigterm
         self.should_trace = should_trace
         self.check_include = check_include
         self.should_start_context = should_start_context
@@ -188,7 +193,18 @@ class Collector:
 
     def reset(self) -> None:
         """Clear collected data, and prepare to collect more."""
-        self.data_lock = self.threading.Lock() if self.threading else None
+        # Issue 2310: with the SIGTERM handler installed, this thread can be
+        # interrupted inside lock_data/unlock_data while the lock is held.
+        # save() → _clear_data() needs the lock again. A Lock deadlocks; an
+        # RLock lets this thread re-enter and other threads still wait. The
+        # default hot path stays a Lock.
+        if self.threading:
+            if self._reentrant_data_lock:
+                self.data_lock = self.threading.RLock()
+            else:
+                self.data_lock = self.threading.Lock()
+        else:
+            self.data_lock = None
 
         # The trace data we are collecting.
         self.data: TTraceData = {}
