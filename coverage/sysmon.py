@@ -10,6 +10,7 @@ import functools
 import inspect
 import os
 import os.path
+import tempfile
 import sys
 import threading
 import tokenize
@@ -70,10 +71,17 @@ if LOG:  # pragma: debugging
             self.wrapped = wrapped
             self.namespace = namespace
 
-        def __getattr__(self, name: str) -> Callable[..., Any]:
+        def __getattr__(self, name: str) -> Any:
+            real_attr = getattr(self.wrapped, name)
+            if not callable(real_attr):
+                # Constants (COVERAGE_ID, DISABLE, …) must keep their value:
+                # wrapping them as functions breaks code that reads them, e.g.
+                # `self.myid = sys_monitoring.COVERAGE_ID` (#2260).
+                return real_attr
+
             def _wrapped(*args: Any, **kwargs: Any) -> Any:
                 log(f"{self.namespace}.{name}{args}{kwargs}")
-                return getattr(self.wrapped, name)(*args, **kwargs)
+                return real_attr(*args, **kwargs)
 
             return _wrapped
 
@@ -87,30 +95,41 @@ if LOG:  # pragma: debugging
         frame_ids=True,
     )
     seen_threads: set[int] = set()
+    _log_busy = threading.local()
 
     def log(msg: str) -> None:
         """Write a message to our detailed debugging log(s)."""
-        # Thread ids are reused across processes?
-        # Make a shorter number more likely to be unique.
-        pid = os.getpid()
-        tid = cast(int, threading.current_thread().ident)
-        tslug = f"{(pid * tid) % 9_999_991:07d}"
-        if tid not in seen_threads:
-            seen_threads.add(tid)
-            log(f"New thread {tid} {tslug}:\n{short_stack()}")
-        # log_seq = int(os.getenv("PANSEQ", "0"))
-        # root = f"/tmp/pan.{log_seq:03d}"
-        for filename in [
-            "/tmp/foo.out",
-            # f"{root}.out",
-            # f"{root}-{pid}.out",
-            # f"{root}-{pid}-{tslug}.out",
-        ]:
-            with open(filename, "a", encoding="utf-8") as f:
-                try:
-                    print(f"{pid}:{tslug}: {msg}", file=f, flush=True)
-                except UnicodeError:
-                    print(f"{pid}:{tslug}: {msg!a}", file=f, flush=True)
+        # File I/O and stack walks here re-enter sys.monitoring. Without a
+        # guard, covering the stdlib (test_stdlib[True]) deadlocks. #2087
+        if getattr(_log_busy, "on", False):
+            return
+        _log_busy.on = True
+        try:
+            # Thread ids are reused across processes?
+            # Make a shorter number more likely to be unique.
+            pid = os.getpid()
+            tid = cast(int, threading.current_thread().ident)
+            tslug = f"{(pid * tid) % 9_999_991:07d}"
+            if tid not in seen_threads:
+                seen_threads.add(tid)
+                msg = f"New thread {tid} {tslug}:\n{short_stack()}\n{msg}"
+            # log_seq = int(os.getenv("PANSEQ", "0"))
+            # root = f"/tmp/pan.{log_seq:03d}"
+            for filename in [
+                # A real path on POSIX; on Windows tempfile resolves to
+                # %TEMP%, which always exists (issue 2087).
+                os.path.join(tempfile.gettempdir(), "foo.out"),
+                # f"{root}.out",
+                # f"{root}-{pid}.out",
+                # f"{root}-{pid}-{tslug}.out",
+            ]:
+                with open(filename, "a", encoding="utf-8") as f:
+                    try:
+                        print(f"{pid}:{tslug}: {msg}", file=f, flush=True)
+                    except UnicodeError:
+                        print(f"{pid}:{tslug}: {msg!a}", file=f, flush=True)
+        finally:
+            _log_busy.on = False
 
     def arg_repr(arg: Any) -> str:
         """Make a customized repr for logged values."""
@@ -221,7 +240,11 @@ class SysMonitor(Tracer):
         self.multiline_maps: dict[str, dict[TLineNo, TLineNo]] = {}
 
         self.sysmon_on = False
-        self.lock = threading.Lock()
+        # An RLock, not a Lock: with COVERAGE_SYSMON_LOG=1, logging a
+        # sys.monitoring call (e.g. set_events in start()) triggers PY_START
+        # events, and the callback re-enters this lock in the same thread
+        # (issue 2087).
+        self.lock = threading.RLock()
 
         self.stats: dict[str, int] | None = None
         if COLLECT_STATS:
