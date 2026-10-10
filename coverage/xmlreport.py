@@ -11,6 +11,7 @@ import sys
 import time
 import xml.dom.minidom
 from dataclasses import dataclass
+from decimal import Decimal
 from typing import IO, TYPE_CHECKING, Any
 
 from coverage import files
@@ -35,7 +36,8 @@ def rate(hit: int, num: int) -> str:
     if num == 0:
         return "1"
     else:
-        return f"{hit / num:.4g}"
+        result = f"{hit / num:.4g}"
+        return format(Decimal(result), "f")
 
 
 @dataclass
