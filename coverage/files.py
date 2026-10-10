@@ -274,13 +274,12 @@ class TreeMatcher(Matcher):
         """Does `fpath` indicate a file in one of our trees?"""
         fpath = abs_file(fpath)
         for p in self.paths:
-            if fpath.startswith(p):
-                if fpath == p:
-                    # This is the same file!
-                    return True
-                if fpath[len(p)] == os.sep:
-                    # This is a file in the directory
-                    return True
+            if fpath == p:
+                # This is the same file!
+                return True
+            if fpath.startswith(p.rstrip(os.sep) + os.sep):
+                # This is a file in the directory
+                return True
         return False
 
 

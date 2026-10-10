@@ -47,6 +47,12 @@ Unreleased
 - Binary wheels are now provided for iOS and Android. This allows the use of
   the optimized C tracer on mobile platforms.
 
+- Fix: ``--source=/`` (or any source path resolving to the filesystem root)
+  matched no files, so nothing was measured. This is now fixed, closing
+  `issue 2291`_.
+
+.. _issue 2291: https://github.com/coveragepy/coveragepy/issues/2291
+
 .. start-releases
 
 .. _changes_7-16-2:
