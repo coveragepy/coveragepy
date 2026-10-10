@@ -1799,6 +1799,14 @@ class FailUnderTest(CoverageTest):
                 "Coverage failure: total of 20.12345 is less than fail-under=20.12350\n",
             ),
             (20.12339, "report --fail-under=20.1234 --precision=4", 0, ""),
+            # Issue 2295: near-zero total + fractional fail_under at precision 0
+            # must not claim "1 is less than 0".
+            (
+                0.4,
+                "report --fail-under=0.3 --precision=0",
+                2,
+                "Coverage failure: total of 0 is less than fail-under=0.3\n",
+            ),
         ],
     )
     def test_fail_under_with_precision(self, result: float, cmd: str, ret: int, msg: str) -> None:
