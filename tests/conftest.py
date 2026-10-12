@@ -31,6 +31,31 @@ pytest_plugins = [
     "tests.select_plugin",
 ]
 
+
+def pytest_addoption(parser: pytest.Parser) -> None:
+    """Add command-line options for controlling the test suite."""
+    parser.addoption(
+        "--benchmarks",
+        action="store_true",
+        default=False,
+        help="Collect the benchmarks in tests/benchmarks (see its README).",
+    )
+    parser.addoption(
+        "--bench-rounds",
+        type=int,
+        default=None,
+        help="Measured rounds for setup-dependent benchmarks (10, or 5 for slow cases).",
+    )
+    parser.addoption(
+        "--bench-smoke",
+        action="store_true",
+        help="Validate workloads once without recording performance results.",
+    )
+    parser.addoption(
+        "--bench-real", action="store_true", help="Include the explicitly prepared Jinja2 workload."
+    )
+
+
 if testenv.USE_HYPOTHESIS:
     import hypothesis
 
