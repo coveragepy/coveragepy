@@ -738,11 +738,17 @@ class CoverageData:
             self._debug.write(f"Updating with data from {other_filename!r}")
         if self._has_lines and other_data._has_arcs:
             raise DataError(
-                "Can't combine branch coverage data with statement data", slug="cant-combine"
+                "Can't combine branch coverage data with statement data: "
+                + f"data file {other_data.data_filename()!r} measured branch coverage, "
+                + f"but data file {self.data_filename()!r} didn't",
+                slug="cant-combine",
             )
         if self._has_arcs and other_data._has_lines:
             raise DataError(
-                "Can't combine statement coverage data with branch data", slug="cant-combine"
+                "Can't combine statement coverage data with branch data: "
+                + f"data file {other_data.data_filename()!r} didn't measure branch coverage, "
+                + f"but data file {self.data_filename()!r} did",
+                slug="cant-combine",
             )
 
         # Force the database we're writing to to exist before we start nesting contexts.

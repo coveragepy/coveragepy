@@ -85,6 +85,12 @@ Unreleased
 .. _issue 2335: https://github.com/coveragepy/coveragepy/issues/2335
 
 
+- The "Can't combine statement coverage data with branch data" error (and its
+  opposite) now names the two data files it couldn't combine, and says which
+  one measured branch coverage.  The :ref:`error description
+  <error_cant_combine>` now lists common causes and how to find the process
+  that wrote the file.
+
 .. start-releases
 
 .. _changes_7-16-2:
