@@ -19,7 +19,7 @@ import os.path
 from collections.abc import Callable, Iterable
 from typing import Literal
 
-from coverage.exceptions import CoverageException, NoDataError
+from coverage.exceptions import CoverageException, DataError, NoDataError
 from coverage.files import PathAliases
 from coverage.misc import Hasher, file_be_gone, human_sorted, neutralize_control, plural
 from coverage.sqldata import (  # pylint: disable=useless-import-alias
@@ -215,7 +215,22 @@ def combine_parallel_data(
                     data._debug.write(f"Couldn't combine data file {rel_file_name}: {exc}")
                 delete_this_one = False
             else:
-                data.update(new_data, map_path=map_path)
+                try:
+                    data.update(new_data, map_path=map_path)
+                except DataError as exc:
+                    if exc.slug != "cant-combine":
+                        raise
+                    # Name the data file and what it measured, to help find
+                    # the process that used a different branch setting.
+                    if new_data.has_arcs():
+                        this_one, the_rest = "measured", "didn't"
+                    else:
+                        this_one, the_rest = "didn't measure", "did"
+                    msg = (
+                        f"{exc}: data file {f!r} {this_one} branch coverage, "
+                        + f"but the other data {the_rest}"
+                    )
+                    raise DataError(msg, slug=exc.slug) from exc
                 combined += 1
                 combined_any = True
                 if data._debug.should("combine"):

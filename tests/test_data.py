@@ -1064,6 +1064,56 @@ class CoverageDataFilesTest(CoverageTest):
         with pytest.raises(NoDataError, match=msg):
             combine_parallel_data(covdata, data_paths=["xyzzy"])
 
+    @pytest.mark.parametrize("arcs_first", [False, True])
+    def test_combining_cant_mix_lines_and_arcs(self, arcs_first: bool) -> None:
+        # The error names the data file that doesn't match the data already
+        # combined, and says whether that file measured branch coverage.
+        covdata1 = DebugCoverageData(suffix="1")
+        covdata2 = DebugCoverageData(suffix="2")
+        if arcs_first:
+            covdata1.add_arcs(ARCS_3)
+            covdata2.add_lines(LINES_1)
+            msg = (
+                "Can't combine statement coverage data with branch data: "
+                + r"data file '.*\.coverage\.2' didn't measure branch coverage, "
+                + "but the other data did"
+            )
+        else:
+            covdata1.add_lines(LINES_1)
+            covdata2.add_arcs(ARCS_3)
+            msg = (
+                "Can't combine branch coverage data with statement data: "
+                + r"data file '.*\.coverage\.2' measured branch coverage, "
+                + "but the other data didn't"
+            )
+        covdata1.write()
+        covdata2.write()
+
+        covdata3 = DebugCoverageData()
+        with pytest.raises(DataError, match=msg) as excinfo:
+            combine_parallel_data(covdata3)
+        assert excinfo.value.slug == "cant-combine"
+
+        # The data file named in the message is still there to be examined.
+        self.assert_exists(".coverage.2")
+
+    def test_combining_conflicting_file_tracers(self) -> None:
+        # Other errors from combining a data file are raised as they are.
+        covdata1 = DebugCoverageData(suffix="1")
+        covdata1.add_lines({"p1.html": [1, 2, 3]})
+        covdata1.add_file_tracers({"p1.html": "html.plugin"})
+        covdata1.write()
+
+        covdata2 = DebugCoverageData(suffix="2")
+        covdata2.add_lines({"p1.html": [1, 2, 3]})
+        covdata2.add_file_tracers({"p1.html": "html.other_plugin"})
+        covdata2.write()
+
+        covdata3 = DebugCoverageData()
+        msg = "Conflicting file tracer name for 'p1.html': 'html.plugin' vs 'html.other_plugin'$"
+        with pytest.raises(DataError, match=msg):
+            combine_parallel_data(covdata3)
+
     def test_interleaved_erasing_bug716(self) -> None:
         # pytest-cov could produce this scenario. #716
         covdata1 = DebugCoverageData()
