@@ -606,20 +606,7 @@ class Coverage(TConfigurable):
             concurrency=concurrency,
         )
 
-        suffix = self._data_suffix_specified
-        if suffix:
-            if not isinstance(suffix, str):
-                # if data_suffix=True, use .machinename.pid.random
-                suffix = True
-        elif self.config.parallel:
-            if suffix is None:
-                suffix = True
-            elif not isinstance(suffix, str):
-                suffix = bool(suffix)
-        else:
-            suffix = None
-
-        self._init_data(suffix)
+        self._init_data(self._data_suffix_for_start())
 
         assert self._data is not None
         self._collector.use_data(self._data, self.config.context)
@@ -662,6 +649,22 @@ class Coverage(TConfigurable):
                     signal.SIGTERM,
                     self._on_sigterm,
                 )
+
+    def _data_suffix_for_start(self) -> str | bool | None:
+        """Compute the data filename suffix to use for collection."""
+        suffix = self._data_suffix_specified
+        if suffix:
+            if not isinstance(suffix, str):
+                # if data_suffix=True, use .machinename.pid.random
+                suffix = True
+        elif self.config.parallel:
+            if suffix is None:
+                suffix = True
+            elif not isinstance(suffix, str):
+                suffix = bool(suffix)
+        else:
+            suffix = None
+        return suffix
 
     def _init_data(self, suffix: str | bool | None) -> None:
         """Create a data file if we don't have one yet."""
@@ -796,7 +799,7 @@ class Coverage(TConfigurable):
         if self._collector is not None:
             self._collector.reset()
         self._close_data()
-        self._init_data(suffix=None)
+        self._init_data(self._data_suffix_for_start())
         assert self._data is not None
         if self._collector is not None:
             self._collector.use_data(self._data, self.config.context)

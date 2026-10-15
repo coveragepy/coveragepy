@@ -432,6 +432,35 @@ class ApiTest(CoverageTest):
             cov.clear_data()
         assert len(cov._data_to_close) == before
 
+    def test_clear_data_keeps_data_suffix(self) -> None:
+        self.make_code1_code2()
+        cov = coverage.Coverage(data_suffix="workerA")
+        cov.clear_data()
+        self.start_import_stop(cov, "code1")
+        cov.save()
+        assert os.path.basename(cov.get_data().data_filename()) == ".coverage.workerA"
+
+        cov.clear_data()
+        self.start_import_stop(cov, "code2")
+        cov.save()
+        assert os.path.basename(cov.get_data().data_filename()) == ".coverage.workerA"
+        self.assert_exists(".coverage.workerA")
+        self.assert_doesnt_exist(".coverage")
+        assert cov.get_data().measured_files() == {os.path.abspath("code2.py")}
+
+        os.remove(".coverage.workerA")
+        cov_parallel = coverage.Coverage(data_suffix=True)
+        self.start_import_stop(cov_parallel, "code1")
+        cov_parallel.save()
+        cov_parallel.clear_data()
+        cov_parallel.set_option("run:parallel", True)
+        cov_parallel._data_suffix_specified = None
+        cov_parallel.clear_data()
+        self.start_import_stop(cov_parallel, "code2")
+        cov_parallel.save()
+        self.assert_doesnt_exist(".coverage")
+        self.assert_file_count(".coverage.*", 2)
+
     def test_empty_reporting(self) -> None:
         # empty summary reports raise exception, just like the xml report
         cov = coverage.Coverage()
