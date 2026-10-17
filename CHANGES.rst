@@ -61,6 +61,12 @@ Unreleased
 - Binary wheels are now provided for iOS and Android. This allows the use of
   the optimized C tracer on mobile platforms.
 
+- The "Can't combine statement coverage data with branch data" error (and its
+  opposite) now names the data file that couldn't be combined, and says
+  whether that file measured branch coverage.  The :ref:`error description
+  <error_cant_combine>` now lists common causes and how to find the process
+  that wrote the file.
+
 .. start-releases
 
 .. _changes_7-16-2:
