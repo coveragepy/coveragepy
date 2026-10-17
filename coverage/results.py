@@ -124,7 +124,9 @@ class Analysis:
         else:
             arcs = None
 
-        return format_lines(self.statements, self.missing, arcs=arcs)
+        # Excluded lines aren't missing, so a range of missing lines should stop at
+        # them instead of running through them, the same as at an executed line.
+        return format_lines(self.statements | self.excluded, self.missing, arcs=arcs)
 
     def arcs_missing(self) -> list[TArc]:
         """Returns a sorted list of the un-executed arcs in the code."""
