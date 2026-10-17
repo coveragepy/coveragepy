@@ -11,11 +11,13 @@ import os
 import pathlib
 import random
 import re
+import signal
 import sys
 import threading
 import time
 from collections.abc import Iterable
 from types import ModuleType
+from unittest import mock
 
 import pytest
 
@@ -819,3 +821,104 @@ class SigtermTest(CoverageTest):
         )
         out = self.run_command("coverage run handler.py")
         assert out == "START\nSIGTERM\nEND\n"
+
+    def test_sigterm_handler_ignores_reentry(self) -> None:
+        # A second SIGTERM while stop/save is running must not enter again.
+        # The nested call used to deadlock or raise out of the interrupted
+        # frame (issue 2310). Call the handler directly so this doesn't depend
+        # on signal timing.
+        cov = coverage.Coverage(data_file="not_metacov_sigterm_reentry")
+        cov.set_option("run:sigterm", True)
+        previous = signal.getsignal(signal.SIGTERM)
+
+        def restore_sigterm() -> None:
+            signal.signal(signal.SIGTERM, previous)
+
+        self.addCleanup(restore_sigterm)
+        cov.start()
+        atexit_calls: list[str] = []
+        real_atexit = cov._atexit
+
+        # Runs inside stop/save, so metacov cannot see this body (same as
+        # the trailing lines in Coverage._on_sigterm).
+        def reenter_atexit(event: str = "atexit") -> None:  # pragma: not covered
+            atexit_calls.append(event)
+            if event == "sigterm" and atexit_calls.count("sigterm") == 1:
+                # The outer handler is inside stop/save: further SIGTERMs are
+                # ignored, and a direct re-entry must not run _atexit again.
+                assert cov._sigterm_handling is True
+                assert signal.getsignal(signal.SIGTERM) == signal.SIG_IGN
+                cov._on_sigterm(signal.SIGTERM, None)
+            real_atexit(event)
+
+        cov._atexit = reenter_atexit  # type: ignore[method-assign]
+        try:
+            with mock.patch("coverage.control.os.kill") as fake_kill:
+                cov._on_sigterm(signal.SIGTERM, None)
+        finally:
+            if cov._started:
+                cov.stop()
+
+        assert atexit_calls == ["sigterm"]
+        assert cov._sigterm_handling is False
+        assert signal.getsignal(signal.SIGTERM) == previous
+        fake_kill.assert_called_once_with(os.getpid(), signal.SIGTERM)
+
+    def test_sigterm_saves_while_data_lock_is_held(self) -> None:
+        # SIGTERM can land in unlock_data after the tracer has acquired
+        # data_lock and before it has released it. save() must not wait
+        # forever on that same thread (issue 2310).
+        self.make_file("prog.py", "a = 1\n")
+        cov = coverage.Coverage(data_file="not_metacov_sigterm_lock")
+        cov.set_option("run:sigterm", True)
+        previous = signal.getsignal(signal.SIGTERM)
+
+        def restore_sigterm() -> None:
+            signal.signal(signal.SIGTERM, previous)
+
+        self.addCleanup(restore_sigterm)
+        cov.start()
+        try:
+            import_local_file("prog")
+            collector = cov._collector
+            assert collector is not None
+            lock = collector.data_lock
+            assert lock is not None
+            assert type(lock) is type(threading.RLock())
+            collector.lock_data()
+            try:
+                # A non-reentrant Lock returns False here. Fail before
+                # _on_sigterm, which would deadlock inside _clear_data.
+                assert lock.acquire(blocking=False)
+                lock.release()
+                with mock.patch("coverage.control.os.kill") as fake_kill:
+                    cov._on_sigterm(signal.SIGTERM, None)
+                fake_kill.assert_called_once_with(os.getpid(), signal.SIGTERM)
+            finally:
+                collector.unlock_data()
+        finally:
+            if cov._started:
+                cov.stop()
+
+        saved = coverage.CoverageData("not_metacov_sigterm_lock")
+        saved.read()
+        assert line_counts(saved).get("prog.py") == 1
+
+    def test_data_lock_is_not_reentrant_without_sigterm(self) -> None:
+        # RLock costs a recursion count on every traced call. Keep a Lock
+        # unless the SIGTERM handler is installed.
+        cov = coverage.Coverage()
+        cov.start()
+        try:
+            collector = cov._collector
+            assert collector is not None
+            lock = collector.data_lock
+            assert lock is not None
+            assert type(lock) is type(threading.Lock())
+            collector.lock_data()
+            try:
+                assert lock.acquire(blocking=False) is False
+            finally:
+                collector.unlock_data()
+        finally:
+            cov.stop()
