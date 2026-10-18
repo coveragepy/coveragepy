@@ -47,3 +47,10 @@ CAN_MEASURE_BRANCHES = env.PYBEHAVIOR.branch_right_left
 # So we need a way to let Hypothesis be on or off. To simplify the coverage
 # of both options, we'll use it on half the releases.
 USE_HYPOTHESIS = bool(env.PYVERSION[1] % 2)
+
+# Are we running as root? File permissions don't stop root.
+ROOT_USER = hasattr(os, "geteuid") and os.geteuid() == 0
+
+# Is the network unavailable? Some tests need to install packages.
+# $set_env.py: COVERAGE_TEST_NO_NETWORK - Expect tests needing the network to fail.
+NO_NETWORK = bool(os.getenv("COVERAGE_TEST_NO_NETWORK"))

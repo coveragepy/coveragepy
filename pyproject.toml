@@ -214,3 +214,11 @@ combine-as-imports = true
     "RUF012",   # Mutable default value for class attribute
     "RUF024",   # Do not pass mutable objects as values to `dict.fromkeys`
 ]
+
+## CIBUILDWHEEL
+[tool.cibuildwheel]
+test-command = "python -m tests.smoke"
+test-sources = "tests/smoke.py"
+
+[tool.cibuildwheel.ios]
+xbuild-tools = []

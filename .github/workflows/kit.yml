@@ -36,7 +36,7 @@ env:
   PIP_DISABLE_PIP_VERSION_CHECK: 1
   # PYVERSIONS: changing the list of versions will change the number of
   # expected distributions. This must match the same number in publish.yml.
-  EXPECTED: 107
+  EXPECTED: 119
 
 permissions:
   contents: read
@@ -47,10 +47,10 @@ concurrency:
 
 jobs:
   wheels:
-    name: "${{ matrix.py }} ${{ matrix.os }} ${{ matrix.arch }} wheels"
+    name: "${{ matrix.py }} ${{ matrix.platform || matrix.os }} ${{ matrix.arch }} wheels"
     runs-on: "${{ matrix.os }}-${{ matrix.os-version || 'latest' }}"
     env:
-      MATRIX_ID: "${{ matrix.py }}-${{ matrix.os }}-${{ matrix.arch }}"
+      MATRIX_ID: "${{ matrix.py }}-${{ matrix.platform || matrix.os }}-${{ matrix.arch }}"
     strategy:
       matrix:
         include:
@@ -88,6 +88,14 @@ jobs:
           #     ("windows", "ARM64"): ["cp311", "cp312", "cp313", "cp314", "cp315"],
           #   }
           #
+          #   # Mobile platforms: cibuildwheel only supports these from cp313 onward,
+          #   # and each tuple key is (os, platform, os-version-or-None).
+          #   mobile_pys = ["cp313", "cp314", "cp315"]
+          #   mobile_os_archs = {
+          #       ("ubuntu", "android", None): ["arm64_v8a", "x86_64"],
+          #       ("macos", "ios", "26"): ["arm64_iphoneos", "arm64_iphonesimulator"],
+          #   }
+          #
           #   #----- ^^^ ---------------------- ^^^ -----
           #
           #   import json
@@ -101,7 +109,7 @@ jobs:
           #                   "cipy": cipy,
           #               }
           #               if the_os == "macos":
-          #                   them["os-version"] = "14"
+          #                   them["os-version"] = "26"
           #               if the_os == "windows" and the_arch == "ARM64":
           #                   them["os-version"] = "11-arm"
           #                   # them["cipy"] = "3.11"
@@ -110,6 +118,19 @@ jobs:
           #                   them["os-version"] = "22.04-arm"
           #               if the_arch == "ppc64le":
           #                   them["os-version"] = "24.04-ppc64le"
+          #               print(f"- {json.dumps(them)}")
+          #   for (the_os, the_platform, the_os_version), archs in mobile_os_archs.items():
+          #       for the_arch in archs:
+          #           for the_py in mobile_pys:
+          #               them = {
+          #                   "os": the_os,
+          #                   "py": the_py,
+          #                   "arch": the_arch,
+          #                   "cipy": cipy,
+          #                   "platform": the_platform,
+          #               }
+          #               if the_os_version is not None:
+          #                   them["os-version"] = the_os_version
           #               print(f"- {json.dumps(them)}")
           # ]]]
           - {"os": "ubuntu", "py": "cp311", "arch": "x86_64", "cipy": "3.11"}
@@ -137,16 +158,16 @@ jobs:
           - {"os": "ubuntu", "py": "cp313", "arch": "ppc64le", "cipy": "3.11", "os-version": "24.04-ppc64le"}
           - {"os": "ubuntu", "py": "cp314", "arch": "ppc64le", "cipy": "3.11", "os-version": "24.04-ppc64le"}
           - {"os": "ubuntu", "py": "cp315", "arch": "ppc64le", "cipy": "3.11", "os-version": "24.04-ppc64le"}
-          - {"os": "macos", "py": "cp311", "arch": "arm64", "cipy": "3.11", "os-version": "14"}
-          - {"os": "macos", "py": "cp312", "arch": "arm64", "cipy": "3.11", "os-version": "14"}
-          - {"os": "macos", "py": "cp313", "arch": "arm64", "cipy": "3.11", "os-version": "14"}
-          - {"os": "macos", "py": "cp314", "arch": "arm64", "cipy": "3.11", "os-version": "14"}
-          - {"os": "macos", "py": "cp315", "arch": "arm64", "cipy": "3.11", "os-version": "14"}
-          - {"os": "macos", "py": "cp311", "arch": "x86_64", "cipy": "3.11", "os-version": "14"}
-          - {"os": "macos", "py": "cp312", "arch": "x86_64", "cipy": "3.11", "os-version": "14"}
-          - {"os": "macos", "py": "cp313", "arch": "x86_64", "cipy": "3.11", "os-version": "14"}
-          - {"os": "macos", "py": "cp314", "arch": "x86_64", "cipy": "3.11", "os-version": "14"}
-          - {"os": "macos", "py": "cp315", "arch": "x86_64", "cipy": "3.11", "os-version": "14"}
+          - {"os": "macos", "py": "cp311", "arch": "arm64", "cipy": "3.11", "os-version": "26"}
+          - {"os": "macos", "py": "cp312", "arch": "arm64", "cipy": "3.11", "os-version": "26"}
+          - {"os": "macos", "py": "cp313", "arch": "arm64", "cipy": "3.11", "os-version": "26"}
+          - {"os": "macos", "py": "cp314", "arch": "arm64", "cipy": "3.11", "os-version": "26"}
+          - {"os": "macos", "py": "cp315", "arch": "arm64", "cipy": "3.11", "os-version": "26"}
+          - {"os": "macos", "py": "cp311", "arch": "x86_64", "cipy": "3.11", "os-version": "26"}
+          - {"os": "macos", "py": "cp312", "arch": "x86_64", "cipy": "3.11", "os-version": "26"}
+          - {"os": "macos", "py": "cp313", "arch": "x86_64", "cipy": "3.11", "os-version": "26"}
+          - {"os": "macos", "py": "cp314", "arch": "x86_64", "cipy": "3.11", "os-version": "26"}
+          - {"os": "macos", "py": "cp315", "arch": "x86_64", "cipy": "3.11", "os-version": "26"}
           - {"os": "windows", "py": "cp311", "arch": "x86", "cipy": "3.11"}
           - {"os": "windows", "py": "cp312", "arch": "x86", "cipy": "3.11"}
           - {"os": "windows", "py": "cp313", "arch": "x86", "cipy": "3.11"}
@@ -162,7 +183,19 @@ jobs:
           - {"os": "windows", "py": "cp313", "arch": "ARM64", "cipy": "3.11", "os-version": "11-arm"}
           - {"os": "windows", "py": "cp314", "arch": "ARM64", "cipy": "3.11", "os-version": "11-arm"}
           - {"os": "windows", "py": "cp315", "arch": "ARM64", "cipy": "3.11", "os-version": "11-arm"}
-        # [[[end]]] (sum: gyH1wtv//a)
+          - {"os": "ubuntu", "py": "cp313", "arch": "arm64_v8a", "cipy": "3.11", "platform": "android"}
+          - {"os": "ubuntu", "py": "cp314", "arch": "arm64_v8a", "cipy": "3.11", "platform": "android"}
+          - {"os": "ubuntu", "py": "cp315", "arch": "arm64_v8a", "cipy": "3.11", "platform": "android"}
+          - {"os": "ubuntu", "py": "cp313", "arch": "x86_64", "cipy": "3.11", "platform": "android"}
+          - {"os": "ubuntu", "py": "cp314", "arch": "x86_64", "cipy": "3.11", "platform": "android"}
+          - {"os": "ubuntu", "py": "cp315", "arch": "x86_64", "cipy": "3.11", "platform": "android"}
+          - {"os": "macos", "py": "cp313", "arch": "arm64_iphoneos", "cipy": "3.11", "platform": "ios", "os-version": "26"}
+          - {"os": "macos", "py": "cp314", "arch": "arm64_iphoneos", "cipy": "3.11", "platform": "ios", "os-version": "26"}
+          - {"os": "macos", "py": "cp315", "arch": "arm64_iphoneos", "cipy": "3.11", "platform": "ios", "os-version": "26"}
+          - {"os": "macos", "py": "cp313", "arch": "arm64_iphonesimulator", "cipy": "3.11", "platform": "ios", "os-version": "26"}
+          - {"os": "macos", "py": "cp314", "arch": "arm64_iphonesimulator", "cipy": "3.11", "platform": "ios", "os-version": "26"}
+          - {"os": "macos", "py": "cp315", "arch": "arm64_iphonesimulator", "cipy": "3.11", "platform": "ios", "os-version": "26"}
+        # [[[end]]] (sum: f3kjK8N7/g)
         #            ^^^^^^^^^^^^^^^
         # If a check fails and points to this checksum line, it means you edited
         # the matrix directly instead of editing the Python code in the comment
@@ -212,10 +245,10 @@ jobs:
 
       - name: "Build binary wheels"
         env:
+          CIBW_PLATFORM: ${{ matrix.platform || 'auto' }}
           CIBW_BUILD: ${{ matrix.py }}*-*
           CIBW_ARCHS: ${{ matrix.arch }}
           CIBW_ENVIRONMENT: PIP_DISABLE_PIP_VERSION_CHECK=1
-          CIBW_TEST_COMMAND: python -c "from coverage.tracer import CTracer; print('CTracer OK!')"
         run: |
           python -m cibuildwheel --output-dir wheelhouse
 
@@ -228,7 +261,7 @@ jobs:
           python -m twine check wheelhouse/*
 
       - name: "Upload binary wheels"
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: dist-${{ env.MATRIX_ID }}
           path: wheelhouse/*.whl
@@ -269,7 +302,7 @@ jobs:
           python -m twine check dist/*
 
       - name: "Upload non-binary artifacts"
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: dist-non-binary
           path: dist/*
@@ -287,7 +320,7 @@ jobs:
       id-token: write   # Needed for signing artifacts
     steps:
       - name: "Download artifacts"
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           pattern: dist-*
           merge-multiple: true
@@ -309,7 +342,7 @@ jobs:
           ls -alR
 
       - name: "Upload signatures"
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: signatures
           path: "*.sigstore.json"

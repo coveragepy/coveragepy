@@ -9,6 +9,7 @@ import os
 import os.path
 import shutil
 from collections.abc import Iterable
+from contextlib import chdir
 from pathlib import Path
 from typing import cast
 
@@ -17,7 +18,7 @@ import pytest
 from coverage import env
 from tests import testenv
 from tests.coveragetest import COVERAGE_INSTALL_ARGS, CoverageTest
-from tests.helpers import change_dir, make_file, re_lines, run_command
+from tests.helpers import make_file, re_lines, run_command
 
 
 def run_in_venv(cmd: str) -> str:
@@ -48,7 +49,7 @@ def venv_world_fixture(tmp_path_factory: pytest.TempPathFactory) -> Path:
     """
 
     venv_world = tmp_path_factory.mktemp("venv_world")
-    with change_dir(venv_world):
+    with chdir(venv_world):
         # Create a virtualenv.
         run_command("python -m venv venv")
 
@@ -203,6 +204,7 @@ def coverage_command_fixture(request: pytest.FixtureRequest) -> str:
     bool(os.getenv("COVERAGE_PIP_ARGS")),
     reason="COVERAGE_PIP_ARGS setting means we shouldn't try pip",
 )
+@pytest.mark.xfail(testenv.NO_NETWORK, reason="Installing packages needs the network")
 class VirtualenvTest(CoverageTest):
     """Tests of virtualenv considerations."""
 
@@ -211,7 +213,7 @@ class VirtualenvTest(CoverageTest):
     @pytest.fixture(autouse=True)
     def in_venv_world_fixture(self, venv_world: Path) -> Iterable[None]:
         """For running tests inside venv_world, and cleaning up made files."""
-        with change_dir(venv_world):
+        with chdir(venv_world):
             self.make_file(
                 "myproduct.py",
                 """\

@@ -239,11 +239,11 @@ class DynamicContextTest(CoverageTest):
 def get_qualname() -> str | None:
     """Helper to return qualname_from_frame for the caller."""
     stack = inspect.stack()[1:]
-    if any(sinfo[0].f_code.co_name == "get_qualname" for sinfo in stack):
+    if any(sinfo.frame.f_code.co_name == "get_qualname" for sinfo in stack):
         # We're calling ourselves recursively, maybe because we're testing
         # properties. Return an int to try to get back on track.
         return 17  # type: ignore[return-value]
-    caller_frame = stack[0][0]
+    caller_frame = stack[0].frame
     return qualname_from_frame(caller_frame)
 
 

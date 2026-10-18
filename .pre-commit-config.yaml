@@ -11,12 +11,11 @@ repos:
       - id: check-xml
       - id: check-yaml
       - id: end-of-file-fixer
-        exclude: "(status\\.json|\\.min\\.js)$"
       - id: trailing-whitespace
         exclude: "stress_phystoken|\\.py,cover$"
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.16.10
+    rev: v0.17.1
     hooks:
       - id: ruff-format
 

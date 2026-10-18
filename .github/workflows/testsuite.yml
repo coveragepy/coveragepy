@@ -36,6 +36,7 @@ jobs:
       pull-requests: read   # Needed for this check to run on pull requests
     outputs:
       run_tests: ${{ steps.filter.outputs.run_tests }}
+      run_js_tests: ${{ steps.filter.outputs.run_js_tests }}
     steps:
       - name: "Check out the repo"
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -57,6 +58,12 @@ jobs:
               - "tox.ini"
               - "requirements/*.txt"
               - "tests/gold/**"
+            run_js_tests:
+              - "coverage/htmlfiles/*.js"
+              - "tests/js/**"
+              - ".github/workflows/testsuite.yml"
+              - "tox.ini"
+              - "requirements/js.txt"
 
   tests:
     name: "${{ matrix.python-version }} on ${{ matrix.os }}"
@@ -159,6 +166,40 @@ jobs:
           # `exit 1` makes sure that the job remains red with flaky runs
           python -m tox -- -rfsEX --lf -vvvvv && exit 1
 
+  js_tests:
+    name: "JavaScript tests"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    # Don't run tests if the branch name includes "-notests".
+    # Only run tests if files that affect the JavaScript tests have changed.
+    needs: changed
+    if:
+      needs.changed.outputs.run_js_tests == 'true'
+      && !contains(github.ref, '-notests')
+
+    steps:
+      - name: "Check out the repo"
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: "Set up Python"
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.11" # Minimum of PYVERSIONS
+          cache: pip
+          cache-dependency-path: 'requirements/*.txt'
+
+      - name: "Install dependencies"
+        run: |
+          set -xe
+          python -m pip install -r requirements/tox.txt
+
+      - name: "Run the JavaScript tests"
+        run: |
+          python -m tox -e js
+
   # This job aggregates test results. It's the required check for branch protection.
   # https://github.com/marketplace/actions/alls-green#why
   # https://github.com/orgs/community/discussions/33579
@@ -166,6 +207,7 @@ jobs:
     name: "Tests successful"
     needs:
       - tests
+      - js_tests
     # Without this, GitHub skips this job when `tests` doesn't succeed, so the
     # gate reports "skipped" instead of failing.  `allowed-skips` keeps the
     # deliberate skips (-notests branches, no test-relevant files) passing.
@@ -176,4 +218,4 @@ jobs:
         uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
         with:
           jobs: ${{ toJSON(needs) }}
-          allowed-skips: tests
+          allowed-skips: tests, js_tests

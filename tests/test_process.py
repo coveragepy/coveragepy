@@ -17,6 +17,7 @@ import signal
 import stat
 import sys
 import textwrap
+from contextlib import chdir
 from pathlib import Path
 from typing import Any
 
@@ -30,7 +31,7 @@ from coverage.misc import first
 from coverage.sqldata import good_filename_match
 from tests import testenv
 from tests.coveragetest import TESTS_DIR, CoverageTest
-from tests.helpers import change_dir, re_lines, re_lines_text
+from tests.helpers import re_lines, re_lines_text
 
 
 class ProcessTest(CoverageTest):
@@ -1583,7 +1584,7 @@ class ProcessStartupTest(CoverageTest):
             """,
         )
         self.set_environ("PYTHONPATH", os.path.abspath("lib"))
-        with change_dir("main"):
+        with chdir("main"):
             out = self.run_command("coverage run main.py")
             assert out == "Other\nHello, world!\n"
             self.run_command("coverage combine")
