@@ -630,7 +630,7 @@ class HtmlTest(HtmlTestHelpers, CoverageTest):
         connect = sqlite3.connect
 
         def connect_and_remember(*args: Any, **kwargs: Any) -> sqlite3.Connection:
-            con = connect(*args, **kwargs)
+            con: sqlite3.Connection = connect(*args, **kwargs)
             connections.append(con)
             return con
 
