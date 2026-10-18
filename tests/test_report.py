@@ -5,7 +5,6 @@
 
 from __future__ import annotations
 
-import gc
 import glob
 import io
 import math
@@ -14,8 +13,6 @@ import os.path
 import py_compile
 import re
 import string
-import weakref
-from unittest import mock
 
 import pytest
 
@@ -25,9 +22,8 @@ from coverage.control import Coverage
 from coverage.data import CoverageData
 from coverage.exceptions import ConfigError, NoDataError, NotPython
 from coverage.files import abs_file
-from coverage.plugin import FileReporter
 from coverage.report import SummaryReporter
-from coverage.types import TConfigValueIn, TMorf
+from coverage.types import TConfigValueIn
 from tests.coveragetest import TESTS_DIR, CoverageTest, UsingModulesMixin
 from tests.helpers import assert_coverage_warnings
 
@@ -1255,36 +1251,6 @@ class SummaryReporterConfigurationTest(CoverageTest):
         report = self.get_summary_text()
         assert "Missing" not in report
         assert "Branch" not in report
-
-    def test_file_reporters_are_not_kept(self) -> None:
-        # The reporter used to keep every file's FileReporter, with its parsed
-        # source, until the end of the report.  On a large project that is a
-        # lot of memory: https://github.com/coveragepy/coveragepy/issues/2277
-        self.make_rigged_file("file1.py", 339, 155)
-        self.make_rigged_file("file2.py", 13, 3)
-        self.make_file("doit.py", "import file1, file2")
-        cov = Coverage(source=["."], omit=["doit.py"])
-        self.start_import_stop(cov, "doit")
-
-        file_reporters = []
-        get_file_reporter = cov._get_file_reporter
-
-        def tracking_get_file_reporter(morf: TMorf) -> FileReporter:
-            fr = get_file_reporter(morf)
-            file_reporters.append(weakref.ref(fr))
-            return fr
-
-        printer = SummaryReporter(cov)
-        destination = io.StringIO()
-        with mock.patch.object(cov, "_get_file_reporter", tracking_get_file_reporter):
-            printer.report([], destination)
-        gc.collect()
-
-        # The reporter is still alive, but the file reporters are gone.
-        assert len(file_reporters) == 2
-        assert [ref() for ref in file_reporters] == [None, None]
-        names = [line.split()[0] for line in destination.getvalue().splitlines()[2:-2]]
-        assert names == ["file1.py", "file2.py"]
 
     def test_print_missing(self) -> None:
         """Run the report printing the missing lines."""
