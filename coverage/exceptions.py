@@ -30,43 +30,29 @@ class CoverageException(Exception):
 class ConfigError(CoverageException):
     """A problem with a config file, or a value in one."""
 
-    pass
-
 
 class DataError(CoverageException):
     """An error in using a data file."""
-
-    pass
 
 
 class NoDataError(CoverageException):
     """We didn't have data to work with."""
 
-    pass
-
 
 class NoSource(CoverageException):
     """We couldn't find the source for a module."""
-
-    pass
 
 
 class NoCode(NoSource):
     """We couldn't find any code at all."""
 
-    pass
-
 
 class NotPython(CoverageException):
     """A source file turned out not to be parsable Python."""
 
-    pass
-
 
 class PluginError(CoverageException):
     """A plugin misbehaved."""
-
-    pass
 
 
 class _ExceptionDuringRun(CoverageException):
@@ -76,10 +62,6 @@ class _ExceptionDuringRun(CoverageException):
 
     """
 
-    pass
-
 
 class CoverageWarning(Warning):
     """A warning from Coverage.py."""
-
-    pass

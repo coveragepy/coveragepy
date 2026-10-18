@@ -14,7 +14,6 @@ import py_compile
 import re
 import string
 
-
 import pytest
 
 import coverage
@@ -25,8 +24,7 @@ from coverage.exceptions import ConfigError, NoDataError, NotPython
 from coverage.files import abs_file
 from coverage.report import SummaryReporter
 from coverage.types import TConfigValueIn
-
-from tests.coveragetest import CoverageTest, TESTS_DIR, UsingModulesMixin
+from tests.coveragetest import TESTS_DIR, CoverageTest, UsingModulesMixin
 from tests.helpers import assert_coverage_warnings
 
 
@@ -1220,7 +1218,7 @@ class SummaryReporterConfigurationTest(CoverageTest):
         # TOTAL        586    386    34%
         lines = report.splitlines()[2:-2]
         assert len(lines) == 3
-        nums = [list(map(int, l.replace("%", "").split()[1:])) for l in lines]
+        nums = [list(map(int, line.replace("%", "").split()[1:])) for line in lines]
         # [
         #  [339, 155, 54],
         #  [ 13,   3, 77],

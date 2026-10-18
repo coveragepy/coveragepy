@@ -12,7 +12,6 @@ import pytest
 
 from coverage import env
 from coverage.python import get_zip_bytes, source_for_file
-
 from tests.coveragetest import CoverageTest
 from tests.helpers import os_sep
 

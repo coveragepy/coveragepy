@@ -7,24 +7,21 @@ from __future__ import annotations
 
 import json
 import sqlite3
-
 from collections.abc import Iterable
 
 from coverage import env
+from coverage.misc import first
 from coverage.numbits import (
-    nums_to_numbits,
+    num_in_numbits,
+    numbits_any_intersection,
+    numbits_intersection,
     numbits_to_nums,
     numbits_union,
-    numbits_intersection,
-    numbits_any_intersection,
-    num_in_numbits,
+    nums_to_numbits,
     register_sqlite_functions,
 )
-
 from tests.coveragetest import CoverageTest
-from tests.hypo import example, given, settings
-from tests.hypo import sets, integers
-
+from tests.hypo import example, given, integers, sets, settings
 
 # Hypothesis-generated line number data
 line_numbers = integers(min_value=1, max_value=9999)
@@ -152,7 +149,7 @@ class NumbitsSqliteFunctionTest(CoverageTest):
             98,
             99,
         ]
-        answer = numbits_to_nums(list(res)[0][0])
+        answer = numbits_to_nums(first(res)[0])
         assert expected == answer
 
     def test_numbits_union_aggregate(self) -> None:
@@ -160,7 +157,7 @@ class NumbitsSqliteFunctionTest(CoverageTest):
             "select numbits_union_agg(numbits) from data where id in (7, 9)",
         )
         expected = set(range(7, 100, 7)) | set(range(9, 100, 9))
-        answer = set(numbits_to_nums(list(res)[0][0]))
+        answer = set(numbits_to_nums(first(res)[0]))
         assert expected == answer
 
     def test_numbits_intersection(self) -> None:
@@ -170,7 +167,7 @@ class NumbitsSqliteFunctionTest(CoverageTest):
             + "(select numbits from data where id = 9)"
             + ")",
         )
-        answer = numbits_to_nums(list(res)[0][0])
+        answer = numbits_to_nums(first(res)[0])
         assert [63] == answer
 
     def test_numbits_any_intersection(self) -> None:

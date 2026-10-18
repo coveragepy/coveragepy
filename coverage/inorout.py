@@ -539,10 +539,7 @@ class InOrOut:
                     warned.add(filename)
                 elif self.debug and self.debug.should("trace"):
                     self.debug.write(
-                        "Didn't trace already imported file {!r}: {}".format(
-                            disp.original_filename,
-                            disp.reason,
-                        ),
+                        f"Didn't trace already imported file {disp.original_filename!r}: {disp.reason}",
                     )
 
     def warn_unimported_source(self) -> None:

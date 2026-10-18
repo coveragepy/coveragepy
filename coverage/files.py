@@ -237,7 +237,7 @@ class Matcher(abc.ABC):
         return f"<{self.__class__.__name__} {self.name} {self.strs!r}>"
 
     @abc.abstractmethod
-    def match(self, s: str) -> bool:
+    def match(self, s: str, /) -> bool:
         """Does this string match?"""
 
     def info(self) -> list[str]:
@@ -270,7 +270,7 @@ class TreeMatcher(Matcher):
                 debug(f"        Normalized {p!r} to {ap!r}")
             self.paths.append(ap)
 
-    def match(self, fpath: str) -> bool:  # pylint: disable=arguments-renamed
+    def match(self, fpath: str, /) -> bool:
         """Does `fpath` indicate a file in one of our trees?"""
         fpath = abs_file(fpath)
         for p in self.paths:
@@ -297,7 +297,7 @@ class ModuleMatcher(Matcher):
         self.modules = list(module_names)
         super().__init__(self.modules, name=name, caption=caption, debug=debug)
 
-    def match(self, module_name: str) -> bool:  # pylint: disable=arguments-renamed
+    def match(self, module_name: str, /) -> bool:
         """Does `module_name` indicate a module in one of our packages?"""
         if not module_name:
             return False
@@ -327,7 +327,7 @@ class GlobMatcher(Matcher):
         super().__init__(self.pats, name=name, caption=caption, debug=debug)
         self.re = globs_to_regex(self.pats, case_insensitive=env.WINDOWS)
 
-    def match(self, fpath: str) -> bool:  # pylint: disable=arguments-renamed
+    def match(self, fpath: str, /) -> bool:
         """Does `fpath` match one of our file name patterns?"""
         return self.re.match(fpath) is not None
 
@@ -506,7 +506,7 @@ class PathAliases:
 
         for original_pattern, regex, result in self.aliases:
             if m := regex.match(path):
-                new = path.replace(m[0], result)
+                new = path.replace(m[0], result, 1)
                 new = new.replace(sep(path), sep(result))
                 if not self.relative:
                     new = canonical_filename(new)

@@ -8,9 +8,8 @@ from __future__ import annotations
 import os
 import os.path
 import re
-
-from typing import Any
 from collections.abc import Iterable
+from typing import Any
 from xml.etree import ElementTree
 
 import pytest
@@ -21,7 +20,6 @@ from coverage import Coverage, env
 from coverage.exceptions import NoDataError
 from coverage.files import abs_file
 from coverage.misc import import_local_file
-
 from tests.coveragetest import CoverageTest
 from tests.goldtest import compare, gold_path
 from tests.helpers import assert_coverage_warnings, change_dir

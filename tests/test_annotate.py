@@ -5,8 +5,9 @@
 
 from __future__ import annotations
 
-import coverage
+import os
 
+import coverage
 from tests.coveragetest import CoverageTest
 from tests.goldtest import compare, gold_path
 
@@ -60,6 +61,16 @@ class AnnotationGoldTest(CoverageTest):
         self.start_import_stop(cov, "multi")
         cov.annotate(directory="out_anno_dir")
         compare(gold_path("annotate/anno_dir"), "out_anno_dir", "*,cover")
+
+    def test_annotate_dir_pyw(self) -> None:
+        # A .pyw file has an extension other than .py, and annotating it into a
+        # directory used to raise an AssertionError.
+        self.make_file("main.py", "print('hello')\n")
+        self.make_file("mod.pyw", "print('never run')\n")
+        cov = coverage.Coverage(source=["."])
+        self.start_import_stop(cov, "main")
+        cov.annotate(directory="out_anno_dir")
+        assert sorted(os.listdir("out_anno_dir")) == ["main.py,cover", "mod.pyw,cover"]
 
     def test_encoding(self) -> None:
         self.make_file(

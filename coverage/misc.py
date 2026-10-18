@@ -285,6 +285,14 @@ def substitute_variables(text: str, variables: Mapping[str, str]) -> str:
     return text
 
 
+T = TypeVar("T")
+
+
+def first(it: Iterable[T]) -> T:
+    """Return the first value from an iterable."""
+    return next(iter(it))
+
+
 def format_local_datetime(dt: datetime.datetime) -> str:
     """Return a string with local timezone representing the date."""
     return dt.astimezone().strftime("%Y-%m-%d %H:%M %z")

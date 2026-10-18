@@ -24,10 +24,10 @@ import threading
 import uuid
 import zlib
 from collections.abc import Callable, Collection, Iterator, Mapping, Sequence
-from typing import Any, cast
+from typing import Any, Concatenate, ParamSpec, TypeAlias, TypeVar, cast
 
 from coverage.debug import NoDebugging, auto_repr, file_summary
-from coverage.exceptions import CoverageException, DataError
+from coverage.exceptions import ConfigError, CoverageException, DataError
 from coverage.misc import Hasher, file_be_gone, isolate_module
 from coverage.numbits import (
     numbits_to_nums,
@@ -36,7 +36,7 @@ from coverage.numbits import (
     register_sqlite_functions,
 )
 from coverage.sqlitedb import SqliteDb
-from coverage.types import AnyCallable, FilePath, TArc, TDebugCtl, TLineNo, TWarnFn
+from coverage.types import FilePath, TArc, TDebugCtl, TLineNo, TWarnFn
 from coverage.version import __version__
 
 os = isolate_module(os)
@@ -119,11 +119,16 @@ SCHEMA = textwrap.dedent("""\
     """)
 
 
-def _locked(method: AnyCallable) -> AnyCallable:
+P = ParamSpec("P")
+R = TypeVar("R")
+S = TypeVar("S", bound="CoverageData")
+CovDataMethod: TypeAlias = Callable[Concatenate[S, P], R]
+
+
+def _locked(method: CovDataMethod[S, P, R]) -> CovDataMethod[S, P, R]:
     """A decorator for methods that should hold self._lock."""
 
-    @functools.wraps(method)
-    def _wrapped(self: CoverageData, *args: Any, **kwargs: Any) -> Any:
+    def _wrapped(self: S, /, *args: P.args, **kwargs: P.kwargs) -> R:
         if self._debug.should("lock"):
             self._debug.write(f"Locking {self._lock!r} for {method.__name__}")
         with self._lock:
@@ -131,6 +136,7 @@ def _locked(method: AnyCallable) -> AnyCallable:
                 self._debug.write(f"Locked {self._lock!r} for {method.__name__}")
             return method(self, *args, **kwargs)
 
+    functools.update_wrapper(_wrapped, method)
     return _wrapped
 
 
@@ -426,7 +432,7 @@ class CoverageData:
         Returns:
             A byte string of serialized data.
 
-        .. versionadded:: 5.0
+        .. version-added:: 5.0
 
         """
         self._debug_dataio("Dumping data from data file", self._filename)
@@ -446,7 +452,7 @@ class CoverageData:
         Arguments:
             data: A byte string of serialized data produced by :meth:`dumps`.
 
-        .. versionadded:: 5.0
+        .. version-added:: 5.0
 
         """
         self._debug_dataio("Loading data into data file", self._filename)
@@ -488,20 +494,26 @@ class CoverageData:
                 return None
 
     @_locked
-    def set_context(self, context: str | None) -> None:
+    def set_context(self, context: str | None) -> str | None:
         """Set the current context for future :meth:`add_lines` etc.
 
         `context` is a str, the name of the context to use for the next data
         additions.  The context persists until the next :meth:`set_context`.
 
-        .. versionadded:: 5.0
+        Returns the previous context.
+
+        .. version-added:: 5.0
+        .. version-changed:: 7.16
+           Now returns the previous context.
 
         """
         if self._debug.should("dataop"):
             self._debug.write(f"Setting coverage context: {context!r}")
+        old_context = self._current_context
         self._current_context = context
         self._current_context_id = None
         self._hasher.update(context)
+        return old_context
 
     def _set_context_id(self) -> None:
         """Use the _current_context to set _current_context_id."""
@@ -518,7 +530,7 @@ class CoverageData:
     def base_filename(self) -> str:
         """The base filename for storing data.
 
-        .. versionadded:: 5.0
+        .. version-added:: 5.0
 
         """
         return self._basename
@@ -526,7 +538,7 @@ class CoverageData:
     def data_filename(self) -> str:
         """Where is the data stored?
 
-        .. versionadded:: 5.0
+        .. version-added:: 5.0
 
         """
         return self._filename
@@ -689,7 +701,7 @@ class CoverageData:
     def purge_files(self, filenames: Collection[str]) -> None:
         """Purge any existing coverage data for the given `filenames`.
 
-        .. versionadded:: 7.2
+        .. version-added:: 7.2
 
         """
         if self._debug.should("dataop"):
@@ -733,8 +745,6 @@ class CoverageData:
                 "Can't combine statement coverage data with branch data", slug="cant-combine"
             )
 
-        map_path = map_path or (lambda p: p)
-
         # Force the database we're writing to to exist before we start nesting contexts.
         self._start_using()
         other_data.read()
@@ -749,7 +759,14 @@ class CoverageData:
 
             # Register functions for SQLite
             register_sqlite_functions(con.con)
-            con.con.create_function("map_path", 1, map_path)
+
+            def map_with_fixed_slashes(p: str) -> str:
+                if map_path is not None:
+                    p = map_path(p)
+                p = re.sub(r"[/\\]", re.escape(os.sep), p)
+                return p
+
+            con.con.create_function("map_path", 1, map_with_fixed_slashes)
 
             # Attach the other database
             con.execute_void("ATTACH DATABASE ? AS other_db", (other_data.data_filename(),))
@@ -875,6 +892,13 @@ class CoverageData:
                 INNER JOIN main.file AS main_file ON other_file_mapped.mapped_path = main_file.path
             """)
 
+            # Clean up in case we'll use update() again.
+            con.execute_void("DROP TABLE other_file_mapped")
+            if has_arcs:
+                con.execute_void("DROP TABLE context_mapping")
+            con.con.commit()
+            con.execute_void("DETACH DATABASE other_db")
+
         if not self._no_disk:
             # Update all internal cache data.
             self._reset()
@@ -952,7 +976,7 @@ class CoverageData:
     def measured_contexts(self) -> set[str]:
         """A set of all contexts that have been measured.
 
-        .. versionadded:: 5.0
+        .. version-added:: 5.0
 
         """
         self._start_using()
@@ -987,7 +1011,7 @@ class CoverageData:
         must match a context exactly.  If it does not, no exception is raised,
         but queries will return no data.
 
-        .. versionadded:: 5.0
+        .. version-added:: 5.0
 
         """
         self._start_using()
@@ -1004,11 +1028,16 @@ class CoverageData:
         :func:`re.search <python:re.search>`.  Data will be included in query
         results if they are part of any of the contexts matched.
 
-        .. versionadded:: 5.0
+        .. version-added:: 5.0
 
         """
         self._start_using()
         if contexts:
+            for context in contexts:
+                try:
+                    re.compile(context)
+                except re.error as e:
+                    raise ConfigError(f"Invalid context regex {context!r}: {e}") from e
             with self._connect() as con:
                 context_clause = " or ".join(["context REGEXP ?"] * len(contexts))
                 with con.execute("SELECT id FROM context WHERE " + context_clause, contexts) as cur:
@@ -1031,7 +1060,7 @@ class CoverageData:
             arcs = self.arcs(filename)
             if arcs is not None:
                 all_lines = itertools.chain.from_iterable(arcs)
-                return list({l for l in all_lines if l > 0})
+                return list({lineno for lineno in all_lines if lineno > 0})
 
         with self._connect() as con:
             file_id = self._file_id(filename)
@@ -1089,7 +1118,7 @@ class CoverageData:
         Returns:
             A dict mapping line numbers to a list of context names.
 
-        .. versionadded:: 5.0
+        .. version-added:: 5.0
 
         """
         self._start_using()

@@ -6,7 +6,7 @@
 The CoverageData class
 ----------------------
 
-.. versionadded:: 4.0
+.. version-added:: 4.0
 
 .. autoclass:: coverage.CoverageData
     :members:

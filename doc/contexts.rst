@@ -17,7 +17,7 @@
 Measurement contexts
 ====================
 
-.. versionadded:: 5.0
+.. version-added:: 5.0
 
 Coverage.py measures whether code was run, but it can also record the context
 in which it was run.  This can provide more information to help you understand

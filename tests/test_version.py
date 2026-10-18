@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import coverage
 from coverage.version import _make_version
-
 from tests.coveragetest import CoverageTest
 
 

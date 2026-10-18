@@ -92,7 +92,7 @@ For branch coverage, these kinds of branches are automatically excluded:
 
 - A branch just for type checkers: ``if TYPE_CHECKING:``.
 
-.. versionadded:: 7.10.0 the ``...`` and ``TYPE_CHECKING`` defaults.
+.. version-added:: 7.10.0 the ``...`` and ``TYPE_CHECKING`` defaults.
 
 
 Advanced exclusion
@@ -292,7 +292,7 @@ which is certainly not what you want to exclude.
 Multi-line exclusion regexes
 ----------------------------
 
-.. versionadded:: 7.6.0
+.. version-added:: 7.6.0
 
 Exclusion regexes can match multi-line regions.  All of the lines in a matched
 region will be excluded.  If part of the region introduces a block, the entire

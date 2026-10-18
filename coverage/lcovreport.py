@@ -19,6 +19,19 @@ if TYPE_CHECKING:
     from coverage import Coverage
 
 
+def lcov_field(text: str) -> str:
+    """Make `text` safe to write as a field in a single LCOV record.
+
+    LCOV records are newline-delimited and the format has no escaping, so a
+    value carrying a newline (a legal character in a POSIX file name) would
+    spill into fabricated records. Replace any control characters, which can't
+    appear in a valid one-line field, and leave printable text untouched.
+    """
+    if text.isprintable():
+        return text
+    return "".join(ch if ch.isprintable() else "?" for ch in text)
+
+
 def line_hash(line: str) -> str:
     """Produce a hash of a source line for use in the LCOV file."""
     # The LCOV file format optionally allows each line to be MD5ed as a
@@ -97,8 +110,9 @@ def lcov_functions(
         hit = int(analysis.numbers.n_executed > 0)
         functions_hit += hit
 
-        outfile.write(f"FN:{first_line},{last_line},{region.name}\n")
-        outfile.write(f"FNDA:{hit},{region.name}\n")
+        name = lcov_field(region.name)
+        outfile.write(f"FN:{first_line},{last_line},{name}\n")
+        outfile.write(f"FNDA:{hit},{name}\n")
 
     outfile.write(f"FNF:{functions_found}\n")
     outfile.write(f"FNH:{functions_hit}\n")
@@ -145,7 +159,7 @@ def lcov_arcs(
         destinations.sort(key=lambda d: (d[0] < 0, d))
 
         for dst, hit in destinations:
-            branch = fr.arc_description(line, dst)
+            branch = lcov_field(fr.arc_description(line, dst))
             outfile.write(f"BRDA:{line},0,{branch},{hit}\n")
 
     # Summary of the branch coverage.
@@ -207,7 +221,7 @@ class LcovReporter:
             if self.config.skip_empty:
                 return
 
-        outfile.write(f"SF:{rel_fname}\n")
+        outfile.write(f"SF:{lcov_field(rel_fname)}\n")
 
         lines = sorted(analysis.statements)
         if self.config.lcov_line_checksums:

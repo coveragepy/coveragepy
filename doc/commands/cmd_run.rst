@@ -148,7 +148,7 @@ If you are specifying ``--save-signal``, please make sure that your program
 doesn't intercept this signal. If it does, coverage won't receive the signal
 and the data file will not be written.
 
-.. versionadded:: 7.10 ``--save-signal``
+.. version-added:: 7.10 ``--save-signal``
 
 Coverage.py sets an environment variable, ``COVERAGE_RUN`` to indicate that
 your code is running under coverage measurement.  The value is not relevant,

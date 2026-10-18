@@ -75,9 +75,13 @@ class AnnotateReporter:
 
         if self.directory:
             ensure_dir(self.directory)
-            dest_file = os.path.join(self.directory, flat_rootname(fr.relative_filename()))
-            assert dest_file.endswith("_py")
-            dest_file = dest_file[:-3] + ".py"
+            rel_fname = fr.relative_filename()
+            dest_file = os.path.join(self.directory, flat_rootname(rel_fname))
+            # flat_rootname turned the dot of the extension into an underscore.
+            # Put the original extension back, whatever it is: .py, .pyw, or
+            # something a plugin measures.
+            ext = os.path.splitext(rel_fname)[1]
+            dest_file = dest_file[: len(dest_file) - len(ext)] + ext
         else:
             dest_file = fr.filename
         dest_file += ",cover"

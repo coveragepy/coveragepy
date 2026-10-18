@@ -106,6 +106,10 @@ RETURNS = op_set(
     "RETURN_GENERATOR",
 )
 
+# Opcodes that do not fall through. The bytecode after them belongs to
+# another path (for example the swallowed-exception side of a with).
+NO_FALL_THROUGH = op_set("RERAISE")
+
 
 # CACHE doesn't exist in Python 3.10, but the branch resolver is only used
 # on 3.14+, so a placeholder value is fine.
@@ -203,6 +207,8 @@ class BranchArcResolver:
                 return None
             if op in RETURNS:
                 return (from_line, -self.code.co_firstlineno)
+            if op in NO_FALL_THROUGH:
+                return None
             ext_arg = 0
             offset += 2
         return None

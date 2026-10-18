@@ -32,17 +32,12 @@
     - Check that the docs build correctly:
         $ tox -e doc
 - commit the release-prep changes
-    $ make relcommit1
-- Generate new sample_html to get the latest, incl footer version number:
+    $ make relcommit
+- Generate new sample_html to get the latest, and publish:
     - IF PRE-RELEASE:
-        $ make sample_html_beta relcommit2 install
+        $ make sample_html_beta install publishbeta
     - IF NOT PRE-RELEASE:
-        $ make sample_html relcommit2 install
-- Build and publish docs:
-    - IF PRE-RELEASE:
-        $ make publishbeta
-    - ELSE:
-        $ make publish
+        $ make sample_html install publish
     - commit and publish nedbatchelder.com
 - Done with changes to source files
     $ g puo; gshipit
@@ -81,9 +76,7 @@ $ deopvars
 ### Pushing changes to pull requests
 
 withop github gh pr checkout 2206
-    opvars github
-    gh pr checkout 2206
 .. edit files..
 g ci -am "etc"
-git -c credential.helper='!gh auth git-credential' push
+withop github git -c credential.helper='!gh auth git-credential' push
 g ma; g brdel-

@@ -24,7 +24,7 @@ from coverage.control import DEFAULT_DATAFILE
 from coverage.core import CTRACER_FILE
 from coverage.data import CoverageData, combinable_files, debug_data_file
 from coverage.debug import info_header, short_stack, write_formatted_info
-from coverage.exceptions import NoSource, CoverageException, _ExceptionDuringRun
+from coverage.exceptions import CoverageException, NoSource, _ExceptionDuringRun
 from coverage.execfile import PyRunner
 from coverage.results import display_covered, should_fail_under
 from coverage.version import __url__
@@ -432,8 +432,6 @@ class CoverageOptionParser(optparse.OptionParser):
     class OptionParserError(Exception):
         """Used to stop the optparse error handler ending the process."""
 
-        pass
-
     def parse_args_ok(self, args: list[str]) -> tuple[bool, optparse.Values | None, list[str]]:
         """Call optparse.parse_args, but return a triple:
 
@@ -753,8 +751,7 @@ def show_help(
         # coverage-3.5-script.py.  argv[0] is the .py file, but we want to
         # get back to the original form.
         auto_suffix = "-script.py"
-        if program_name.endswith(auto_suffix):
-            program_name = program_name[: -len(auto_suffix)]
+        program_name = program_name.removesuffix(auto_suffix)
 
     help_params = dict(coverage.__dict__)
     help_params["__url__"] = __url__
@@ -1020,7 +1017,7 @@ class CoverageScript:
             show_help("Can't append to data files in parallel mode.")
             return ERR
 
-        if options.concurrency == "multiprocessing":
+        if "multiprocessing" in (options.concurrency or "").split(","):
             # Can't set other run-affecting command line options with
             # multiprocessing.
             for opt_name in ["branch", "include", "omit", "pylib", "source", "timid"]:

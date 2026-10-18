@@ -771,6 +771,19 @@ CTracer_handle_return(CTracer *self, PyFrameObject *frame)
             real_return = !(is_yield || is_yield_from);
 #endif
             if (real_return) {
+#if PY_VERSION_HEX >= 0x030E0000
+                /* Python 3.14 can report a new line only on the return event. */
+                int return_line = PyFrame_GetLineNumber(frame);
+                if (
+                    self->pcur_entry->file_tracer == Py_None &&
+                    return_line != self->pcur_entry->last_line
+                ) {
+                    if (CTracer_record_pair(self, self->pcur_entry->last_line, return_line) < 0) {
+                        goto error;
+                    }
+                    self->pcur_entry->last_line = return_line;
+                }
+#endif
                 int first = MyFrame_BorrowCode(frame)->co_firstlineno;
                 if (CTracer_record_pair(self, self->pcur_entry->last_line, -first) < 0) {
                     goto error;

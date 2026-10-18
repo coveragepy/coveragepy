@@ -9,7 +9,6 @@ import inspect
 import io
 import math
 import os.path
-
 from collections.abc import Iterable
 from typing import Any
 from xml.etree import ElementTree
@@ -17,15 +16,13 @@ from xml.etree import ElementTree
 import pytest
 
 import coverage
+import coverage.plugin
 from coverage import Coverage
-from coverage.plugin_support import Plugins
 from coverage.data import line_counts, sorted_lines
 from coverage.exceptions import CoverageWarning, NoSource, PluginError
 from coverage.misc import import_local_file
+from coverage.plugin_support import Plugins
 from coverage.types import TConfigSectionOut, TLineNo, TPluginConfig
-
-import coverage.plugin
-
 from tests import testenv
 from tests.coveragetest import CoverageTest
 from tests.helpers import CheckUniqueFilenames, swallow_warnings

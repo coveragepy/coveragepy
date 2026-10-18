@@ -11,7 +11,7 @@
 Coverage.py database schema
 ===========================
 
-.. versionadded:: 5.0
+.. version-added:: 5.0
 
 Coverage.py stores data in a SQLite database, by default called ``.coverage``.
 For most needs, the :class:`.CoverageData` API will be sufficient, and should

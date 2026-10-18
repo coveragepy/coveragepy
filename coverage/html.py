@@ -9,12 +9,14 @@ import collections
 import dataclasses
 import datetime
 import functools
+import itertools
 import json
 import os
 import re
 import string
 from collections.abc import Iterable
 from dataclasses import dataclass, field
+from html import escape
 from typing import TYPE_CHECKING, Any
 
 import coverage
@@ -274,12 +276,12 @@ class HtmlReporter:
 
     # These files will be copied from the htmlfiles directory to the output
     # directory.
-    STATIC_FILES = [
+    STATIC_FILES = (
         "style.css",
         "coverage_html.js",
         "keybd_closed.png",
         "favicon_32.png",
-    ]
+    )
 
     def __init__(self, cov: Coverage) -> None:
         self.coverage = cov
@@ -382,7 +384,7 @@ class HtmlReporter:
         self.make_local_static_report_files()
 
         if files_to_report:
-            for ftr1, ftr2 in zip(files_to_report[:-1], files_to_report[1:]):
+            for ftr1, ftr2 in itertools.pairwise(files_to_report):
                 ftr1.next_html = ftr2.html_filename
                 ftr2.prev_html = ftr1.html_filename
             files_to_report[0].prev_html = "index.html"
@@ -847,16 +849,6 @@ class IncrementalChecker:
 
 
 # Helpers for templates and generating HTML
-
-
-def escape(t: str) -> str:
-    """HTML-escape the text in `t`.
-
-    This is only suitable for HTML text, not attributes.
-
-    """
-    # Convert HTML special chars into HTML entities.
-    return t.replace("&", "&amp;").replace("<", "&lt;")
 
 
 def pair(ratio: tuple[int, int]) -> str:

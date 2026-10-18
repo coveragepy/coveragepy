@@ -16,7 +16,6 @@ Code coverage measurement for Python.
 |  |kit| |license| |versions|
 |  |test-status| |quality-status| |docs| |metacov|
 |  |tidelift| |sponsor| |stars| |mastodon-coveragepy| |mastodon-nedbat|
-   |bluesky-nedbat|
 
 Coverage.py measures code coverage, typically during test execution. It uses
 the code analysis tools and tracing hooks provided in the Python standard
@@ -26,7 +25,7 @@ Coverage.py runs on these versions of Python:
 
 .. PYVERSIONS
 
-* Python 3.10 through 3.15 beta, including free-threading.
+* Python 3.10 through 3.15 rc2, including free-threading.
 * PyPy3 versions 3.10 and 3.11.
 
 Documentation is on `Read the Docs`_.  Code repository and issue tracker are on
@@ -142,9 +141,6 @@ Licensed under the `Apache 2.0 License`_.  For details, see `NOTICE.txt`_.
 .. |mastodon-coveragepy| image:: https://img.shields.io/badge/dynamic/json?style=flat&labelColor=450657&logo=mastodon&logoColor=ffffff&label=@coveragepy&query=followers_count&url=https%3A%2F%2Fhachyderm.io%2Fapi%2Fv1%2Faccounts%2Flookup%3Facct=coveragepy
     :target: https://hachyderm.io/@coveragepy
     :alt: coveragepy on Mastodon
-.. |bluesky-nedbat| image:: https://img.shields.io/badge/dynamic/json?style=flat&color=96a3b0&labelColor=3686f7&logo=icloud&logoColor=white&label=@nedbat&url=https%3A%2F%2Fpublic.api.bsky.app%2Fxrpc%2Fapp.bsky.actor.getProfile%3Factor=nedbat.com&query=followersCount
-    :target: https://bsky.app/profile/nedbat.com
-    :alt: nedbat on Bluesky
 .. |sponsor| image:: https://img.shields.io/badge/%E2%9D%A4-Sponsor%20me-brightgreen?style=flat&logo=GitHub
     :target: https://github.com/sponsors/nedbat
     :alt: Sponsor me on GitHub

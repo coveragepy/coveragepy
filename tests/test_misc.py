@@ -12,14 +12,18 @@ from unittest import mock
 import pytest
 
 from coverage.exceptions import CoverageException
-from coverage.misc import file_be_gone
-from coverage.misc import Hasher, substitute_variables, import_third_party
-from coverage.misc import human_sorted, human_sorted_items, stdout_link
-
+from coverage.misc import (
+    Hasher,
+    file_be_gone,
+    human_sorted,
+    human_sorted_items,
+    import_third_party,
+    stdout_link,
+    substitute_variables,
+)
 from tests import testenv
 from tests.coveragetest import CoverageTest
 from tests.hypo import given
-
 
 # Make two sets which are equal but iterate differently.
 numset1 = set(range(20))

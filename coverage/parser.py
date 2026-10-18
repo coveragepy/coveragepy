@@ -13,7 +13,7 @@ import token
 import tokenize
 from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
-from typing import Optional, Protocol, cast
+from typing import Protocol, cast
 
 from coverage import env
 from coverage.bytecode import ByteParser
@@ -45,8 +45,8 @@ def multiline_map_from_tokens(tokens: Iterable[tokenize.TokenInfo]) -> dict[TLin
                 # We're at the end of a line, and we've ended on a
                 # different line than the first line of the statement,
                 # so record a multi-line range.
-                for l in range(first_line, elineno + 1):
-                    multiline_map[l] = first_line
+                for lineno in range(first_line, elineno + 1):
+                    multiline_map[lineno] = first_line
             first_line = 0
         if ttext.strip() and toktype != tokenize.COMMENT:
             # A non-white-space token, the first in a statement.
@@ -265,6 +265,16 @@ class PythonParser:
                 first_line = min((d.lineno for d in node.decorator_list), default=node.lineno)
                 if self.excluded.intersection(range(first_line, node.lineno + 1)):
                     self.excluded.update(range(first_line, cast(int, node.end_lineno) + 1))
+            # An irrefutable `case` (like `case _:`) is the `match` equivalent
+            # of an `else` clause.  If its whole body is excluded, exclude the
+            # `case` line too, so it isn't left behind as a missing statement.
+            # Refutable cases are left alone, the same way an `elif` line is
+            # still reported.  https://github.com/coveragepy/coveragepy/issues/1563
+            if isinstance(node, ast.match_case) and _case_is_irrefutable(node):
+                body_lines = range(node.body[0].lineno, cast(int, node.body[-1].end_lineno) + 1)
+                body_statements = self.raw_statements & set(body_lines)
+                if body_statements and body_statements <= self.excluded:
+                    self.excluded.update(range(node.pattern.lineno, node.pattern.end_lineno + 1))
 
     def first_line(self, lineno: TLineNo) -> TLineNo:
         """Return the first line number of the statement including `lineno`."""
@@ -284,7 +294,7 @@ class PythonParser:
         Returns a set of the first lines.
 
         """
-        return {self.first_line(l) for l in linenos}
+        return {self.first_line(lineno) for lineno in linenos}
 
     def translate_lines(self, lines: Iterable[TLineNo]) -> set[TLineNo]:
         """Implement `FileReporter.translate_lines`."""
@@ -519,9 +529,10 @@ class TAddArcFn(Protocol):
         10" or "exit from function 'fooey'."
 
         """
+        ...
 
 
-TArcFragments = dict[TArc, list[tuple[Optional[str], Optional[str]]]]
+TArcFragments = dict[TArc, list[tuple[str | None, str | None]]]
 
 
 class Block:
@@ -647,6 +658,24 @@ def walk_statement_nodes(root: ast.AST) -> Iterable[ast.AST]:
                 todo.append(child)
 
 
+def _case_is_irrefutable(case: ast.match_case) -> bool:
+    """Will this `case` clause always match, like `case _:` does?
+
+    An irrefutable case has a wildcard or bare-capture pattern and no guard,
+    so anything reaching it will match.  These are the `match` equivalent of
+    an `else` clause.
+
+    """
+    if case.guard is not None:
+        return False
+    pattern = case.pattern
+    while isinstance(pattern, ast.MatchOr):
+        pattern = pattern.patterns[-1]
+    while isinstance(pattern, ast.MatchAs) and pattern.pattern is not None:
+        pattern = pattern.pattern
+    return isinstance(pattern, ast.MatchAs) and pattern.pattern is None
+
+
 def is_constant_test_expr(node: ast.AST) -> tuple[bool, bool]:
     """Is this a compile-time constant test expression?
 
@@ -703,7 +732,7 @@ class AstArcAnalyzer:
     ) -> None:
         self.filename = filename
         self.root_node = root_node
-        self.statements = {multiline.get(l, l) for l in statements}
+        self.statements = {multiline.get(lineno, lineno) for lineno in statements}
         self.multiline = multiline
 
         # Turn on AST dumps with an environment variable.
@@ -878,19 +907,21 @@ class AstArcAnalyzer:
         return 1
 
     # The node types that just flow to the next node with no complications.
-    OK_TO_DEFAULT = {
-        "AnnAssign",
-        "Assign",
-        "Assert",
-        "AugAssign",
-        "Delete",
-        "Expr",
-        "Global",
-        "Import",
-        "ImportFrom",
-        "Nonlocal",
-        "Pass",
-    }
+    OK_TO_DEFAULT = frozenset(
+        (
+            "AnnAssign",
+            "Assign",
+            "Assert",
+            "AugAssign",
+            "Delete",
+            "Expr",
+            "Global",
+            "Import",
+            "ImportFrom",
+            "Nonlocal",
+            "Pass",
+        )
+    )
 
     def node_exits(self, node: ast.AST) -> set[ArcStart]:
         """Find the set of arc starts that exit this node.
@@ -1100,14 +1131,7 @@ class AstArcAnalyzer:
             last_start = case_start
 
         # case is now the last case, check for wildcard match.
-        pattern = case.pattern  # pylint: disable=undefined-loop-variable
-        while isinstance(pattern, ast.MatchOr):
-            pattern = pattern.patterns[-1]
-        while isinstance(pattern, ast.MatchAs) and pattern.pattern is not None:
-            pattern = pattern.pattern
-        had_wildcard = (
-            isinstance(pattern, ast.MatchAs) and pattern.pattern is None and case.guard is None  # pylint: disable=undefined-loop-variable
-        )
+        had_wildcard = _case_is_irrefutable(case)  # pylint: disable=undefined-loop-variable
 
         if not had_wildcard:
             exits.add(

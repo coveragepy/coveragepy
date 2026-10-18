@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import os
 import tempfile
-
 from pathlib import Path
 from unittest import mock
 
@@ -21,7 +20,6 @@ from coverage.config import CoverageConfig, HandyConfigParser
 from coverage.exceptions import ConfigError, CoverageWarning
 from coverage.tomlconfig import TomlConfigParser
 from coverage.types import FilePathClasses, FilePathType
-
 from tests.coveragetest import CoverageTest, UsingModulesMixin
 
 
@@ -301,6 +299,26 @@ class ConfigTest(CoverageTest):
             ('[tool.coverage.run]\nconcurrency="foo"', "not a list"),
             ("[tool.coverage.report]\nprecision=1.23", "not an integer"),
             ('[tool.coverage.report]\nfail_under="s"', "couldn't convert to a float"),
+            (
+                "[tool.coverage.run]\nomit=[1, 2]",
+                r"Option \[tool.coverage.run\]omit is not a list of strings: 1",
+            ),
+            (
+                "[tool.coverage.report]\nexclude_lines=[17]",
+                r"Option \[tool.coverage.report\]exclude_lines is not a list of strings: 17",
+            ),
+            (
+                "[tool.coverage.run]\ndata_file=3",
+                r"Option \[tool.coverage.run\]data_file is not a string: 3",
+            ),
+            (
+                '[tool.coverage.paths]\nsource="not-a-list"',
+                r"Option \[tool.coverage.paths\]source is not a list: 'not-a-list'",
+            ),
+            (
+                "[tool.coverage.paths]\nsource=[1, 2]",
+                r"Option \[tool.coverage.paths\]source is not a list of strings: 1",
+            ),
         ],
     )
     def test_toml_parse_errors(self, filename: str, bad_config: str, msg: str) -> None:

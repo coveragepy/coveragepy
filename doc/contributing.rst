@@ -66,13 +66,19 @@ these steps:
 #.  Install the requirements with either of these commands::
 
     $ make install
-    $ python3 -m pip install -r requirements/dev.pip
+    $ python3 -m pip install -r requirements/dev.txt
 
     Note: You may need to upgrade pip to install the requirements.
 
 
 Running the tests
 -----------------
+
+Most of the tests are for the Python code, but we also have JavaScript tests
+for the JavaScript in the HTML reports.
+
+Python tests
+............
 
 .. To get the test output:
     # Use the lowest of the PYVERSIONS
@@ -81,13 +87,15 @@ Running the tests
 
 .. with COVERAGE_ONE_CORE=
 
-The tests are written mostly as standard unittest-style tests, and are run with
-pytest running under `tox`_::
+The Python tests are a mix of unittest-style tests and pytest-style tests. They
+are run with pytest running under `tox`_. They will run automatically via
+GitHub actions when you push your changes to GitHub, but it's also a good idea
+to run them locally for faster feedback::
 
     % python3 -m tox -e py310
     py310: pip-26.0.1-py3-none-any.whl already present in /Users/ned/.cache/virtualenv/wheel/3.10/embed/3/pip.json
     py310: setuptools-82.0.1-py3-none-any.whl already present in /Users/ned/.cache/virtualenv/wheel/3.10/embed/3/setuptools.json
-    py310: install_deps> python -m pip install -U -r requirements/pip.pip -r requirements/pytest.pip -r requirements/light-threads.pip
+    py310: install_deps> python -m pip install -U -r requirements/pip.txt -r requirements/pytest.txt -r requirements/light-threads.txt
     .pkg: install_requires> python -I -m pip install setuptools
     .pkg: _optional_hooks> python /Users/ned/coverage/trunk/.venv/lib/python3.10/site-packages/pyproject_api/_backend.py True setuptools.build_meta
     .pkg: get_requires_for_build_sdist> python /Users/ned/coverage/trunk/.venv/lib/python3.10/site-packages/pyproject_api/_backend.py True setuptools.build_meta
@@ -221,6 +229,14 @@ as a simple terminal interface to see and set them.
 Of course, run all the tests on every version of Python you have before
 submitting a change.
 
+JavaScript tests
+................
+
+The JavaScript tests are run by loading tests/js/index.html in a web browser.
+You should see nearly 100 tests, all passing. These tests are not run
+automatically, so be sure to run them if you have changed any aspect of the
+HTML reports.
+
 
 Lint, etc
 ---------
@@ -268,8 +284,9 @@ output.  The top of the file you edited will have instructions.
 Continuous integration
 ----------------------
 
-When you make a pull request, `GitHub actions`__ will run all of the tests and
-quality checks on your changes.  If any fail, either fix them or ask for help.
+When you make a pull request, `GitHub actions`__ will run all of the Python
+tests and quality checks on your changes.  If any fail, either fix them or ask
+for help.
 
 __ https://github.com/coveragepy/coveragepy/actions
 
@@ -282,7 +299,7 @@ that way.
 
 It has many development dependencies.  These are specified generically in the
 ``requirements/*.in`` files.  The .in files should have no versions specified
-in them.  The specific versions to use are pinned in ``requirements/*.pip``
+in them.  The specific versions to use are pinned in ``requirements/*.txt``
 files.  These are created by running ``make upgrade``.
 
 .. minimum of PYVERSIONS:
@@ -292,7 +309,7 @@ versions will work on all of the Python versions currently supported by
 coverage.py.
 
 If for some reason we need to constrain a version of a dependency, the
-constraint should be specified in the ``requirements/pins.pip`` file, with a
+constraint should be specified in the ``requirements/pins.txt`` file, with a
 detailed reason for the pin.
 
 

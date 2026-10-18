@@ -6,14 +6,13 @@
 # Setuptools setup for coverage.py
 # This file is used unchanged under all versions of Python.
 
-import re
 import os
 import os.path
 import platform
+import re
 import sys
 import textwrap
 import zipfile
-
 from pathlib import Path
 from typing import Any
 
@@ -46,15 +45,6 @@ def get_long_description(url: str) -> str:
         .replace("@@", "readthedocs")
     )
     return long_description
-
-
-def count_contributors() -> int:
-    """Read CONTRIBUTORS.txt to count how many people have helped."""
-    with open("CONTRIBUTORS.txt", "rb") as contributors:
-        paras = contributors.read().split(b"\n\n")
-        num_others = len(paras[-1].splitlines())
-        num_others += 1  # Count Gareth Rees, who is mentioned in the top paragraph.
-    return num_others
 
 
 # PYVERSIONS
@@ -202,14 +192,14 @@ setup_args = dict(
     },
     # We need to get HTML assets from our htmlfiles directory.
     zip_safe=False,
-    author=f"Ned Batchelder and {count_contributors()} others",
+    author="Ned Batchelder and many others",
     author_email="ned@nedbatchelder.com",
     description=__doc__,
     long_description=get_long_description(url=version_data["__url__"]),
     long_description_content_type="text/x-rst",
     keywords="code coverage testing",
     license="Apache-2.0",
-    license_files=["LICENSE.txt"],
+    license_files=["LICENSE.txt", "NOTICE.txt"],
     classifiers=CLASSIFIERS,
     url="https://github.com/coveragepy/coveragepy",
     project_urls={

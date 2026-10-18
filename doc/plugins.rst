@@ -27,7 +27,7 @@ Information about using plug-ins is on this page.  To write a plug-in, see
 
 See :ref:`other` for available plug-ins.
 
-.. versionadded:: 4.0
+.. version-added:: 4.0
 
 
 Using plug-ins

@@ -11,7 +11,6 @@ import pytest
 
 from coverage import env
 from coverage.sysmon import SysMonitor, compute_multiline_map
-
 from tests.coveragetest import CoverageTest
 
 MULTI_PY = "x = (\n    1 +\n    2\n)\ny = 5\n"

@@ -20,13 +20,9 @@ from typing import Any, NoReturn, cast
 class TempliteSyntaxError(ValueError):
     """Raised when a template has a syntax error."""
 
-    pass
-
 
 class TempliteValueError(ValueError):
     """Raised when an expression won't evaluate in a template."""
-
-    pass
 
 
 class CodeBuilder:

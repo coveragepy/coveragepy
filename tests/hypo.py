@@ -34,6 +34,6 @@ else:
 
     def _dummy(*_args: Any, **_kwargs: Any) -> None:
         """Replace Hypothesis tools with nothing."""
-        return None
+        return
 
     integers = sets = _dummy  # type: ignore[assignment]

@@ -9,9 +9,8 @@ import itertools
 import os
 import os.path
 import re
-
-from typing import Any
 from collections.abc import Iterable
+from typing import Any
 from unittest import mock
 
 import pytest
@@ -30,7 +29,6 @@ from coverage.files import (
     flat_rootname,
     globs_to_regex,
 )
-
 from tests.coveragetest import CoverageTest
 from tests.helpers import os_sep
 
@@ -524,6 +522,16 @@ class PathAliasesTest(CoverageTest):
         aliases = PathAliases(relative=rel_yn)
         aliases.add("/home/*/src", "./mysrc")
         self.assert_unchanged(aliases, "/home/foo/srcetc")
+
+    def test_maps_only_the_matched_prefix(self, rel_yn: bool) -> None:
+        # Only the part the rule matched is replaced, not every occurrence of it.
+        aliases = PathAliases(relative=rel_yn)
+        aliases.add("/ci/src", "./mysrc")
+        self.assert_mapped(
+            aliases,
+            "/ci/src/vendor/ci/src/a.py",
+            "./mysrc/vendor/ci/src/a.py",
+        )
 
     def test_no_map_if_not_exist(self, rel_yn: bool) -> None:
         aliases = PathAliases(relative=rel_yn)

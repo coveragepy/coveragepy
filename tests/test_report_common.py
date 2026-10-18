@@ -9,7 +9,6 @@ import textwrap
 
 import coverage
 from coverage.files import abs_file
-
 from tests.coveragetest import CoverageTest
 from tests.goldtest import contains, doesnt_contain
 from tests.helpers import arcz_to_arcs, os_sep

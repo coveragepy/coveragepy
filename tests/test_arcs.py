@@ -10,14 +10,13 @@ from unittest import mock
 
 import pytest
 
-from tests.coveragetest import CoverageTest
-from tests.helpers import assert_count_equal
-
 import coverage
 import coverage.python
 from coverage import env
 from coverage.data import sorted_lines
 from coverage.files import abs_file
+from tests.coveragetest import CoverageTest
+from tests.helpers import assert_count_equal
 
 
 class SimpleArcTest(CoverageTest):
@@ -349,6 +348,30 @@ class WithTest(CoverageTest):
         expected = "line 3 didn't jump to the function exit"
         assert self.get_missing_arc_description(cov, 3, -2) == expected
 
+    def test_bug_2289(self) -> None:
+        # https://github.com/coveragepy/coveragepy/issues/2289
+        self.check_coverage(
+            """\
+            import contextlib
+
+            def main():
+                raise SystemExit()
+
+            def example():
+                try:
+                    with contextlib.ExitStack():
+                        main()
+                except SystemExit:
+                    return 1
+                else:
+                    raise RuntimeError("!!!")
+
+            example()
+            """,
+            lines=[1, 3, 4, 6, 7, 8, 9, 10, 11, 13, 15],
+            missing="13",
+        )
+
     def test_untaken_if_through_with(self) -> None:
         cov = self.check_coverage(
             """\
@@ -503,6 +526,23 @@ class LoopArcTest(CoverageTest):
             assert a == 4
             """,
             branchz="12 14 23 21",
+            branchz_missing="",
+        )
+
+    def test_bug_2168_loop_completion_before_return(self) -> None:
+        self.check_coverage(
+            """\
+            def foo(*x):
+                for i in x:
+                    if i:
+                        break
+                pass
+
+            foo()
+            foo(0)
+            foo(1)
+            """,
+            branchz="23 25 32 34",
             branchz_missing="",
         )
 
@@ -1945,7 +1985,7 @@ class MiscArcTest(CoverageTest):
         )
 
     def test_failing_open(self) -> None:
-        with mock.patch.object(coverage.python, "open", side_effect=IOError("Nope")):
+        with mock.patch.object(coverage.python, "open", side_effect=OSError("Nope")):
             self.make_file(
                 "some_branches.py",
                 """\
@@ -2358,6 +2398,49 @@ class ExcludeTest(CoverageTest):
             missing="",
             branchz="23 24 56 57 89 8A BC BE",
             branchz_missing="",
+        )
+
+    def test_default_always_needs_code_not_comment(self) -> None:
+        # The default `partial_branches_always` patterns match the whole line,
+        # so a comment merely mentioning a constant test would excuse a real
+        # branch, and it would be reported as taken when it never ran.
+        self.check_coverage(
+            """\
+            a = 1
+            if len([]):  # TODO: rewrite as "if True:" once this is fixed
+                a = 3
+            b = 4
+            """,
+            lines=[1, 2, 3, 4],
+            missing="3",
+            branchz="23 24",
+            branchz_missing="23",
+        )
+        self.check_coverage(
+            """\
+            a = 1
+            while len([]):  # TODO: rewrite as "while True:" once this is fixed
+                a = 3
+            else:
+                a = 5
+            b = 6
+            """,
+            lines=[1, 2, 3, 5, 6],
+            missing="3",
+            branchz="23 25",
+            branchz_missing="23",
+        )
+        self.check_coverage(
+            """\
+            a = 1
+            if len([2]):    # good thing it's not `if TYPE_CHECKING:`!
+                a = 3
+            else:
+                a = 5
+            b = 6
+            """,
+            lines=[1, 2, 3, 5, 6],
+            missing="5",
         )
 
     def test_custom_pragmas(self) -> None:

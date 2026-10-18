@@ -5,15 +5,14 @@
 
 from __future__ import annotations
 
-from typing import IO
 from collections.abc import Iterable
+from typing import IO
 
 import pytest
 
 from coverage.exceptions import CoverageException
 from coverage.report_core import render_report
 from coverage.types import TMorf, TMorfs
-
 from tests.coveragetest import CoverageTest
 
 
