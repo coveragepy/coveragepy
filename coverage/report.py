@@ -41,7 +41,10 @@ class SummaryReporter:
         self.output_format = self.config.format or "text"
         if self.output_format not in {"text", "markdown", "total"}:
             raise ConfigError(f"Unknown report format choice: {self.output_format!r}")
-        self.fr_analyses: list[tuple[FileReporter, Analysis]] = []
+        # The file names and analyses to show in the report. We keep the names
+        # rather than the FileReporters: a FileReporter holds on to its parsed
+        # source, which adds up to a lot of memory for a large project.
+        self.name_analyses: list[tuple[str, Analysis]] = []
         self.skipped_count = 0
         self.empty_count = 0
         self.total = Numbers(precision=self.config.precision)
@@ -237,9 +240,9 @@ class SummaryReporter:
         # `lines_values` is list of lists of sortable values.
         lines_values = []
 
-        for fr, analysis in self.fr_analyses:
+        for name, analysis in self.name_analyses:
             nums = analysis.numbers
-            args = [neutralize_control(fr.relative_filename()), nums.n_statements, nums.n_missing]
+            args = [neutralize_control(name), nums.n_statements, nums.n_missing]
             if self.branches:
                 args += [nums.n_branches, nums.n_partial_branches]
             args += [nums.pc_covered_str]
@@ -304,4 +307,4 @@ class SummaryReporter:
             # Don't report on empty files.
             self.empty_count += 1
         else:
-            self.fr_analyses.append((fr, analysis))
+            self.name_analyses.append((fr.relative_filename(), analysis))

@@ -25,6 +25,13 @@ Unreleased
 
 - Dropped support for Python 3.10.
 
+- Fix: the text summary report (``coverage report``) held on to every file's
+  parsed source until it finished, so its memory use grew with the size of the
+  project: ten times or more what 7.14 used on large projects.  Now it keeps
+  only what it needs to print.  Fixes `issue 2277`_.
+
+.. _issue 2277: https://github.com/coveragepy/coveragepy/issues/2277
+
 - Fix: a comment or string that merely mentioned ``if True:`` or
   ``while True:`` could mark its line as a branch that is known to be partial,
   so a branch that never ran was reported as taken.  These built-in patterns
