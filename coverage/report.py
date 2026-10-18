@@ -11,7 +11,7 @@ from collections.abc import Iterable
 from typing import IO, TYPE_CHECKING, Any
 
 from coverage.exceptions import ConfigError, NoDataError
-from coverage.misc import human_sorted_items, plural
+from coverage.misc import human_sorted_items, neutralize_control, plural
 from coverage.plugin import FileReporter
 from coverage.report_core import get_analysis_to_report
 from coverage.results import Analysis, Numbers
@@ -239,7 +239,7 @@ class SummaryReporter:
 
         for fr, analysis in self.fr_analyses:
             nums = analysis.numbers
-            args = [fr.relative_filename(), nums.n_statements, nums.n_missing]
+            args = [neutralize_control(fr.relative_filename()), nums.n_statements, nums.n_missing]
             if self.branches:
                 args += [nums.n_branches, nums.n_partial_branches]
             args += [nums.pc_covered_str]

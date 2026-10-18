@@ -6,28 +6,16 @@
 from __future__ import annotations
 
 import os
-import re
+import tomllib
 from collections.abc import Callable, Iterable
 from typing import Any, TypeVar
 
-from coverage import config, env
+from coverage import config
 from coverage.exceptions import ConfigError
-from coverage.misc import import_third_party, isolate_module, substitute_variables
+from coverage.misc import isolate_module, substitute_variables
 from coverage.types import TConfigSectionOut, TConfigValueOut
 
 os = isolate_module(os)
-
-if env.PYVERSION >= (3, 11, 0, "alpha", 7):
-    import tomllib  # pylint: disable=import-error
-
-    has_tomllib = True
-else:
-    # TOML support on Python 3.10 and below is an install-time extra option.
-    tomllib, has_tomllib = import_third_party("tomli")
-
-
-class TomlDecodeError(Exception):
-    """An exception class that exists even when toml isn't installed."""
 
 
 TWant = TypeVar("TWant")
@@ -55,19 +43,8 @@ class TomlConfigParser:
                 toml_text = fp.read()
         except OSError:
             return []
-        if has_tomllib:
-            try:
-                self.data = tomllib.loads(toml_text)
-            except tomllib.TOMLDecodeError as err:
-                raise TomlDecodeError(str(err)) from err
-            return [filename]
-        else:
-            has_toml = re.search(r"^\[tool\.coverage(\.|])", toml_text, flags=re.MULTILINE)
-            if self.our_file or has_toml:
-                # Looks like they meant to read TOML, but we can't read it.
-                msg = "Can't read {!r} without TOML support. Install with [toml] extra"
-                raise ConfigError(msg.format(filename))
-            return []
+        self.data = tomllib.loads(toml_text)
+        return [filename]
 
     def _get_section(self, section: str) -> tuple[str | None, TConfigSectionOut | None]:
         """Get a section from the data.

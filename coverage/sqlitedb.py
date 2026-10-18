@@ -9,7 +9,7 @@ import contextlib
 import re
 import sqlite3
 from collections.abc import Iterable, Iterator
-from typing import Any, cast
+from typing import Any, Never, cast
 
 from coverage.debug import auto_repr, clipped_repr, exc_one_line
 from coverage.exceptions import DataError
@@ -38,6 +38,13 @@ class SqliteDb:
 
     __repr__ = auto_repr
 
+    def _raise_data_error(self, msg: str, exc: Exception) -> Never:
+        """Raise a DataError with as much information as possible."""
+        msg += f": {exc}"
+        if hasattr(exc, "sqlite_errorname"):
+            msg += f": ({exc.sqlite_errorname})"
+        raise DataError(msg) from exc
+
     def _connect(self) -> None:
         """Connect to the db and do universal initialization."""
         if self.con is not None:
@@ -57,7 +64,7 @@ class SqliteDb:
             else:
                 self.con = sqlite3.connect(self.filename, check_same_thread=False)
         except sqlite3.Error as exc:
-            raise DataError(f"Couldn't use data file {self.filename!r}: {exc}") from exc
+            self._raise_data_error(f"Couldn't use data file {self.filename!r}", exc)
 
         if self.debug.should("sql"):
             self.debug.write(f"Connected to {self.filename!r} as {self.con!r}")
@@ -109,7 +116,7 @@ class SqliteDb:
             except Exception as exc:
                 if self.debug.should("sql"):
                     self.debug.write(f"EXCEPTION from __exit__: {exc_one_line(exc)}")
-                raise DataError(f"Couldn't end data file {self.filename!r}: {exc}") from exc
+                self._raise_data_error(f"Couldn't end data file {self.filename!r}", exc)
 
     def _execute(self, sql: str, parameters: Iterable[Any]) -> sqlite3.Cursor:
         """Same as :meth:`python:sqlite3.Connection.execute`."""
@@ -126,10 +133,9 @@ class SqliteDb:
                 # https://github.com/coveragepy/coveragepy/issues/1010
                 return self.con.execute(sql, parameters)  # type: ignore[arg-type]
         except sqlite3.Error as exc:
-            msg = str(exc)
             if self.debug.should("sql"):
                 self.debug.write(f"EXCEPTION from execute: {exc_one_line(exc)}")
-            raise DataError(f"Couldn't use data file {self.filename!r}: {msg}") from exc
+            self._raise_data_error(f"Couldn't use data file {self.filename!r}", exc)
 
     @contextlib.contextmanager
     def execute(

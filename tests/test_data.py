@@ -745,7 +745,7 @@ class CoverageDataInTempDirTest(CoverageTest):
     def test_hard_read_error(self) -> None:
         self.make_file("noperms.dat", "go away")
         os.chmod("noperms.dat", 0)
-        with pytest.raises(DataError, match=r"Couldn't .* '.*[/\\]noperms.dat': \S+"):
+        with pytest.raises(DataError, match=r"Couldn't .* '.*[/\\]noperms.dat': .*\(\S+\)$"):
             covdata = DebugCoverageData("noperms.dat")
             covdata.read()
 

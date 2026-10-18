@@ -23,6 +23,8 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
+- Dropped support for Python 3.10.
+
 - Fix: a comment or string that merely mentioned ``if True:`` or
   ``while True:`` could mark its line as a branch that is known to be partial,
   so a branch that never ran was reported as taken.  These built-in patterns
@@ -30,6 +32,34 @@ Unreleased
 
 .. _issue 2314: https://github.com/coveragepy/coveragepy/issues/2314
 
+- Fix: file names (and plugin names) can contain control characters, which are
+  legal in POSIX paths but unsafe in reports: in XML 1.0 they make the document
+  non-well-formed, and in a terminal they act as escape sequences (colors,
+  title/clipboard sequences, cursor moves that forge output). Now the XML
+  report, the text and Markdown summary reports, and ``coverage debug data``
+  replace non-printable characters in names. Printable names are unchanged.
+
+- Fix: a file pattern (from ``include``, ``omit``, or a ``[paths]`` alias)
+  containing a newline sent the glob-to-regex translation into an infinite
+  loop, hanging the process.  Newlines in patterns are now handled like any
+  other character.
+
+- Fix: using the C tracer, the refcount of ``None`` was mismanaged during
+  function calls, including comprehensions. This was unlikely to cause an
+  actual problem, but is now fixed. Thanks, Andrew Dalke.
+
+- Fix: using the C tracer, if a plugin's ``dynamic_source_filename`` method
+  raised an exception, lines in that function could be recorded as belonging
+  to a different file.  Also fixed some minor memory leaks in the C tracer.
+
+- Fix: the C tracer held borrowed references to dictionary values, which was
+  unsafe on free-threaded Python.  Now it takes its own references.
+
+- Fix: using the C tracer, an internal error while recording a new file could
+  be reported as a confusing ``SystemError`` instead of the actual exception.
+
+- Binary wheels are now provided for iOS and Android. This allows the use of
+  the optimized C tracer on mobile platforms.
 
 .. start-releases
 
@@ -68,7 +98,17 @@ Version 7.16.1 — 2026-09-13
 - Fix: using :meth:`.CoverageData.update` twice on an in-memory database would
   fail, as described in `issue 2279`_. This is now fixed.
 
+- Fix: the Total row in the footer of the HTML report's index page was
+  recomputed in JavaScript with rounding that could disagree with the total
+  the server rendered in the heading, including showing ``100%`` when coverage
+  was not complete.  The footer now clamps values the way the rest of the
+  report does, and when nothing is filtered out it is shown exactly as the
+  server rendered it, so the two can't disagree.  That also keeps rows the
+  report omits (``--skip-covered`` drops fully covered files) in the total.
+  Fixes `issue 2256`_.
+
 .. _issue 1563: https://github.com/coveragepy/coveragepy/issues/1563
+.. _issue 2256: https://github.com/coveragepy/coveragepy/issues/2256
 .. _pull 2269: https://github.com/coveragepy/coveragepy/pull/2269
 .. _issue 2279: https://github.com/coveragepy/coveragepy/issues/2279
 

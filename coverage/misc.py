@@ -77,29 +77,6 @@ def sys_modules_saved() -> Iterator[None]:
         saver.restore()
 
 
-def import_third_party(modname: str) -> tuple[ModuleType, bool]:
-    """Import a third-party module we need, but might not be installed.
-
-    This also cleans out the module after the import, so that coverage won't
-    appear to have imported it.  This lets the third party use coverage for
-    their own tests.
-
-    Arguments:
-        modname (str): the name of the module to import.
-
-    Returns:
-        The imported module, and a boolean indicating if the module could be imported.
-
-    If the boolean is False, the module returned is not the one you want: don't use it.
-
-    """
-    with sys_modules_saved():
-        try:
-            return importlib.import_module(modname), True
-        except ImportError:
-            return sys, False
-
-
 def nice_pair(pair: TArc) -> str:
     """Make a nice string representation of a pair of numbers.
 
@@ -376,6 +353,21 @@ def plural(n: int, thing: str = "", things: str = "") -> str:
     else:
         noun = things or (thing + "s")
     return f"{n} {noun}"
+
+
+def neutralize_control(text: str) -> str:
+    """Make `text` safe to put in a report.
+
+    File names (and plugin names read from a data file) can contain control
+    characters: they are legal in a POSIX path but unsafe in our output.  In a
+    terminal they act as escape sequences (SGR colors, OSC title/clipboard
+    sequences, cursor moves to forge output); in XML 1.0 they make the document
+    non-well-formed.  Replace anything non-printable and leave ordinary text, so
+    valid names are unchanged.
+    """
+    if text.isprintable():
+        return text
+    return "".join(ch if ch.isprintable() else "?" for ch in text)
 
 
 def stdout_link(text: str, url: str) -> str:

@@ -18,8 +18,8 @@ supported on:
 
 .. PYVERSIONS
 
-* Python 3.10 through 3.15 rc2, including free-threading.
-* PyPy3 versions 3.10 and 3.11.
+* Python 3.11 through 3.15, including free-threading.
+* PyPy3 version 3.11.
 
 .. ifconfig:: prerelease
 

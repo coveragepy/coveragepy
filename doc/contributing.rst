@@ -232,10 +232,14 @@ submitting a change.
 JavaScript tests
 ................
 
-The JavaScript tests are run by loading tests/js/index.html in a web browser.
-You should see nearly 100 tests, all passing. These tests are not run
-automatically, so be sure to run them if you have changed any aspect of the
-HTML reports.
+The JavaScript tests for the HTML report are in tests/js.  To run them in a
+headless browser::
+
+    $ make test_js
+
+You can also see them in a web browser by loading tests/js/index.html. These
+tests are run in CI when the report JavaScript changes, but be sure to run them
+yourself if you have changed any aspect of the HTML reports.
 
 
 Lint, etc

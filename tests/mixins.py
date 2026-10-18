@@ -14,12 +14,13 @@ import os
 import os.path
 import sys
 from collections.abc import Callable, Iterable
+from contextlib import chdir
 from typing import Any, cast
 
 import pytest
 
 from coverage.misc import SysModuleSaver
-from tests.helpers import change_dir, make_file, remove_tree
+from tests.helpers import make_file, remove_tree
 
 
 class PytestBase:
@@ -67,7 +68,7 @@ class TempDirMixin:
         if self.run_in_temp_dir:
             tmpdir = tmp_path_factory.mktemp("t")
             self.temp_dir = str(tmpdir)
-            with change_dir(self.temp_dir):
+            with chdir(self.temp_dir):
                 # Modules should be importable from this temp directory.  We don't
                 # use '' because we make lots of different temp directories and
                 # nose's caching importer can get confused.  The full path prevents

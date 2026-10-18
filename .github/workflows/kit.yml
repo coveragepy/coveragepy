@@ -36,7 +36,7 @@ env:
   PIP_DISABLE_PIP_VERSION_CHECK: 1
   # PYVERSIONS: changing the list of versions will change the number of
   # expected distributions. This must match the same number in publish.yml.
-  EXPECTED: 121
+  EXPECTED: 119
 
 permissions:
   contents: read
@@ -47,10 +47,10 @@ concurrency:
 
 jobs:
   wheels:
-    name: "${{ matrix.py }} ${{ matrix.os }} ${{ matrix.arch }} wheels"
+    name: "${{ matrix.py }} ${{ matrix.platform || matrix.os }} ${{ matrix.arch }} wheels"
     runs-on: "${{ matrix.os }}-${{ matrix.os-version || 'latest' }}"
     env:
-      MATRIX_ID: "${{ matrix.py }}-${{ matrix.os }}-${{ matrix.arch }}"
+      MATRIX_ID: "${{ matrix.py }}-${{ matrix.platform || matrix.os }}-${{ matrix.arch }}"
     strategy:
       matrix:
         include:
@@ -79,13 +79,21 @@ jobs:
           #   # of Python: https://cibuildwheel.readthedocs.io/en/stable/options/#enable
           #   # When changing this, also adjust SHIPPING_WHEELS in env.py.
           #
-          #   pys = ["cp310", "cp311", "cp312", "cp313", "cp314", "cp315"]
+          #   pys = ["cp311", "cp312", "cp313", "cp314", "cp315"]
           #   cipy = "3.11"  # PYVERSIONS, default for cibuildwheel
           #
           #   # Some OS/arch combinations need overrides for the Python versions:
           #   os_arch_pys = {
           #     # ("macos", "arm64"): ["cp38", "cp39", "cp310", "cp311", "cp312"],
           #     ("windows", "ARM64"): ["cp311", "cp312", "cp313", "cp314", "cp315"],
+          #   }
+          #
+          #   # Mobile platforms: cibuildwheel only supports these from cp313 onward,
+          #   # and each tuple key is (os, platform, os-version-or-None).
+          #   mobile_pys = ["cp313", "cp314", "cp315"]
+          #   mobile_os_archs = {
+          #       ("ubuntu", "android", None): ["arm64_v8a", "x86_64"],
+          #       ("macos", "ios", "26"): ["arm64_iphoneos", "arm64_iphonesimulator"],
           #   }
           #
           #   #----- ^^^ ---------------------- ^^^ -----
@@ -101,7 +109,7 @@ jobs:
           #                   "cipy": cipy,
           #               }
           #               if the_os == "macos":
-          #                   them["os-version"] = "14"
+          #                   them["os-version"] = "26"
           #               if the_os == "windows" and the_arch == "ARM64":
           #                   them["os-version"] = "11-arm"
           #                   # them["cipy"] = "3.11"
@@ -111,56 +119,60 @@ jobs:
           #               if the_arch == "ppc64le":
           #                   them["os-version"] = "24.04-ppc64le"
           #               print(f"- {json.dumps(them)}")
+          #   for (the_os, the_platform, the_os_version), archs in mobile_os_archs.items():
+          #       for the_arch in archs:
+          #           for the_py in mobile_pys:
+          #               them = {
+          #                   "os": the_os,
+          #                   "py": the_py,
+          #                   "arch": the_arch,
+          #                   "cipy": cipy,
+          #                   "platform": the_platform,
+          #               }
+          #               if the_os_version is not None:
+          #                   them["os-version"] = the_os_version
+          #               print(f"- {json.dumps(them)}")
           # ]]]
-          - {"os": "ubuntu", "py": "cp310", "arch": "x86_64", "cipy": "3.11"}
           - {"os": "ubuntu", "py": "cp311", "arch": "x86_64", "cipy": "3.11"}
           - {"os": "ubuntu", "py": "cp312", "arch": "x86_64", "cipy": "3.11"}
           - {"os": "ubuntu", "py": "cp313", "arch": "x86_64", "cipy": "3.11"}
           - {"os": "ubuntu", "py": "cp314", "arch": "x86_64", "cipy": "3.11"}
           - {"os": "ubuntu", "py": "cp315", "arch": "x86_64", "cipy": "3.11"}
-          - {"os": "ubuntu", "py": "cp310", "arch": "i686", "cipy": "3.11"}
           - {"os": "ubuntu", "py": "cp311", "arch": "i686", "cipy": "3.11"}
           - {"os": "ubuntu", "py": "cp312", "arch": "i686", "cipy": "3.11"}
           - {"os": "ubuntu", "py": "cp313", "arch": "i686", "cipy": "3.11"}
           - {"os": "ubuntu", "py": "cp314", "arch": "i686", "cipy": "3.11"}
           - {"os": "ubuntu", "py": "cp315", "arch": "i686", "cipy": "3.11"}
-          - {"os": "ubuntu", "py": "cp310", "arch": "aarch64", "cipy": "3.11", "os-version": "22.04-arm"}
           - {"os": "ubuntu", "py": "cp311", "arch": "aarch64", "cipy": "3.11", "os-version": "22.04-arm"}
           - {"os": "ubuntu", "py": "cp312", "arch": "aarch64", "cipy": "3.11", "os-version": "22.04-arm"}
           - {"os": "ubuntu", "py": "cp313", "arch": "aarch64", "cipy": "3.11", "os-version": "22.04-arm"}
           - {"os": "ubuntu", "py": "cp314", "arch": "aarch64", "cipy": "3.11", "os-version": "22.04-arm"}
           - {"os": "ubuntu", "py": "cp315", "arch": "aarch64", "cipy": "3.11", "os-version": "22.04-arm"}
-          - {"os": "ubuntu", "py": "cp310", "arch": "riscv64", "cipy": "3.11"}
           - {"os": "ubuntu", "py": "cp311", "arch": "riscv64", "cipy": "3.11"}
           - {"os": "ubuntu", "py": "cp312", "arch": "riscv64", "cipy": "3.11"}
           - {"os": "ubuntu", "py": "cp313", "arch": "riscv64", "cipy": "3.11"}
           - {"os": "ubuntu", "py": "cp314", "arch": "riscv64", "cipy": "3.11"}
           - {"os": "ubuntu", "py": "cp315", "arch": "riscv64", "cipy": "3.11"}
-          - {"os": "ubuntu", "py": "cp310", "arch": "ppc64le", "cipy": "3.11", "os-version": "24.04-ppc64le"}
           - {"os": "ubuntu", "py": "cp311", "arch": "ppc64le", "cipy": "3.11", "os-version": "24.04-ppc64le"}
           - {"os": "ubuntu", "py": "cp312", "arch": "ppc64le", "cipy": "3.11", "os-version": "24.04-ppc64le"}
           - {"os": "ubuntu", "py": "cp313", "arch": "ppc64le", "cipy": "3.11", "os-version": "24.04-ppc64le"}
           - {"os": "ubuntu", "py": "cp314", "arch": "ppc64le", "cipy": "3.11", "os-version": "24.04-ppc64le"}
           - {"os": "ubuntu", "py": "cp315", "arch": "ppc64le", "cipy": "3.11", "os-version": "24.04-ppc64le"}
-          - {"os": "macos", "py": "cp310", "arch": "arm64", "cipy": "3.11", "os-version": "14"}
-          - {"os": "macos", "py": "cp311", "arch": "arm64", "cipy": "3.11", "os-version": "14"}
-          - {"os": "macos", "py": "cp312", "arch": "arm64", "cipy": "3.11", "os-version": "14"}
-          - {"os": "macos", "py": "cp313", "arch": "arm64", "cipy": "3.11", "os-version": "14"}
-          - {"os": "macos", "py": "cp314", "arch": "arm64", "cipy": "3.11", "os-version": "14"}
-          - {"os": "macos", "py": "cp315", "arch": "arm64", "cipy": "3.11", "os-version": "14"}
-          - {"os": "macos", "py": "cp310", "arch": "x86_64", "cipy": "3.11", "os-version": "14"}
-          - {"os": "macos", "py": "cp311", "arch": "x86_64", "cipy": "3.11", "os-version": "14"}
-          - {"os": "macos", "py": "cp312", "arch": "x86_64", "cipy": "3.11", "os-version": "14"}
-          - {"os": "macos", "py": "cp313", "arch": "x86_64", "cipy": "3.11", "os-version": "14"}
-          - {"os": "macos", "py": "cp314", "arch": "x86_64", "cipy": "3.11", "os-version": "14"}
-          - {"os": "macos", "py": "cp315", "arch": "x86_64", "cipy": "3.11", "os-version": "14"}
-          - {"os": "windows", "py": "cp310", "arch": "x86", "cipy": "3.11"}
+          - {"os": "macos", "py": "cp311", "arch": "arm64", "cipy": "3.11", "os-version": "26"}
+          - {"os": "macos", "py": "cp312", "arch": "arm64", "cipy": "3.11", "os-version": "26"}
+          - {"os": "macos", "py": "cp313", "arch": "arm64", "cipy": "3.11", "os-version": "26"}
+          - {"os": "macos", "py": "cp314", "arch": "arm64", "cipy": "3.11", "os-version": "26"}
+          - {"os": "macos", "py": "cp315", "arch": "arm64", "cipy": "3.11", "os-version": "26"}
+          - {"os": "macos", "py": "cp311", "arch": "x86_64", "cipy": "3.11", "os-version": "26"}
+          - {"os": "macos", "py": "cp312", "arch": "x86_64", "cipy": "3.11", "os-version": "26"}
+          - {"os": "macos", "py": "cp313", "arch": "x86_64", "cipy": "3.11", "os-version": "26"}
+          - {"os": "macos", "py": "cp314", "arch": "x86_64", "cipy": "3.11", "os-version": "26"}
+          - {"os": "macos", "py": "cp315", "arch": "x86_64", "cipy": "3.11", "os-version": "26"}
           - {"os": "windows", "py": "cp311", "arch": "x86", "cipy": "3.11"}
           - {"os": "windows", "py": "cp312", "arch": "x86", "cipy": "3.11"}
           - {"os": "windows", "py": "cp313", "arch": "x86", "cipy": "3.11"}
           - {"os": "windows", "py": "cp314", "arch": "x86", "cipy": "3.11"}
           - {"os": "windows", "py": "cp315", "arch": "x86", "cipy": "3.11"}
-          - {"os": "windows", "py": "cp310", "arch": "AMD64", "cipy": "3.11"}
           - {"os": "windows", "py": "cp311", "arch": "AMD64", "cipy": "3.11"}
           - {"os": "windows", "py": "cp312", "arch": "AMD64", "cipy": "3.11"}
           - {"os": "windows", "py": "cp313", "arch": "AMD64", "cipy": "3.11"}
@@ -171,7 +183,19 @@ jobs:
           - {"os": "windows", "py": "cp313", "arch": "ARM64", "cipy": "3.11", "os-version": "11-arm"}
           - {"os": "windows", "py": "cp314", "arch": "ARM64", "cipy": "3.11", "os-version": "11-arm"}
           - {"os": "windows", "py": "cp315", "arch": "ARM64", "cipy": "3.11", "os-version": "11-arm"}
-        # [[[end]]] (sum: N6DRns0iG/)
+          - {"os": "ubuntu", "py": "cp313", "arch": "arm64_v8a", "cipy": "3.11", "platform": "android"}
+          - {"os": "ubuntu", "py": "cp314", "arch": "arm64_v8a", "cipy": "3.11", "platform": "android"}
+          - {"os": "ubuntu", "py": "cp315", "arch": "arm64_v8a", "cipy": "3.11", "platform": "android"}
+          - {"os": "ubuntu", "py": "cp313", "arch": "x86_64", "cipy": "3.11", "platform": "android"}
+          - {"os": "ubuntu", "py": "cp314", "arch": "x86_64", "cipy": "3.11", "platform": "android"}
+          - {"os": "ubuntu", "py": "cp315", "arch": "x86_64", "cipy": "3.11", "platform": "android"}
+          - {"os": "macos", "py": "cp313", "arch": "arm64_iphoneos", "cipy": "3.11", "platform": "ios", "os-version": "26"}
+          - {"os": "macos", "py": "cp314", "arch": "arm64_iphoneos", "cipy": "3.11", "platform": "ios", "os-version": "26"}
+          - {"os": "macos", "py": "cp315", "arch": "arm64_iphoneos", "cipy": "3.11", "platform": "ios", "os-version": "26"}
+          - {"os": "macos", "py": "cp313", "arch": "arm64_iphonesimulator", "cipy": "3.11", "platform": "ios", "os-version": "26"}
+          - {"os": "macos", "py": "cp314", "arch": "arm64_iphonesimulator", "cipy": "3.11", "platform": "ios", "os-version": "26"}
+          - {"os": "macos", "py": "cp315", "arch": "arm64_iphonesimulator", "cipy": "3.11", "platform": "ios", "os-version": "26"}
+        # [[[end]]] (sum: f3kjK8N7/g)
         #            ^^^^^^^^^^^^^^^
         # If a check fails and points to this checksum line, it means you edited
         # the matrix directly instead of editing the Python code in the comment
@@ -221,10 +245,10 @@ jobs:
 
       - name: "Build binary wheels"
         env:
+          CIBW_PLATFORM: ${{ matrix.platform || 'auto' }}
           CIBW_BUILD: ${{ matrix.py }}*-*
           CIBW_ARCHS: ${{ matrix.arch }}
           CIBW_ENVIRONMENT: PIP_DISABLE_PIP_VERSION_CHECK=1
-          CIBW_TEST_COMMAND: python -c "from coverage.tracer import CTracer; print('CTracer OK!')"
         run: |
           python -m cibuildwheel --output-dir wheelhouse
 
