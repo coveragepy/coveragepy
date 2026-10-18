@@ -15,6 +15,7 @@ import shutil
 import sys
 import textwrap
 from collections.abc import Callable, Iterable
+from contextlib import chdir
 from typing import cast
 from unittest import mock
 
@@ -32,7 +33,6 @@ from tests.coveragetest import TESTS_DIR, CoverageTest, UsingModulesMixin
 from tests.helpers import (
     assert_count_equal,
     assert_coverage_warnings,
-    change_dir,
     get_coverage_warnings,
     nice_file,
     os_sep,
@@ -482,7 +482,14 @@ class ApiTest(CoverageTest):
 
     @pytest.mark.parametrize(
         "problem, msgpattern",
-        [("badcontent", BAD_SQLITE_REGEX), ("noperms", NO_OPEN_REGEX)],
+        [
+            ("badcontent", BAD_SQLITE_REGEX),
+            pytest.param(
+                "noperms",
+                NO_OPEN_REGEX,
+                marks=pytest.mark.xfail(testenv.ROOT_USER, reason="root can read any file"),
+            ),
+        ],
     )
     def test_combining_bad_data(self, problem: str, msgpattern: str) -> None:
         # If you try to combine a bad data file, then you will get a warning,
@@ -1309,7 +1316,7 @@ class RelativePathTest(CoverageTest):
         os.remove("foo.py")
         self.make_file("new/foo.py", "a = 1")
         shutil.move(".coverage", "new/.coverage")
-        with change_dir("new"):
+        with chdir("new"):
             cov = coverage.Coverage()
             cov.load()
             with pytest.raises(NoSource, match=expected):
@@ -1334,7 +1341,7 @@ class RelativePathTest(CoverageTest):
         self.make_file("new/foo.py", "a = 1")
         shutil.move(".coverage", "new/.coverage")
         shutil.move(".coveragerc", "new/.coveragerc")
-        with change_dir("new"):
+        with chdir("new"):
             cov = coverage.Coverage()
             cov.load()
             res = cov.report()
@@ -1369,7 +1376,7 @@ class RelativePathTest(CoverageTest):
             relative_files = true
             """,
         )
-        with change_dir("dir2"):
+        with chdir("dir2"):
             cov = coverage.Coverage(source=["."], data_suffix=True)
             self.start_import_stop(cov, "bar")
             cov.save()

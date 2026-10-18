@@ -325,6 +325,11 @@ def globs_to_regex_params(
                     matches=["a+b/foo", "a+b/foobar", "x{y}z/foobar"],
                     nomatches=["aab/foo", "ab/foo", "xyz/foo"],
                 ),
+                globs_to_regex_params(
+                    ["foo/a\nb*"],
+                    matches=["foo/a\nb", "foo/a\nbc"],
+                    nomatches=["foo/ab", "foo/axb"],
+                ),
             ]
         )
     ),

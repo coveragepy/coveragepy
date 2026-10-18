@@ -37,7 +37,7 @@ set_TArc = set[TArc]
 
 
 # We need the YIELD_VALUE opcode below, in a comparison-friendly form.
-# PYVERSIONS: RESUME is new in Python3.11
+# PYVERSIONS: RESUME is new in CPython 3.11
 RESUME = dis.opmap.get("RESUME")
 RETURN_VALUE = dis.opmap["RETURN_VALUE"]
 # PyPy attributes the exception-handler PUSH_EXC_INFO to the try/else line.

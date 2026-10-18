@@ -17,7 +17,6 @@ from coverage.misc import (
     file_be_gone,
     human_sorted,
     human_sorted_items,
-    import_third_party,
     stdout_link,
     substitute_variables,
 )
@@ -144,30 +143,6 @@ def test_substitute_variables_errors(text: str) -> None:
         substitute_variables(text, VARS)
     assert text in str(exc_info.value)
     assert "Variable NOTHING is undefined" in str(exc_info.value)
-
-
-class ImportThirdPartyTest(CoverageTest):
-    """Test import_third_party."""
-
-    run_in_temp_dir = False
-
-    def test_success(self) -> None:
-        # Make sure we don't have pytest in sys.modules before we start.
-        del sys.modules["pytest"]
-        # Import pytest
-        mod, has = import_third_party("pytest")
-        assert has
-        # Yes, it's really pytest:
-        assert mod.__name__ == "pytest"
-        print(dir(mod))
-        assert all(hasattr(mod, name) for name in ["skip", "mark", "raises", "warns"])
-        # But it's not in sys.modules:
-        assert "pytest" not in sys.modules
-
-    def test_failure(self) -> None:
-        _, has = import_third_party("xyzzy")
-        assert not has
-        assert "xyzzy" not in sys.modules
 
 
 HUMAN_DATA = [

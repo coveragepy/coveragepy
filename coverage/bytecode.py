@@ -111,8 +111,8 @@ RETURNS = op_set(
 NO_FALL_THROUGH = op_set("RERAISE")
 
 
-# CACHE doesn't exist in Python 3.10, but the branch resolver is only used
-# on 3.14+, so a placeholder value is fine.
+# CACHE doesn't exist in PyPy, but the branch resolver is only used
+# by sysmond, so a placeholder value is fine.
 _CACHE = dis.opmap.get("CACHE", -1)
 _EXTENDED_ARG = dis.opmap["EXTENDED_ARG"]
 

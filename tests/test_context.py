@@ -13,7 +13,6 @@ from unittest import mock
 import pytest
 
 import coverage
-from coverage import env
 from coverage.context import qualname_from_frame
 from coverage.data import CoverageData, sorted_lines
 from coverage.types import TArc, TCovKwargs, TLineNo
@@ -208,7 +207,6 @@ class DynamicContextTest(CoverageTest):
         assert_context_lines("stat|two_tests.test_one", self.TEST_ONE_LINES)
         assert_context_lines("stat|two_tests.test_two", self.TEST_TWO_LINES)
 
-    @pytest.mark.skipif(env.PYVERSION < (3, 11), reason="Needs co_qualname")
     def test_static_and_class_methods(self) -> None:
         # Test methods without a `self` argument also get a context, issue 1923.
         self.make_file(
@@ -241,11 +239,11 @@ class DynamicContextTest(CoverageTest):
 def get_qualname() -> str | None:
     """Helper to return qualname_from_frame for the caller."""
     stack = inspect.stack()[1:]
-    if any(sinfo[0].f_code.co_name == "get_qualname" for sinfo in stack):
+    if any(sinfo.frame.f_code.co_name == "get_qualname" for sinfo in stack):
         # We're calling ourselves recursively, maybe because we're testing
         # properties. Return an int to try to get back on track.
         return 17  # type: ignore[return-value]
-    caller_frame = stack[0][0]
+    caller_frame = stack[0].frame
     return qualname_from_frame(caller_frame)
 
 
@@ -331,12 +329,10 @@ class QualnameTest(CoverageTest):
     def test_property(self) -> None:
         assert Parent().a_property == "tests.test_context.Parent.a_property"
 
-    @pytest.mark.skipif(env.PYVERSION < (3, 11), reason="Needs co_qualname")
     def test_staticmethod(self) -> None:
         assert StaticAndClass.a_static() == "tests.test_context.StaticAndClass.a_static"
         assert StaticAndClass().a_static() == "tests.test_context.StaticAndClass.a_static"
 
-    @pytest.mark.skipif(env.PYVERSION < (3, 11), reason="Needs co_qualname")
     def test_classmethod(self) -> None:
         assert StaticAndClass.a_class() == "tests.test_context.StaticAndClass.a_class"
         assert StaticAndClass().a_class() == "tests.test_context.StaticAndClass.a_class"

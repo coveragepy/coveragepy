@@ -87,7 +87,6 @@ jobs:
           # tox.ini so that tox will run properly. PYVERSIONS
           # Available versions:
           # https://github.com/actions/python-versions/blob/main/versions-manifest.json
-          - "3.10"
           - "3.11"
           - "3.12"
           - "3.13"
@@ -95,19 +94,11 @@ jobs:
           - "3.14t"
           - "3.15"
           - "3.15t"
-          - "pypy-3.10"
           - "pypy-3.11"
         exclude:
           # Mac PyPy always takes the longest, and doesn't add anything.
           - os: macos
-            python-version: "pypy-3.10"
-          - os: macos
             python-version: "pypy-3.11"
-          # Windows pypy 3.10 gets stuck with PyPy 7.3.15.  I hope to
-          # unstick them, but I don't want that to block all other progress, so
-          # skip them for now.
-          - os: windows
-            python-version: "pypy-3.10"
         # If we need to tweak the os version we can do it with an include like
         # this:
         #  include:
@@ -164,7 +155,7 @@ jobs:
           mv .metacov ".metacov.$MATRIX_ID"
 
       - name: "Upload coverage data"
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: metacov-${{ env.MATRIX_ID }}
           path: .metacov.*
@@ -189,12 +180,9 @@ jobs:
       - name: "Set up Python"
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.10" # Minimum of PYVERSIONS
-          # At a certain point, installing dependencies failed on pypy 3.9 and
-          # 3.10 on Windows.  Commenting out the cache here fixed it.  Someday
-          # try using the cache again.
-          #cache: pip
-          #cache-dependency-path: 'requirements/*.txt'
+          python-version: "3.11" # Minimum of PYVERSIONS
+          cache: pip
+          cache-dependency-path: 'requirements/*.txt'
 
       - name: "Show environment"
         run: |
@@ -211,7 +199,7 @@ jobs:
           python igor.py zip_mods
 
       - name: "Download coverage data"
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           pattern: metacov-*
           merge-multiple: true
@@ -225,14 +213,14 @@ jobs:
           python igor.py combine_html
 
       - name: "Upload HTML report"
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: html_report
           path: htmlcov
           include-hidden-files: true
 
       - name: "Upload other reports"
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: json_xml
           path: |
@@ -331,7 +319,7 @@ jobs:
 
       - name: "Download coverage HTML report"
         if: ${{ github.ref == 'refs/heads/main' }}
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: html_report
           path: reports_repo/${{ env.report_dir }}

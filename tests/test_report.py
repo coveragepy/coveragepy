@@ -104,6 +104,24 @@ class SummaryTest(UsingModulesMixin, CoverageTest):
         assert "mycode.py " in report
         assert self.last_line_squeezed(report) == "TOTAL 4 0 100%"
 
+    @pytest.mark.skipif(
+        env.WINDOWS, reason="Control characters are disallowed in Windows filenames."
+    )
+    def test_control_chars_in_filename_are_neutralized(self) -> None:
+        # A POSIX file name may contain control characters.  Printed verbatim to
+        # a terminal they act as escape sequences (SGR colors, OSC title/clipboard
+        # sequences, cursor moves to forge output), so non-printable characters
+        # are replaced before the name reaches the report.
+        evil = "mod\x1b[31m\x07.py"
+        self.make_file(evil, "a = 1\nb = 2\n")
+        self.make_data_file(lines={os.path.abspath(evil): [1, 2]})
+        cov = coverage.Coverage()
+        cov.load()
+        report = self.get_report(cov, squeeze=False)
+        assert "\x1b" not in report
+        assert "\x07" not in report
+        assert "mod?[31m?.py " in report
+
     def test_report_omitting(self) -> None:
         # Try reporting while omitting some modules
         self.make_mycode()

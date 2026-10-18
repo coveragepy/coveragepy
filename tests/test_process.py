@@ -17,6 +17,7 @@ import signal
 import stat
 import sys
 import textwrap
+from contextlib import chdir
 from pathlib import Path
 from typing import Any
 
@@ -30,7 +31,7 @@ from coverage.misc import first
 from coverage.sqldata import good_filename_match
 from tests import testenv
 from tests.coveragetest import TESTS_DIR, CoverageTest
-from tests.helpers import change_dir, re_lines, re_lines_text
+from tests.helpers import re_lines, re_lines_text
 
 
 class ProcessTest(CoverageTest):
@@ -979,7 +980,6 @@ class EnvironmentTest(CoverageTest):
         actual = self.run_command("coverage run link/run_me.py")
         self.assert_tryexecfile_output(expected, actual)
 
-    @pytest.mark.skipif(env.PYVERSION < (3, 11), reason="PYTHONSAFEPATH is new in 3.11")
     @pytest.mark.skipif(
         env.WINDOWS,
         reason="Windows gets this wrong: https://github.com/python/cpython/issues/131484",
@@ -991,7 +991,6 @@ class EnvironmentTest(CoverageTest):
         actual = self.run_command("coverage run run_me.py")
         self.assert_tryexecfile_output(expected, actual)
 
-    @pytest.mark.skipif(env.PYVERSION < (3, 11), reason="PYTHONSAFEPATH is new in 3.11")
     def test_pythonsafepath_dashm_runme(self) -> None:
         self.make_file("run_me.py", TRY_EXECFILE_CODE)
         self.set_environ("PYTHONSAFEPATH", "1")
@@ -1005,7 +1004,6 @@ class EnvironmentTest(CoverageTest):
         actual = self.run_command("python -Im coverage run run_me.py")
         self.assert_tryexecfile_output(expected, actual)
 
-    @pytest.mark.skipif(env.PYVERSION < (3, 11), reason="PYTHONSAFEPATH is new in 3.11")
     def test_pythonsafepath_dashm(self) -> None:
         self.make_file("with_main/__main__.py", TRY_EXECFILE_CODE)
         self.set_environ("PYTHONSAFEPATH", "1")
@@ -1586,7 +1584,7 @@ class ProcessStartupTest(CoverageTest):
             """,
         )
         self.set_environ("PYTHONPATH", os.path.abspath("lib"))
-        with change_dir("main"):
+        with chdir("main"):
             out = self.run_command("coverage run main.py")
             assert out == "Other\nHello, world!\n"
             self.run_command("coverage combine")

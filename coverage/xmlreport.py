@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from typing import IO, TYPE_CHECKING, Any
 
 from coverage import files
-from coverage.misc import human_sorted, human_sorted_items, isolate_module
+from coverage.misc import human_sorted, human_sorted_items, isolate_module, neutralize_control
 from coverage.plugin import FileReporter
 from coverage.report_core import get_analysis_to_report
 from coverage.results import Analysis
@@ -115,7 +115,7 @@ class XmlReporter:
         for path in human_sorted(self.source_paths):
             xsource = self.xml_out.createElement("source")
             appendChild(xsources, xsource)
-            txt = self.xml_out.createTextNode(path)
+            txt = self.xml_out.createTextNode(neutralize_control(path))
             appendChild(xsource, txt)
 
         lnum_tot, lhits_tot = 0, 0
@@ -189,6 +189,8 @@ class XmlReporter:
         else:
             rel_name = fr.relative_filename().replace("\\", "/")
             self.source_paths.add(fr.filename[: -len(rel_name)].rstrip(r"\/"))
+
+        rel_name = neutralize_control(rel_name)
 
         dirname = os.path.dirname(rel_name) or "."
         dirname = "/".join(dirname.split("/")[: self.config.xml_package_depth])

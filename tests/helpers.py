@@ -278,22 +278,6 @@ def arcz_to_arcs(arcz: str) -> list[TArc]:
     return sorted(arcs)
 
 
-@contextlib.contextmanager
-def change_dir(new_dir: str | Path) -> Iterator[None]:
-    """Change directory, and then change back.
-
-    Use as a context manager, it will return to the original
-    directory at the end of the block.
-
-    """
-    old_dir = os.getcwd()
-    os.chdir(str(new_dir))
-    try:
-        yield
-    finally:
-        os.chdir(old_dir)
-
-
 T = TypeVar("T")
 
 
