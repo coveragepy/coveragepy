@@ -68,7 +68,7 @@ Unreleased
 - Binary wheels are now provided for iOS and Android. This allows the use of
   the optimized C tracer on mobile platforms.
 
-- Performance: HTML reports should be about 5% faster to produce.
+- Performance: HTML reports should be about 5% faster to produce..
 
 .. start-releases
 
