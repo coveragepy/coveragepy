@@ -407,10 +407,7 @@ class HtmlReporter:
         # Write function and class index pages.
         self.write_region_index_pages(files_to_report)
 
-        return (
-            self.index_pages["file"].totals.n_statements
-            and self.index_pages["file"].totals.pc_covered
-        )
+        return self.index_pages["file"].totals.pc_covered
 
     def make_directory(self) -> None:
         """Make sure our htmlcov directory exists."""
