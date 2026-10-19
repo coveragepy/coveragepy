@@ -17,6 +17,7 @@ from collections.abc import Iterable
 from coverage import env
 from coverage.types import TLineNo, TSourceTokenLines
 
+# The same tuple that tokenize.tokenize returns:
 TToken = tuple[int, str, tuple[int, int], tuple[int, int], str]
 TokenInfos = Iterable[TToken]
 
@@ -139,7 +140,10 @@ def source_token_lines(source: str) -> TSourceTokenLines:
 
     for ttype, ttext, (sline, scol), (_, ecol), _ in _phys_tokens(tokgen):
         mark_start = True
-        parts = re.split("(\n)", ttext) if "\n" in ttext else (ttext,)
+        if "\n" in ttext:
+            parts = re.split("(\n)", ttext)
+        else:
+            parts = [ttext]
         for part in parts:
             if part == "\n":
                 yield line
