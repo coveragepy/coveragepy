@@ -305,6 +305,9 @@ class Coverage(TConfigurable):
         self._data_suffix = self._run_suffix = None
         self._exclude_re: dict[str, str] = {}
         self._old_sigterm: Callable[[int, FrameType | None], Any] | None = None
+        # True while _on_sigterm is inside stop/save. A nested SIGTERM must
+        # not enter again (issue 2310).
+        self._sigterm_handling = False
 
         # State machine variables:
         # Have we initialized everything?
@@ -595,6 +598,17 @@ class Coverage(TConfigurable):
             config=self.config,
             dynamic_contexts=(should_start_context is not None),
         )
+        # The Python docs seem to imply that SIGTERM works uniformly even
+        # on Windows, but that's not my experience, and this agrees:
+        # https://stackoverflow.com/questions/35772001/x/35792192#35792192
+        # The handler runs on this thread between bytecodes, including inside
+        # lock_data/unlock_data. The collector uses an RLock when we install
+        # it so save() can re-enter that lock (issue 2310).
+        catch_sigterm = (
+            self.config.sigterm
+            and threading.current_thread() == threading.main_thread()
+            and not env.WINDOWS
+        )
         self._collector = Collector(
             core=self._core,
             should_trace=self._should_trace,
@@ -604,6 +618,7 @@ class Coverage(TConfigurable):
             branch=self.config.branch,
             warn=self._warn,
             concurrency=concurrency,
+            sigterm=catch_sigterm,
         )
 
         suffix = self._data_suffix_specified
@@ -652,16 +667,11 @@ class Coverage(TConfigurable):
 
         # Register our clean-up handlers.
         atexit.register(self._atexit)
-        if self.config.sigterm:
-            is_main = (threading.current_thread() == threading.main_thread())  # fmt: skip
-            if is_main and not env.WINDOWS:
-                # The Python docs seem to imply that SIGTERM works uniformly even
-                # on Windows, but that's not my experience, and this agrees:
-                # https://stackoverflow.com/questions/35772001/x/35792192#35792192
-                self._old_sigterm = signal.signal(  # type: ignore[assignment]
-                    signal.SIGTERM,
-                    self._on_sigterm,
-                )
+        if catch_sigterm:
+            self._old_sigterm = signal.signal(  # type: ignore[assignment]
+                signal.SIGTERM,
+                self._on_sigterm,
+            )
 
     def _init_data(self, suffix: str | bool | None) -> None:
         """Create a data file if we don't have one yet."""
@@ -755,10 +765,26 @@ class Coverage(TConfigurable):
 
     def _on_sigterm(self, signum_unused: int, frame_unused: FrameType | None) -> None:
         """A handler for signal.SIGTERM."""
-        self._atexit("sigterm")
-        # Statements after here won't be seen by metacov because we just wrote
-        # the data, and are about to kill the process.
-        signal.signal(signal.SIGTERM, self._old_sigterm)  # pragma: not covered
+        # Issue 2310: Python runs this between bytecodes, so a second SIGTERM
+        # can land inside stop/save. The nested call deadlocks on data_lock
+        # or raises from the data file the outer call is writing, and that
+        # exception escapes into the interrupted program. Ignore it; the
+        # outer call still re-raises SIGTERM after saving.
+        # The handler runs while the Coverage being tested is collecting, so
+        # metacov can't record any of it.
+        if self._sigterm_handling:  # pragma: not covered
+            return
+        self._sigterm_handling = True  # pragma: not covered
+        try:  # pragma: not covered
+            # Drop further SIGTERMs at the OS. The flag above covers a delivery
+            # that was already inside this function before the disposition changes.
+            signal.signal(signal.SIGTERM, signal.SIG_IGN)  # pragma: not covered
+            self._atexit("sigterm")  # pragma: not covered
+        finally:
+            # Statements after here won't be seen by metacov because we just wrote
+            # the data, and are about to kill the process.
+            signal.signal(signal.SIGTERM, self._old_sigterm)  # pragma: not covered
+            self._sigterm_handling = False  # pragma: not covered
         os.kill(os.getpid(), signal.SIGTERM)  # pragma: not covered
 
     def erase(self) -> None:
