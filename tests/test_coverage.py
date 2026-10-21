@@ -1502,6 +1502,23 @@ class ExcludeTest(CoverageTest):
             lines=[1, 3, 5, 7, 9, 11, 19, 24, 25],
         )
 
+    def test_excluded_lines_split_missing_ranges(self) -> None:
+        # Issue #1691: excluded lines aren't missing, so a range of missing
+        # lines shouldn't run through them.  Comments still don't split one.
+        self.check_coverage(
+            """\
+            def outer():
+                a = 2
+                if a:  # pragma: no cover
+                    b = 4
+                c = 5
+                # a comment
+                d = 7
+            """,
+            lines=[1, 2, 5, 7],
+            missing="2, 5-7",
+        )
+
     def test_default_ellipsis_multiline_return_type(self) -> None:
         # Issue #2185: the default `...` exclusion should still apply when the
         # return type annotation is split over multiple lines (a common shape
