@@ -936,19 +936,36 @@ class CoverageData:
             with self._connect():
                 self._have_used = True
 
+    def _data_hash(self) -> str:
+        """The short hash of the data so far, for the data file name."""
+        return base64.b64encode(self._hasher.digest(), altchars=b"01").decode()[:NHASH]
+
     def write(self) -> None:
         """Ensure the data is written to the data file."""
+        unhashed_filename = None
         if self._our_suffix and not self._wrote_hash:
+            unhashed_filename = self._filename
+        elif (
+            self._our_suffix
+            and (m := filename_match(self._filename))
+            and m["hash"]
+            and not self._filename.endswith(f".H{self._data_hash()}h")
+        ):
+            # More data was recorded after the hash went into the file name.
+            # Update the name, or combining would skip this file as a
+            # duplicate of another one that only shared its earlier data.
+            unhashed_filename = self._filename[: m.start("hash") - len(".H")]
+        if unhashed_filename is not None:
             self._debug_dataio("Finishing data file", self._filename)
             with self._connect() as con:
                 con.execute_void(
-                    "INSERT OR IGNORE INTO meta (key, value) VALUES ('hash', ?)",
+                    "INSERT OR REPLACE INTO meta (key, value) VALUES ('hash', ?)",
                     (self._hasher.hexdigest(),),
                 )
             self.close()
-            data_hash = base64.b64encode(self._hasher.digest(), altchars=b"01").decode()[:NHASH]
+            data_hash = self._data_hash()
             current_filename = self._filename
-            self._filename += f".H{data_hash}h"
+            self._filename = unhashed_filename + f".H{data_hash}h"
             self._debug_dataio("Renaming data file to", self._filename)
             os.rename(current_filename, self._filename)
             self._wrote_hash = True

@@ -57,6 +57,12 @@ Unreleased
   ``line-rate`` values like ``8.333e-05`` or ``1``. This is now fixed, closing
   `issue 2293`_ and `issue 2294`_.
 
+- Fix: a parallel data file saved more than once kept the hash of its first
+  save in its file name. Combining could then skip it as a duplicate of another
+  file that had the same data at that point, and delete it, losing the data
+  recorded after the first save. Each save now updates the hash. This had been
+  a problem since 7.13.1. Fixes `issue 2338`_.
+
 - Fix: using the C tracer, the refcount of ``None`` was mismanaged during
   function calls, including comprehensions. This was unlikely to cause an
   actual problem, but is now fixed. Thanks, Andrew Dalke.
@@ -104,6 +110,7 @@ Unreleased
 .. _issue 2294: https://github.com/coveragepy/coveragepy/issues/2294
 .. _issue 2314: https://github.com/coveragepy/coveragepy/issues/2314
 .. _issue 2335: https://github.com/coveragepy/coveragepy/issues/2335
+.. _issue 2338: https://github.com/coveragepy/coveragepy/issues/2338
 
 
 .. start-releases

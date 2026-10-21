@@ -28,6 +28,7 @@ from coverage.data import (
 from coverage.exceptions import ConfigError, DataError, NoDataError
 from coverage.files import PathAliases, canonical_filename
 from coverage.misc import first
+from coverage.sqldata import good_filename_match
 from coverage.types import FilePathClasses, FilePathType, TArc, TLineNo
 from tests import osinfo
 from tests.coveragetest import CoverageTest
@@ -878,6 +879,49 @@ class CoverageDataFilesTest(CoverageTest):
 
         # In addition to being different, the suffixes have the pid in them.
         assert all(str(os.getpid()) in fn for fn in data_files2)
+
+    def test_true_suffix_written_twice(self) -> None:
+        # Two files start with the same data, then record different data and
+        # are written again. Both have to be combined, so the second write has
+        # to update the hash in the file name.
+        for more_lines in [LINES_2, {"d.py": {4}}]:
+            covdata = DebugCoverageData(suffix=True)
+            covdata.add_lines(LINES_1)
+            covdata.write()
+            covdata.add_lines(more_lines)
+            covdata.write()
+        data_files = glob.glob(".coverage.*")
+        assert len(data_files) == 2
+        assert all(good_filename_match(fn)["hash"] for fn in data_files)
+
+        covdata3 = DebugCoverageData()
+        combine_parallel_data(covdata3)
+        assert_line_counts(covdata3, {"a.py": 3, "b.py": 1, "c.py": 1, "d.py": 1})
+        self.assert_file_count(".coverage.*", 0)
+
+    def test_true_suffix_written_twice_same_data(self) -> None:
+        # Files with the same data are still skipped as duplicates when they
+        # were written more than once.
+        data_files = []
+        for _ in range(2):
+            covdata = DebugCoverageData(suffix=True)
+            covdata.add_lines(LINES_1)
+            covdata.write()
+            covdata.add_lines(LINES_2)
+            covdata.write()
+            data_files.append(covdata.data_filename())
+        classifier = DataFileClassifier()
+        assert classifier.classify(data_files[0]) == "combine"
+        assert classifier.classify(data_files[1]) == "skip"
+
+    def test_true_suffix_written_again_without_new_data(self) -> None:
+        covdata = DebugCoverageData(suffix=True)
+        covdata.add_lines(LINES_1)
+        covdata.write()
+        data_file = covdata.data_filename()
+        covdata.write()
+        assert covdata.data_filename() == data_file
+        self.assert_file_count(".coverage.*", 1)
 
     def test_combining(self) -> None:
         self.assert_file_count(".coverage.*", 0)
