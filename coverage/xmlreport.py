@@ -37,7 +37,10 @@ def rate(hit: int, num: int) -> str:
     is only returned when `hit == num` (or `num == 0`). Rounding can never
     result in either "0" or "1".
     """
-    if num == 0 or hit == num:
+    if num == 0:
+        # No lines at all counts as 100%
+        return "1"
+    elif hit == num:
         return "1"
     elif hit == 0:
         return "0"
