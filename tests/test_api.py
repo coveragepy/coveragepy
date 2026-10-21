@@ -849,7 +849,7 @@ class SwitchContextTest(CoverageTest):
         assert [2, 5] == sorted_lines(data, suite_filename)
 
     def test_dynamic_context_conflict(self) -> None:
-        cov = coverage.Coverage(source=["."])
+        cov = coverage.Coverage()
         cov.set_option("run:dynamic_context", "test_function")
         with cov.collect():
             with pytest.warns(Warning) as warns:

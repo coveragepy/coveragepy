@@ -35,7 +35,7 @@ class XmlTestHelpers(CoverageTest):
         self.make_file("sub/__init__.py")
         self.make_file("sub/doit.py", "print('doit!')")
         self.make_file("main.py", "import sub.doit")
-        cov = coverage.Coverage(source=["."])
+        cov = coverage.Coverage()
         self.start_import_stop(cov, "main")
         return cov
 

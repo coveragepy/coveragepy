@@ -719,7 +719,7 @@ class HtmlTest(HtmlTestHelpers, CoverageTest):
             normal()
         """,
         )
-        res = self.run_coverage(covargs=dict(source="."), htmlargs=dict(skip_covered=True))
+        res = self.run_coverage(htmlargs=dict(skip_covered=True))
         assert res == 100.0
         self.assert_doesnt_exist("htmlcov/main_file_py.html")
         # Since there are no files to report, we can't collect any region
@@ -738,7 +738,7 @@ class HtmlTest(HtmlTestHelpers, CoverageTest):
             normal()
         """,
         )
-        res = self.run_coverage(covargs=dict(source="."), htmlargs=dict(skip_covered=True))
+        res = self.run_coverage(htmlargs=dict(skip_covered=True))
         assert res == 80.0
         self.assert_exists("htmlcov/main_file_py.html")
         # We have a file to report, so we get function and class index pages,

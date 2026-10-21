@@ -25,48 +25,86 @@ Unreleased
 
 - Dropped support for Python 3.10.
 
+- Binary wheels are now provided for iOS and Android. This allows the use of
+  the optimized C tracer on mobile platforms.
+
+- Fix: three or more levels of nested ``with`` statements could make a ``with``
+  line look like a branch with an exit that can never happen. Using the
+  sys.monitoring core, these phantom branches were reported as partial. Other
+  cores hid the problem but still counted the phantom branches in the total.
+  Closes `issue 1987`_.
+
 - Fix: a comment or string that merely mentioned ``if True:`` or
   ``while True:`` could mark its line as a branch that is known to be partial,
   so a branch that never ran was reported as taken.  These built-in patterns
-  now only match at the start of the statement.  Closes `issue 2314`_.
+  now only match at the start of the statement. Closes `issue 2314`_.
 
-.. _issue 2314: https://github.com/coveragepy/coveragepy/issues/2314
+- Fix: region detection missed functions defined in unusual places, such as
+  ``else`` and ``except`` clauses. This is now fixed.
 
-- Fix: file names (and plugin names) can contain control characters, which are
-  legal in POSIX paths but unsafe in reports: in XML 1.0 they make the document
-  non-well-formed, and in a terminal they act as escape sequences (colors,
-  title/clipboard sequences, cursor moves that forge output). Now the XML
-  report, the text and Markdown summary reports, and ``coverage debug data``
-  replace non-printable characters in names. Printable names are unchanged.
+- Fix: recent versions of the lcov tool complain if the same function name
+  appears more than once in a report. Python can have multiple same-named
+  functions in a few ways, for example, getters/setters or conditionally
+  defined functions. These are now disambiguated by adding a ``@<line number>``
+  suffix to the function name. Fixes `issue 2335`.
 
-- Fix: a file pattern (from ``include``, ``omit``, or a ``[paths]`` alias)
-  containing a newline sent the glob-to-regex translation into an infinite
-  loop, hanging the process.  Newlines in patterns are now handled like any
-  other character.
+- Fix: The "Can't combine statement coverage data with branch data" error now
+  names the two data files it couldn't combine. The :ref:`error description
+  <error_cant_combine>` in the docs now lists common causes and how to find the
+  process that wrote the file.
 
 - Fix: at coverage totals close to 0 or 100, the XML report could get incorrect
   ``line-rate`` values like ``8.333e-05`` or ``1``. This is now fixed, closing
   `issue 2293`_ and `issue 2294`_.
 
-.. _issue 2293: https://github.com/coveragepy/coveragepy/issues/2293
-.. _issue 2294: https://github.com/coveragepy/coveragepy/issues/2294
-
 - Fix: using the C tracer, the refcount of ``None`` was mismanaged during
   function calls, including comprehensions. This was unlikely to cause an
   actual problem, but is now fixed. Thanks, Andrew Dalke.
+- Fixes for obscure but legal file names:
 
-- Fix: using the C tracer, if a plugin's ``dynamic_source_filename`` method
-  raised an exception, lines in that function could be recorded as belonging
-  to a different file.  Also fixed some minor memory leaks in the C tracer.
+  - File names (and plugin names) can contain control characters, which are
+    legal in POSIX paths but unsafe in reports: in XML 1.0 they make the
+    document non-well-formed, and in a terminal they act as escape sequences
+    (colors, title/clipboard sequences, cursor moves that forge output). Now
+    the XML report, the text and Markdown summary reports, and ``coverage debug
+    data`` replace non-printable characters in names. Printable names are
+    unchanged.
 
-- Fix: the C tracer held borrowed references to dictionary values, which was
-  unsafe on free-threaded Python.  Now it takes its own references.
+  - A file pattern (from ``include``, ``omit``, or a ``[paths]`` alias)
+    containing a newline sent the glob-to-regex translation into an infinite
+    loop, hanging the process. Newlines in patterns are now handled like any
+    other character.
 
-- Fix: using the C tracer, an internal error while recording a new file could
-  be reported as a confusing ``SystemError`` instead of the actual exception.
+- Fixes in the implementation of the C tracer:
 
-- Binary wheels are now provided for iOS and Android. This allows the use of
-  the optimized C tracer on mobile platforms.
+  - If a plugin's ``dynamic_source_filename`` method raised an exception, lines
+    in that function could be recorded as belonging to a different file. Also
+    fixed some minor memory leaks in the C tracer.
+
+  - The refcount of ``None`` was mismanaged during function calls, including
+    comprehensions. This was unlikely to cause an actual problem, but is now
+    fixed. Thanks, Andrew Dalke.
+
+  - The C tracer held borrowed references to dictionary values, which was
+    unsafe on free-threaded Python.  Now it takes its own references.
+
+  - An internal error while recording a new file could be reported as a
+    confusing ``SystemError`` instead of the actual exception.
+
+- Performance: the text summary report (``coverage report``) held on to every
+  file's parsed source until it finished, so its memory use grew with the size
+  of the project: ten times or more what 7.14 used on large projects.  Now it
+  keeps only what it needs to print. Fixes `issue 2277`_.
+
+- Performance: HTML reports should be about 5% faster to produce.
+
+.. _issue 1987: https://github.com/coveragepy/coveragepy/issues/1987
+.. _issue 2277: https://github.com/coveragepy/coveragepy/issues/2277
+.. _issue 2293: https://github.com/coveragepy/coveragepy/issues/2293
+.. _issue 2294: https://github.com/coveragepy/coveragepy/issues/2294
+.. _issue 2314: https://github.com/coveragepy/coveragepy/issues/2314
+.. _issue 2335: https://github.com/coveragepy/coveragepy/issues/2335
+
 
 .. start-releases
 

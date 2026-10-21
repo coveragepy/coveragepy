@@ -11,6 +11,11 @@ from typing import cast
 
 from coverage.plugin import CodeRegion
 
+# These are all the ast fields that can contain statements, directly or
+# through ExceptHandler or match_case nodes.  A test checks that this is
+# complete.
+STATEMENT_FIELDS = ("body", "orelse", "finalbody", "handlers", "cases")
+
 
 @dataclass
 class Context:
@@ -51,9 +56,10 @@ class RegionFinder:
             self.handle_node_body(node)
 
     def handle_node_body(self, node: ast.AST) -> None:
-        """Recursively handle the nodes in this node's body, if any."""
-        for body_node in getattr(node, "body", ()):
-            self.handle_node(body_node)
+        """Recursively handle the nodes in this node's statement lists, if any."""
+        for field in STATEMENT_FIELDS:
+            for stmts_node in getattr(node, field, ()):
+                self.handle_node(stmts_node)
 
     def handle_FunctionDef(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
         """Called for `def` or `async def`."""

@@ -165,7 +165,7 @@ class DynamicContextTest(CoverageTest):
 
     def test_dynamic_alone(self) -> None:
         self.make_file("two_tests.py", self.SOURCE)
-        cov = coverage.Coverage(source=["."])
+        cov = coverage.Coverage()
         cov.set_option("run:dynamic_context", "test_function")
         self.start_import_stop(cov, "two_tests")
         data = cov.get_data()
@@ -187,7 +187,7 @@ class DynamicContextTest(CoverageTest):
 
     def test_static_and_dynamic(self) -> None:
         self.make_file("two_tests.py", self.SOURCE)
-        cov = coverage.Coverage(context="stat", source=["."])
+        cov = coverage.Coverage(context="stat")
         cov.set_option("run:dynamic_context", "test_function")
         self.start_import_stop(cov, "two_tests")
         data = cov.get_data()
@@ -225,7 +225,7 @@ class DynamicContextTest(CoverageTest):
             TestSomething.test_class()
             """,
         )
-        cov = coverage.Coverage(source=["."])
+        cov = coverage.Coverage()
         cov.set_option("run:dynamic_context", "test_function")
         self.start_import_stop(cov, "class_tests")
         data = cov.get_data()

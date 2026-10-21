@@ -428,13 +428,23 @@ class CoverageDataTest(CoverageTest):
         covdata2 = DebugCoverageData(suffix="2")
         covdata2.add_arcs(ARCS_3)
 
-        msg = "Can't combine branch coverage data with statement data"
-        with pytest.raises(DataError, match=msg):
+        msg = (
+            "Can't combine branch coverage data with statement data: "
+            + r"data file '.*\.coverage\.2' measured branch coverage, "
+            + r"but data file '.*\.coverage\.1' didn't$"
+        )
+        with pytest.raises(DataError, match=msg) as excinfo:
             covdata1.update(covdata2)
+        assert excinfo.value.slug == "cant-combine"
 
-        msg = "Can't combine statement coverage data with branch data"
-        with pytest.raises(DataError, match=msg):
+        msg = (
+            "Can't combine statement coverage data with branch data: "
+            + r"data file '.*\.coverage\.1' didn't measure branch coverage, "
+            + r"but data file '.*\.coverage\.2' did$"
+        )
+        with pytest.raises(DataError, match=msg) as excinfo:
             covdata2.update(covdata1)
+        assert excinfo.value.slug == "cant-combine"
 
     def test_update_file_tracers(self) -> None:
         covdata1 = DebugCoverageData(suffix="1")
@@ -1063,6 +1073,39 @@ class CoverageDataFilesTest(CoverageTest):
         msg = "Couldn't combine from non-existent path 'xyzzy'"
         with pytest.raises(NoDataError, match=msg):
             combine_parallel_data(covdata, data_paths=["xyzzy"])
+
+    @pytest.mark.parametrize("arcs_first", [False, True])
+    def test_combining_cant_mix_lines_and_arcs(self, arcs_first: bool) -> None:
+        # The error names the data file that doesn't match the data already
+        # combined, and the data file it is combined into.
+        covdata1 = DebugCoverageData(suffix="1")
+        covdata2 = DebugCoverageData(suffix="2")
+        if arcs_first:
+            covdata1.add_arcs(ARCS_3)
+            covdata2.add_lines(LINES_1)
+            msg = (
+                "Can't combine statement coverage data with branch data: "
+                + r"data file '.*\.coverage\.2' didn't measure branch coverage, "
+                + r"but data file '.*\.coverage' did$"
+            )
+        else:
+            covdata1.add_lines(LINES_1)
+            covdata2.add_arcs(ARCS_3)
+            msg = (
+                "Can't combine branch coverage data with statement data: "
+                + r"data file '.*\.coverage\.2' measured branch coverage, "
+                + r"but data file '.*\.coverage' didn't$"
+            )
+        covdata1.write()
+        covdata2.write()
+
+        covdata3 = DebugCoverageData()
+        with pytest.raises(DataError, match=msg) as excinfo:
+            combine_parallel_data(covdata3)
+        assert excinfo.value.slug == "cant-combine"
+
+        # The data file named in the message is still there to be examined.
+        self.assert_exists(".coverage.2")
 
     def test_interleaved_erasing_bug716(self) -> None:
         # pytest-cov could produce this scenario. #716

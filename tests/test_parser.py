@@ -181,6 +181,25 @@ class PythonParserTest(PythonParserTestBase):
         assert parser.statements == one_nine
         assert parser.exit_counts() == dict.fromkeys(one_nine, 1)
 
+    def test_deeply_nested_context_managers(self) -> None:
+        # https://github.com/coveragepy/coveragepy/issues/1987
+        parser = self.parse_text("""\
+            a = 1
+            with suppress(ValueError):
+                with suppress(ValueError):
+                    with suppress(ValueError):
+                        with suppress(ValueError):
+                            x = 6
+                    with suppress(ValueError): x = 7
+            with suppress(ValueError): x = 8
+            a = 9
+            """)
+
+        one_nine = set(range(1, 10))
+        assert parser.statements == one_nine
+        assert parser.arcs() == set(arcz_to_arcs("12 23 34 45 56 67 78 89 9."))
+        assert parser.exit_counts() == dict.fromkeys(one_nine, 1)
+
     def test_module_docstrings(self) -> None:
         parser = self.parse_text("""\
             '''The docstring on line 1'''
