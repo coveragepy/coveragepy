@@ -6,5 +6,8 @@
 # So that we have pytest types.
 -r pytest.in
 
+# So that we have playwright types for tests/js/run_js_tests.py.
+-r js.in
+
 mypy
 types-requests

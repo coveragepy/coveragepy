@@ -252,6 +252,106 @@ class MemoryFumblingTest(CoverageTest):
     """Test that we properly manage the None refcount."""
 
     @pytest.mark.skipif(not testenv.C_TRACER, reason="Only the C tracer has refcounting issues")
+    def test_miscounting_none(self) -> None:
+        self.make_file(
+            "nones.py",
+            """\
+            import sys
+
+            def f(): ...
+
+            n1 = sys.getrefcount(None)
+            for _ in range(100):
+                f()
+            n2 = sys.getrefcount(None)
+            print(f"None count diff: {n2-n1}")
+            """,
+        )
+        out = self.run_command("coverage run nones.py")
+        assert out == "None count diff: 0\n"
+
+    @pytest.mark.skipif(not testenv.C_TRACER, reason="Only the C tracer has refcounting issues")
+    def test_ctracer_releases_trace_arcs(self) -> None:
+        # CTracer is only sometimes importable when pylint runs.
+        # pylint: disable=import-error, no-name-in-module, useless-suppression
+        from coverage.tracer import CTracer
+
+        trace_arcs = object()
+        before = sys.getrefcount(trace_arcs)
+        for _ in range(100):
+            tracer = CTracer()
+            tracer.trace_arcs = trace_arcs
+            del tracer
+        assert sys.getrefcount(trace_arcs) == before
+
+    @pytest.mark.skipif(not testenv.C_TRACER, reason="Only the C tracer has refcounting issues")
+    def test_cfiledisposition_frees_memory(self) -> None:
+        import tracemalloc  # PyPy doesn't have tracemalloc.
+
+        # CTracer is only sometimes importable when pylint runs.
+        # pylint: disable=import-error, no-name-in-module, useless-suppression
+        from coverage.tracer import CFileDisposition
+
+        tracemalloc.start()
+        try:
+            before, _ = tracemalloc.get_traced_memory()
+            for _ in range(1000):
+                CFileDisposition()
+            after, _ = tracemalloc.get_traced_memory()
+        finally:
+            tracemalloc.stop()
+        # 1000 leaked objects would be at least 72K.
+        assert after - before < 10_000
+
+    @pytest.mark.skipif(not testenv.C_TRACER, reason="Only the C tracer has this issue")
+    def test_ctracer_unlocks_without_pending_error(self) -> None:
+        # unlock_data used to be called with the error still set, so Python
+        # replaced the real error with a SystemError.
+        self.make_file(
+            "bad_key.py",
+            """\
+            import sys
+            from coverage.tracer import CTracer, CFileDisposition
+
+            class BadKey(str):
+                def __hash__(self):
+                    raise ValueError("can't hash BadKey")
+
+            disp = CFileDisposition()
+            disp.original_filename = disp.canonical_filename = __file__
+            disp.source_filename = BadKey(__file__)
+            disp.trace = True
+            disp.reason = ""
+            disp.file_tracer = None
+            disp.has_dynamic_filename = False
+
+            tracer = CTracer()
+            tracer.data = {}
+            tracer.should_trace_cache = {__file__: disp}
+            tracer.trace_arcs = False
+            tracer.should_trace = None
+            tracer.concur_id_func = None
+            tracer.should_start_context = None
+            tracer.lock_data = lambda: None
+            tracer.unlock_data = lambda: None
+
+            def f():
+                pass
+
+            sys.settrace(tracer.start())
+            try:
+                f()
+            except Exception as exc:
+                print(f"{type(exc).__name__}: {exc}")
+            finally:
+                tracer.stop()
+                sys.settrace(None)
+            """,
+        )
+        out = self.run_command("python bad_key.py")
+        assert out == "ValueError: can't hash BadKey\n"
+
+    @pytest.mark.skipif(not testenv.C_TRACER, reason="Only the C tracer has refcounting issues")
     def test_dropping_none(self) -> None:  # pragma: not covered
         # TODO: Mark this so it will only be run sometimes.
         pytest.skip("This is too expensive for now (30s)")

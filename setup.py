@@ -120,7 +120,7 @@ class BuildFailed(Exception):
 
     def __init__(self) -> None:
         Exception.__init__(self)
-        self.cause = sys.exc_info()[1]  # work around py 2/3 different syntax
+        self.cause = sys.exception()
 
 
 class ve_build_ext(build_ext):  # type: ignore[misc]

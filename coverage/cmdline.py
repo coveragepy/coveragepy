@@ -1176,7 +1176,7 @@ def main(argv: list[str] | None = None) -> int | None:
         # An exception was caught while running the product code.  The
         # sys.exc_info() return tuple is packed into an _ExceptionDuringRun
         # exception.
-        traceback.print_exception(*err.args)  # pylint: disable=no-value-for-parameter
+        traceback.print_exception(*err.args)
         status = ERR
     except CoverageException as err:
         # A controlled error inside coverage.py: print the message to the user.

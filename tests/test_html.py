@@ -13,6 +13,7 @@ import os
 import os.path
 import re
 import sys
+from contextlib import chdir
 from html.parser import HTMLParser
 from typing import IO, Any
 from unittest import mock
@@ -30,7 +31,7 @@ from coverage.types import TLineNo, TMorf
 from tests import testenv
 from tests.coveragetest import TESTS_DIR, CoverageTest
 from tests.goldtest import compare, contains, contains_any, contains_rx, doesnt_contain, gold_path
-from tests.helpers import assert_coverage_warnings, change_dir
+from tests.helpers import assert_coverage_warnings
 
 
 class HtmlTestHelpers(CoverageTest):
@@ -718,7 +719,7 @@ class HtmlTest(HtmlTestHelpers, CoverageTest):
             normal()
         """,
         )
-        res = self.run_coverage(covargs=dict(source="."), htmlargs=dict(skip_covered=True))
+        res = self.run_coverage(htmlargs=dict(skip_covered=True))
         assert res == 100.0
         self.assert_doesnt_exist("htmlcov/main_file_py.html")
         # Since there are no files to report, we can't collect any region
@@ -737,7 +738,7 @@ class HtmlTest(HtmlTestHelpers, CoverageTest):
             normal()
         """,
         )
-        res = self.run_coverage(covargs=dict(source="."), htmlargs=dict(skip_covered=True))
+        res = self.run_coverage(htmlargs=dict(skip_covered=True))
         assert res == 80.0
         self.assert_exists("htmlcov/main_file_py.html")
         # We have a file to report, so we get function and class index pages,
@@ -825,7 +826,7 @@ def unbust(directory: str) -> None:
 
     This makes it possible for us to compare gold files.
     """
-    with change_dir(directory):
+    with chdir(directory):
         for fname in os.listdir("."):
             base, ext = os.path.splitext(fname)
             base, _, _ = base.partition("_cb_")
@@ -1114,7 +1115,7 @@ assert len(math) == 18
             """,
         )
 
-        with change_dir("src"):
+        with chdir("src"):
             sys.path.insert(0, "../othersrc")
             cov = coverage.Coverage(include=["./*", "../othersrc/*"])
             self.start_import_stop(cov, "here")

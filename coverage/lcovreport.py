@@ -99,6 +99,7 @@ def lcov_functions(
     functions.sort()
     functions_found = 0
     functions_hit = 0
+    function_names: set[str] = set()
     for first_line, last_line, region in functions:
         # A function counts as having been executed if any of it has been
         # executed.
@@ -111,6 +112,10 @@ def lcov_functions(
         functions_hit += hit
 
         name = lcov_field(region.name)
+        if name in function_names:
+            name += f"@{first_line}"
+        else:
+            function_names.add(name)
         outfile.write(f"FN:{first_line},{last_line},{name}\n")
         outfile.write(f"FNDA:{hit},{name}\n")
 

@@ -300,6 +300,45 @@ class WithTest(CoverageTest):
             branchz_missing="",
         )
 
+    def test_triple_nested_with(self) -> None:
+        # https://github.com/coveragepy/coveragepy/issues/1987
+        self.check_coverage(
+            """\
+            from contextlib import nullcontext
+            def f():
+                with nullcontext():
+                    with nullcontext():
+                        with nullcontext():
+                            print(6)
+            f()
+            """,
+            branchz="",
+            branchz_missing="",
+        )
+        assert self.stdout() == "6\n"
+
+    def test_branches_in_deeply_nested_with(self) -> None:
+        # https://github.com/coveragepy/coveragepy/issues/1987
+        self.check_coverage(
+            """\
+            from contextlib import nullcontext
+            def f(x):
+                with nullcontext():
+                    with nullcontext():
+                        if x:
+                            with nullcontext():
+                                with nullcontext():
+                                    if x == 2:
+                                        print(9)
+                print(10)
+            f(1)
+            f(0)
+            """,
+            branchz="56 5A 89 8A",
+            branchz_missing="89",
+        )
+        assert self.stdout() == "10\n10\n"
+
     def test_break_through_with(self) -> None:
         self.check_coverage(
             """\
@@ -473,6 +512,45 @@ class WithTest(CoverageTest):
             branchz="89 8A",
             branchz_missing="",
         )
+
+    def test_nested_with_in_multi_multiline_with(self) -> None:
+        # https://github.com/coveragepy/coveragepy/issues/1987
+        self.check_coverage(
+            """\
+            import contextlib
+            with (
+                contextlib.nullcontext() as x,
+                contextlib.nullcontext() as y,
+            ):
+                with contextlib.nullcontext():
+                    with contextlib.nullcontext():
+                        print(8)
+            print(9)
+            """,
+            branchz="",
+            branchz_missing="",
+        )
+        assert self.stdout() == "8\n9\n"
+
+    def test_with_at_end_of_finally(self) -> None:
+        # https://github.com/coveragepy/coveragepy/issues/1987
+        # If the `try` clause can't complete normally, the `with` at the
+        # end of the `finally` clause has no arc onward from the `with` line.
+        self.check_coverage(
+            """\
+            import contextlib
+            def f():
+                try:
+                    return 4
+                finally:
+                    with contextlib.nullcontext():
+                        print(7)
+            f()
+            """,
+            branchz="",
+            branchz_missing="",
+        )
+        assert self.stdout() == "7\n"
 
     def test_multi_multiline_with_backslash(self) -> None:
         # https://github.com/coveragepy/coveragepy/issues/1880

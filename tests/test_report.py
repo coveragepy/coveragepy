@@ -104,6 +104,24 @@ class SummaryTest(UsingModulesMixin, CoverageTest):
         assert "mycode.py " in report
         assert self.last_line_squeezed(report) == "TOTAL 4 0 100%"
 
+    @pytest.mark.skipif(
+        env.WINDOWS, reason="Control characters are disallowed in Windows filenames."
+    )
+    def test_control_chars_in_filename_are_neutralized(self) -> None:
+        # A POSIX file name may contain control characters.  Printed verbatim to
+        # a terminal they act as escape sequences (SGR colors, OSC title/clipboard
+        # sequences, cursor moves to forge output), so non-printable characters
+        # are replaced before the name reaches the report.
+        evil = "mod\x1b[31m\x07.py"
+        self.make_file(evil, "a = 1\nb = 2\n")
+        self.make_data_file(lines={os.path.abspath(evil): [1, 2]})
+        cov = coverage.Coverage()
+        cov.load()
+        report = self.get_report(cov, squeeze=False)
+        assert "\x1b" not in report
+        assert "\x07" not in report
+        assert "mod?[31m?.py " in report
+
     def test_report_omitting(self) -> None:
         # Try reporting while omitting some modules
         self.make_mycode()
@@ -283,7 +301,7 @@ class SummaryTest(UsingModulesMixin, CoverageTest):
             branch(1)
             """,
         )
-        cov = coverage.Coverage(source=["."], branch=True)
+        cov = coverage.Coverage(branch=True)
         self.start_import_stop(cov, "mybranch")
         assert self.stdout() == "x\n"
         report = self.get_report(cov)
@@ -317,7 +335,7 @@ class SummaryTest(UsingModulesMixin, CoverageTest):
             missing(0, 1)
             """,
         )
-        cov = coverage.Coverage(source=["."])
+        cov = coverage.Coverage()
         self.start_import_stop(cov, "mymissing")
         assert self.stdout() == "y\nz\n"
         report = self.get_report(cov, show_missing=True)
@@ -545,7 +563,7 @@ class SummaryTest(UsingModulesMixin, CoverageTest):
             foo()
             """,
         )
-        cov = coverage.Coverage(source=["."], branch=True)
+        cov = coverage.Coverage(branch=True)
         self.start_import_stop(cov, "main")
         assert self.stdout() == ""
         report = self.get_report(cov, skip_covered=True)
@@ -593,7 +611,7 @@ class SummaryTest(UsingModulesMixin, CoverageTest):
             foo()
             """,
         )
-        cov = coverage.Coverage(source=["."], branch=True)
+        cov = coverage.Coverage(branch=True)
         self.start_import_stop(cov, "long_______________filename")
         assert self.stdout() == ""
         report = self.get_report(cov, squeeze=False, skip_covered=True)
@@ -1092,7 +1110,7 @@ class SummaryTest(UsingModulesMixin, CoverageTest):
             missing(0, 1)
             """,
         )
-        cov = coverage.Coverage(source=["."])
+        cov = coverage.Coverage()
         self.start_import_stop(cov, "mymissing")
         assert self.stdout() == "y\nz\n"
         report = self.get_report(cov, squeeze=False, output_format="markdown", show_missing=True)
@@ -1195,7 +1213,7 @@ class SummaryReporterConfigurationTest(CoverageTest):
         self.make_rigged_file("file10.py", 234, 228)
         self.make_file("doit.py", "import file1, file2, file10")
 
-        cov = Coverage(source=["."], omit=["doit.py"])
+        cov = Coverage(omit=["doit.py"])
         self.start_import_stop(cov, "doit")
         for name, value in options:
             cov.set_option(name, value)

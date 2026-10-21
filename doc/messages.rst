@@ -52,6 +52,27 @@ Can't combine (branch or statement) coverage data with (statement or branch) dat
   incompatible.  You'll need to ensure that all of your data files are
   collected with the same settings.
 
+  The message names two data files: the first one that doesn't match the data
+  already combined, and the data file it is combined into.  It says which of
+  them measured branch coverage.  ``coverage debug data`` shows more.  For each
+  data file, ``has_arcs`` is true if the file has branch data.  The source
+  files a data file measured can tell you which process wrote it.
+
+  If a process wrote the wrong kind of data, it didn't use the :ref:`[run]
+  branch <config_run_branch>` setting you intended.  Common causes are:
+
+  - The process ran in a different directory, so it didn't find your
+    configuration file.  Set the ``COVERAGE_RCFILE`` environment variable to
+    the absolute path of the file to use it everywhere.  For subprocesses, the
+    :ref:`[run] patch = subprocess <config_run_patch>` setting passes your
+    configuration along.
+
+  - The data file was left over from an earlier run that used a different
+    setting.  Delete old data files before measuring again.
+
+  - ``--branch`` was used on the command line for some runs but not others.
+    Put the setting in your configuration file instead.
+
 
 .. _cmd_warnings:
 .. _warnings:
