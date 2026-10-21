@@ -44,6 +44,13 @@ Unreleased
   loop, hanging the process.  Newlines in patterns are now handled like any
   other character.
 
+- Fix: at coverage totals close to 0 or 100, the XML report could get incorrect
+  ``line-rate`` values like ``8.333e-05`` or ``1``. This is now fixed, closing
+  `issue 2293`_ and `issue 2294`_.
+
+.. _issue 2293: https://github.com/coveragepy/coveragepy/issues/2293
+.. _issue 2294: https://github.com/coveragepy/coveragepy/issues/2294
+
 - Fix: using the C tracer, the refcount of ``None`` was mismanaged during
   function calls, including comprehensions. This was unlikely to cause an
   actual problem, but is now fixed. Thanks, Andrew Dalke.
