@@ -23,7 +23,12 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
-Nothing yet.
+- Fix: XML reports using ``relative_files = True`` no longer emit an empty
+  ``<source>`` element when the report filenames are already relative to the
+  current directory. The source is now written as ``.`` instead. Closes
+  `issue 1555`_.
+
+.. _issue 1555: https://github.com/coveragepy/coveragepy/issues/1555
 
 
 .. start-releases
