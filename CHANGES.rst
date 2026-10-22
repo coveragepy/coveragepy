@@ -81,6 +81,10 @@ Unreleased
     loop, hanging the process. Newlines in patterns are now handled like any
     other character.
 
+  - The HTML report's index pages escaped file names twice, so a name with
+    ``&``, ``<``, or quotes in it was shown with entities like ``&amp;``. Now
+    they are escaped once.
+
 - Fixes in the implementation of the C tracer:
 
   - If a plugin's ``dynamic_source_filename`` method raised an exception, lines
