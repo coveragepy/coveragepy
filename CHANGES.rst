@@ -113,6 +113,12 @@ Unreleased
 .. _issue 2338: https://github.com/coveragepy/coveragepy/issues/2338
 
 
+- Fix: ``--source=/`` (or any source path resolving to the filesystem root)
+  matched no files, so nothing was measured. This is now fixed, closing
+  `issue 2291`_.
+
+.. _issue 2291: https://github.com/coveragepy/coveragepy/issues/2291
+
 .. start-releases
 
 .. _changes_7-16-2:
