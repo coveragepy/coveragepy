@@ -392,6 +392,48 @@ class HtmlDeltaTest(HtmlTestHelpers, CoverageTest):
         # The 100% file, skipped, shouldn't be here.
         self.assert_doesnt_exist("htmlcov/helper1_py.html")
 
+    def test_file_becomes_100_updates_neighbor_links(self) -> None:
+        # helper2 drops out of a skip_covered report. helper1 and helper3 haven't
+        # changed, but their pages link to helper2, so they have to be written again.
+        self.make_file(
+            "main_file.py",
+            """\
+            import helper1, helper2, helper3
+            helper1.func(12)
+            helper2.func(12)
+            helper3.func(12)
+            """,
+        )
+        for name in ["helper1", "helper2", "helper3"]:
+            self.make_file(
+                f"{name}.py",
+                """\
+                def func(x):
+                    if x % 2:
+                        print("odd")
+                """,
+            )
+        self.run_coverage(htmlargs=dict(skip_covered=True))
+        self.assert_exists("htmlcov/helper2_py.html")
+
+        # Now helper2 is 100% covered.
+        self.make_file(
+            "main_file.py",
+            """\
+            import helper1, helper2, helper3
+            helper1.func(12)
+            helper2.func(12)
+            helper2.func(23)
+            helper3.func(12)
+            """,
+        )
+        self.run_coverage(htmlargs=dict(skip_covered=True))
+
+        # run_coverage checked that no page links to the deleted helper2 page.
+        self.assert_doesnt_exist("htmlcov/helper2_py.html")
+        assert "htmlcov/helper1_py.html" in self.files_written
+        assert "htmlcov/helper3_py.html" in self.files_written
+
     def test_status_format_change(self) -> None:
         self.create_initial_files()
         self.run_coverage()
