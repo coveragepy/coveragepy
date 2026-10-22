@@ -63,6 +63,12 @@ Unreleased
   recorded after the first save. Each save now updates the hash. This had been
   a problem since 7.13.1. Fixes `issue 2338`_.
 
+- Fix: when a one-file report failed, deleting the output path could raise
+  ``PermissionError`` (as with ``/dev/stdout``) and hide the original error.
+  That cleanup now ignores ``PermissionError``.  Closes `issue 1804`_.
+
+.. _issue 1804: https://github.com/coveragepy/coveragepy/issues/1804
+
 - Fix: using the C tracer, the refcount of ``None`` was mismanaged during
   function calls, including comprehensions. This was unlikely to cause an
   actual problem, but is now fixed. Thanks, Andrew Dalke.
