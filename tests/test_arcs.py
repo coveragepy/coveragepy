@@ -2079,6 +2079,20 @@ class MiscArcTest(CoverageTest):
             self.start_import_stop(cov, "some_branches")
             # No assert: the test passes if it didn't raise an exception.
 
+    def test_elided_statement(self) -> None:
+        # https://github.com/nedbat/coveragepy/issues/2337
+        # Elided statement: function body on the same line as the def.
+        # sysmon branch coverage must not report a phantom missing branch.
+        self.check_coverage(
+            """\
+            def test():0
+            0
+            test()
+            """,
+            branchz="1. 12",
+            branchz_missing="",
+        )
+
 
 class DecoratorArcTest(CoverageTest):
     """Tests of arcs with decorators."""

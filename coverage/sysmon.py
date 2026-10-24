@@ -181,6 +181,9 @@ class CodeInfo:
     # first branch event in the code object.
     branch_resolver: BranchArcResolver | None
 
+    # Last line seen in this code object, used to emit sequential arcs.
+    last_line: int | None = None
+
 
 class SysMonitor(Tracer):
     """Python implementation of the raw data tracer for PEP669 implementations."""
@@ -412,6 +415,7 @@ class SysMonitor(Tracer):
             arc = (last_line, -code.co_firstlineno)
             code_info.file_data.add(arc)  # type: ignore
             # log(f"adding {arc=}")
+        code_info.last_line = None  # type: ignore[union-attr]  # pragma: nested
         return DISABLE
 
     @panopticon("code", "line")
@@ -436,9 +440,13 @@ class SysMonitor(Tracer):
         code_info = self.code_infos[id(code)]
         # code_info is not None and code_info.file_data is not None, since we
         # wouldn't have enabled this event if they were.
-        arc = (line_number, line_number)
+        if code_info.last_line is not None:  # pragma: nested
+            arc = (code_info.last_line, line_number)  # pragma: nested
+        else:
+            arc = (line_number, line_number)  # pragma: nested
         code_info.file_data.add(arc)  # type: ignore
         # log(f"adding {arc=}")
+        code_info.last_line = line_number  # pragma: nested
         return DISABLE
 
     @panopticon("code", "@", "@")
