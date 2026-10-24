@@ -1436,6 +1436,18 @@ assert len(math) == 18
             index = indexf.read()
         assert '<a href="h&#226;t_py.html">h&#226;t.py</a>' in index
 
+    def test_ampersand_in_filename(self) -> None:
+        # The file name on the index pages is escaped once, not twice.
+        self.make_file("a&b.py", "print('ampersand')")
+        self.make_data_file(lines={abs_file("a&b.py"): [1]})
+        cov = coverage.Coverage()
+        cov.load()
+        cov.html_report()
+        for page in ["index.html", "function_index.html"]:
+            with open(f"htmlcov/{page}", encoding="utf-8") as indexf:
+                index = indexf.read()
+            assert '<a href="a&amp;b_py.html">a&amp;b.py</a>' in index
+
     def test_accented_directory(self) -> None:
         # Make a file with a non-ascii character in the directory name.
         self.make_file("\xe2/accented.py", "print('accented')")

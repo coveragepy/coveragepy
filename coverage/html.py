@@ -565,7 +565,7 @@ class HtmlReporter:
         # Save this file's information for the index page.
         index_info = IndexItem(
             url=ftr.html_filename,
-            file=escape(ftr.fr.relative_filename()),
+            file=ftr.fr.relative_filename(),
             nums=ftr.analysis.numbers,
         )
         self.index_pages["file"].summaries.append(index_info)
@@ -615,7 +615,7 @@ class HtmlReporter:
                     page_data.summaries.append(
                         IndexItem(
                             url=f"{ftr.html_filename}#t{region.start}",
-                            file=escape(ftr.fr.relative_filename()),
+                            file=ftr.fr.relative_filename(),
                             description=(
                                 f"<data value='{escape(sorting_name)}'>"
                                 + escape(region.name)
@@ -630,7 +630,7 @@ class HtmlReporter:
                     page_data.summaries.append(
                         IndexItem(
                             url=ftr.html_filename,
-                            file=escape(ftr.fr.relative_filename()),
+                            file=ftr.fr.relative_filename(),
                             description=(
                                 "<data value=''>"
                                 + f"<span class='no-noun'>(no {escape(noun)})</span>"
