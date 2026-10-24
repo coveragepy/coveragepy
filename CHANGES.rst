@@ -26,6 +26,13 @@ Unreleased
 - In an abundance of caution, prevent forged SQLite journal files from being
   able to delete files they shouldn't.
 
+- Fix: the HTML report only rewrites a file's page when the file or its data
+  has changed, but each page also links to the previous and next files. When
+  the set of reported files changed, unchanged pages kept their old links. For
+  example, with ``skip_covered``, a file that became 100% covered had its page
+  deleted, but the pages next to it still linked to it. Now a page is also
+  rewritten when its neighbors change.
+
 
 .. start-releases
 

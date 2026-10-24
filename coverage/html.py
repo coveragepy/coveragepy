@@ -477,7 +477,7 @@ class HtmlReporter:
 
         """
         # Find out if the page on disk is already correct.
-        if self.incr.can_skip_file(self.data, ftr.fr, ftr.rootname):
+        if self.incr.can_skip_file(self.data, ftr):
             self.index_pages["file"].summaries.append(self.incr.index_info(ftr.rootname))
             return
 
@@ -816,22 +816,24 @@ class IncrementalChecker:
             self._reset()
             self.globals = these_globals
 
-    def can_skip_file(self, data: CoverageData, fr: FileReporter, rootname: str) -> bool:
+    def can_skip_file(self, data: CoverageData, ftr: FileToReport) -> bool:
         """Can we skip reporting this file?
 
-        `data` is a CoverageData object, `fr` is a `FileReporter`, and
-        `rootname` is the name being used for the file.
+        `data` is a CoverageData object, and `ftr` is the `FileToReport`.
 
         Returns True if the HTML page is fine as-is, False if we need to recreate
         the HTML page.
 
         """
         h = Hasher()
-        h.update(fr.source().encode("utf-8"))
-        add_data_to_hash(data, fr.filename, h)
+        h.update(ftr.fr.source().encode("utf-8"))
+        add_data_to_hash(data, ftr.fr.filename, h)
+        # The page links to the previous and next pages.
+        h.update(ftr.prev_html)
+        h.update(ftr.next_html)
         this_hash = h.hexdigest()
 
-        file_info = self.files.setdefault(rootname, FileInfo())
+        file_info = self.files.setdefault(ftr.rootname, FileInfo())
 
         if this_hash == file_info.hash:
             # Nothing has changed to require the file to be reported again.
