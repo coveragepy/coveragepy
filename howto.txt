@@ -60,6 +60,7 @@
 - Tag the tree, update GitHub releases and comment on issues:
     $ make clean tag github_releases comment_on_fixes
 - Bump version:
+    - commit any build process changes
     $ make bump_version
 $ deopvars
 - Once CI passes, merge the bump-version branch to main and push it

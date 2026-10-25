@@ -7,6 +7,8 @@ Test class mixins
 Some of these are transitional while working toward pure-pytest style.
 """
 
+# pragma: enforce 100% coverage
+
 from __future__ import annotations
 
 import importlib

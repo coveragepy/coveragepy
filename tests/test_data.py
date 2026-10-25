@@ -18,6 +18,7 @@ from unittest import mock
 
 import pytest
 
+from coverage import env
 from coverage.data import (
     CoverageData,
     DataFileClassifier,
@@ -28,6 +29,7 @@ from coverage.data import (
 from coverage.exceptions import ConfigError, DataError, NoDataError
 from coverage.files import PathAliases, canonical_filename
 from coverage.misc import first
+from coverage.sqldata import good_filename_match
 from coverage.types import FilePathClasses, FilePathType, TArc, TLineNo
 from tests import osinfo
 from tests.coveragetest import CoverageTest
@@ -137,6 +139,20 @@ def dicts_from_sets(file_data: dict[str, set[TData]]) -> dict[str, dict[TData, N
     This function helps us test that the old dict format still works.
     """
     return {k: dict.fromkeys(v) for k, v in file_data.items()}
+
+
+def hostile_journal(victim: str) -> bytes:
+    """Make the bytes of a SQLite journal naming `victim` as its super-journal.
+
+    Rolling back this journal makes SQLite delete `victim`.
+    """
+    name = os.path.abspath(victim).encode("utf-8")
+    return (
+        name
+        + len(name).to_bytes(4, "big")
+        + sum(name).to_bytes(4, "big")
+        + b"\xd9\xd5\x05\xf9\x20\xa1\x63\xd7"
+    )
 
 
 class CoverageDataTest(CoverageTest):
@@ -879,6 +895,49 @@ class CoverageDataFilesTest(CoverageTest):
         # In addition to being different, the suffixes have the pid in them.
         assert all(str(os.getpid()) in fn for fn in data_files2)
 
+    def test_true_suffix_written_twice(self) -> None:
+        # Two files start with the same data, then record different data and
+        # are written again. Both have to be combined, so the second write has
+        # to update the hash in the file name.
+        for more_lines in [LINES_2, {"d.py": {4}}]:
+            covdata = DebugCoverageData(suffix=True)
+            covdata.add_lines(LINES_1)
+            covdata.write()
+            covdata.add_lines(more_lines)
+            covdata.write()
+        data_files = glob.glob(".coverage.*")
+        assert len(data_files) == 2
+        assert all(good_filename_match(fn)["hash"] for fn in data_files)
+
+        covdata3 = DebugCoverageData()
+        combine_parallel_data(covdata3)
+        assert_line_counts(covdata3, {"a.py": 3, "b.py": 1, "c.py": 1, "d.py": 1})
+        self.assert_file_count(".coverage.*", 0)
+
+    def test_true_suffix_written_twice_same_data(self) -> None:
+        # Files with the same data are still skipped as duplicates when they
+        # were written more than once.
+        data_files = []
+        for _ in range(2):
+            covdata = DebugCoverageData(suffix=True)
+            covdata.add_lines(LINES_1)
+            covdata.write()
+            covdata.add_lines(LINES_2)
+            covdata.write()
+            data_files.append(covdata.data_filename())
+        classifier = DataFileClassifier()
+        assert classifier.classify(data_files[0]) == "combine"
+        assert classifier.classify(data_files[1]) == "skip"
+
+    def test_true_suffix_written_again_without_new_data(self) -> None:
+        covdata = DebugCoverageData(suffix=True)
+        covdata.add_lines(LINES_1)
+        covdata.write()
+        data_file = covdata.data_filename()
+        covdata.write()
+        assert covdata.data_filename() == data_file
+        self.assert_file_count(".coverage.*", 1)
+
     def test_combining(self) -> None:
         self.assert_file_count(".coverage.*", 0)
 
@@ -1067,6 +1126,112 @@ class CoverageDataFilesTest(CoverageTest):
         self.assert_doesnt_exist("cov2/.coverage.2")
         self.assert_exists(".coverage.xxx")
         self.assert_exists("cov2/.coverage.xxx")
+
+    @pytest.mark.skipif(env.WINDOWS, reason="Windows lets us delete files in read-only directories")
+    def test_hostile_journal_matches_sqlite(self) -> None:
+        # hostile_journal() builds its bytes by hand.  Check them against a
+        # journal SQLite writes itself.  A commit spanning two databases names
+        # a super-journal at the end of each database's journal.  SQLite
+        # normally deletes the journals when the commit is done, but it can't
+        # delete one in a read-only directory.
+        os.mkdir("two")
+        con = sqlite3.connect("one.db", isolation_level=None)
+        con.execute("attach 'two/two.db' as two")
+        con.execute("create table main.t (x)")
+        con.execute("create table two.t (x)")
+        con.execute("begin")
+        con.execute("insert into main.t values (1)")
+        con.execute("insert into two.t values (1)")
+        os.chmod("two", 0o555)
+        try:
+            con.execute("commit")
+        finally:
+            os.chmod("two", 0o755)
+        # The super-journal is named after the main database, with SQLite's
+        # idea of its full path.  The main database is always listed first.
+        main_path = con.execute("pragma database_list").fetchone()[2]
+        con.close()
+
+        with open("two/two.db-journal", "rb") as fjournal:
+            journal = fjournal.read()
+        super_name = re.search(re.escape(main_path) + r"-mj[0-9A-F]+", journal.decode("latin-1"))
+        assert super_name is not None
+        assert journal.endswith(hostile_journal(super_name.group()))
+
+    def test_combining_with_hostile_journal(self) -> None:
+        # A data file from somewhere else might have a SQLite journal file
+        # beside it.  If we opened the data file read-write, SQLite would roll
+        # back the journal, and delete the "super-journal" it names, which can
+        # be any file at all.
+        covdata1 = DebugCoverageData(".coverage.1")
+        covdata1.add_lines(LINES_1)
+        covdata1.write()
+
+        self.make_file("victim.txt", "don't delete me")
+        self.make_file(".coverage.1-journal", bytes=hostile_journal("victim.txt"))
+
+        covdata2 = DebugCoverageData()
+        combine_parallel_data(covdata2)
+
+        assert_line_counts(covdata2, SUMMARY_1)
+        self.assert_exists("victim.txt")
+        self.assert_doesnt_exist(".coverage.1")
+
+    def test_reading_with_hostile_journal(self) -> None:
+        # The main data file has to be opened read-write, so a data file with a
+        # journal SQLite would roll back is refused instead.
+        covdata1 = DebugCoverageData()
+        covdata1.add_lines(LINES_1)
+        covdata1.write()
+
+        self.make_file("victim.txt", "don't delete me")
+        self.make_file(".coverage-journal", bytes=hostile_journal("victim.txt"))
+
+        covdata2 = DebugCoverageData()
+        msg = r"Couldn't use data file '.*\.coverage': it has a journal file to roll back"
+        with pytest.raises(DataError, match=msg):
+            covdata2.read()
+        self.assert_exists("victim.txt")
+        self.assert_exists(".coverage-journal")
+
+    @pytest.mark.skipif(env.WINDOWS, reason="Windows can't make symlinks")
+    def test_reading_symlink_with_hostile_journal(self) -> None:
+        # SQLite looks for the journal beside the real file, not the link.
+        os.mkdir("real")
+        covdata1 = DebugCoverageData("real/.coverage")
+        covdata1.add_lines(LINES_1)
+        covdata1.write()
+        os.symlink("real/.coverage", ".coverage")
+
+        self.make_file("victim.txt", "don't delete me")
+        self.make_file("real/.coverage-journal", bytes=hostile_journal("victim.txt"))
+
+        covdata2 = DebugCoverageData()
+        msg = r"Couldn't use data file '.*\.coverage': it has a journal file to roll back"
+        with pytest.raises(DataError, match=msg):
+            covdata2.read()
+        self.assert_exists("victim.txt")
+
+    def test_writing_after_erasing_with_hostile_journal(self) -> None:
+        # "coverage run" erases the data file before writing it.  The journal
+        # beside it isn't refused then: SQLite discards a journal beside an
+        # empty database without rolling it back.
+        covdata1 = DebugCoverageData()
+        covdata1.add_lines(LINES_1)
+        covdata1.write()
+
+        self.make_file("victim.txt", "don't delete me")
+        self.make_file(".coverage-journal", bytes=hostile_journal("victim.txt"))
+
+        covdata2 = DebugCoverageData()
+        covdata2.erase()
+        covdata2.add_lines(LINES_1)
+        covdata2.write()
+
+        covdata3 = DebugCoverageData()
+        covdata3.read()
+        assert_line_counts(covdata3, SUMMARY_1)
+        self.assert_exists("victim.txt")
 
     def test_combining_from_nonexistent_directories(self) -> None:
         covdata = DebugCoverageData()

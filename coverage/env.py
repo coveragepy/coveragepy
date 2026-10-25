@@ -3,6 +3,8 @@
 
 """Determine facts about the environment."""
 
+# pragma: enforce 100% coverage
+
 from __future__ import annotations
 
 import os

@@ -250,6 +250,14 @@ jobs:
               echo '***** Total coverage is less than 90%!'
               exit 1
           fi
+
+          # Files that have reached 100% coverage should stay that way.
+          # shellcheck disable=SC2046
+          if ! python lab/goals.py --file 100 $(grep -l -R 'pragma: enforce 100% coverage'); then
+              echo '***** Coverage dropped for a 100% file!'
+              exit 1
+          fi
+
           # Absolutely all of our test code should be covered.
           if ! python lab/goals.py --file 100 "tests/test_*.py"; then
               echo '***** Coverage of test files must be 100%!'

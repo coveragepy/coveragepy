@@ -23,6 +23,28 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
+- Fix: the HTML report only rewrites a file's page when the file or its data
+  has changed, but each page also links to the previous and next files. When
+  the set of reported files changed, unchanged pages kept their old links. For
+  example, with ``skip_covered``, a file that became 100% covered had its page
+  deleted, but the pages next to it still linked to it. Now a page is also
+  rewritten when its neighbors change.
+
+- Fix: the HTML report escaped file names twice, so a name with ``&``, ``<``,
+  or quotes in it was shown with entities like ``&amp;``. Now they are properly
+  escaped only once.
+
+- In an abundance of caution, prevent forged SQLite journal files from deleting
+  files they shouldn't.
+
+
+.. start-releases
+
+.. _changes_7-17-0:
+
+Version 7.17.0 — 2026-10-22
+---------------------------
+
 - Dropped support for Python 3.10.
 
 - Binary wheels are now provided for iOS and Android. This allows the use of
@@ -65,9 +87,12 @@ Unreleased
   ``line-rate`` values like ``8.333e-05`` or ``1``. This is now fixed, closing
   `issue 2293`_ and `issue 2294`_.
 
-- Fix: using the C tracer, the refcount of ``None`` was mismanaged during
-  function calls, including comprehensions. This was unlikely to cause an
-  actual problem, but is now fixed. Thanks, Andrew Dalke.
+- Fix: a parallel data file saved more than once kept the hash of its first
+  save in its file name. Combining could then skip it as a duplicate of another
+  file that had the same data at that point, and delete it, losing the data
+  recorded after the first save. Each save now updates the hash. This had been
+  a problem since 7.13.1. Fixes `issue 2338`_.
+
 - Fixes for obscure but legal file names:
 
   - File names (and plugin names) can contain control characters, which are
@@ -106,6 +131,8 @@ Unreleased
 
 - Performance: HTML reports should be about 5% faster to produce.
 
+- Kept the political banner in the README. Closes `issue 2344`_.
+
 .. _issue 1987: https://github.com/coveragepy/coveragepy/issues/1987
 .. _issue 2277: https://github.com/coveragepy/coveragepy/issues/2277
 .. _issue 2293: https://github.com/coveragepy/coveragepy/issues/2293
@@ -113,9 +140,9 @@ Unreleased
 .. _issue 2295: https://github.com/coveragepy/coveragepy/issues/2295
 .. _issue 2314: https://github.com/coveragepy/coveragepy/issues/2314
 .. _issue 2335: https://github.com/coveragepy/coveragepy/issues/2335
+.. _issue 2338: https://github.com/coveragepy/coveragepy/issues/2338
+.. _issue 2344: https://github.com/coveragepy/coveragepy/issues/2344
 
-
-.. start-releases
 
 .. _changes_7-16-2:
 

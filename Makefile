@@ -27,7 +27,7 @@ ifdef HAS_UV
 	INSTALL_R := uv pip sync
 	UNINSTALL := uv pip uninstall
 else
-	VENV := python -m venv .venv
+	VENV := python3.11 -m venv .venv
 	INSTALL := python -m pip install
 	INSTALL_R := python -m pip install -r
 	UNINSTALL := python -m pip uninstall -y
@@ -166,7 +166,7 @@ diff_upgrade:				#- Summarize the last `make upgrade`.
 	@#	+bashlex==0.17
 	@#	-build==0.9.0
 	@#	+build==0.10.0
-	@git diff -U0 | grep -v '^@' | grep == | sort -k1.2,1.99 -k1.1,1.1r -u -V
+	@git diff -U0 $(since) | grep -v '^@' | grep == | sort -k1.2,1.99 -k1.1,1.1r -u -V
 
 
 ### Pre-builds for prepping the code

@@ -3,6 +3,8 @@
 
 """A test base class for tests based on gold file comparison."""
 
+# pragma: enforce 100% coverage
+
 from __future__ import annotations
 
 import difflib

@@ -3,6 +3,8 @@
 
 """SQLite coverage data."""
 
+# pragma: enforce 100% coverage
+
 from __future__ import annotations
 
 import base64
@@ -35,7 +37,7 @@ from coverage.numbits import (
     nums_to_numbits,
     register_sqlite_functions,
 )
-from coverage.sqlitedb import SqliteDb
+from coverage.sqlitedb import SqliteDb, read_only_uri
 from coverage.types import FilePath, TArc, TDebugCtl, TLineNo, TWarnFn
 from coverage.version import __version__
 
@@ -232,6 +234,7 @@ class CoverageData:
         no_disk: bool = False,
         warn: TWarnFn | None = None,
         debug: TDebugCtl | None = None,
+        read_only: bool = False,
     ) -> None:
         """Create a :class:`CoverageData` object to hold coverage-measured data.
 
@@ -245,9 +248,12 @@ class CoverageData:
             warn: a warning callback function, accepting a warning message
                 argument.
             debug: a `DebugControl` object (optional)
+            read_only (bool): if True, the data file will only be read, never
+                written. Use this for data files from other sources.
 
         """
         self._no_disk = no_disk
+        self._read_only = read_only
         self._basename = os.path.abspath(basename or ".coverage")
         self._suffix = suffix
         self._our_suffix = suffix is True
@@ -322,7 +328,12 @@ class CoverageData:
     def _open_db(self) -> None:
         """Open an existing db file, and read its metadata."""
         self._debug_dataio("Opening data file", self._filename)
-        self._dbs[threading.get_ident()] = SqliteDb(self._filename, self._debug, self._no_disk)
+        self._dbs[threading.get_ident()] = SqliteDb(
+            self._filename,
+            self._debug,
+            no_disk=self._no_disk,
+            read_only=self._read_only,
+        )
         self._read_db()
 
     def _read_db(self) -> None:
@@ -461,7 +472,9 @@ class CoverageData:
                 f"Unrecognized serialization: {data[:40]!r} (head of {len(data)} bytes)",
             )
         script = zlib.decompress(data[1:]).decode("utf-8")
-        self._dbs[threading.get_ident()] = db = SqliteDb(self._filename, self._debug, self._no_disk)
+        self._dbs[threading.get_ident()] = db = SqliteDb(
+            self._filename, self._debug, no_disk=self._no_disk
+        )
         with db:
             db.executescript(script)
         self._read_db()
@@ -774,8 +787,13 @@ class CoverageData:
 
             con.con.create_function("map_path", 1, map_with_fixed_slashes)
 
-            # Attach the other database
-            con.execute_void("ATTACH DATABASE ? AS other_db", (other_data.data_filename(),))
+            # Attach the other database, read-only: we never write to it, and
+            # it might have come from somewhere else, so be as careful as
+            # possible.
+            other_filename = other_data.data_filename()
+            if not other_filename.startswith("file:"):
+                other_filename = read_only_uri(other_filename)
+            con.execute_void("ATTACH DATABASE ? AS other_db", (other_filename,))
 
             # Create temporary table with mapped file paths to avoid repeated map_path() calls
             con.execute_void("""
@@ -936,19 +954,36 @@ class CoverageData:
             with self._connect():
                 self._have_used = True
 
+    def _data_hash(self) -> str:
+        """The short hash of the data so far, for the data file name."""
+        return base64.b64encode(self._hasher.digest(), altchars=b"01").decode()[:NHASH]
+
     def write(self) -> None:
         """Ensure the data is written to the data file."""
+        unhashed_filename = None
         if self._our_suffix and not self._wrote_hash:
+            unhashed_filename = self._filename
+        elif (
+            self._our_suffix
+            and (m := filename_match(self._filename))
+            and m["hash"]
+            and not self._filename.endswith(f".H{self._data_hash()}h")
+        ):
+            # More data was recorded after the hash went into the file name.
+            # Update the name, or combining would skip this file as a
+            # duplicate of another one that only shared its earlier data.
+            unhashed_filename = self._filename[: m.start("hash") - len(".H")]
+        if unhashed_filename is not None:
             self._debug_dataio("Finishing data file", self._filename)
             with self._connect() as con:
                 con.execute_void(
-                    "INSERT OR IGNORE INTO meta (key, value) VALUES ('hash', ?)",
+                    "INSERT OR REPLACE INTO meta (key, value) VALUES ('hash', ?)",
                     (self._hasher.hexdigest(),),
                 )
             self.close()
-            data_hash = base64.b64encode(self._hasher.digest(), altchars=b"01").decode()[:NHASH]
+            data_hash = self._data_hash()
             current_filename = self._filename
-            self._filename += f".H{data_hash}h"
+            self._filename = unhashed_filename + f".H{data_hash}h"
             self._debug_dataio("Renaming data file to", self._filename)
             os.rename(current_filename, self._filename)
             self._wrote_hash = True

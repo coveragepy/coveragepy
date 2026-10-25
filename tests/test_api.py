@@ -553,6 +553,28 @@ class ApiTest(CoverageTest):
         assert self.stdout() == ""
         self.check_code1_code2(cov)
 
+    def test_combining_after_saving_twice(self) -> None:
+        # Two parallel runs measure the same code and save while still running,
+        # then each measures different code and saves again. Combining must
+        # keep both.
+        self.make_code1_code2()
+        self.make_file("code3.py", "code3 = 1\n")
+        for later in ["code2", "code3"]:
+            cov = coverage.Coverage(data_suffix=True)
+            with cov.collect():
+                import_local_file("code1")
+                cov.save()
+                import_local_file(later)
+            cov.save()
+        self.assert_file_count(".coverage.*", 2)
+
+        cov = coverage.Coverage()
+        cov.combine()
+        self.check_code1_code2(cov)
+        _, statements, missing, _ = cov.analysis("code3.py")
+        assert statements == [1]
+        assert missing == []
+
     def test_ordered_combine(self) -> None:
         # https://github.com/coveragepy/coveragepy/issues/649
         # The order of the [paths] setting used to matter. Now the
