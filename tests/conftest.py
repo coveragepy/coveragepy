@@ -7,6 +7,8 @@ Pytest auto configuration.
 This module is run automatically by pytest, to define and enable fixtures.
 """
 
+# pragma: enforce 100% coverage
+
 from __future__ import annotations
 
 import os

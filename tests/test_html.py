@@ -13,6 +13,7 @@ import os
 import os.path
 import re
 import sys
+from contextlib import chdir
 from html.parser import HTMLParser
 from typing import IO, Any
 from unittest import mock
@@ -30,7 +31,7 @@ from coverage.types import TLineNo, TMorf
 from tests import testenv
 from tests.coveragetest import TESTS_DIR, CoverageTest
 from tests.goldtest import compare, contains, contains_any, contains_rx, doesnt_contain, gold_path
-from tests.helpers import assert_coverage_warnings, change_dir
+from tests.helpers import assert_coverage_warnings
 
 
 class HtmlTestHelpers(CoverageTest):
@@ -391,6 +392,48 @@ class HtmlDeltaTest(HtmlTestHelpers, CoverageTest):
         # The 100% file, skipped, shouldn't be here.
         self.assert_doesnt_exist("htmlcov/helper1_py.html")
 
+    def test_file_becomes_100_updates_neighbor_links(self) -> None:
+        # helper2 drops out of a skip_covered report. helper1 and helper3 haven't
+        # changed, but their pages link to helper2, so they have to be written again.
+        self.make_file(
+            "main_file.py",
+            """\
+            import helper1, helper2, helper3
+            helper1.func(12)
+            helper2.func(12)
+            helper3.func(12)
+            """,
+        )
+        for name in ["helper1", "helper2", "helper3"]:
+            self.make_file(
+                f"{name}.py",
+                """\
+                def func(x):
+                    if x % 2:
+                        print("odd")
+                """,
+            )
+        self.run_coverage(htmlargs=dict(skip_covered=True))
+        self.assert_exists("htmlcov/helper2_py.html")
+
+        # Now helper2 is 100% covered.
+        self.make_file(
+            "main_file.py",
+            """\
+            import helper1, helper2, helper3
+            helper1.func(12)
+            helper2.func(12)
+            helper2.func(23)
+            helper3.func(12)
+            """,
+        )
+        self.run_coverage(htmlargs=dict(skip_covered=True))
+
+        # run_coverage checked that no page links to the deleted helper2 page.
+        self.assert_doesnt_exist("htmlcov/helper2_py.html")
+        assert "htmlcov/helper1_py.html" in self.files_written
+        assert "htmlcov/helper3_py.html" in self.files_written
+
     def test_status_format_change(self) -> None:
         self.create_initial_files()
         self.run_coverage()
@@ -718,7 +761,7 @@ class HtmlTest(HtmlTestHelpers, CoverageTest):
             normal()
         """,
         )
-        res = self.run_coverage(covargs=dict(source="."), htmlargs=dict(skip_covered=True))
+        res = self.run_coverage(htmlargs=dict(skip_covered=True))
         assert res == 100.0
         self.assert_doesnt_exist("htmlcov/main_file_py.html")
         # Since there are no files to report, we can't collect any region
@@ -737,7 +780,7 @@ class HtmlTest(HtmlTestHelpers, CoverageTest):
             normal()
         """,
         )
-        res = self.run_coverage(covargs=dict(source="."), htmlargs=dict(skip_covered=True))
+        res = self.run_coverage(htmlargs=dict(skip_covered=True))
         assert res == 80.0
         self.assert_exists("htmlcov/main_file_py.html")
         # We have a file to report, so we get function and class index pages,
@@ -825,7 +868,7 @@ def unbust(directory: str) -> None:
 
     This makes it possible for us to compare gold files.
     """
-    with change_dir(directory):
+    with chdir(directory):
         for fname in os.listdir("."):
             base, ext = os.path.splitext(fname)
             base, _, _ = base.partition("_cb_")
@@ -1114,7 +1157,7 @@ assert len(math) == 18
             """,
         )
 
-        with change_dir("src"):
+        with chdir("src"):
             sys.path.insert(0, "../othersrc")
             cov = coverage.Coverage(include=["./*", "../othersrc/*"])
             self.start_import_stop(cov, "here")
@@ -1434,6 +1477,18 @@ assert len(math) == 18
         with open("htmlcov/index.html", encoding="utf-8") as indexf:
             index = indexf.read()
         assert '<a href="h&#226;t_py.html">h&#226;t.py</a>' in index
+
+    def test_ampersand_in_filename(self) -> None:
+        # The file name on the index pages is escaped once, not twice.
+        self.make_file("a&b.py", "print('ampersand')")
+        self.make_data_file(lines={abs_file("a&b.py"): [1]})
+        cov = coverage.Coverage()
+        cov.load()
+        cov.html_report()
+        for page in ["index.html", "function_index.html"]:
+            with open(f"htmlcov/{page}", encoding="utf-8") as indexf:
+                index = indexf.read()
+            assert '<a href="a&amp;b_py.html">a&amp;b.py</a>' in index
 
     def test_accented_directory(self) -> None:
         # Make a file with a non-ascii character in the directory name.

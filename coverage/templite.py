@@ -10,6 +10,8 @@ http://aosabook.org/en/500L/a-template-engine.html
 
 # Coincidentally named the same as http://code.activestate.com/recipes/496702/
 
+# pragma: enforce 100% coverage
+
 from __future__ import annotations
 
 import re

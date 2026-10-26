@@ -3,6 +3,8 @@
 
 """XML reporting for coverage.py"""
 
+# pragma: enforce 100% coverage
+
 from __future__ import annotations
 
 import os
@@ -31,11 +33,22 @@ DTD_URL = "https://raw.githubusercontent.com/cobertura/web/master/htdocs/xml/cov
 
 
 def rate(hit: int, num: int) -> str:
-    """Return the fraction of `hit`/`num`, as a string."""
+    """Return the fraction of `hit`/`num`, as a string.
+
+    Note that "0" is only returned when `hit` is truly zero, and "1"
+    is only returned when `hit == num` (or `num == 0`). Rounding can never
+    result in either "0" or "1".
+    """
     if num == 0:
+        # No lines at all counts as 100%
         return "1"
+    elif hit == num:
+        return "1"
+    elif hit == 0:
+        return "0"
     else:
-        return f"{hit / num:.4g}"
+        frac = min(max(hit / num, 0.0001), 0.9999)
+        return f"{frac:.4g}"
 
 
 @dataclass

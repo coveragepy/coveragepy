@@ -17,6 +17,7 @@ import signal
 import stat
 import sys
 import textwrap
+from contextlib import chdir
 from pathlib import Path
 from typing import Any
 
@@ -30,7 +31,7 @@ from coverage.misc import first
 from coverage.sqldata import good_filename_match
 from tests import testenv
 from tests.coveragetest import TESTS_DIR, CoverageTest
-from tests.helpers import change_dir, re_lines, re_lines_text
+from tests.helpers import re_lines, re_lines_text
 
 
 class ProcessTest(CoverageTest):
@@ -274,6 +275,42 @@ class ProcessTest(CoverageTest):
         expected = abs_file("src/x.py")
         assert expected == actual
         assert first(summary.values()) == 6
+
+    def test_combine_branch_and_statement_data(self) -> None:
+        # A process started in another directory doesn't find our .coveragerc,
+        # so it doesn't measure branches.  Its data can't be combined with
+        # ours, and the error names a data file to start looking at.
+        self.make_file(
+            ".coveragerc",
+            """\
+            [run]
+            branch = true
+            parallel = true
+            """,
+        )
+        self.make_file("here.py", "print('here')")
+        self.make_file("elsewhere/there.py", "print('there')")
+
+        # With core=sysmon, 3.12 and 3.13 can't measure branches, and a warning
+        # comes before the output of the program.
+        out = self.run_command("coverage run here.py")
+        assert out.endswith("here\n")
+        with chdir("elsewhere"):
+            out = self.run_command("coverage run -p --data-file=../.coverage there.py")
+            assert out.endswith("there\n")
+        self.assert_file_count(".coverage.*", 2)
+
+        # The data files are combined in name order, so either one could be
+        # the one that doesn't match.
+        out = self.run_command("coverage combine", status=1)
+        assert re.search(
+            r"Can't combine (branch|statement) coverage data with (statement|branch) data: "
+            + r"data file '.*\.coverage\.[^']+' (measured|didn't measure) branch coverage, "
+            + r"but data file '.*\.coverage' (didn't|did)"
+            + r"; see https://coverage.readthedocs.io/en/[^/]+/messages.html#error-cant-combine",
+            out,
+        )
+        assert "Traceback" not in out
 
     def test_erase_parallel(self) -> None:
         self.make_file(
@@ -1583,7 +1620,7 @@ class ProcessStartupTest(CoverageTest):
             """,
         )
         self.set_environ("PYTHONPATH", os.path.abspath("lib"))
-        with change_dir("main"):
+        with chdir("main"):
             out = self.run_command("coverage run main.py")
             assert out == "Other\nHello, world!\n"
             self.run_command("coverage combine")

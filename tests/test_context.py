@@ -165,7 +165,7 @@ class DynamicContextTest(CoverageTest):
 
     def test_dynamic_alone(self) -> None:
         self.make_file("two_tests.py", self.SOURCE)
-        cov = coverage.Coverage(source=["."])
+        cov = coverage.Coverage()
         cov.set_option("run:dynamic_context", "test_function")
         self.start_import_stop(cov, "two_tests")
         data = cov.get_data()
@@ -187,7 +187,7 @@ class DynamicContextTest(CoverageTest):
 
     def test_static_and_dynamic(self) -> None:
         self.make_file("two_tests.py", self.SOURCE)
-        cov = coverage.Coverage(context="stat", source=["."])
+        cov = coverage.Coverage(context="stat")
         cov.set_option("run:dynamic_context", "test_function")
         self.start_import_stop(cov, "two_tests")
         data = cov.get_data()
@@ -225,7 +225,7 @@ class DynamicContextTest(CoverageTest):
             TestSomething.test_class()
             """,
         )
-        cov = coverage.Coverage(source=["."])
+        cov = coverage.Coverage()
         cov.set_option("run:dynamic_context", "test_function")
         self.start_import_stop(cov, "class_tests")
         data = cov.get_data()
@@ -239,11 +239,11 @@ class DynamicContextTest(CoverageTest):
 def get_qualname() -> str | None:
     """Helper to return qualname_from_frame for the caller."""
     stack = inspect.stack()[1:]
-    if any(sinfo[0].f_code.co_name == "get_qualname" for sinfo in stack):
+    if any(sinfo.frame.f_code.co_name == "get_qualname" for sinfo in stack):
         # We're calling ourselves recursively, maybe because we're testing
         # properties. Return an int to try to get back on track.
         return 17  # type: ignore[return-value]
-    caller_frame = stack[0][0]
+    caller_frame = stack[0].frame
     return qualname_from_frame(caller_frame)
 
 

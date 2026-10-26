@@ -3,6 +3,8 @@
 
 """A configuring plugin for test_plugins.py to import."""
 
+# pragma: enforce 100% coverage
+
 from __future__ import annotations
 
 from typing import Any, cast

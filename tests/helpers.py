@@ -3,6 +3,8 @@
 
 """Helpers for coverage.py tests."""
 
+# pragma: enforce 100% coverage
+
 from __future__ import annotations
 
 import collections
@@ -276,22 +278,6 @@ def arcz_to_arcs(arcz: str) -> list[TArc]:
                 bsgn = -1
         arcs.append((asgn * _arcz_map[a], bsgn * _arcz_map[b]))
     return sorted(arcs)
-
-
-@contextlib.contextmanager
-def change_dir(new_dir: str | Path) -> Iterator[None]:
-    """Change directory, and then change back.
-
-    Use as a context manager, it will return to the original
-    directory at the end of the block.
-
-    """
-    old_dir = os.getcwd()
-    os.chdir(str(new_dir))
-    try:
-        yield
-    finally:
-        os.chdir(old_dir)
 
 
 T = TypeVar("T")

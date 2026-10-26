@@ -23,39 +23,133 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
+- Fix: the HTML report only rewrites a file's page when the file or its data
+  has changed, but each page also links to the previous and next files. When
+  the set of reported files changed, unchanged pages kept their old links. For
+  example, with ``skip_covered``, a file that became 100% covered had its page
+  deleted, but the pages next to it still linked to it. Now a page is also
+  rewritten when its neighbors change.
+
+- Fix: ``--fail-under`` now uses at least the decimal precision of the
+  threshold for both the comparison and failure message.  With ``precision=0``,
+  a total of 0.4 now passes ``--fail-under=0.3`` and fails ``--fail-under=0.5``
+  with the message "total of 0.4 is less than fail-under=0.5".  Previously, the
+  comparison rounded the total to zero and the message could claim "1 is less
+  than 0". Closes `issue 2295`_.
+
+- Fix: the HTML report escaped file names twice, so a name with ``&``, ``<``,
+  or quotes in it was shown with entities like ``&amp;``. Now they are properly
+  escaped only once.
+
+- In an abundance of caution, prevent forged SQLite journal files from deleting
+  files they shouldn't.
+
 - Fix: the default ``...`` exclusion matched a line of three dots inside a
   multi-line string, such as a YAML end-of-document marker, and then excluded
   the whole statement.  Exclusion regexes now ignore matches on a line that
   lies entirely inside a string literal.  A real ``...`` statement and a stub
   function body are still excluded.  Closes `issue 2112`_.
 
+.. _issue 2295: https://github.com/coveragepy/coveragepy/issues/2295
 .. _issue 2112: https://github.com/coveragepy/coveragepy/issues/2112
 
+
+.. start-releases
+
+.. _changes_7-17-0:
+
+Version 7.17.0 — 2026-10-22
+---------------------------
+
 - Dropped support for Python 3.10.
-
-- Fix: a comment or string that merely mentioned ``if True:`` or
-  ``while True:`` could mark its line as a branch that is known to be partial,
-  so a branch that never ran was reported as taken.  These built-in patterns
-  now only match at the start of the statement.  Closes `issue 2314`_.
-
-.. _issue 2314: https://github.com/coveragepy/coveragepy/issues/2314
-
-- Fix: file names (and plugin names) can contain control characters, which are
-  legal in POSIX paths but unsafe in reports: in XML 1.0 they make the document
-  non-well-formed, and in a terminal they act as escape sequences (colors,
-  title/clipboard sequences, cursor moves that forge output). Now the XML
-  report, the text and Markdown summary reports, and ``coverage debug data``
-  replace non-printable characters in names. Printable names are unchanged.
-
-- Fix: a file pattern (from ``include``, ``omit``, or a ``[paths]`` alias)
-  containing a newline sent the glob-to-regex translation into an infinite
-  loop, hanging the process.  Newlines in patterns are now handled like any
-  other character.
 
 - Binary wheels are now provided for iOS and Android. This allows the use of
   the optimized C tracer on mobile platforms.
 
-.. start-releases
+- Fix: three or more levels of nested ``with`` statements could make a ``with``
+  line look like a branch with an exit that can never happen. Using the
+  sys.monitoring core, these phantom branches were reported as partial. Other
+  cores hid the problem but still counted the phantom branches in the total.
+  Closes `issue 1987`_.
+
+- Fix: a comment or string that merely mentioned ``if True:`` or
+  ``while True:`` could mark its line as a branch that is known to be partial,
+  so a branch that never ran was reported as taken.  These built-in patterns
+  now only match at the start of the statement. Closes `issue 2314`_.
+
+- Fix: region detection missed functions defined in unusual places, such as
+  ``else`` and ``except`` clauses. This is now fixed.
+
+- Fix: recent versions of the lcov tool complain if the same function name
+  appears more than once in a report. Python can have multiple same-named
+  functions in a few ways, for example, getters/setters or conditionally
+  defined functions. These are now disambiguated by adding a ``@<line number>``
+  suffix to the function name. Fixes `issue 2335`.
+
+- Fix: The "Can't combine statement coverage data with branch data" error now
+  names the two data files it couldn't combine. The :ref:`error description
+  <error_cant_combine>` in the docs now lists common causes and how to find the
+  process that wrote the file.
+
+- Fix: at coverage totals close to 0 or 100, the XML report could get incorrect
+  ``line-rate`` values like ``8.333e-05`` or ``1``. This is now fixed, closing
+  `issue 2293`_ and `issue 2294`_.
+
+- Fix: a parallel data file saved more than once kept the hash of its first
+  save in its file name. Combining could then skip it as a duplicate of another
+  file that had the same data at that point, and delete it, losing the data
+  recorded after the first save. Each save now updates the hash. This had been
+  a problem since 7.13.1. Fixes `issue 2338`_.
+
+- Fixes for obscure but legal file names:
+
+  - File names (and plugin names) can contain control characters, which are
+    legal in POSIX paths but unsafe in reports: in XML 1.0 they make the
+    document non-well-formed, and in a terminal they act as escape sequences
+    (colors, title/clipboard sequences, cursor moves that forge output). Now
+    the XML report, the text and Markdown summary reports, and ``coverage debug
+    data`` replace non-printable characters in names. Printable names are
+    unchanged.
+
+  - A file pattern (from ``include``, ``omit``, or a ``[paths]`` alias)
+    containing a newline sent the glob-to-regex translation into an infinite
+    loop, hanging the process. Newlines in patterns are now handled like any
+    other character.
+
+- Fixes in the implementation of the C tracer:
+
+  - If a plugin's ``dynamic_source_filename`` method raised an exception, lines
+    in that function could be recorded as belonging to a different file. Also
+    fixed some minor memory leaks in the C tracer.
+
+  - The refcount of ``None`` was mismanaged during function calls, including
+    comprehensions. This was unlikely to cause an actual problem, but is now
+    fixed. Thanks, Andrew Dalke.
+
+  - The C tracer held borrowed references to dictionary values, which was
+    unsafe on free-threaded Python.  Now it takes its own references.
+
+  - An internal error while recording a new file could be reported as a
+    confusing ``SystemError`` instead of the actual exception.
+
+- Performance: the text summary report (``coverage report``) held on to every
+  file's parsed source until it finished, so its memory use grew with the size
+  of the project: ten times or more what 7.14 used on large projects.  Now it
+  keeps only what it needs to print. Fixes `issue 2277`_.
+
+- Performance: HTML reports should be about 5% faster to produce.
+
+- Kept the political banner in the README. Closes `issue 2344`_.
+
+.. _issue 1987: https://github.com/coveragepy/coveragepy/issues/1987
+.. _issue 2277: https://github.com/coveragepy/coveragepy/issues/2277
+.. _issue 2293: https://github.com/coveragepy/coveragepy/issues/2293
+.. _issue 2294: https://github.com/coveragepy/coveragepy/issues/2294
+.. _issue 2314: https://github.com/coveragepy/coveragepy/issues/2314
+.. _issue 2335: https://github.com/coveragepy/coveragepy/issues/2335
+.. _issue 2338: https://github.com/coveragepy/coveragepy/issues/2338
+.. _issue 2344: https://github.com/coveragepy/coveragepy/issues/2344
+
 
 .. _changes_7-16-2:
 
@@ -92,7 +186,17 @@ Version 7.16.1 — 2026-09-13
 - Fix: using :meth:`.CoverageData.update` twice on an in-memory database would
   fail, as described in `issue 2279`_. This is now fixed.
 
+- Fix: the Total row in the footer of the HTML report's index page was
+  recomputed in JavaScript with rounding that could disagree with the total
+  the server rendered in the heading, including showing ``100%`` when coverage
+  was not complete.  The footer now clamps values the way the rest of the
+  report does, and when nothing is filtered out it is shown exactly as the
+  server rendered it, so the two can't disagree.  That also keeps rows the
+  report omits (``--skip-covered`` drops fully covered files) in the total.
+  Fixes `issue 2256`_.
+
 .. _issue 1563: https://github.com/coveragepy/coveragepy/issues/1563
+.. _issue 2256: https://github.com/coveragepy/coveragepy/issues/2256
 .. _pull 2269: https://github.com/coveragepy/coveragepy/pull/2269
 .. _issue 2279: https://github.com/coveragepy/coveragepy/issues/2279
 

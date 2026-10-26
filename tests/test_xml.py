@@ -9,6 +9,7 @@ import os
 import os.path
 import re
 from collections.abc import Iterable
+from contextlib import chdir
 from typing import Any
 from xml.etree import ElementTree
 
@@ -20,9 +21,10 @@ from coverage import Coverage, env
 from coverage.exceptions import NoDataError
 from coverage.files import abs_file
 from coverage.misc import import_local_file
+from coverage.xmlreport import rate
 from tests.coveragetest import CoverageTest
 from tests.goldtest import compare, gold_path
-from tests.helpers import assert_coverage_warnings, change_dir
+from tests.helpers import assert_coverage_warnings
 
 
 class XmlTestHelpers(CoverageTest):
@@ -33,7 +35,7 @@ class XmlTestHelpers(CoverageTest):
         self.make_file("sub/__init__.py")
         self.make_file("sub/doit.py", "print('doit!')")
         self.make_file("main.py", "import sub.doit")
-        cov = coverage.Coverage(source=["."])
+        cov = coverage.Coverage()
         self.start_import_stop(cov, "main")
         return cov
 
@@ -100,6 +102,24 @@ class XmlTestHelpersTest(XmlTestHelpers, CoverageTest):
             self.assert_source(dom, "foo")
         with pytest.raises(AssertionError):
             self.assert_source(dom, "thing")
+
+    @pytest.mark.parametrize(
+        ("hit", "num", "expected"),
+        [
+            (0, 0, "1"),
+            (0, 10, "0"),
+            (10, 10, "1"),
+            (2, 3, "0.6667"),
+            (4, 5, "0.8"),
+            (1, 2, "0.5"),
+            (25000, 25001, "0.9999"),
+            (99999, 100000, "0.9999"),
+            (1, 100000, "0.0001"),
+            (1, 1000000, "0.0001"),
+        ],
+    )
+    def test_rate(self, hit: int, num: int, expected: str) -> None:
+        assert rate(hit, num) == expected
 
 
 class XmlReportTest(XmlTestHelpers, CoverageTest):
@@ -235,6 +255,42 @@ class XmlReportTest(XmlTestHelpers, CoverageTest):
         assert len(elts) == 1
         assert elts[0].get("line-rate") == "1"
 
+    def test_line_rate_not_one_when_uncovered_lines_exist(self) -> None:
+        # https://github.com/coveragepy/coveragepy/issues/2293
+        # When 25000 out of 25001 lines are covered, line-rate should not round to 1.
+        self.make_data_file(lines={abs_file("big.py"): list(range(1, 25001))})
+        lines = [f"x{i} = {i}" for i in range(24999)] + ["def never_called():", "    y = 1"]
+        self.make_file("big.py", "\n".join(lines) + "\n")
+        cov = coverage.Coverage()
+        cov.load()
+        cov.xml_report()
+        dom = ElementTree.parse("coverage.xml")
+        root = dom.getroot()
+        assert root.get("lines-valid") == "25001"
+        assert root.get("lines-covered") == "25000"
+        assert root.get("line-rate") == "0.9999"
+        elt = dom.find(".//class[@name='big.py']")
+        assert elt is not None
+        assert elt.get("line-rate") == "0.9999"
+
+    def test_line_rate_no_scientific_notation(self) -> None:
+        # https://github.com/coveragepy/coveragepy/issues/2294
+        # When 1 out of 100000 lines is covered, line-rate should not use scientific notation.
+        self.make_data_file(lines={abs_file("huge.py"): [1]})
+        lines = ["def never_called():"] + [f"    x{i} = {i}" for i in range(99999)]
+        self.make_file("huge.py", "\n".join(lines) + "\n")
+        cov = coverage.Coverage()
+        cov.load()
+        cov.xml_report()
+        dom = ElementTree.parse("coverage.xml")
+        root = dom.getroot()
+        assert root.get("lines-valid") == "100000"
+        assert root.get("lines-covered") == "1"
+        assert root.get("line-rate") == "0.0001"
+        elt = dom.find(".//class[@name='huge.py']")
+        assert elt is not None
+        assert elt.get("line-rate") == "0.0001"
+
     def test_empty_file_is_skipped(self) -> None:
         cov = self.run_doit()
         cov.xml_report(skip_empty=True)
@@ -300,7 +356,7 @@ class XmlReportTest(XmlTestHelpers, CoverageTest):
     def test_nonascii_directory(self) -> None:
         # https://github.com/coveragepy/coveragepy/issues/573
         self.make_file("테스트/program.py", "a = 1")
-        with change_dir("테스트"):
+        with chdir("테스트"):
             cov = coverage.Coverage()
             self.start_import_stop(cov, "program")
             cov.xml_report()

@@ -108,7 +108,7 @@ class PyRunner:
             # sys.path[0] with the directory of the file we're running, or the
             # current directory when running modules.  If it isn't so, then we
             # don't know what's going on, and just leave it alone.
-            top_file = inspect.stack()[-1][0].f_code.co_filename
+            top_file = inspect.stack()[-1].frame.f_code.co_filename
             sys_path_0_abs = os.path.abspath(sys.path[0])
             top_file_dir_abs = os.path.abspath(os.path.dirname(top_file))
             sys_path_0_abs = canonical_filename(sys_path_0_abs)

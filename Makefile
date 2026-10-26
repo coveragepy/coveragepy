@@ -27,7 +27,7 @@ ifdef HAS_UV
 	INSTALL_R := uv pip sync
 	UNINSTALL := uv pip uninstall
 else
-	VENV := python -m venv .venv
+	VENV := python3.11 -m venv .venv
 	INSTALL := python -m pip install
 	INSTALL_R := python -m pip install -r
 	UNINSTALL := python -m pip uninstall -y
@@ -80,7 +80,7 @@ install: venv				#- Install the developer tools.
 
 ### Tests and quality checks
 
-.PHONY: lint mypy precommit quality test
+.PHONY: lint mypy precommit quality test test_js
 
 lint:					#- Run linters and checkers.
 	tox -q -e lint
@@ -95,6 +95,9 @@ quality: lint mypy precommit		#- Run all the quality checks.
 
 test:					#- Run the test suite.
 	tox -q -m py
+
+test_js:				#- Run the JavaScript tests in a headless browser.
+	tox -q -e js
 
 ### Metacov: coverage measurement of coverage.py itself
 # See metacov.ini for details.
@@ -152,6 +155,7 @@ _upgrade: $(DOCBIN) $(KITBIN)
 	$(PIP_COMPILE) -o requirements/dev.txt requirements/dev.in
 	$(PIP_COMPILE) -o requirements/light-threads.txt requirements/light-threads.in
 	$(PIP_COMPILE) -o requirements/mypy.txt requirements/mypy.in
+	$(PIP_COMPILE) -o requirements/js.txt requirements/js.in
 	$(PIP_COMPILE) -p $(DOCBIN)/python3 -o doc/requirements.txt doc/requirements.in
 	PYTHONWARNDEFAULTENCODING= pre-commit autoupdate
 
@@ -162,7 +166,7 @@ diff_upgrade:				#- Summarize the last `make upgrade`.
 	@#	+bashlex==0.17
 	@#	-build==0.9.0
 	@#	+build==0.10.0
-	@git diff -U0 | grep -v '^@' | grep == | sort -k1.2,1.99 -k1.1,1.1r -u -V
+	@git diff -U0 $(since) | grep -v '^@' | grep == | sort -k1.2,1.99 -k1.1,1.1r -u -V
 
 
 ### Pre-builds for prepping the code

@@ -3,17 +3,59 @@
 
 """SQLite abstraction for coverage.py"""
 
+# pragma: enforce 100% coverage
+
 from __future__ import annotations
 
 import contextlib
+import os
+import pathlib
 import re
 import sqlite3
 from collections.abc import Iterable, Iterator
-from typing import Any, cast
+from typing import Any, Never, cast
 
 from coverage.debug import auto_repr, clipped_repr, exc_one_line
 from coverage.exceptions import DataError
 from coverage.types import TDebugCtl
+
+
+def read_only_uri(filename: str) -> str:
+    """Make a URI to open `filename` read-only.
+
+    Opening a database read-write lets SQLite act on files beside it: a hot
+    `*-journal` file gets rolled back, and the "super-journal" it names gets
+    deleted. Data files we only read (combine inputs, for example) can come
+    from anywhere, so open them with `immutable=1`, which makes SQLite ignore
+    journals and locks entirely.
+
+    """
+    return pathlib.Path(os.path.abspath(filename)).as_uri() + "?mode=ro&immutable=1"
+
+
+def check_hot_journal(filename: str) -> None:
+    """Raise DataError if SQLite would roll back a journal beside `filename`.
+
+    When a database is opened read-write, SQLite rolls back a hot journal
+    beside it, then deletes the "super-journal" the journal names, which could
+    be any file at all.  Coverage.py turn journaling off, so a journal like
+    that is almost certainly not ours.  A read-only connection won't roll back,
+    but reports the hot journal instead, so probe with one of those first.
+    This lets SQLite decide where the journal is and whether it is hot.
+
+    """
+    if not os.path.exists(filename):
+        return
+    uri = pathlib.Path(os.path.abspath(filename)).as_uri() + "?mode=ro"
+    try:
+        with contextlib.closing(sqlite3.connect(uri, uri=True)) as con:
+            con.execute("select count(*) from sqlite_master").fetchall()
+    except sqlite3.Error as exc:
+        if exc.sqlite_errorcode == sqlite3.SQLITE_READONLY_ROLLBACK:
+            raise DataError(
+                f"Couldn't use data file {filename!r}: it has a journal file to roll back"
+            ) from exc
+        # Other errors will be reported by the real connection.
 
 
 class SqliteDb:
@@ -29,14 +71,29 @@ class SqliteDb:
 
     """
 
-    def __init__(self, filename: str, debug: TDebugCtl, no_disk: bool = False) -> None:
+    def __init__(
+        self,
+        filename: str,
+        debug: TDebugCtl,
+        *,
+        no_disk: bool = False,
+        read_only: bool = False,
+    ) -> None:
         self.debug = debug
         self.filename = filename
         self.no_disk = no_disk
+        self.read_only = read_only
         self.nest = 0
         self.con: sqlite3.Connection | None = None
 
     __repr__ = auto_repr
+
+    def _raise_data_error(self, msg: str, exc: Exception) -> Never:
+        """Raise a DataError with as much information as possible."""
+        msg += f": {exc}"
+        if hasattr(exc, "sqlite_errorname"):
+            msg += f": ({exc.sqlite_errorname})"
+        raise DataError(msg) from exc
 
     def _connect(self) -> None:
         """Connect to the db and do universal initialization."""
@@ -50,14 +107,18 @@ class SqliteDb:
         # is not a problem.
         if self.debug.should("sql"):
             self.debug.write(f"Connecting to {self.filename!r}")
-        try:
-            # Use uri=True when connecting to memory URIs
-            if self.filename.startswith("file:"):
-                self.con = sqlite3.connect(self.filename, check_same_thread=False, uri=True)
+        filename = self.filename
+        if not filename.startswith("file:"):
+            if self.read_only:
+                filename = read_only_uri(filename)
             else:
-                self.con = sqlite3.connect(self.filename, check_same_thread=False)
+                check_hot_journal(filename)
+        try:
+            # uri=True is needed for memory and read-only URIs, and is harmless
+            # for plain file names. It also makes ATTACH honor URIs.
+            self.con = sqlite3.connect(filename, check_same_thread=False, uri=True)
         except sqlite3.Error as exc:
-            raise DataError(f"Couldn't use data file {self.filename!r}: {exc}") from exc
+            self._raise_data_error(f"Couldn't use data file {self.filename!r}", exc)
 
         if self.debug.should("sql"):
             self.debug.write(f"Connected to {self.filename!r} as {self.con!r}")
@@ -109,7 +170,7 @@ class SqliteDb:
             except Exception as exc:
                 if self.debug.should("sql"):
                     self.debug.write(f"EXCEPTION from __exit__: {exc_one_line(exc)}")
-                raise DataError(f"Couldn't end data file {self.filename!r}: {exc}") from exc
+                self._raise_data_error(f"Couldn't end data file {self.filename!r}", exc)
 
     def _execute(self, sql: str, parameters: Iterable[Any]) -> sqlite3.Cursor:
         """Same as :meth:`python:sqlite3.Connection.execute`."""
@@ -126,10 +187,9 @@ class SqliteDb:
                 # https://github.com/coveragepy/coveragepy/issues/1010
                 return self.con.execute(sql, parameters)  # type: ignore[arg-type]
         except sqlite3.Error as exc:
-            msg = str(exc)
             if self.debug.should("sql"):
                 self.debug.write(f"EXCEPTION from execute: {exc_one_line(exc)}")
-            raise DataError(f"Couldn't use data file {self.filename!r}: {msg}") from exc
+            self._raise_data_error(f"Couldn't use data file {self.filename!r}", exc)
 
     @contextlib.contextmanager
     def execute(
