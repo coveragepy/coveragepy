@@ -16,7 +16,6 @@ import json
 import os
 import re
 import string
-from collections.abc import Iterable
 from dataclasses import dataclass, field
 from html import escape
 from typing import TYPE_CHECKING, Any
@@ -375,6 +374,9 @@ class HtmlReporter:
             have_data = True
             ftr = FileToReport(fr, analysis)
             if self.should_report(analysis, self.index_pages["file"]):
+                # Summarize the regions now, reusing the parser's AST, so that
+                # neither the AST nor the regions are held in the report list.
+                self.add_region_summaries(ftr)
                 files_to_report.append(ftr)
             else:
                 file_be_gone(os.path.join(self.directory, ftr.html_filename))
@@ -394,9 +396,6 @@ class HtmlReporter:
 
         for ftr in files_to_report:
             self.write_html_page(ftr)
-            for noun, plural_noun in ftr.fr.code_region_kinds():
-                if noun not in self.index_pages:
-                    self.index_pages[noun] = self.new_index_page(noun, plural_noun)
 
         # Write the index page.
         if files_to_report:
@@ -407,7 +406,7 @@ class HtmlReporter:
         self.write_file_index_page(first_html, final_html)
 
         # Write function and class index pages.
-        self.write_region_index_pages(files_to_report)
+        self.write_region_index_pages()
 
         return (
             self.index_pages["file"].totals.n_statements
@@ -585,61 +584,63 @@ class HtmlReporter:
         # Write the latest hashes for next time.
         self.incr.write()
 
-    def write_region_index_pages(self, files_to_report: Iterable[FileToReport]) -> None:
-        """Write the other index pages for this report."""
-        for ftr in files_to_report:
-            region_nouns = [pair[0] for pair in ftr.fr.code_region_kinds()]
-            num_lines = len(ftr.fr.source().splitlines())
-            regions = ftr.fr.code_regions()
+    def add_region_summaries(self, ftr: FileToReport) -> None:
+        """Add the regions in one file to the function and class index pages."""
+        num_lines = len(ftr.fr.source().splitlines())
+        regions = ftr.fr.code_regions()
 
-            for noun in region_nouns:
-                page_data = self.index_pages[noun]
+        for noun, plural_noun in ftr.fr.code_region_kinds():
+            if noun not in self.index_pages:
+                self.index_pages[noun] = self.new_index_page(noun, plural_noun)
+            page_data = self.index_pages[noun]
 
-                outside_lines = set(range(1, num_lines + 1))
-                for region in regions:
-                    if region.kind != noun:
-                        continue
-                    outside_lines -= region.lines
+            outside_lines = set(range(1, num_lines + 1))
+            for region in regions:
+                if region.kind != noun:
+                    continue
+                outside_lines -= region.lines
 
-                narrower = AnalysisNarrower(ftr.analysis)
-                narrower.add_regions(r.lines for r in regions if r.kind == noun)
-                narrower.add_regions([outside_lines])
+            narrower = AnalysisNarrower(ftr.analysis)
+            narrower.add_regions(r.lines for r in regions if r.kind == noun)
+            narrower.add_regions([outside_lines])
 
-                for region in regions:
-                    if region.kind != noun:
-                        continue
-                    analysis = narrower.narrow(region.lines)
-                    if not self.should_report(analysis, page_data):
-                        continue
-                    sorting_name = region.name.rpartition(".")[-1].lstrip("_")
-                    page_data.summaries.append(
-                        IndexItem(
-                            url=f"{ftr.html_filename}#t{region.start}",
-                            file=ftr.fr.relative_filename(),
-                            description=(
-                                f"<data value='{escape(sorting_name)}'>"
-                                + escape(region.name)
-                                + "</data>"
-                            ),
-                            nums=analysis.numbers,
-                        )
+            for region in regions:
+                if region.kind != noun:
+                    continue
+                analysis = narrower.narrow(region.lines)
+                if not self.should_report(analysis, page_data):
+                    continue
+                sorting_name = region.name.rpartition(".")[-1].lstrip("_")
+                page_data.summaries.append(
+                    IndexItem(
+                        url=f"{ftr.html_filename}#t{region.start}",
+                        file=ftr.fr.relative_filename(),
+                        description=(
+                            f"<data value='{escape(sorting_name)}'>"
+                            + escape(region.name)
+                            + "</data>"
+                        ),
+                        nums=analysis.numbers,
                     )
+                )
 
-                analysis = narrower.narrow(outside_lines)
-                if self.should_report(analysis, page_data):
-                    page_data.summaries.append(
-                        IndexItem(
-                            url=ftr.html_filename,
-                            file=ftr.fr.relative_filename(),
-                            description=(
-                                "<data value=''>"
-                                + f"<span class='no-noun'>(no {escape(noun)})</span>"
-                                + "</data>"
-                            ),
-                            nums=analysis.numbers,
-                        )
+            analysis = narrower.narrow(outside_lines)
+            if self.should_report(analysis, page_data):
+                page_data.summaries.append(
+                    IndexItem(
+                        url=ftr.html_filename,
+                        file=ftr.fr.relative_filename(),
+                        description=(
+                            "<data value=''>"
+                            + f"<span class='no-noun'>(no {escape(noun)})</span>"
+                            + "</data>"
+                        ),
+                        nums=analysis.numbers,
                     )
+                )
 
+    def write_region_index_pages(self) -> None:
+        """Write the function and class index pages for this report."""
         for noun, index_page in self.index_pages.items():
             if noun != "file":
                 self.write_index_page(index_page)

@@ -98,24 +98,31 @@ def find_soft_key_lines(source: str) -> set[TLineNo]:
                 return set()
 
     soft_key_lines: set[TLineNo] = set()
-
     for node in ast.walk(ast.parse(source)):
-        # PYVERSION: we use sys.version_info here so that mypy will be ok with
-        # us accessing attributes that appeared in those versions.
-        if isinstance(node, ast.Match):
-            soft_key_lines.add(node.lineno)
-            for case in node.cases:
-                soft_key_lines.add(case.pattern.lineno)
-        elif sys.version_info >= (3, 12) and isinstance(node, ast.TypeAlias):
-            soft_key_lines.add(node.lineno)
-        elif sys.version_info >= (3, 15) and isinstance(node, (ast.Import, ast.ImportFrom)):
-            if node.is_lazy:
-                soft_key_lines.add(node.lineno)
-
+        add_soft_key_lines(node, soft_key_lines)
     return soft_key_lines
 
 
-def source_token_lines(source: str) -> TSourceTokenLines:
+def add_soft_key_lines(node: ast.AST, soft_key_lines: set[TLineNo]) -> None:
+    """Add to `soft_key_lines` any lines in `node` that use soft keywords."""
+    # PYVERSION: we use sys.version_info here so that mypy will be ok with
+    # us accessing attributes that appeared in those versions.
+    if isinstance(node, ast.Match):
+        soft_key_lines.add(node.lineno)
+        for case in node.cases:
+            soft_key_lines.add(case.pattern.lineno)
+    elif sys.version_info >= (3, 12) and isinstance(node, ast.TypeAlias):
+        soft_key_lines.add(node.lineno)
+    elif sys.version_info >= (3, 15) and isinstance(node, (ast.Import, ast.ImportFrom)):
+        if node.is_lazy:
+            soft_key_lines.add(node.lineno)
+
+
+def source_token_lines(
+    source: str,
+    *,
+    soft_key_lines: set[TLineNo] | None = None,
+) -> TSourceTokenLines:
     """Generate a series of lines, one for each line in `source`.
 
     Each line is a list of pairs, each pair is a token::
@@ -138,7 +145,8 @@ def source_token_lines(source: str) -> TSourceTokenLines:
     source = source.expandtabs(8).replace("\r\n", "\n")
     tokgen = generate_tokens(source)
 
-    soft_key_lines = find_soft_key_lines(source)
+    if soft_key_lines is None:
+        soft_key_lines = find_soft_key_lines(source)
 
     for ttype, ttext, (sline, scol), (_, ecol), _ in _phys_tokens(tokgen):
         mark_start = True

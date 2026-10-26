@@ -44,6 +44,13 @@ Unreleased
 - In an abundance of caution, prevent forged SQLite journal files from deleting
   files they shouldn't.
 
+- Performance: HTML, JSON, and LCOV reports no longer parse each file a second
+  time to find its functions and classes, making them about 10% to 60% faster
+  on large projects. The HTML report without branch coverage and the LCOV
+  report also held on to large per-file data until they finished, so their
+  memory use grew with the size of the project. Now they keep only what they
+  need, using up to 90% less memory on large projects.
+
 .. _issue 2295: https://github.com/coveragepy/coveragepy/issues/2295
 
 

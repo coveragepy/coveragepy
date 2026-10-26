@@ -37,6 +37,24 @@ class PythonParserTestBase(CoverageTest):
 class PythonParserTest(PythonParserTestBase):
     """Tests of coverage.parser."""
 
+    def test_soft_key_lines(self) -> None:
+        parser = self.parse_text("""
+            match value:
+                case 1:
+                    pass
+            """)
+        assert parser.soft_key_lines == {2, 3}
+
+    def test_arcs_after_release_ast(self) -> None:
+        text = """\
+            if x:
+                a = 1
+            b = 2
+            """
+        parser = self.parse_text(text)
+        parser.release_ast()
+        assert parser.arcs() == self.parse_text(text).arcs()
+
     def test_exit_counts(self) -> None:
         parser = self.parse_text("""\
             # check some basic branch counting

@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import sys
 
+import coverage
 from coverage.plugin import FileReporter
 from coverage.python import PythonFileReporter
 from tests.coveragetest import CoverageTest, UsingModulesMixin
@@ -102,3 +103,32 @@ class FileReporterTest(UsingModulesMixin, CoverageTest):
         z1z1 = PythonFileReporter(zip1.zip1)
         assert z1.source() == ""
         assert "# My zip file!" in z1z1.source().splitlines()
+
+
+class PythonFileReporterRegionsTest(CoverageTest):
+    """Tests of PythonFileReporter.code_regions."""
+
+    def test_code_regions_with_and_without_parser(self) -> None:
+        self.make_file(
+            "regions.py",
+            """\
+            def f():
+                return 1
+
+            class C:
+                def m(self):
+                    return 2
+            """,
+        )
+        cov = coverage.Coverage()
+        unparsed = PythonFileReporter("regions.py", coverage=cov)
+        parsed = PythonFileReporter("regions.py", coverage=cov)
+        assert parsed.lines() == {1, 2, 4, 5, 6}
+
+        regions = sorted(unparsed.code_regions())
+        assert [r.name for r in regions] == ["C", "C.m", "f"]
+        assert sorted(parsed.code_regions()) == regions
+
+        # Finding regions released the parser's AST, but arcs still work.
+        fresh = PythonFileReporter("regions.py", coverage=cov)
+        assert parsed.arcs() == fresh.arcs() == {(1, 4), (2, -1), (4, -1), (5, -4), (6, -5)}

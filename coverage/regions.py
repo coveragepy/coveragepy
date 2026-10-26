@@ -40,10 +40,6 @@ class RegionFinder:
         self.regions: list[CodeRegion] = []
         self.context: list[Context] = []
 
-    def parse_source(self, source: str) -> None:
-        """Parse `source` and walk the ast to populate the .regions attribute."""
-        self.handle_node(ast.parse(source))
-
     def fq_node_name(self) -> str:
         """Get the current fully qualified name we're processing."""
         return ".".join(c.name for c in self.context)
@@ -130,6 +126,11 @@ def code_regions(source: str) -> list[CodeRegion]:
     in a class.
 
     """
+    return code_regions_from_ast(ast.parse(source))
+
+
+def code_regions_from_ast(root: ast.AST) -> list[CodeRegion]:
+    """Find function and class regions in an already-parsed AST."""
     rf = RegionFinder()
-    rf.parse_source(source)
+    rf.handle_node(root)
     return rf.regions

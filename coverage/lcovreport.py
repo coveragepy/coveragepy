@@ -198,16 +198,16 @@ class LcovReporter:
         self.coverage.get_data()
         outfile = outfile or sys.stdout
 
-        # ensure file records are sorted by the _relative_ filename, not the full path
-        to_report = [
-            (fr.relative_filename(), fr, analysis)
-            for fr, analysis in get_analysis_to_report(self.coverage, morfs)
-        ]
-        to_report.sort()
-
-        for fname, fr, analysis in to_report:
+        # File records are sorted by the _relative_ filename, not the full path.
+        # Getting the files in that order lets us write each record as we go,
+        # without holding on to anything for the files we're done with.
+        for fr, analysis in get_analysis_to_report(
+            self.coverage,
+            morfs,
+            sort_key=lambda fr: fr.relative_filename(),
+        ):
             self.total += analysis.numbers
-            self.lcov_file(fname, fr, analysis, outfile)
+            self.lcov_file(fr.relative_filename(), fr, analysis, outfile)
 
         return self.total.n_statements and self.total.pc_covered
 

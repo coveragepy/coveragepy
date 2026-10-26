@@ -74,12 +74,16 @@ def render_report(
 def get_analysis_to_report(
     coverage: Coverage,
     morfs: TMorfs,
+    sort_key: Callable[[FileReporter], str] | None = None,
 ) -> Iterable[tuple[FileReporter, Analysis]]:
     """Get the files to report on.
 
     For each morf in `morfs`, if it should be reported on (based on the omit
     and include configuration options), yield a pair, the `FileReporter` and
     `Analysis` for the morf.
+
+    Files are yielded in order of their file names, or of `sort_key(fr)` if
+    `sort_key` is provided, with ties in file name order.
 
     """
     fr_morfs = coverage._get_file_reporters(morfs)
@@ -100,7 +104,10 @@ def get_analysis_to_report(
     # but when you use one, it becomes large. We don't want to hold onto them
     # longer than we need to, so instead of a for loop, we'll pop and discard
     # the file reporters as we go.
-    fr_morfs.sort(reverse=True)
+    if sort_key is None:
+        fr_morfs.sort(reverse=True)
+    else:
+        fr_morfs.sort(key=lambda fm: (sort_key(fm[0]), fm[0].filename), reverse=True)
     while fr_morfs:
         fr, morf = fr_morfs.pop()
         try:
