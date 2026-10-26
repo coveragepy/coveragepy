@@ -1532,6 +1532,34 @@ class ExcludeTest(CoverageTest):
             lines=[1, 15, 16, 17],
         )
 
+    def test_ellipsis_inside_string_is_not_excluded(self) -> None:
+        # Issue #2112: a line that is only `...` inside a multi-line string
+        # (a YAML end-of-document marker, for example) is text.  It must not
+        # exclude the assignment that contains it.  A real ellipsis statement
+        # and a stub function are still excluded.
+        self.check_coverage(
+            """\
+            yaml_literal = '''\\
+            ---
+            version: 1.2.3
+            ...
+            '''
+            after_yaml = 1
+            def stub(): ...
+            f_literal = f'''
+            ...
+            '''
+            after_f = 2
+            b_literal = b'''
+            ...
+            '''
+            after_b = 3
+            ...
+            tail = 4
+            """,
+            lines=[1, 6, 8, 11, 12, 15, 17],
+        )
+
     def test_two_excludes(self) -> None:
         self.check_coverage(
             """\
