@@ -333,6 +333,10 @@ class PyTracer(Tracer):
         if self.threading:
             if self.thread is None:
                 self.thread = self.threading.current_thread()
+            elif self.thread.ident != self.threading.current_thread().ident:
+                # Called on a different thread than started us: only clear the
+                # stop flag, or this thread would share our trace function.
+                return self._cached_bound_method_trace
 
         sys.settrace(self._cached_bound_method_trace)
         return self._cached_bound_method_trace

@@ -64,6 +64,7 @@ CTracer_init(CTracer *self, PyObject *args_unused, PyObject *kwds_unused)
     }
 
     self->pdata_stack = &self->data_stack;
+    self->thread_id = PyThread_get_thread_ident();
 
     self->context = Py_None;
     Py_INCREF(self->context);
@@ -1003,7 +1004,13 @@ static PyObject *
 CTracer_start(CTracer *self, PyObject *args_unused)
 {
     assert(atomic_load(&self->started) == FALSE);
-    PyEval_SetTrace((Py_tracefunc)CTracer_trace, (PyObject*)self);
+    /* PyEval_SetTrace installs us on the current thread. If this isn't our
+       thread, as when Collector.resume() runs on another thread, only set
+       the started flag, or two threads would share this tracer.
+       */
+    if (self->thread_id == PyThread_get_thread_ident()) {
+        PyEval_SetTrace((Py_tracefunc)CTracer_trace, (PyObject*)self);
+    }
     self->tracing_arcs = self->trace_arcs && PyObject_IsTrue(self->trace_arcs);
     atomic_store(&self->started, TRUE);
 

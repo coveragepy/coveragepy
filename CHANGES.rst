@@ -44,11 +44,17 @@ Unreleased
 - Fix: ``--source=/`` measured no files. A file system root can't be a source
   directory, so now it is an error. Closes `issue 2291`_.
 
+- Fix: when a Coverage object was started and stopped while another one was
+  already measuring a program with threads, the current thread could end up
+  using another thread's tracer. That recorded lines in the wrong files, and
+  could crash the C tracer, as in `issue 2313`_.
+
 - In an abundance of caution, prevent forged SQLite journal files from deleting
   files they shouldn't.
 
 .. _issue 2291: https://github.com/coveragepy/coveragepy/issues/2291
 .. _issue 2295: https://github.com/coveragepy/coveragepy/issues/2295
+.. _issue 2313: https://github.com/coveragepy/coveragepy/issues/2313
 
 
 .. start-releases

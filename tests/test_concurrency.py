@@ -629,6 +629,39 @@ def test_coverage_stop_in_threads() -> None:
     assert has_stopped_coverage == [t.ident]
 
 
+@pytest.mark.skipif(not testenv.SETTRACE_CORE, reason="gettrace is not supported with this core.")
+def test_nested_coverage_keeps_thread_tracers() -> None:
+    # Stopping a nested Coverage resumes the outer one. That used to start every
+    # thread's tracer on the current thread, so the main thread ended up with the
+    # worker thread's tracer: https://github.com/coveragepy/coveragepy/issues/2313
+    traces: dict[str, object] = {}
+    ready = threading.Event()
+    go = threading.Event()
+
+    def worker() -> None:  # pragma: nested
+        traces["worker before"] = sys.gettrace()
+        ready.set()
+        go.wait()
+        traces["worker after"] = sys.gettrace()
+
+    outer = coverage.Coverage()
+    with outer.collect():
+        t = threading.Thread(target=worker)
+        t.start()
+        ready.wait()
+        traces["main before"] = sys.gettrace()
+        inner = coverage.Coverage()
+        with inner.collect():
+            pass
+        traces["main after"] = sys.gettrace()
+        go.set()
+        t.join()
+
+    assert traces["main before"] is not traces["worker before"]
+    assert traces["main after"] is traces["main before"]
+    assert traces["worker after"] is traces["worker before"]
+
+
 def test_thread_safe_save_data(tmp_path: pathlib.Path) -> None:
     # Non-regression test for: https://github.com/coveragepy/coveragepy/issues/581
 

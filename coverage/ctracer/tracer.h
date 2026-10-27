@@ -31,6 +31,8 @@ typedef struct CTracer {
     PyObject * unlock_data;
     PyObject * disable_plugin;
 
+    /* The thread that created the tracer. */
+    unsigned long thread_id;
     /* Has the tracer been started? */
     _Atomic BOOL started;
     /* Are we tracing arcs, or just lines? */
