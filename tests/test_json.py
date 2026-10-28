@@ -439,6 +439,78 @@ class JsonReportTest(UsingModulesMixin, CoverageTest):
 
         self._assert_json_report(cov, expected_result, "b", b_py_source)
 
+    def test_duplicate_region_names(self) -> None:
+        # Functions and classes can have the same name, like a property getter
+        # and setter. Each of them should be reported, not only the last one.
+        # Overload stubs have no statements, so the implementation keeps the
+        # name, as in the LCOV report.
+        self.make_file(
+            "dups.py",
+            """\
+            class C:
+                @property
+                def x(self):
+                    return 4
+
+                @x.setter
+                def x(self, value):
+                    pass
+
+            c = C()
+            c.x = 11
+
+            if c:
+                class D:
+                    def m(self):
+                        return 16
+            else:
+                class D:
+                    def m(self):
+                        return 20
+
+            D().m()
+
+            from typing import overload
+
+            @overload
+            def f(a: int) -> int: ...
+            @overload
+            def f(a: str) -> str: ...
+            def f(a):
+                return 31
+
+            f(1)
+            """,
+        )
+        cov = coverage.Coverage()
+        mod = self.start_import_stop(cov, "dups")
+        cov.json_report(mod, outfile="dups.json")
+        with open("dups.json", encoding="utf-8") as result_file:
+            result = json.load(result_file)["files"]["dups.py"]
+
+        def lines(regions: dict[str, Any]) -> dict[str, tuple[int, list[int], list[int]]]:
+            return {
+                name: (region["start_line"], region["executed_lines"], region["missing_lines"])
+                for name, region in regions.items()
+            }
+
+        assert lines(result["functions"]) == {
+            "C.x": (3, [], [4]),
+            "C.x@7": (7, [8], []),
+            "D.m": (15, [16], []),
+            "D.m@19": (19, [], [20]),
+            "f@27": (27, [], []),
+            "f@29": (29, [], []),
+            "f": (30, [31], []),
+            "": (1, [1, 2, 3, 6, 7, 10, 11, 13, 14, 15, 22, 24, 30, 33], [18, 19]),
+        }
+        assert lines(result["classes"]) == {
+            "C": (1, [8], [4]),
+            "D": (14, [16], []),
+            "D@18": (18, [], [20]),
+            "": (1, [1, 2, 3, 6, 7, 10, 11, 13, 14, 15, 22, 24, 30, 31, 33], [18, 19]),
+        }
+
     def test_empty_file(self) -> None:
         cov = coverage.Coverage()
         self.make_file("empty.py", "")
