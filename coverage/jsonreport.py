@@ -147,12 +147,16 @@ class JsonReporter:
             narrower.add_regions([outside_lines])
 
             reported_file[plural] = region_data = {}
-            for region in regions:
-                if region.kind != noun:
-                    continue
-                region_data[region.name] = self.make_region_data(
+            noun_regions = [(r, narrower.narrow(r.lines)) for r in regions if r.kind == noun]
+            # Like the LCOV report, the first same-named region with statements keeps the name.
+            names = {r.name for r, narrowed in noun_regions if narrowed.numbers.n_statements}
+            for region, narrowed in noun_regions:
+                name = region.name
+                if name in region_data or (name in names and not narrowed.numbers.n_statements):
+                    name += f"@{region.start}"
+                region_data[name] = self.make_region_data(
                     coverage_data,
-                    narrower.narrow(region.lines),
+                    narrowed,
                     region.start,
                 )
 
