@@ -67,6 +67,15 @@ Version 7.17.0 — 2026-10-22
 
 - Dropped support for Python 3.10.
 
+- Added :meth:`Coverage.clear_data <coverage.Coverage.clear_data>`, a
+  lighter-weight alternative to :meth:`~coverage.Coverage.erase` for clearing
+  collected data between measurement cycles. Unlike ``erase()``, it doesn't
+  force the next ``start()`` to redo the collector/tracer setup, which makes
+  repeated start/stop/clear loops on the same ``Coverage`` object much
+  cheaper. Closes `issue 2139`_.
+
+.. _issue 2139: https://github.com/coveragepy/coveragepy/issues/2139
+
 - Binary wheels are now provided for iOS and Android. This allows the use of
   the optimized C tracer on mobile platforms.
 
