@@ -278,6 +278,9 @@ jobs:
               --format markdown:report.md \
               || status=$?
           cat report.md >> "$GITHUB_STEP_SUMMARY"
+          if [ -n "${status}" ]; then
+              echo '::error::Changed lines are not fully covered! Add tests, or label the PR "missing-coverage-ok" then close and re-open it.'
+          fi
           exit "${status:-0}"
 
   publish:
