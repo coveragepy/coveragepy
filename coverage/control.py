@@ -1510,9 +1510,28 @@ def process_startup(
 
 def _after_fork_in_child() -> None:
     """Used by patch=fork in the child process to restart coverage."""
-    if cov := Coverage.current():
-        cov.stop()
-    process_startup(force=True, slug="fork")
+    parent_cov = Coverage.current()
+    if parent_cov is not None:
+        parent_config = parent_cov.config
+        parent_cov.stop()
+        parent_cov._auto_save = False  # prevent child from saving parent's pre-fork data
+        # Restart with the same configuration the parent had.
+        # process_startup() requires COVERAGE_PROCESS_START or
+        # COVERAGE_PROCESS_CONFIG to be set, but those are only present
+        # when patch=subprocess is also used.  With patch=fork alone,
+        # neither variable is set, so we must start coverage directly
+        # from the serialized parent config instead of going through
+        # the env-var lookup path.
+        config_file = CONFIG_DATA_PREFIX + parent_config.serialize()
+        child_cov = Coverage(config_file=config_file)
+        child_cov._warn_no_data = False
+        child_cov._warn_unimported_source = False
+        child_cov._warn_preimported_source = False
+        child_cov._auto_save = True
+        child_cov.start()
+        process_startup.coverage = child_cov  # type: ignore[attr-defined]
+    else:  # pragma: no cover
+        process_startup(force=True, slug="fork")
 
 
 def _prevent_sub_process_measurement() -> None:
