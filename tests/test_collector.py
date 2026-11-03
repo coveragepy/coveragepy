@@ -67,18 +67,19 @@ class CollectorTest(CoverageTest):
         try:
             collector = cov._collector
             assert collector is not None
+            data = collector.data
 
             class GrowingSet(set[int]):
                 """A per-file data set that records another file when cleared."""
 
                 def clear(self) -> None:
-                    collector.data["added.py"] = set()
+                    data["added.py"] = set()
                     super().clear()
 
-            collector.data["stale.py"] = GrowingSet({1})
+            data["stale.py"] = GrowingSet({1})
             collector._clear_data()
 
-            assert collector.data["stale.py"] == set()
-            assert collector.data["added.py"] == set()
+            assert data["stale.py"] == set()
+            assert data["added.py"] == set()
         finally:
             cov.stop()
