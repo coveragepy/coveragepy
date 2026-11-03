@@ -180,19 +180,17 @@ class Collector:
         # keys and data values that were still in use higher up the stack
         # when we are called as part of switch_context.
         #
-        # Hold the lock only to snapshot the values. Clearing them inside the
-        # lock would let the GC run traced code (a __del__, a weakref
-        # callback, a gc.callbacks hook), whose tracer would re-enter
-        # lock_data on this same thread and self-deadlock on the
-        # non-reentrant lock.
+        # Hold the lock only long enough to snapshot the values, then clear
+        # them outside it.  Clearing inside the lock would let the GC run
+        # traced code (a __del__, a weakref callback, a gc.callbacks hook),
+        # whose tracer would re-enter lock_data on this same thread and
+        # self-deadlock on the non-reentrant lock.
+        #
+        # Iterating the snapshot instead of self.data.values() also keeps a
+        # tracer that records a new file name while the data is being cleared
+        # from changing the dict we are iterating.
         with self.data_lock or contextlib.nullcontext():
-            while True:
-                try:
-                    data_values = list(self.data.values())
-                    break
-                except RuntimeError:
-                    # a re-entrant tracer added a key mid-iteration
-                    continue
+            data_values = list(self.data.values())
 
         for d in data_values:
             d.clear()

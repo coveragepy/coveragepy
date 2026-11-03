@@ -55,3 +55,30 @@ class CollectorTest(CoverageTest):
         abs_files = {os.path.abspath(f) for f in should_trace_hook.filenames}
         assert os.path.abspath("f1.py") in abs_files
         assert os.path.abspath("f2.py") in abs_files
+
+    def test_clear_data_when_a_file_is_recorded_while_clearing(self) -> None:
+        # Clearing the per-file data runs traced code: the GC can call a
+        # __del__ or a gc.callbacks hook, and that code is measured, so a
+        # tracer can record a new file name in self.data while we are in the
+        # middle of clearing.  _clear_data() has to iterate a snapshot of the
+        # values, not the live dict.
+        cov = coverage.Coverage(include=["f1.py"])
+        cov.start()
+        try:
+            collector = cov._collector
+            assert collector is not None
+
+            class GrowingSet(set[int]):
+                """A per-file data set that records another file when cleared."""
+
+                def clear(self) -> None:
+                    collector.data["added.py"] = set()
+                    super().clear()
+
+            collector.data["stale.py"] = GrowingSet({1})
+            collector._clear_data()
+
+            assert collector.data["stale.py"] == set()
+            assert collector.data["added.py"] == set()
+        finally:
+            cov.stop()
