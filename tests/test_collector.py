@@ -8,8 +8,21 @@ from __future__ import annotations
 import os.path
 
 import coverage
+from coverage.types import TTraceData
 from tests.coveragetest import CoverageTest
 from tests.helpers import CheckUniqueFilenames
+
+
+class RecordingSet(set[int]):
+    """A per-file data set that records another file name when it is cleared."""
+
+    def __init__(self, data: TTraceData) -> None:
+        super().__init__({1})
+        self.data = data
+
+    def clear(self) -> None:
+        self.data["added.py"] = set()
+        super().clear()
 
 
 class CollectorTest(CoverageTest):
@@ -64,22 +77,13 @@ class CollectorTest(CoverageTest):
         # values, not the live dict.
         cov = coverage.Coverage(include=["f1.py"])
         cov.start()
-        try:
-            collector = cov._collector
-            assert collector is not None
-            data = collector.data
+        cov.stop()
+        collector = cov._collector
+        assert collector is not None
+        data = collector.data
 
-            class GrowingSet(set[int]):
-                """A per-file data set that records another file when cleared."""
+        data["stale.py"] = RecordingSet(data)
+        collector._clear_data()
 
-                def clear(self) -> None:
-                    data["added.py"] = set()
-                    super().clear()
-
-            data["stale.py"] = GrowingSet({1})
-            collector._clear_data()
-
-            assert data["stale.py"] == set()
-            assert data["added.py"] == set()
-        finally:
-            cov.stop()
+        assert data["stale.py"] == set()
+        assert data["added.py"] == set()
