@@ -20,8 +20,12 @@ upgrading your version of coverage.py.
     ..  Version 9.8.1 — 2027-07-27
     ..  --------------------------
 
-Unreleased
-----------
+.. start-releases
+
+.. _changes_7-17-1:
+
+Version 7.17.1 — 2026-11-03
+---------------------------
 
 - Fix: a one-line class or function body immediately followed by another
   statement (such as ``class Foo: ...`` on its own line) was incorrectly
@@ -57,8 +61,6 @@ Unreleased
 .. _issue 2295: https://github.com/coveragepy/coveragepy/issues/2295
 .. _issue 2337: https://github.com/coveragepy/coveragepy/issues/2337
 
-
-.. start-releases
 
 .. _changes_7-17-0:
 
