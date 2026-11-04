@@ -343,7 +343,11 @@ class CoverageData:
                 row = db.execute_one("select version from coverage_schema")
                 assert row is not None
             except Exception as exc:
-                if "no such table: coverage_schema" in str(exc):
+                if "no such table: coverage_schema" in str(exc) and not self._read_only:
+                    # There's no schema, so this is a new, empty data file.
+                    # Give it our schema to get started, unless we can only
+                    # read it: a read-only data file isn't ours to fix up, and
+                    # it might not be a coverage data file at all.
                     self._init_db(db)
                 else:
                     raise DataError(

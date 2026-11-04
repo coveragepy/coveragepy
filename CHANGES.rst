@@ -20,6 +20,20 @@ upgrading your version of coverage.py.
     ..  Version 9.8.1 — 2027-07-27
     ..  --------------------------
 
+Unreleased
+----------
+
+- Fix: ``coverage combine`` and ``coverage debug data`` crashed with an
+  unhandled ``sqlite3.OperationalError: attempt to write a readonly database``
+  when a data file existed but had no coverage schema, for example an empty
+  file left behind by a worker that died.  Data files that come from elsewhere
+  are opened read-only, so they are no longer initialized.  A file we can't
+  read is now reported like any other unusable data file, and is left in
+  place.  Closes `issue 2356`_.
+
+.. _issue 2356: https://github.com/coveragepy/coveragepy/issues/2356
+
+
 .. start-releases
 
 .. _changes_7-17-2:
