@@ -20,8 +20,12 @@ upgrading your version of coverage.py.
     ..  Version 9.8.1 — 2027-07-27
     ..  --------------------------
 
-Unreleased
-----------
+.. start-releases
+
+.. _changes_7-17-2:
+
+Version 7.17.2 — 2026-11-04
+---------------------------
 
 - Fix: ``coverage combine`` (and pytest-cov, which combines automatically)
   failed with "attempt to write a readonly database" when using a version of
@@ -30,8 +34,6 @@ Unreleased
 
 .. _issue 2356: https://github.com/coveragepy/coveragepy/issues/2356
 
-
-.. start-releases
 
 .. _changes_7-17-1:
 
