@@ -1221,7 +1221,6 @@ class CoverageData:
                 temp_store = [row[0] for row in cur]
             with db.execute("PRAGMA compile_options") as cur:
                 copts = [row[0] for row in cur]
-            copts = textwrap.wrap(", ".join(copts), width=75)
 
         return [
             ("sqlite3_sqlite_version", sqlite3.sqlite_version),
