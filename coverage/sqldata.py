@@ -774,7 +774,12 @@ class CoverageData:
 
         with self._connect() as con:
             assert con.con is not None
-            con.con.isolation_level = "IMMEDIATE"
+            # Use a deferred transaction, not IMMEDIATE: BEGIN IMMEDIATE asks for
+            # a write lock on every attached database, and SQLite before 3.34.0
+            # refuses that for our read-only other_db.  The first statement in
+            # the transaction is a write to main anyway.
+            # https://github.com/coveragepy/coveragepy/issues/2356
+            con.con.isolation_level = "DEFERRED"
 
             # Register functions for SQLite
             register_sqlite_functions(con.con)

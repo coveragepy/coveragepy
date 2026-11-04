@@ -23,7 +23,12 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
-Nothing yet.
+- Fix: ``coverage combine`` (and pytest-cov, which combines automatically)
+  failed with "attempt to write a readonly database" when using a version of
+  SQLite older than 3.34.0, such as on RHEL 8 or Ubuntu 20.04.  This was a
+  regression in 7.17.1. Fixes `issue 2356`_.
+
+.. _issue 2356: https://github.com/coveragepy/coveragepy/issues/2356
 
 
 .. start-releases
