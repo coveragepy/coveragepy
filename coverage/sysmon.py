@@ -393,7 +393,13 @@ class SysMonitor(Tracer):
                 with self.lock:
                     if self.sysmon_on:
                         assert sys_monitoring is not None
-                        sys_monitoring.set_local_events(self.myid, code, self.local_events)
+                        # Arming a code object happens inside the callback
+                        # that the arming enables, so meta-coverage can never
+                        # see this line execute.  See control.py:743 for the
+                        # pragma's origin.
+                        sys_monitoring.set_local_events(  # pragma: nested
+                            self.myid, code, self.local_events
+                        )
 
                         if LOG:  # pragma: debugging
                             if code.co_filename not in {"<string>"}:
