@@ -200,6 +200,52 @@ jobs:
         run: |
           python -m tox -e js
 
+  old_sqlite:
+    # SQLite before 3.34.0 behaves differently in ways that have broken us:
+    # https://github.com/coveragepy/coveragepy/issues/2357
+    # Rocky 8 has SQLite 3.26.0 and a Python new enough to run coverage.py.
+    name: "3.12 on old SQLite 3.26"
+    runs-on: ubuntu-latest
+    container: rockylinux:8@sha256:9794037624aaa6212aeada1d28861ef5e0a935adaf93e4ef79837119f2a2d04c
+    timeout-minutes: 15
+
+    # Don't run tests if the branch name includes "-notests".
+    # Only run tests if files that affect tests have changed.
+    needs: changed
+    if:
+      needs.changed.outputs.run_tests == 'true'
+      && !contains(github.ref, '-notests')
+
+    steps:
+      # Git has to be installed before checkout, or checkout downloads a
+      # tarball instead of making a repo.
+      - name: "Install system packages"
+        run: |
+          set -xe
+          dnf -y install python3.12 python3.12-pip python3.12-devel gcc git
+
+      - name: "Check out the repo"
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: "Show environment"
+        run: |
+          set -xe
+          python3.12 -VV
+          python3.12 -c "import sqlite3; print(sqlite3.sqlite_version)"
+          env | sort
+          whoami
+
+      - name: "Install dependencies"
+        run: |
+          set -xe
+          python3.12 -m pip install -r requirements/tox.txt
+
+      - name: "Run tox for 3.12"
+        run: |
+          python3.12 -m tox -e py312 -- -rfsEX
+
   # This job aggregates test results. It's the required check for branch protection.
   # https://github.com/marketplace/actions/alls-green#why
   # https://github.com/orgs/community/discussions/33579
@@ -208,6 +254,7 @@ jobs:
     needs:
       - tests
       - js_tests
+      - old_sqlite
     # Without this, GitHub skips this job when `tests` doesn't succeed, so the
     # gate reports "skipped" instead of failing.  `allowed-skips` keeps the
     # deliberate skips (-notests branches, no test-relevant files) passing.
@@ -218,4 +265,4 @@ jobs:
         uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
         with:
           jobs: ${{ toJSON(needs) }}
-          allowed-skips: tests, js_tests
+          allowed-skips: tests, js_tests, old_sqlite
