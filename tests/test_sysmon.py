@@ -79,7 +79,7 @@ class MultilineMapCacheTest(CoverageTest):
 
 @pytest.mark.skipif(not env.PYBEHAVIOR.pep669, reason="SysMonitor needs sys.monitoring")
 @pytest.mark.skipif(
-    not hasattr(sys.monitoring, "get_local_events"),
+    not hasattr(getattr(sys, "monitoring", None), "get_local_events"),
     reason="get_local_events needs Python 3.14",
 )
 class StartLocalEventsTest(CoverageTest):
