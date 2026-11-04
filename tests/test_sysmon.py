@@ -85,7 +85,19 @@ class MultilineMapCacheTest(CoverageTest):
 class StartLocalEventsTest(CoverageTest):
     """Tests that start() arms local events on already-registered code objects."""
 
-    @pytest.mark.parametrize("trace_arcs", [False, True])
+    @pytest.mark.parametrize(
+        "trace_arcs",
+        [
+            False,
+            pytest.param(
+                True,
+                marks=pytest.mark.skipif(
+                    not env.PYBEHAVIOR.branch_right_left,
+                    reason="branch events need Python 3.14",
+                ),
+            ),
+        ],
+    )
     def test_start_arms_local_events(self, trace_arcs: bool) -> None:
         # Register a code object the way sysmon_py_start does, then start the
         # tracer: start() must arm it with the right local events, including
