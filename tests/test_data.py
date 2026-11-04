@@ -1126,6 +1126,10 @@ class CoverageDataFilesTest(CoverageTest):
         self.assert_exists("cov2/.coverage.xxx")
 
     @pytest.mark.skipif(env.WINDOWS, reason="Windows lets us delete files in read-only directories")
+    @pytest.mark.skipif(
+        not env.WINDOWS and os.geteuid() == 0,
+        reason="root can delete files in read-only directories",
+    )
     def test_hostile_journal_matches_sqlite(self) -> None:
         # hostile_journal() builds its bytes by hand.  Check them against a
         # journal SQLite writes itself.  A commit spanning two databases names
