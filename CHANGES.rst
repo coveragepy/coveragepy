@@ -20,20 +20,6 @@ upgrading your version of coverage.py.
     ..  Version 9.8.1 — 2027-07-27
     ..  --------------------------
 
-Unreleased
-----------
-
-- Fix: ``coverage combine`` and ``coverage debug data`` crashed with an
-  unhandled ``sqlite3.OperationalError: attempt to write a readonly database``
-  when a data file existed but had no coverage schema, for example an empty
-  file left behind by a worker that died.  Data files that come from elsewhere
-  are opened read-only, so they are no longer initialized.  A file we can't
-  read is now reported like any other unusable data file, and is left in
-  place.  Closes `issue 2356`_.
-
-.. _issue 2356: https://github.com/coveragepy/coveragepy/issues/2356
-
-
 .. start-releases
 
 .. _changes_7-17-2:
@@ -41,10 +27,18 @@ Unreleased
 Version 7.17.2 — 2026-11-04
 ---------------------------
 
-- Fix: ``coverage combine`` (and pytest-cov, which combines automatically)
-  failed with "attempt to write a readonly database" when using a version of
-  SQLite older than 3.34.0, such as on RHEL 8 or Ubuntu 20.04.  This was a
-  regression in 7.17.1. Fixes `issue 2356`_.
+- Fix: two different scenarios failed with "attempt to write a readonly
+  database". These were regressions in 7.17.1. They are fixed, closing `issue
+  2356`_:
+
+  - When using a version of SQLite older than 3.34.0, such as on RHEL 8 or
+    Ubuntu 20.04, ``coverage combine`` (and pytest-cov, which combines
+    automatically) always failed.
+
+  - ``coverage combine`` and ``coverage debug data`` failed when a data file
+    existed but had no coverage schema, for example an empty file left behind
+    by a worker that died. A file we can't read is now reported like any other
+    unusable data file, and is left in place.
 
 .. _issue 2356: https://github.com/coveragepy/coveragepy/issues/2356
 
