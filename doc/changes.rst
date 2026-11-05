@@ -1527,7 +1527,7 @@ Version 4.0a6 — 2015-06-21
 
 - HTML reports were truncated at formfeed characters.  This is now fixed
   (`issue 360`_).  It's always fun when the problem is due to a `bug in the
-  Python standard library <http://bugs.python.org/issue19035>`_.
+  Python standard library <https://bugs.python.org/issue19035>`__.
 
 - Files with incorrect encoding declaration comments are no longer ignored by
   the reporting commands, fixing `issue 351`_.

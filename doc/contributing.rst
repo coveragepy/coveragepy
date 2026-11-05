@@ -34,10 +34,10 @@ you frustration.
 
 We have a `#coverage channel in the Python Discord <discord_>`_ that can be a
 good place to explore ideas, get help, or help people with coverage.py.
-`Join us <discord_>`_!  (`Join the Python Discord server <https://discord.com/invite/python>`_ first,
-if you haven't already.)
+`Come there <discord_>`_ after `joining the Python Discord server <join_>`_.
 
 .. _discord: https://discord.com/channels/267624335836053506/1253355750684753950
+.. _join: https://discord.com/invite/python
 
 
 Getting the code
