@@ -181,6 +181,9 @@ html_logo = "media/sleepy-snake-circle-150.png"
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
 
+# The sample HTML report is copied as-is into the built docs.
+html_extra_path = ["_extra"]
+
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
 # html_last_updated_fmt = '%b %d, %Y'
@@ -241,6 +244,8 @@ linkcheck_ignore = [
     # When publishing a new version, the docs will refer to the version before
     # the docs have been published.  So don't check those links.
     rf"https://coverage.readthedocs.io/en/{release}$",
+    # Linkcheck looks for local files in the source tree, not html_extra_path.
+    r"^sample_html/",
 ]
 
 # https://github.com/executablebooks/sphinx-tabs/pull/54

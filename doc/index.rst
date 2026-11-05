@@ -136,19 +136,10 @@ Getting started is easy:
         $ coverage html
         Wrote HTML report to htmlcov/index.html
 
-    .. ifconfig:: not prerelease
-
-        Then open `htmlcov/index.html <htmlreport_>`__ in your browser
-        to see a `report like this <htmlreport_>`__.
-
-    .. ifconfig:: prerelease
-
-        Then open `htmlcov/index.html <betahtmlreport_>`__ in your browser
-        to see a `report like this <betahtmlreport_>`__.
+    Then open `htmlcov/index.html <sample_html/index.html>`__ in your browser
+    to see a `report like this <sample_html/index.html>`__.
 
 
-.. _htmlreport: https://nedbatchelder.com/files/sample_coverage_html/index.html
-.. _betahtmlreport: https://nedbatchelder.com/files/sample_coverage_html_beta/index.html
 .. _nose state: https://github.com/nose-devs/nose/commit/0f40fa995384afad77e191636c89eb7d5b8870ca
 .. _include tests: https://nedbatchelder.com/blog/202008/you_should_include_your_tests_in_coverage.html
 

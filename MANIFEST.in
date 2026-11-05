@@ -39,6 +39,7 @@ recursive-include coverage/ctracer *.c *.h
 recursive-include doc *.py *.in *.rst *.txt *.png
 recursive-include doc/_static *
 prune doc/_build
+prune doc/_extra
 prune doc/_spell
 
 recursive-include requirements *.in *.txt

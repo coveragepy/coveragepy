@@ -58,7 +58,7 @@ clean: debug_clean _clean_platform	#- Remove artifacts of test execution, instal
 	@rm -f .tox/*/lib/*/site-packages/a0_metacov.pth
 	@rm -f */.coverage */*/.coverage */*/*/.coverage */*/*/*/.coverage */*/*/*/*/.coverage */*/*/*/*/*/.coverage
 	@rm -f tests/covmain.zip tests/zipmods.zip tests/zip1.zip
-	@rm -rf doc/_build doc/_spell doc/sample_html doc/sample_html_beta
+	@rm -rf doc/_build doc/_spell
 	@rm -rf tmp
 	@rm -rf a1_coverage.pth
 	@rm -rf .*cache */.*cache */*/.*cache */*/*/.*cache .hypothesis
@@ -189,25 +189,22 @@ prebuild: css workflows cogdoc		#- One command for all source prep.
 
 ### Sample HTML reports
 
-.PHONY: _sample_cog_html sample_html sample_html_beta
+.PHONY: sample_html
 
-_sample_cog_html: clean
+SAMPLE_HTML = doc/_extra/sample_html
+
+sample_html: clean			#- Generate sample HTML report.
 	$(INSTALL) -e .
 	cd ~/cog; \
 		rm -rf htmlcov; \
 		PYTEST_ADDOPTS= coverage run --branch --source=cogapp -m pytest -k CogTestsInMemory; \
 		coverage combine; \
 		coverage html
-
-sample_html: _sample_cog_html		#- Generate sample HTML report.
-	rm -f doc/sample_html/*.*
-	cp -r ~/cog/htmlcov/ doc/sample_html/
-	rm doc/sample_html/.gitignore doc/sample_html/status.json
-
-sample_html_beta: _sample_cog_html	#- Generate sample HTML report for a beta release.
-	rm -f doc/sample_html_beta/*.*
-	cp -r ~/cog/htmlcov/ doc/sample_html_beta/
-	rm doc/sample_html_beta/.gitignore doc/sample_html_beta/status.json
+	rm -rf $(SAMPLE_HTML)
+	cp -r ~/cog/htmlcov/ $(SAMPLE_HTML)/
+	rm $(SAMPLE_HTML)/.gitignore $(SAMPLE_HTML)/status.json
+	@# The file names have hashes that change, so new files need to be added.
+	git add -A $(SAMPLE_HTML)
 
 
 ### Kitting: making releases
@@ -305,21 +302,7 @@ docspell: $(DOCBIN)			#- Run the spell checker on the docs.
 
 ### Publishing docs
 
-.PHONY: publish publishbeta github_releases comment_on_fixes
-
-WEBHOME = ~/web/stellated
-WEBSAMPLE = $(WEBHOME)/files/sample_coverage_html
-WEBSAMPLEBETA = $(WEBHOME)/files/sample_coverage_html_beta
-
-publish:				#- Publish the sample HTML report.
-	rm -f $(WEBSAMPLE)/*.*
-	mkdir -p $(WEBSAMPLE)
-	cp doc/sample_html/*.* $(WEBSAMPLE)
-
-publishbeta:
-	rm -f $(WEBSAMPLEBETA)/*.*
-	mkdir -p $(WEBSAMPLEBETA)
-	cp doc/sample_html_beta/*.* $(WEBSAMPLEBETA)
+.PHONY: github_releases comment_on_fixes
 
 CHANGES_MD = tmp/rst_rst/changes.md
 SCRIV_SOURCE = tmp/only-changes.md
