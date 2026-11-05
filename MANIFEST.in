@@ -23,7 +23,6 @@ include Makefile
 include NOTICE.txt
 include README.rst
 include __main__.py
-include metacov.ini
 include setup.py
 include tox.ini
 

@@ -100,7 +100,7 @@ test_js:				#- Run the JavaScript tests in a headless browser.
 	tox -q -e js
 
 ### Metacov: coverage measurement of coverage.py itself
-# See metacov.ini for details.
+# See tools/metacov.ini for details.
 
 .PHONY: metacov metahtml
 

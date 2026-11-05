@@ -57,7 +57,7 @@ jobs:
               - "**.c"
               - ".github/workflows/coverage.yml"
               - "tox.ini"
-              - "metacov.ini"
+              - "tools/metacov.ini"
               - "requirements/*.txt"
               - "tests/gold/**"
 
@@ -152,7 +152,7 @@ jobs:
 
       - name: "Combine data"
         env:
-          COVERAGE_RCFILE: "metacov.ini"
+          COVERAGE_RCFILE: "tools/metacov.ini"
         run: |
           python -m coverage combine
           mv .metacov ".metacov.$MATRIX_ID"
@@ -171,7 +171,7 @@ jobs:
     outputs:
       total: ${{ steps.total.outputs.total }}
     env:
-      COVERAGE_RCFILE: "metacov.ini"
+      COVERAGE_RCFILE: "tools/metacov.ini"
 
     steps:
       - name: "Check out the repo"
