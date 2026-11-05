@@ -388,8 +388,8 @@ class GoodFileTracerTest(FileTracerTest):
         _, statements, _, _ = cov.analysis(zzfile)
         assert statements == [105, 106, 107, 205, 206, 207]
 
-    def make_render_and_caller(self) -> None:
-        """Make the render.py and caller.py files we need."""
+    def make_render(self) -> None:
+        """Make the render.py file we need."""
         # plugin2 emulates a dynamic tracing plugin: the caller's locals
         # are examined to determine the source file and line number.
         # The plugin is in tests/plugin2.py.
@@ -409,6 +409,10 @@ class GoodFileTracerTest(FileTracerTest):
                 return x+1
             """,
         )
+
+    def make_render_and_caller(self) -> None:
+        """Make the render.py and caller.py files we need."""
+        self.make_render()
         self.make_file(
             "caller.py",
             """\
@@ -461,6 +465,37 @@ class GoodFileTracerTest(FileTracerTest):
         assert "bar_4.html" in line_counts(cov.get_data())
 
         assert "quux_5.html" not in line_counts(cov.get_data())
+
+    def test_plugin2_with_source_pkgs(self) -> None:
+        # A dynamic source file name from a plugin isn't a Python module, so
+        # source_pkgs has to match it by location, not by module name.
+        self.make_render()
+        self.make_file("pkg/__init__.py", "")
+        self.make_file("pkg/foo_7.html", "".join("line %d\n" % i for i in range(7)))
+        self.make_file("bar_4.html", "".join("line %d\n" % i for i in range(4)))
+        self.make_file(
+            "caller.py",
+            """\
+            import pkg
+            from render import render
+
+            assert render("pkg/foo_7.html", 4) == "[pkg/foo_7.html @ 4]"
+            # bar_4.html is outside the package, so it won't be measured.
+            assert render("bar_4.html", 2) == "[bar_4.html @ 2]"
+            """,
+        )
+
+        cov = coverage.Coverage(source_pkgs=["pkg"])
+        cov.set_option("run:plugins", ["tests.plugin2"])
+
+        self.start_import_stop(cov, "caller")
+
+        _, statements, missing, _ = cov.analysis(os.path.join("pkg", "foo_7.html"))
+        assert statements == [1, 2, 3, 4, 5, 6, 7]
+        assert missing == [1, 2, 3, 6, 7]
+        assert "foo_7.html" in line_counts(cov.get_data())
+
+        assert "bar_4.html" not in line_counts(cov.get_data())
 
     def test_plugin2_with_branch(self) -> None:
         self.make_render_and_caller()
