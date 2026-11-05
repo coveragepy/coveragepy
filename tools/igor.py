@@ -42,7 +42,7 @@ PYPY = platform.python_implementation() == "PyPy"
 VERBOSITY = int(os.getenv("COVERAGE_IGOR_VERBOSE", "1"))
 
 # Functions named do_* are executable from the command line: do_blah is run
-# by "python igor.py blah".
+# by "python tools/igor.py blah".
 
 
 def do_show_env():

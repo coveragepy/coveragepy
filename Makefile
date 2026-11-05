@@ -108,7 +108,7 @@ metacov:				#- Run meta-coverage, measuring ourself.
 	COVERAGE_COVERAGE=yes tox -q $(ARGS)
 
 metahtml:				#- Produce meta-coverage HTML reports.
-	tox exec -q $(ARGS) -- python3 igor.py combine_html
+	tox exec -q $(ARGS) -- python3 tools/igor.py combine_html
 
 
 ### Requirements management
@@ -218,18 +218,18 @@ REPO_OWNER = coveragepy/coveragepy
 RTD_PROJECT = coverage
 
 release_version:			# Update the version for a release.
-	python igor.py release_version
+	python tools/igor.py release_version
 
-edit_for_release:			# Edit sources to insert release facts (see howto.txt).
-	python igor.py edit_for_release
+edit_for_release:			# Edit sources to insert release facts (see tools/release.txt).
+	python tools/igor.py edit_for_release
 
 cheats:					#- Create some useful snippets for releasing.
-	python igor.py cheats | tee cheats.txt
+	python tools/igor.py cheats | tee cheats.txt
 
-relbranch:				# Create the branch for releasing (see howto.txt).
+relbranch:				# Create the branch for releasing (see tools/release.txt).
 	git switch -c nedbat/release-$$(date +%Y%m%d-%H%M%S)
 
-relcommit:				# Commit the release changes (see howto.txt).
+relcommit:				# Commit the release changes (see tools/release.txt).
 	git commit -am "docs: prep for $$(python setup.py --version)"
 
 kit:					#- Make a source distribution and some wheels.
@@ -239,11 +239,11 @@ kit:					#- Make a source distribution and some wheels.
 	COVERAGE_DISABLE_EXTENSION=1 python -m build --wheel
 
 pypi_upload:				#- Upload the built distributions to PyPI.
-	python ci/trigger_action.py $(REPO_OWNER) publish-pypi
+	python tools/trigger_action.py $(REPO_OWNER) publish-pypi
 	@echo "Use that^ URL to approve the upload"
 
 test_upload:				#- Upload the distributions to PyPI's testing server.
-	python ci/trigger_action.py $(REPO_OWNER) publish-testpypi
+	python tools/trigger_action.py $(REPO_OWNER) publish-testpypi
 	@echo "Use that^ URL to approve the upload"
 
 _check_github_auth:			# Check that we have GITHUB_TOKEN for other commands that need it.
@@ -253,23 +253,23 @@ _check_github_auth:			# Check that we have GITHUB_TOKEN for other commands that 
 	fi
 
 build_kits: _check_github_auth		#- Trigger GitHub to build all the distributions.
-	python ci/trigger_action.py $(REPO_OWNER) build-kits
+	python tools/trigger_action.py $(REPO_OWNER) build-kits
 
 download_kits: _check_github_auth	#- Download the kits built on GitHub.
 	@# This is only if we need to examine them for debugging.
 	mkdir -p dist
 	gh run download --dir=dist $$(gh run list --workflow=Kits --json=databaseId --jq='.[0].databaseId')
 
-tag:					# Make a git tag with the version number (see howto.txt).
+tag:					# Make a git tag with the version number (see tools/release.txt).
 	git tag -s -m "Version $$(python setup.py --version)" $$(python setup.py --version)
 	git push --follow-tags
 
 update_rtd:				# Update ReadTheDocs with the versions to show.
-	python ci/update_rtfd.py $(RTD_PROJECT)
+	python tools/update_rtfd.py $(RTD_PROJECT)
 
-bump_version:				# Edit sources to bump the version after a release (see howto.txt).
+bump_version:				# Edit sources to bump the version after a release (see tools/release.txt).
 	git switch -c nedbat/bump-version
-	python igor.py bump_version
+	python tools/igor.py bump_version
 	git commit -a -m "build: bump version to $$(python setup.py --version | sed 's/a.*//')"
 	git push -u origin @
 
@@ -321,4 +321,4 @@ github_releases: $(SCRIV_SOURCE)	#- Update GitHub releases.
 	$(DOCBIN)/python -m scriv github-release --all --repo=coveragepy/coveragepy
 
 comment_on_fixes: $(SCRIV_SOURCE)	#- Add a comment to issues that were fixed.
-	python ci/comment_on_fixes.py $(REPO_OWNER)
+	python tools/comment_on_fixes.py $(REPO_OWNER)

@@ -52,6 +52,7 @@ jobs:
               - "*.py"
               - "coverage/**.py"
               - "tests/**.py"
+              - "tools/igor.py"
               - "**.h"
               - "**.c"
               - ".github/workflows/testsuite.yml"
