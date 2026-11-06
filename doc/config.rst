@@ -842,6 +842,19 @@ branch" regex if you still want to use it. The
 without overwriting the default set.
 
 
+.. _config_report_partial_branches_always:
+
+[report] partial_branches_always
+................................
+
+(multi-string) A list of regular expressions.  Any line of code that matches
+one of these regexes is excused from being reported as a partial branch.  The
+default patterns match branches that are known at compile time, such as
+``if True:`` and ``while True:``.  These patterns are separate from
+:ref:`config_report_partial_branches`, so setting that option does not change
+them.  If you use this option, you are replacing these default patterns.
+
+
 .. _config_report_precision:
 
 [report] precision
