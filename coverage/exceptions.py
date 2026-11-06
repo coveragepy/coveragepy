@@ -37,6 +37,10 @@ class DataError(CoverageException):
     """An error in using a data file."""
 
 
+class _DataFileReadError(DataError):
+    """An input data file could not be opened for merging."""
+
+
 class NoDataError(CoverageException):
     """We didn't have data to work with."""
 

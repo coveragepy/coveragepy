@@ -19,7 +19,7 @@ import os.path
 from collections.abc import Callable, Iterable
 from typing import Literal
 
-from coverage.exceptions import CoverageException, NoDataError
+from coverage.exceptions import NoDataError, _DataFileReadError
 from coverage.files import PathAliases
 from coverage.misc import Hasher, file_be_gone, human_sorted, neutralize_control, plural
 from coverage.sqldata import (  # pylint: disable=useless-import-alias
@@ -116,19 +116,22 @@ class DataFileClassifier:
     def __init__(self) -> None:
         self.file_hashes: set[str] = set()
 
-    def classify(self, f: str) -> Literal["combine", "skip"]:
-        """Determine whether to combine or skip this file."""
+    def classify(self, f: str) -> tuple[Literal["combine", "skip"], str | None]:
+        """Determine whether to combine or skip this file, and return its hash."""
         try:
             sha = hash_for_data_file(f)
         except Exception:
             # We can't get the hash of the file, so let's try to combine it.
             # Probably it will fail later, but that error will be handled.
-            return "combine"
+            return "combine", None
         if sha in self.file_hashes:
-            return "skip"
-        else:
+            return "skip", sha
+        return "combine", sha
+
+    def mark_combined(self, sha: str | None) -> None:
+        """Remember the hash of an input once its data has been merged."""
+        if sha is not None:
             self.file_hashes.add(sha)
-            return "combine"
 
 
 def combine_parallel_data(
@@ -196,7 +199,7 @@ def combine_parallel_data(
             # we print the original value of f instead of its relative path.
             rel_file_name = f
 
-        file_action = classifier.classify(f)
+        file_action, file_hash = classifier.classify(f)
 
         delete_this_one = not keep
         if file_action == "combine":
@@ -204,18 +207,18 @@ def combine_parallel_data(
                 data._debug.write(f"Combining data file {f!r}")
             try:
                 new_data = CoverageData(f, debug=data._debug, read_only=True)
-                new_data.read()
-            except CoverageException as exc:
+                data.update(new_data, map_path=map_path)
+            except _DataFileReadError as exc:
                 errored += 1
                 if data._warn:
-                    # The CoverageException has the file name in it, so just
+                    # The exception has the file name in it, so just
                     # use the message as the warning.
                     data._warn(str(exc))
                 if data._debug.should("combine"):
                     data._debug.write(f"Couldn't combine data file {rel_file_name}: {exc}")
                 delete_this_one = False
             else:
-                data.update(new_data, map_path=map_path)
+                classifier.mark_combined(file_hash)
                 combined += 1
                 combined_any = True
                 if data._debug.should("combine"):

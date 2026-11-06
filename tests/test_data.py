@@ -924,8 +924,10 @@ class CoverageDataFilesTest(CoverageTest):
             covdata.write()
             data_files.append(covdata.data_filename())
         classifier = DataFileClassifier()
-        assert classifier.classify(data_files[0]) == "combine"
-        assert classifier.classify(data_files[1]) == "skip"
+        action, sha = classifier.classify(data_files[0])
+        assert action == "combine"
+        classifier.mark_combined(sha)
+        assert classifier.classify(data_files[1]) == ("skip", sha)
 
     def test_true_suffix_written_again_without_new_data(self) -> None:
         covdata = DebugCoverageData(suffix=True)
@@ -1371,8 +1373,10 @@ class CoverageDataFilesTest(CoverageTest):
         datas = self.make_data_files(spec, arcs=arcs)
         classifier = DataFileClassifier()
         for data_file, c_or_s in zip(datas, combine_or_skip):
-            file_action = classifier.classify(data_file.data_filename())
+            file_action, sha = classifier.classify(data_file.data_filename())
             assert file_action[0] == c_or_s
+            if file_action == "combine":
+                classifier.mark_combined(sha)
 
 
 class DumpsLoadsTest(CoverageTest):

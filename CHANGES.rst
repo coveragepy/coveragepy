@@ -23,7 +23,11 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
-Nothing yet.
+- Fix: if a parallel data file is renamed while ``coverage combine`` is
+  running, the missing file is reported as a warning and the remaining files
+  are still combined.  Closes `issue 2364`_.
+
+.. _issue 2364: https://github.com/coveragepy/coveragepy/issues/2364
 
 
 .. start-releases
