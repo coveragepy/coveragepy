@@ -23,7 +23,11 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
-Nothing yet.
+- Fix: when combining parallel data files, a file that disappears after it
+  has been listed (for example, when the process writing it is still finishing
+  its write) is now reported with a warning, instead of stopping the combine
+  with a ``DataError``.  This was a regression in 7.17.1, closing `issue
+  2364`_.
 
 
 .. start-releases
@@ -47,6 +51,7 @@ Version 7.17.2 — 2026-11-04
     unusable data file, and is left in place.
 
 .. _issue 2356: https://github.com/coveragepy/coveragepy/issues/2356
+.. _issue 2364: https://github.com/coveragepy/coveragepy/issues/2364
 
 
 .. _changes_7-17-1:
