@@ -179,16 +179,28 @@ class Collector:
         # We used to use self.data.clear(), but that would remove filename
         # keys and data values that were still in use higher up the stack
         # when we are called as part of switch_context.
+        #
+        # Hold the lock only long enough to snapshot the values, then clear
+        # them outside it.  Clearing inside the lock would let the GC run
+        # traced code (a __del__, a weakref callback, a gc.callbacks hook),
+        # whose tracer would re-enter lock_data on this same thread and
+        # self-deadlock on the non-reentrant lock.
+        #
+        # Iterating the snapshot instead of self.data.values() also keeps a
+        # tracer that records a new file name while the data is being cleared
+        # from changing the dict we are iterating.
         with self.data_lock or contextlib.nullcontext():
-            for d in self.data.values():
-                d.clear()
+            data_values = list(self.data.values())
+
+        for d in data_values:
+            d.clear()
 
         for tracer in self.tracers:
             tracer.reset_activity()
 
     def reset(self) -> None:
         """Clear collected data, and prepare to collect more."""
-        self.data_lock = self.threading.Lock() if self.threading else None
+        self.data_lock = self.threading.RLock() if self.threading else None
 
         # The trace data we are collecting.
         self.data: TTraceData = {}
