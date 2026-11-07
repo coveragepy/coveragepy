@@ -1446,7 +1446,7 @@ def process_startup(
     *,
     force: bool = False,
     slug: str = "default",  # pylint: disable=unused-argument
-) -> Coverage | None:
+) -> Coverage | None:  # pragma: process start
     """Call this at Python start-up to perhaps measure coverage.
 
     Coverage is started if one of these environment variables is defined:
@@ -1508,7 +1508,7 @@ def process_startup(
     return cov
 
 
-def _after_fork_in_child() -> None:
+def _after_fork_in_child() -> None:  # pragma: process start
     """Used by patch=fork in the child process to restart coverage."""
     if cov := Coverage.current():
         cov.stop()
