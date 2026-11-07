@@ -16,17 +16,18 @@ import sys
 import textwrap
 from collections.abc import Callable, Iterable
 from contextlib import chdir
-from typing import cast
+from typing import Any, cast
 from unittest import mock
 
 import pytest
 
 import coverage
 from coverage import Coverage, env
-from coverage.data import line_counts, sorted_lines
+from coverage.data import combinable_files, line_counts, sorted_lines
 from coverage.exceptions import ConfigError, CoverageException, NoDataError, NoSource
 from coverage.files import abs_file, relative_filename
 from coverage.misc import first, import_local_file
+from coverage.sqlitedb import SqliteDb
 from coverage.types import FilePathClasses, FilePathType, TCovKwargs
 from tests import testenv
 from tests.coveragetest import TESTS_DIR, CoverageTest, UsingModulesMixin
@@ -1627,6 +1628,49 @@ class CombiningTest(CoverageTest):
         data = coverage.CoverageData()
         data.read()
         assert line_counts(data)["b_or_c.py"] == 6
+
+    @pytest.mark.parametrize("rename_before", ["read", "attach"])
+    def test_combine_parallel_data_with_a_renamed_file(
+        self,
+        rename_before: str,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        self.make_b_or_c_py()
+        self.make_data_file(".coverage.b", lines=self.B_LINES)
+        self.make_data_file(".coverage.c", lines=self.C_LINES)
+        shutil.copyfile(".coverage.b", ".coverage.b-copy")
+        renamed_file = ".coverage.b.renamed"
+
+        if rename_before == "read":
+            # Reproduce a worker finishing its write after discovery.
+            discovered = combinable_files(".coverage")
+            os.rename(".coverage.b", renamed_file)
+            monkeypatch.setattr(
+                "coverage.data.combinable_files", mock.Mock(return_value=discovered)
+            )
+        else:
+            # SQLite opens the input again when attaching it to the output.
+            execute_void = SqliteDb.execute_void
+
+            def rename_then_execute(db: SqliteDb, sql: str, *args: Any, **kwargs: Any) -> None:
+                if sql == "ATTACH DATABASE ? AS other_db" and os.path.exists(".coverage.b"):
+                    os.rename(".coverage.b", renamed_file)
+                execute_void(db, sql, *args, **kwargs)
+
+            monkeypatch.setattr(SqliteDb, "execute_void", rename_then_execute)
+
+        cov = coverage.Coverage(messages=True)
+        with pytest.warns(Warning) as warns:
+            cov.combine(strict=True)
+        assert_coverage_warnings(
+            warns,
+            re.compile(r"Couldn't (?:use|attach) data file '.*[/\\]\.coverage\.b': "),
+        )
+        assert self.stderr().splitlines()[-1] == "Combined 2 files, 1 file errored"
+        self.assert_exists(renamed_file)
+        self.assert_doesnt_exist(".coverage.b-copy")
+        self.assert_doesnt_exist(".coverage.c")
+        assert sorted_lines(cov.get_data(), "b_or_c.py") == [1, 2, 3, 4, 6, 7, 8, 9]
 
     def test_combine_no_usable_files(self) -> None:
         # https://github.com/coveragepy/coveragepy/issues/629

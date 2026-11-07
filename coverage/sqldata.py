@@ -29,7 +29,7 @@ from collections.abc import Callable, Collection, Iterator, Mapping, Sequence
 from typing import Any, Concatenate, ParamSpec, TypeAlias, TypeVar, cast
 
 from coverage.debug import NoDebugging, auto_repr, file_summary
-from coverage.exceptions import ConfigError, CoverageException, DataError
+from coverage.exceptions import ConfigError, CoverageException, DataError, _DataFileReadError
 from coverage.misc import Hasher, file_be_gone, isolate_module
 from coverage.numbits import (
     numbits_to_nums,
@@ -753,6 +753,15 @@ class CoverageData:
         if self._debug.should("dataop"):
             other_filename = getattr(other_data, "_filename", "???")
             self._debug.write(f"Updating with data from {other_filename!r}")
+
+        try:
+            other_data.read()
+            # Ensure the input is initialized, even if read() found no file.
+            with other_data._connect():
+                pass
+        except DataError as exc:
+            raise _DataFileReadError(str(exc)) from exc
+
         if self._has_lines and other_data._has_arcs:
             raise DataError(
                 "Can't combine branch coverage data with statement data: "
@@ -768,13 +777,7 @@ class CoverageData:
                 slug="cant-combine",
             )
 
-        # Force the database we're writing to to exist before we start nesting contexts.
         self._start_using()
-        other_data.read()
-
-        # Ensure other_data has a properly initialized database
-        with other_data._connect():
-            pass
 
         with self._connect() as con:
             assert con.con is not None
@@ -802,7 +805,12 @@ class CoverageData:
             other_filename = other_data.data_filename()
             if not other_filename.startswith("file:"):
                 other_filename = read_only_uri(other_filename)
-            con.execute_void("ATTACH DATABASE ? AS other_db", (other_filename,))
+            try:
+                con.execute_void("ATTACH DATABASE ? AS other_db", (other_filename,))
+            except DataError as exc:
+                raise _DataFileReadError(
+                    f"Couldn't attach data file {other_data.data_filename()!r}: {exc.__cause__ or exc}"
+                ) from exc
 
             # Create temporary table with mapped file paths to avoid repeated map_path() calls
             con.execute_void("""
