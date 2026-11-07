@@ -813,7 +813,13 @@ class CoverageData:
                 FROM other_db.file AS other_file
             """)
 
-            # Check for tracer conflicts before proceeding
+            # Check for tracer conflicts before proceeding.  A file recorded
+            # without a tracer only makes a tracer claim when that data file
+            # also holds measurements for the file: a file that was touched but
+            # never executed (an unexecuted source file, say) says nothing about
+            # which plugin owns it, so it must not conflict with another data
+            # file where the file was measured by a plugin.  The tracer from the
+            # other data is adopted below, keeping the plugin association.
             with con.execute("""
                 SELECT other_file_mapped.mapped_path,
                        COALESCE(main.tracer.tracer, ''),
@@ -823,6 +829,20 @@ class CoverageData:
                 INNER JOIN other_file_mapped ON main.file.path = other_file_mapped.mapped_path
                 LEFT JOIN other_db.tracer ON other_file_mapped.other_file_id = other_db.tracer.file_id
                 WHERE COALESCE(main.tracer.tracer, '') != COALESCE(other_db.tracer.tracer, '')
+                  AND (
+                    EXISTS (SELECT 1 FROM main.line_bits AS lb WHERE lb.file_id = main.file.id)
+                    OR EXISTS (SELECT 1 FROM main.arc AS ma WHERE ma.file_id = main.file.id)
+                  )
+                  AND (
+                    EXISTS (
+                        SELECT 1 FROM other_db.line_bits AS olb
+                        WHERE olb.file_id = other_file_mapped.other_file_id
+                    )
+                    OR EXISTS (
+                        SELECT 1 FROM other_db.arc AS oa
+                        WHERE oa.file_id = other_file_mapped.other_file_id
+                    )
+                  )
             """) as cur:
                 conflicts = list(cur)
                 if conflicts:
