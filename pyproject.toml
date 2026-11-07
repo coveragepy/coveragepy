@@ -173,6 +173,8 @@ ignore = [
     "setup.cfg",
     # Files that we create during packaging.
     "a1_coverage.pth",
+    # The sample HTML report is only for the docs.
+    "doc/_extra/*",
 ]
 
 ## UV

@@ -23,6 +23,77 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
+Nothing yet.
+
+
+.. start-releases
+
+.. _changes_7-17-2:
+
+Version 7.17.2 — 2026-11-04
+---------------------------
+
+- Fix: two different scenarios failed with "attempt to write a readonly
+  database". These were regressions in 7.17.1. They are fixed, closing `issue
+  2356`_:
+
+  - When using a version of SQLite older than 3.34.0, such as on RHEL 8 or
+    Ubuntu 20.04, ``coverage combine`` (and pytest-cov, which combines
+    automatically) always failed.
+
+  - ``coverage combine`` and ``coverage debug data`` failed when a data file
+    existed but had no coverage schema, for example an empty file left behind
+    by a worker that died. A file we can't read is now reported like any other
+    unusable data file, and is left in place.
+
+.. _issue 2356: https://github.com/coveragepy/coveragepy/issues/2356
+
+
+.. _changes_7-17-1:
+
+Version 7.17.1 — 2026-11-03
+---------------------------
+
+- Fix: a one-line class or function body immediately followed by another
+  statement (such as ``class Foo: ...`` on its own line) was incorrectly
+  reported as a missing branch when using the sys.monitoring core. This is now
+  fixed, closing `issue 2167`_ and `issue 2337`_.
+
+- Fix: the HTML report only rewrites a file's page when the file or its data
+  has changed, but each page also links to the previous and next files. When
+  the set of reported files changed, unchanged pages kept their old links. For
+  example, with ``skip_covered``, a file that became 100% covered had its page
+  deleted, but the pages next to it still linked to it. Now a page is also
+  rewritten when its neighbors change.
+
+- Fix: ``--fail-under`` now uses at least the decimal precision of the
+  threshold for both the comparison and failure message.  With ``precision=0``,
+  a total of 0.4 now passes ``--fail-under=0.3`` and fails ``--fail-under=0.5``
+  with the message "total of 0.4 is less than fail-under=0.5".  Previously, the
+  comparison rounded the total to zero and the message could claim "1 is less
+  than 0". Closes `issue 2295`_.
+
+- Fix: the HTML report escaped file names twice, so a name with ``&``, ``<``,
+  or quotes in it was shown with entities like ``&amp;``. Now they are properly
+  escaped only once.
+
+- Fix: ``--source=/`` measured no files. A file system root can't be a source
+  directory, so now it is an error. Closes `issue 2291`_.
+
+- In an abundance of caution, prevent forged SQLite journal files from deleting
+  files they shouldn't.
+
+.. _issue 2167: https://github.com/coveragepy/coveragepy/issues/2167
+.. _issue 2291: https://github.com/coveragepy/coveragepy/issues/2291
+.. _issue 2295: https://github.com/coveragepy/coveragepy/issues/2295
+.. _issue 2337: https://github.com/coveragepy/coveragepy/issues/2337
+
+
+.. _changes_7-17-0:
+
+Version 7.17.0 — 2026-10-22
+---------------------------
+
 - Dropped support for Python 3.10.
 
 - Binary wheels are now provided for iOS and Android. This allows the use of
@@ -63,9 +134,6 @@ Unreleased
   recorded after the first save. Each save now updates the hash. This had been
   a problem since 7.13.1. Fixes `issue 2338`_.
 
-- Fix: using the C tracer, the refcount of ``None`` was mismanaged during
-  function calls, including comprehensions. This was unlikely to cause an
-  actual problem, but is now fixed. Thanks, Andrew Dalke.
 - Fixes for obscure but legal file names:
 
   - File names (and plugin names) can contain control characters, which are
@@ -104,6 +172,8 @@ Unreleased
 
 - Performance: HTML reports should be about 5% faster to produce.
 
+- Kept the political banner in the README. Closes `issue 2344`_.
+
 .. _issue 1987: https://github.com/coveragepy/coveragepy/issues/1987
 .. _issue 2277: https://github.com/coveragepy/coveragepy/issues/2277
 .. _issue 2293: https://github.com/coveragepy/coveragepy/issues/2293
@@ -111,9 +181,8 @@ Unreleased
 .. _issue 2314: https://github.com/coveragepy/coveragepy/issues/2314
 .. _issue 2335: https://github.com/coveragepy/coveragepy/issues/2335
 .. _issue 2338: https://github.com/coveragepy/coveragepy/issues/2338
+.. _issue 2344: https://github.com/coveragepy/coveragepy/issues/2344
 
-
-.. start-releases
 
 .. _changes_7-16-2:
 

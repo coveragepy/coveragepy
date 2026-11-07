@@ -10,6 +10,8 @@ http://aosabook.org/en/500L/a-template-engine.html
 
 # Coincidentally named the same as http://code.activestate.com/recipes/496702/
 
+# pragma: enforce 100% coverage
+
 from __future__ import annotations
 
 import re
@@ -282,7 +284,7 @@ class Templite:
         Raises an syntax error if `name` is not a valid name.
 
         """
-        if not re.match(r"[_a-zA-Z][_a-zA-Z0-9]*$", name):
+        if not re.fullmatch(r"[_a-zA-Z][_a-zA-Z0-9]*", name):
             self._syntax_error("Not a valid name", name)
         vars_set.add(name)
 

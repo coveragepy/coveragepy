@@ -3,6 +3,8 @@
 
 """A Hypothesis wrapper so we can turn it off completely in environments it doesn't support."""
 
+# pragma: enforce 100% coverage
+
 from __future__ import annotations
 
 from typing import Any

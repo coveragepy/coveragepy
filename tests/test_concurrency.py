@@ -350,7 +350,7 @@ class ConcurrencyTest(CoverageTest):
 
         out = self.run_command("coverage report -m")
         last_line = self.squeezed_lines(out)[-1]
-        assert re.search(r"TOTAL \d+ 0 100%", last_line)
+        assert re.fullmatch(r"TOTAL \d+ 0 100%", last_line)
 
     def test_bad_concurrency(self) -> None:
         with pytest.raises(ConfigError, match="Unknown concurrency choices: nothing"):

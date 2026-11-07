@@ -42,7 +42,7 @@ PYPY = platform.python_implementation() == "PyPy"
 VERBOSITY = int(os.getenv("COVERAGE_IGOR_VERBOSE", "1"))
 
 # Functions named do_* are executable from the command line: do_blah is run
-# by "python igor.py blah".
+# by "python tools/igor.py blah".
 
 
 def do_show_env():
@@ -169,7 +169,7 @@ def run_tests_with_coverage(core, *runner_args):
     """Run tests, but with coverage."""
     # Need to define this early enough that the first import of env.py sees it.
     os.environ["COVERAGE_TESTING"] = "True"
-    os.environ["COVERAGE_PROCESS_START"] = os.path.abspath("metacov.ini")
+    os.environ["COVERAGE_PROCESS_START"] = os.path.abspath("tools/metacov.ini")
     os.environ["COVERAGE_HOME"] = os.getcwd()
     context = os.getenv("COVERAGE_CONTEXT")
     if context:
@@ -191,7 +191,7 @@ def run_tests_with_coverage(core, *runner_args):
 
     import coverage
 
-    cov = coverage.Coverage(config_file="metacov.ini")
+    cov = coverage.Coverage(config_file="tools/metacov.ini")
     cov._warn_unimported_source = False
     cov._warn_preimported_source = False
     cov.start()
@@ -230,7 +230,7 @@ def do_combine_html():
     import coverage
 
     os.environ["COVERAGE_HOME"] = os.getcwd()
-    cov = coverage.Coverage(config_file="metacov.ini", messages=True)
+    cov = coverage.Coverage(config_file="tools/metacov.ini", messages=True)
     cov.combine()
     cov.save()
     show_contexts = bool(

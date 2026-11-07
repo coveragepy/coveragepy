@@ -3,6 +3,8 @@
 
 """Reporter foundation for coverage.py."""
 
+# pragma: enforce 100% coverage
+
 from __future__ import annotations
 
 import sys

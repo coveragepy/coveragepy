@@ -27,7 +27,7 @@ ifdef HAS_UV
 	INSTALL_R := uv pip sync
 	UNINSTALL := uv pip uninstall
 else
-	VENV := python -m venv .venv
+	VENV := python3.11 -m venv .venv
 	INSTALL := python -m pip install
 	INSTALL_R := python -m pip install -r
 	UNINSTALL := python -m pip uninstall -y
@@ -58,7 +58,7 @@ clean: debug_clean _clean_platform	#- Remove artifacts of test execution, instal
 	@rm -f .tox/*/lib/*/site-packages/a0_metacov.pth
 	@rm -f */.coverage */*/.coverage */*/*/.coverage */*/*/*/.coverage */*/*/*/*/.coverage */*/*/*/*/*/.coverage
 	@rm -f tests/covmain.zip tests/zipmods.zip tests/zip1.zip
-	@rm -rf doc/_build doc/_spell doc/sample_html doc/sample_html_beta
+	@rm -rf doc/_build doc/_spell
 	@rm -rf tmp
 	@rm -rf a1_coverage.pth
 	@rm -rf .*cache */.*cache */*/.*cache */*/*/.*cache .hypothesis
@@ -100,7 +100,7 @@ test_js:				#- Run the JavaScript tests in a headless browser.
 	tox -q -e js
 
 ### Metacov: coverage measurement of coverage.py itself
-# See metacov.ini for details.
+# See tools/metacov.ini for details.
 
 .PHONY: metacov metahtml
 
@@ -108,7 +108,7 @@ metacov:				#- Run meta-coverage, measuring ourself.
 	COVERAGE_COVERAGE=yes tox -q $(ARGS)
 
 metahtml:				#- Produce meta-coverage HTML reports.
-	tox exec -q $(ARGS) -- python3 igor.py combine_html
+	tox exec -q $(ARGS) -- python3 tools/igor.py combine_html
 
 
 ### Requirements management
@@ -166,7 +166,7 @@ diff_upgrade:				#- Summarize the last `make upgrade`.
 	@#	+bashlex==0.17
 	@#	-build==0.9.0
 	@#	+build==0.10.0
-	@git diff -U0 | grep -v '^@' | grep == | sort -k1.2,1.99 -k1.1,1.1r -u -V
+	@git diff -U0 $(since) | grep -v '^@' | grep == | sort -k1.2,1.99 -k1.1,1.1r -u -V
 
 
 ### Pre-builds for prepping the code
@@ -189,25 +189,22 @@ prebuild: css workflows cogdoc		#- One command for all source prep.
 
 ### Sample HTML reports
 
-.PHONY: _sample_cog_html sample_html sample_html_beta
+.PHONY: sample_html
 
-_sample_cog_html: clean
+SAMPLE_HTML = doc/_extra/sample_html
+
+sample_html: clean			#- Generate sample HTML report.
 	$(INSTALL) -e .
 	cd ~/cog; \
 		rm -rf htmlcov; \
 		PYTEST_ADDOPTS= coverage run --branch --source=cogapp -m pytest -k CogTestsInMemory; \
 		coverage combine; \
 		coverage html
-
-sample_html: _sample_cog_html		#- Generate sample HTML report.
-	rm -f doc/sample_html/*.*
-	cp -r ~/cog/htmlcov/ doc/sample_html/
-	rm doc/sample_html/.gitignore doc/sample_html/status.json
-
-sample_html_beta: _sample_cog_html	#- Generate sample HTML report for a beta release.
-	rm -f doc/sample_html_beta/*.*
-	cp -r ~/cog/htmlcov/ doc/sample_html_beta/
-	rm doc/sample_html_beta/.gitignore doc/sample_html_beta/status.json
+	rm -rf $(SAMPLE_HTML)
+	cp -r ~/cog/htmlcov/ $(SAMPLE_HTML)/
+	rm $(SAMPLE_HTML)/.gitignore $(SAMPLE_HTML)/status.json
+	@# The file names have hashes that change, so new files need to be added.
+	git add -A $(SAMPLE_HTML)
 
 
 ### Kitting: making releases
@@ -221,18 +218,18 @@ REPO_OWNER = coveragepy/coveragepy
 RTD_PROJECT = coverage
 
 release_version:			# Update the version for a release.
-	python igor.py release_version
+	python tools/igor.py release_version
 
-edit_for_release:			# Edit sources to insert release facts (see howto.txt).
-	python igor.py edit_for_release
+edit_for_release:			# Edit sources to insert release facts (see tools/release.txt).
+	python tools/igor.py edit_for_release
 
 cheats:					#- Create some useful snippets for releasing.
-	python igor.py cheats | tee cheats.txt
+	python tools/igor.py cheats | tee cheats.txt
 
-relbranch:				# Create the branch for releasing (see howto.txt).
+relbranch:				# Create the branch for releasing (see tools/release.txt).
 	git switch -c nedbat/release-$$(date +%Y%m%d-%H%M%S)
 
-relcommit:				# Commit the release changes (see howto.txt).
+relcommit:				# Commit the release changes (see tools/release.txt).
 	git commit -am "docs: prep for $$(python setup.py --version)"
 
 kit:					#- Make a source distribution and some wheels.
@@ -242,11 +239,11 @@ kit:					#- Make a source distribution and some wheels.
 	COVERAGE_DISABLE_EXTENSION=1 python -m build --wheel
 
 pypi_upload:				#- Upload the built distributions to PyPI.
-	python ci/trigger_action.py $(REPO_OWNER) publish-pypi
+	python tools/trigger_action.py $(REPO_OWNER) publish-pypi
 	@echo "Use that^ URL to approve the upload"
 
 test_upload:				#- Upload the distributions to PyPI's testing server.
-	python ci/trigger_action.py $(REPO_OWNER) publish-testpypi
+	python tools/trigger_action.py $(REPO_OWNER) publish-testpypi
 	@echo "Use that^ URL to approve the upload"
 
 _check_github_auth:			# Check that we have GITHUB_TOKEN for other commands that need it.
@@ -256,23 +253,23 @@ _check_github_auth:			# Check that we have GITHUB_TOKEN for other commands that 
 	fi
 
 build_kits: _check_github_auth		#- Trigger GitHub to build all the distributions.
-	python ci/trigger_action.py $(REPO_OWNER) build-kits
+	python tools/trigger_action.py $(REPO_OWNER) build-kits
 
 download_kits: _check_github_auth	#- Download the kits built on GitHub.
 	@# This is only if we need to examine them for debugging.
 	mkdir -p dist
 	gh run download --dir=dist $$(gh run list --workflow=Kits --json=databaseId --jq='.[0].databaseId')
 
-tag:					# Make a git tag with the version number (see howto.txt).
+tag:					# Make a git tag with the version number (see tools/release.txt).
 	git tag -s -m "Version $$(python setup.py --version)" $$(python setup.py --version)
 	git push --follow-tags
 
 update_rtd:				# Update ReadTheDocs with the versions to show.
-	python ci/update_rtfd.py $(RTD_PROJECT)
+	python tools/update_rtfd.py $(RTD_PROJECT)
 
-bump_version:				# Edit sources to bump the version after a release (see howto.txt).
+bump_version:				# Edit sources to bump the version after a release (see tools/release.txt).
 	git switch -c nedbat/bump-version
-	python igor.py bump_version
+	python tools/igor.py bump_version
 	git commit -a -m "build: bump version to $$(python setup.py --version | sed 's/a.*//')"
 	git push -u origin @
 
@@ -305,21 +302,7 @@ docspell: $(DOCBIN)			#- Run the spell checker on the docs.
 
 ### Publishing docs
 
-.PHONY: publish publishbeta github_releases comment_on_fixes
-
-WEBHOME = ~/web/stellated
-WEBSAMPLE = $(WEBHOME)/files/sample_coverage_html
-WEBSAMPLEBETA = $(WEBHOME)/files/sample_coverage_html_beta
-
-publish:				#- Publish the sample HTML report.
-	rm -f $(WEBSAMPLE)/*.*
-	mkdir -p $(WEBSAMPLE)
-	cp doc/sample_html/*.* $(WEBSAMPLE)
-
-publishbeta:
-	rm -f $(WEBSAMPLEBETA)/*.*
-	mkdir -p $(WEBSAMPLEBETA)
-	cp doc/sample_html_beta/*.* $(WEBSAMPLEBETA)
+.PHONY: github_releases comment_on_fixes
 
 CHANGES_MD = tmp/rst_rst/changes.md
 SCRIV_SOURCE = tmp/only-changes.md
@@ -338,4 +321,4 @@ github_releases: $(SCRIV_SOURCE)	#- Update GitHub releases.
 	$(DOCBIN)/python -m scriv github-release --all --repo=coveragepy/coveragepy
 
 comment_on_fixes: $(SCRIV_SOURCE)	#- Add a comment to issues that were fixed.
-	python ci/comment_on_fixes.py $(REPO_OWNER)
+	python tools/comment_on_fixes.py $(REPO_OWNER)

@@ -3,6 +3,8 @@
 
 """Exceptions coverage.py can raise."""
 
+# pragma: enforce 100% coverage
+
 from __future__ import annotations
 
 from typing import Any

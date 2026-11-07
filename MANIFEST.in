@@ -23,14 +23,11 @@ include Makefile
 include NOTICE.txt
 include README.rst
 include __main__.py
-include howto.txt
-include igor.py
-include metacov.ini
 include setup.py
 include tox.ini
 
-recursive-include ci *
 recursive-include lab *
+recursive-include tools *
 recursive-include .github *
 
 recursive-include coverage *.pyi
@@ -39,6 +36,7 @@ recursive-include coverage/ctracer *.c *.h
 recursive-include doc *.py *.in *.rst *.txt *.png
 recursive-include doc/_static *
 prune doc/_build
+prune doc/_extra
 prune doc/_spell
 
 recursive-include requirements *.in *.txt

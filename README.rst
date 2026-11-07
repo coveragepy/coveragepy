@@ -25,7 +25,7 @@ Coverage.py runs on these versions of Python:
 
 .. PYVERSIONS
 
-* Python 3.11 through 3.15, including free-threading.
+* Python 3.11 through 3.16.0a1, including free-threading.
 * PyPy3 version 3.11.
 
 Documentation is on `Read the Docs`_.  Code repository and issue tracker are on
@@ -46,12 +46,12 @@ For Enterprise
    :widths: 10 100
 
    * - |tideliftlogo|
-     - `Available as part of the Tidelift Subscription. <https://tidelift.com/subscription/pkg/pypi-coverage?utm_source=pypi-coverage&utm_medium=referral&utm_campaign=readme>`_
+     - `Available as part of the Tidelift Subscription. <https://tidelift.com/subscription/pkg/pypi-coverage?utm_source=pypi-coverage&utm_medium=referral&utm_campaign=readme>`__
        Coverage and thousands of other packages are working with
        Tidelift to deliver one enterprise subscription that covers all of the open
        source you use.  If you want the flexibility of open source and the confidence
        of commercial-grade software, this is for you.
-       `Learn more. <https://tidelift.com/subscription/pkg/pypi-coverage?utm_source=pypi-coverage&utm_medium=referral&utm_campaign=readme>`_
+       `Learn more. <https://tidelift.com/subscription/pkg/pypi-coverage?utm_source=pypi-coverage&utm_medium=referral&utm_campaign=readme>`__
 
 
 Getting Started

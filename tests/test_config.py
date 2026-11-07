@@ -789,7 +789,7 @@ class ConfigFileTest(UsingModulesMixin, CoverageTest):
         [testenv]
         commands =
             # Create tests/zipmods.zip
-            python igor.py zip_mods
+            python tools/igor.py zip_mods
         """
 
     def assert_config_settings_are_correct(self, cov: Coverage) -> None:

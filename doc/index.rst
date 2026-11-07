@@ -18,7 +18,7 @@ supported on:
 
 .. PYVERSIONS
 
-* Python 3.11 through 3.15, including free-threading.
+* Python 3.11 through 3.16.0a1, including free-threading.
 * PyPy3 version 3.11.
 
 .. ifconfig:: prerelease
@@ -136,19 +136,10 @@ Getting started is easy:
         $ coverage html
         Wrote HTML report to htmlcov/index.html
 
-    .. ifconfig:: not prerelease
-
-        Then open `htmlcov/index.html <htmlreport_>`__ in your browser
-        to see a `report like this <htmlreport_>`__.
-
-    .. ifconfig:: prerelease
-
-        Then open `htmlcov/index.html <betahtmlreport_>`__ in your browser
-        to see a `report like this <betahtmlreport_>`__.
+    Then open `htmlcov/index.html <sample_html/index.html>`__ in your browser
+    to see a `report like this <sample_html/index.html>`__.
 
 
-.. _htmlreport: https://nedbatchelder.com/files/sample_coverage_html/index.html
-.. _betahtmlreport: https://nedbatchelder.com/files/sample_coverage_html_beta/index.html
 .. _nose state: https://github.com/nose-devs/nose/commit/0f40fa995384afad77e191636c89eb7d5b8870ca
 .. _include tests: https://nedbatchelder.com/blog/202008/you_should_include_your_tests_in_coverage.html
 
@@ -201,12 +192,13 @@ Getting help
 If the :ref:`FAQ <faq>` doesn't answer your question, you can discuss
 coverage.py or get help using it on the `Python discussion forums`_ or in the
 `Python Discord`_. If you ping me (``@nedbat``), there's a higher chance I'll
-see the post.  (The Discord link goes straight to the #coverage channel; if
-you're not a member yet, `join the Python Discord server
-<https://discord.com/invite/python>`_ first — it's a welcoming place.)
+see the post. The Discord link goes straight to the #coverage channel; if
+you're not a member yet, `join the Python Discord server <join_>`_ first — it's
+a welcoming place.
 
 .. _Python discussion forums: https://discuss.python.org/
 .. _Python Discord: https://discord.com/channels/267624335836053506/1253355750684753950
+.. _join: https://discord.com/invite/python
 
 Bug reports are gladly accepted at the `GitHub issue tracker`_.
 GitHub also hosts the `code repository`_.

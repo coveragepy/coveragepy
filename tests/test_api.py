@@ -1143,6 +1143,16 @@ class SourceIncludeOmitTest(IncludeOmitTestsMixin, CoverageTest):
         ):
             self.coverage_usepkgs_counts(source_dirs=["i-do-not-exist"])
 
+    @pytest.mark.parametrize("src", ["/", "/.."])
+    def test_source_dir_is_file_system_root(self, src: str) -> None:
+        cov = coverage.Coverage(source=[src])
+        with pytest.raises(
+            ConfigError,
+            match=re.escape(f"Source dir can't be a file system root: {src!r}"),
+        ):
+            with cov.collect():
+                pass
+
 
 class ReportIncludeOmitTest(IncludeOmitTestsMixin, CoverageTest):
     """Tests of the report include/omit functionality."""
@@ -1584,6 +1594,39 @@ class CombiningTest(CoverageTest):
         data = coverage.CoverageData()
         data.read()
         assert line_counts(data)["b_or_c.py"] == 8
+
+    def test_combine_parallel_data_with_an_empty_file(self) -> None:
+        # A parallel data file can be empty if a worker died before writing
+        # anything.  An empty file is a valid empty SQLite database, so it has
+        # no coverage schema.  Combine reads parallel files read-only, so it
+        # can't write the schema into one.  The file is reported the same way
+        # as any other unreadable data file: warned about, kept, and counted as
+        # an error.  https://github.com/coveragepy/coveragepy/issues/2356
+        self.make_b_or_c_py()
+        self.make_data_file(".coverage.b", lines=self.B_LINES)
+        self.make_file(".coverage.empty")
+
+        cov = coverage.Coverage(messages=True)
+        with pytest.warns(Warning) as warns:
+            cov.combine(strict=True)
+        assert_coverage_warnings(
+            warns,
+            re.compile(
+                r"Data file .*[/\\]\.coverage\.empty' isn't a coverage data file: "
+                + r".*no such table: coverage_schema",
+            ),
+        )
+        assert self.stderr().splitlines()[-1] == "Combined 1 file, 1 file errored"
+
+        # The empty file is left in place: we couldn't read it, so we don't
+        # delete it.
+        self.assert_exists(".coverage")
+        self.assert_exists(".coverage.empty")
+        self.assert_file_count(".coverage.*", 1)
+
+        data = coverage.CoverageData()
+        data.read()
+        assert line_counts(data)["b_or_c.py"] == 6
 
     def test_combine_no_usable_files(self) -> None:
         # https://github.com/coveragepy/coveragepy/issues/629

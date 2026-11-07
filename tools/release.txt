@@ -31,14 +31,10 @@
     - Don't forget the man page: doc/python-coverage.1.txt
     - Check that the docs build correctly:
         $ tox -e doc
+- Generate a new sample HTML report for the docs:
+    $ make sample_html install
 - commit the release-prep changes
     $ make relcommit
-- Generate new sample_html to get the latest, and publish:
-    - IF PRE-RELEASE:
-        $ make sample_html_beta install publishbeta
-    - IF NOT PRE-RELEASE:
-        $ make sample_html install publish
-    - commit and publish nedbatchelder.com
 - Done with changes to source files
     $ g puo; gshipit
         - check them in on the release prep branch
@@ -60,6 +56,7 @@
 - Tag the tree, update GitHub releases and comment on issues:
     $ make clean tag github_releases comment_on_fixes
 - Bump version:
+    - commit any build process changes
     $ make bump_version
 $ deopvars
 - Once CI passes, merge the bump-version branch to main and push it

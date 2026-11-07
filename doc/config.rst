@@ -750,9 +750,11 @@ your regexes.  Use the scoped flag form instead: ``(?s:...)``
 ...................
 
 (float) A target coverage percentage.  If the total coverage measurement is
-under this value, then exit with a status code of 2.  If you specify a
-non-integral value, you must also set ``[report] precision`` properly to make
-use of the decimal places.  A setting of 100 will fail any value under 100,
+under this value, then exit with a status code of 2.  The comparison and
+failure message use the greater of ``[report] precision`` and the number of
+decimal places in this value.  This does not change the precision of the
+report itself.
+A setting of 100 will fail any value under 100,
 regardless of the number of decimal places of precision.
 
 
@@ -848,7 +850,8 @@ without overwriting the default set.
 (integer) The number of digits after the decimal point to display for reported
 coverage percentages.  The default is 0, displaying for example "87%".  A value
 of 2 will display percentages like "87.32%".  This setting also affects the
-interpretation of the ``fail_under`` setting.
+interpretation of the ``fail_under`` setting, unless the threshold requires
+more decimal places.
 
 
 .. _config_report_show_missing:

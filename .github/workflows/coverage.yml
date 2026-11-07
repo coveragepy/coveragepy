@@ -52,11 +52,12 @@ jobs:
               - "*.py"
               - "coverage/**.py"
               - "tests/**.py"
+              - "tools/igor.py"
               - "**.h"
               - "**.c"
               - ".github/workflows/coverage.yml"
               - "tox.ini"
-              - "metacov.ini"
+              - "tools/metacov.ini"
               - "requirements/*.txt"
               - "tests/gold/**"
 
@@ -94,6 +95,8 @@ jobs:
           - "3.14t"
           - "3.15"
           - "3.15t"
+          - "3.16"
+          - "3.16t"
           - "pypy-3.11"
         exclude:
           # Mac PyPy always takes the longest, and doesn't add anything.
@@ -116,7 +119,7 @@ jobs:
           persist-credentials: false
 
       - name: "Set up Python"
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "${{ matrix.python-version }}"
           allow-prereleases: true
@@ -149,7 +152,7 @@ jobs:
 
       - name: "Combine data"
         env:
-          COVERAGE_RCFILE: "metacov.ini"
+          COVERAGE_RCFILE: "tools/metacov.ini"
         run: |
           python -m coverage combine
           mv .metacov ".metacov.$MATRIX_ID"
@@ -168,7 +171,7 @@ jobs:
     outputs:
       total: ${{ steps.total.outputs.total }}
     env:
-      COVERAGE_RCFILE: "metacov.ini"
+      COVERAGE_RCFILE: "tools/metacov.ini"
 
     steps:
       - name: "Check out the repo"
@@ -178,7 +181,7 @@ jobs:
           fetch-depth: 200
 
       - name: "Set up Python"
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.11" # Minimum of PYVERSIONS
           cache: pip
@@ -196,7 +199,7 @@ jobs:
           set -xe
           python -m pip install -e .
           python -m pip install -r requirements/pytest.txt
-          python igor.py zip_mods
+          python tools/igor.py zip_mods
 
       - name: "Download coverage data"
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
@@ -210,7 +213,7 @@ jobs:
           COVERAGE_CONTEXT: "yes"
         run: |
           set -xe
-          python igor.py combine_html
+          python tools/igor.py combine_html
 
       - name: "Upload HTML report"
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -250,6 +253,14 @@ jobs:
               echo '***** Total coverage is less than 90%!'
               exit 1
           fi
+
+          # Files that have reached 100% coverage should stay that way.
+          # shellcheck disable=SC2046
+          if ! python lab/goals.py --file 100 $(grep -l -R 'pragma: enforce 100% coverage'); then
+              echo '***** Coverage dropped for a 100% file!'
+              exit 1
+          fi
+
           # Absolutely all of our test code should be covered.
           if ! python lab/goals.py --file 100 "tests/test_*.py"; then
               echo '***** Coverage of test files must be 100%!'
@@ -270,6 +281,9 @@ jobs:
               --format markdown:report.md \
               || status=$?
           cat report.md >> "$GITHUB_STEP_SUMMARY"
+          if [ -n "${status}" ]; then
+              echo '::error::Changed lines are not fully covered! Add tests, or label the PR "missing-coverage-ok" then close and re-open it.'
+          fi
           exit "${status:-0}"
 
   publish:
