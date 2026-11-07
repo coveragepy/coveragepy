@@ -511,6 +511,40 @@ class JsonReportTest(UsingModulesMixin, CoverageTest):
             "": (1, [1, 2, 3, 6, 7, 10, 11, 13, 14, 15, 22, 24, 30, 31, 33], [18, 19]),
         }
 
+    def test_duplicate_region_names_in_line_order(self) -> None:
+        # The regions of an else clause come before those of the except
+        # handlers, but the plain name goes to the first definition in the file,
+        # so the names match the LCOV report.
+        self.make_file(
+            "tryelse.py",
+            """\
+            try:
+                import no_such_module_xyz
+            except ImportError:
+                def f():
+                    return 5
+            else:
+                def f():
+                    return 8
+            f()
+            """,
+        )
+        cov = coverage.Coverage()
+        mod = self.start_import_stop(cov, "tryelse")
+        cov.json_report(mod, outfile="tryelse.json")
+        with open("tryelse.json", encoding="utf-8") as result_file:
+            functions = json.load(result_file)["files"]["tryelse.py"]["functions"]
+        assert {name: region["start_line"] for name, region in functions.items()} == {
+            "f": 4,
+            "f@7": 7,
+            "": 1,
+        }
+
+        cov.lcov_report(mod, outfile="tryelse.lcov")
+        with open("tryelse.lcov", encoding="utf-8") as lcov_file:
+            fn_records = [line[3:].split(",") for line in lcov_file if line.startswith("FN:")]
+        assert {name.strip(): int(first) for first, _, name in fn_records} == {"f": 4, "f@7": 7}
+
     def test_empty_file(self) -> None:
         cov = coverage.Coverage()
         self.make_file("empty.py", "")
