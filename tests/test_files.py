@@ -606,6 +606,20 @@ class PathAliasesTest(CoverageTest):
         with pytest.raises(ConfigError, match=msg):
             aliases.add(badpat, "fooey")
 
+    @pytest.mark.parametrize(
+        "result",
+        [
+            "*/site-packages/",
+            "*/step*series/",
+            "*/step?series/",
+        ],
+    )
+    def test_result_cant_have_wildcards(self, result: str) -> None:
+        aliases = PathAliases()
+        msg = f"Result path must not contain wildcards: {result!r}"
+        with pytest.raises(ConfigError, match=re.escape(msg)):
+            aliases.add("*/stepseries/", result)
+
     def test_no_accidental_munging(self) -> None:
         aliases = PathAliases()
         aliases.add(r"c:\Zoo\boo", "src/")
