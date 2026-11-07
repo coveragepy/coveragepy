@@ -116,3 +116,12 @@ def _patch_subprocess(config: CoverageConfig, debug: TDebugCtl) -> None:
     debug.write("Patching subprocess")
     assert config.config_file is not None
     os.environ["COVERAGE_PROCESS_CONFIG"] = config.serialize()
+    # Ensure SIGINT handling is preserved in the child process.
+    # Without this, on Python 3.13, a child process receiving SIGINT exits
+    # with code 1 instead of -2 (death by SIGINT). This is because Python
+    # normally re-raises an unhandled KeyboardInterrupt as a real SIGINT death
+    # at shutdown, but coverage's presence in the child process seems to skip
+    # this conversion. Setting the handler to SIG_DFL ensures the default
+    # behavior is preserved.
+    import signal as _signal
+    _signal.signal(_signal.SIGINT, _signal.SIG_DFL)
