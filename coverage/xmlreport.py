@@ -201,7 +201,8 @@ class XmlReporter:
                 break
         else:
             rel_name = fr.relative_filename().replace("\\", "/")
-            self.source_paths.add(fr.filename[: -len(rel_name)].rstrip(r"\/"))
+            source_path = fr.filename[: -len(rel_name)].rstrip(r"\/") or "."
+            self.source_paths.add(source_path)
 
         rel_name = neutralize_control(rel_name)
 
