@@ -23,7 +23,12 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
-Nothing yet.
+- The first entry in a ``[paths]`` list is the result path, and must be an
+  actual file path.  If it contained wildcards, the rule could never be used
+  and was silently ignored.  It is now reported as a configuration error.
+  Closes `issue 1531`_.
+
+.. _issue 1531: https://github.com/coveragepy/coveragepy/issues/1531
 
 
 .. start-releases
