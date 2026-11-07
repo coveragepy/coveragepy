@@ -5,12 +5,14 @@
 
 from __future__ import annotations
 
+import sys
+import types
 from unittest import mock
 
 import pytest
 
 from coverage import env
-from coverage.sysmon import SysMonitor, compute_multiline_map
+from coverage.sysmon import CodeInfo, SysMonitor, compute_multiline_map
 from tests.coveragetest import CoverageTest
 
 MULTI_PY = "x = (\n    1 +\n    2\n)\ny = 5\n"
@@ -73,3 +75,54 @@ class MultilineMapCacheTest(CoverageTest):
         self.make_file("multi.py", "x = 1\ny = (2 +\n    3)\n")
         assert tracer.get_multiline_map("multi.py") == MULTI_MAP  # cached
         assert SysMonitor().get_multiline_map("multi.py") == {2: 2, 3: 2}
+
+
+@pytest.mark.skipif(not env.PYBEHAVIOR.pep669, reason="SysMonitor needs sys.monitoring")
+@pytest.mark.skipif(
+    not hasattr(getattr(sys, "monitoring", None), "get_local_events"),
+    reason="get_local_events needs Python 3.14",
+)
+class StartLocalEventsTest(CoverageTest):
+    """Tests that start() arms local events on already-registered code objects."""
+
+    @pytest.mark.parametrize(
+        "trace_arcs",
+        [
+            False,
+            pytest.param(
+                True,
+                marks=pytest.mark.skipif(
+                    not env.PYBEHAVIOR.branch_right_left,
+                    reason="branch events need Python 3.14",
+                ),
+            ),
+        ],
+    )
+    def test_start_arms_local_events(self, trace_arcs: bool) -> None:
+        # Register a code object the way sysmon_py_start does, then start the
+        # tracer: start() must arm it with the right local events, including
+        # when restarting after a stop.
+        code = compile("def local_events_probe():\n    return 1\n", "<probe>", "exec")
+        tracer = SysMonitor()
+        tracer.trace_arcs = trace_arcs
+        tracer.should_trace_cache = {}
+        tracer.should_trace = lambda filename, frame: types.SimpleNamespace(
+            trace=False,
+            source_filename=None,
+        )
+        tracer.code_infos[id(code)] = CodeInfo(
+            tracing=True,
+            file_data=None,
+            byte_to_line=None,
+            branch_resolver=None,
+        )
+        tracer.code_objects.append(code)
+        try:
+            tracer.start()
+            events = sys.monitoring.events
+            expected = events.LINE
+            if trace_arcs:
+                expected |= events.PY_RETURN | events.BRANCH_RIGHT | events.BRANCH_LEFT
+            assert sys.monitoring.get_local_events(tracer.myid, code) == expected
+        finally:
+            tracer.stop()
