@@ -149,16 +149,12 @@ verbosity_assertions = "5"
 ## Scriv
 
 [tool.scriv]
-changelog = "tmp/only-changes.md"
-ghrel_template = """
-## {{title}}
-
-{{body}}
-
-:arrow_right:\u00a0 PyPI page: [coverage {{version}}](https://pypi.org/project/coverage/{{version}}).
-:arrow_right:\u00a0 To install: `python3 -m pip install coverage=={{version}}`
-
-"""
+fragment_directory = "news"
+categories = []
+changelog = "CHANGES.rst"
+rst_header_chars = "-."
+version = "command: python setup.py --version"
+entry_title_template = "Version {{ version }} — {{ date.strftime('%Y-%m-%d') }}"
 
 ## CHECK-MANIFEST
 

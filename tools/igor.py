@@ -369,14 +369,6 @@ def do_edit_for_release():
         f"Copyright 2004-{facts.now:%Y} Ned",
     )
 
-    # CHANGES.rst
-    title = f"Version {facts.ver} — {facts.now:%Y-%m-%d}"
-    rule = "-" * len(title)
-    new_head = f".. _changes_{facts.anchor}:\n\n{title}\n{rule}"
-
-    update_file("CHANGES.rst", re.escape(RELEASES_START), "")
-    update_file("CHANGES.rst", re.escape(UNRELEASED), RELEASES_START + new_head)
-
     # doc/conf.py
     new_conf = textwrap.dedent(
         f"""\
@@ -414,7 +406,8 @@ def do_bump_version():
     update_file(
         "CHANGES.rst",
         re.escape(RELEASES_START),
-        f"{UNRELEASED}\n\nNothing yet.\n\n\n" + RELEASES_START,
+        f"{UNRELEASED}\n\nSee ``news/*.rst`` files for upcoming changelog fragments.\n\n\n"
+        + RELEASES_START,
     )
 
     # coverage/version.py

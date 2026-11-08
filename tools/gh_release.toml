@@ -1,0 +1,22 @@
+# Licensed under the Apache License: http://www.apache.org/licenses/LICENSE-2.0
+# For details: https://github.com/coveragepy/coveragepy/blob/main/NOTICE.txt
+
+# Scriv is used in two ways in coveragepy and they need different scriv
+# settings:
+#
+# 1) To create and collect .rst fragments for CHANGES.rst.
+#    Those settings are in /pyproject.toml.
+# 2) To make GitHub releases from .md files converted from the .rst files.
+#    Those settings are here.
+
+[tool.scriv]
+changelog = "tmp/only-changes.md"
+ghrel_template = """
+## {{title}}
+
+{{body}}
+
+:arrow_right:\u00a0 PyPI page: [coverage {{version}}](https://pypi.org/project/coverage/{{version}}).
+:arrow_right:\u00a0 To install: `python3 -m pip install coverage=={{version}}`
+
+"""

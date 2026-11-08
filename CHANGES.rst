@@ -23,10 +23,10 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
-Nothing yet.
+See ``news/*.rst`` files for upcoming changelog fragments.
 
 
-.. start-releases
+.. scriv-insert-here
 
 .. _changes_7-17-2:
 
@@ -2855,7 +2855,7 @@ Version 5.3 — 2020-09-13
 .. _issue 1011: https://github.com/coveragepy/coveragepy/issues/1011
 
 
-.. endchangesinclude
+.. scriv-end-here
 
 Older changes
 -------------
