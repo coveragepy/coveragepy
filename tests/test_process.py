@@ -595,7 +595,13 @@ class ProcessTest(CoverageTest):
         self.run_command("coverage combine")
         data = coverage.CoverageData()
         data.read()
-        covered_lines = data.lines("forkonly.py")
+        # Coverage stores absolute paths; find forkonly.py by its basename.
+        forkonly_full = next(
+            (f for f in data.measured_files() if os.path.basename(f) == "forkonly.py"),
+            None,
+        )
+        assert forkonly_full is not None, f"forkonly.py missing from {data.measured_files()!r}"
+        covered_lines = data.lines(forkonly_full)
         assert covered_lines is not None
         assert 4 in covered_lines, covered_lines  # child_only() body must be covered
         assert len(covered_lines) in (7, 8), covered_lines
