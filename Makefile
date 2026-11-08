@@ -68,7 +68,7 @@ metacov:				#- Run meta-coverage, measuring ourself.
 	COVERAGE_COVERAGE=yes tox -q $(ARGS)
 
 metahtml:				#- Produce meta-coverage HTML reports.
-	tox exec -q $(ARGS) -- python3 tools/igor.py combine_html
+	tox exec -q $(ARGS) -- python tools/igor.py combine_html
 
 
 ### Requirements management
@@ -156,15 +156,16 @@ prebuild: css workflows cogdoc		#- One command for all source prep.
 
 REPO_OWNER = coveragepy/coveragepy
 RTD_PROJECT = coverage
+IGOR = PYTHONPATH=. python tools/igor.py
 
 release_version:			# Update the version for a release.
-	python tools/igor.py release_version
+	$(IGOR) release_version
 
 edit_for_release:			# Edit sources to insert release facts (see tools/release.txt).
-	python tools/igor.py edit_for_release
+	$(IGOR) edit_for_release
 
-cheats:					#- Create some useful snippets for releasing.
-	python tools/igor.py cheats | tee cheats.txt
+cheats:				#- Create some useful snippets for releasing.
+	$(IGOR) cheats | tee cheats.txt
 
 relbranch:				# Create the branch for releasing (see tools/release.txt).
 	git switch -c nedbat/release-$$(date +%Y%m%d-%H%M%S)
@@ -209,7 +210,7 @@ update_rtd:				# Update ReadTheDocs with the versions to show.
 
 bump_version:				# Edit sources to bump the version after a release (see tools/release.txt).
 	git switch -c nedbat/bump-version
-	python tools/igor.py bump_version
+	$(IGOR) bump_version
 	git commit -a -m "build: bump version to $$(python setup.py --version | sed 's/a.*//')"
 	git push -u origin @
 
