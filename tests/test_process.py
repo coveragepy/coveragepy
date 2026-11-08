@@ -595,9 +595,10 @@ class ProcessTest(CoverageTest):
         self.run_command("coverage combine")
         data = coverage.CoverageData()
         data.read()
-        # The child-only function body (line 4) must be covered.
-        forkonly_lines = line_counts(data)["forkonly.py"]
-        assert forkonly_lines in (7, 8), forkonly_lines
+        covered_lines = data.lines("forkonly.py")
+        assert covered_lines is not None
+        assert 4 in covered_lines, covered_lines  # child_only() body must be covered
+        assert len(covered_lines) in (7, 8), covered_lines
 
     def test_warnings_during_reporting(self) -> None:
         # While fixing issue #224, the warnings were being printed far too
