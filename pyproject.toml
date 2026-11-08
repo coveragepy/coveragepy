@@ -176,7 +176,8 @@ ignore = [
 ## UV
 
 [tool.uv.exclude-newer-package]
-# We trust sphinx-linklint, so it needs no cooldown.
+# We trust these packages, so they need no cooldown.
+scriv = "P0D"
 sphinx-linklint = "P0D"
 
 ## RUFF
