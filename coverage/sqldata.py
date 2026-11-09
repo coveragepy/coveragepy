@@ -624,7 +624,8 @@ class CoverageData:
             self._set_context_id()
             for filename, arcs in arc_data.items():
                 self._hasher.update(filename)
-                self._hasher.update(arcs)
+                # Hashing the set element by element is slow, hash its repr instead.
+                self._hasher.update(repr(sorted(arcs)))
                 if not arcs:
                     continue
                 file_id = self._file_id(filename, add=True)
