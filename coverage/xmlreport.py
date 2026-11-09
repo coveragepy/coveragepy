@@ -25,6 +25,8 @@ from coverage.types import TMorfs
 from coverage.version import __url__, __version__
 
 if TYPE_CHECKING:
+    from _typeshed import SupportsWrite
+
     from coverage import Coverage
 
 os = isolate_module(os)
@@ -66,6 +68,42 @@ class PackageData:
 def appendChild(parent: Any, child: Any) -> None:
     """Append a child to a parent, in a way mypy will shut up about."""
     parent.appendChild(child)
+
+
+_LineAttributes = list[tuple[str, int | str]]
+
+
+class _LinesElement(xml.dom.minidom.Element):
+    """Serialize the numeric line records without a DOM node for each line."""
+
+    def __init__(self, records: list[_LineAttributes]) -> None:
+        super().__init__("lines")
+        self.records = records
+
+    def writexml(
+        self,
+        writer: SupportsWrite[str],
+        indent: str = "",
+        addindent: str = "",
+        newl: str = "",
+    ) -> None:
+        records = self.records
+        if not records:
+            super().writexml(writer, indent, addindent, newl)
+            return
+        prefix = indent + addindent
+        writer.write(f"{indent}<lines>{newl}{prefix}")
+        lines = []
+        for attrs in records:
+            if len(attrs) == 2:
+                # Most records have two attributes, which can be formatted directly.
+                (name1, value1), (name2, value2) = attrs
+                line = f'<line {name1}="{value1}" {name2}="{value2}"/>'
+            else:
+                line = "<line " + " ".join([f'{name}="{value}"' for name, value in attrs]) + "/>"
+            lines.append(line)
+        writer.write((newl + prefix).join(lines))
+        writer.write(f"{newl}{indent}</lines>{newl}")
 
 
 class XmlReporter:
@@ -218,9 +256,6 @@ class XmlReporter:
 
         appendChild(xclass, self.xml_out.createElement("methods"))
 
-        xlines = self.xml_out.createElement("lines")
-        appendChild(xclass, xlines)
-
         xclass.setAttribute("name", os.path.relpath(rel_name, dirname))
         xclass.setAttribute("filename", rel_name.replace("\\", "/"))
         xclass.setAttribute("complexity", "0")
@@ -228,27 +263,28 @@ class XmlReporter:
         branch_stats = analysis.branch_stats()
         missing_branch_arcs = analysis.missing_branch_arcs()
 
-        # For each statement, create an XML "line" element.
+        records = []
         for line in sorted(analysis.statements):
-            xline = self.xml_out.createElement("line")
-            xline.setAttribute("number", str(line))
-
-            # Q: can we get info about the number of times a statement is
-            # executed?  If so, that should be recorded here.
-            xline.setAttribute("hits", str(int(line not in analysis.missing)))
+            # Use only integers and fixed ASCII strings safe in double-quoted XML
+            # attributes. _LinesElement writes these values verbatim.
+            line_attrs: _LineAttributes = [
+                ("number", line),
+                ("hits", int(line not in analysis.missing)),
+            ]
 
             if has_arcs:
                 if line in branch_stats:
                     total, taken = branch_stats[line]
-                    xline.setAttribute("branch", "true")
-                    xline.setAttribute(
-                        "condition-coverage",
-                        f"{100 * taken // total}% ({taken}/{total})",
-                    )
+                    condition = f"{100 * taken // total}% ({taken}/{total})"
+                    line_attrs.extend((("branch", "true"), ("condition-coverage", condition)))
                 if line in missing_branch_arcs:
                     annlines = ["exit" if b < 0 else str(b) for b in missing_branch_arcs[line]]
-                    xline.setAttribute("missing-branches", ",".join(annlines))
-            appendChild(xlines, xline)
+                    line_attrs.append(("missing-branches", ",".join(annlines)))
+            records.append(line_attrs)
+
+        xlines = _LinesElement(records)
+        xlines.ownerDocument = self.xml_out
+        appendChild(xclass, xlines)
 
         class_lines = len(analysis.statements)
         class_hits = class_lines - len(analysis.missing)
