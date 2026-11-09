@@ -122,8 +122,10 @@ class JsonReporter:
             "missing_lines": sorted(analysis.missing),
             "excluded_lines": sorted(analysis.excluded),
         }
+        contexts = None
         if self.config.json_show_contexts:
-            reported_file["contexts"] = coverage_data.contexts_by_lineno(analysis.filename)
+            contexts = coverage_data.contexts_by_lineno(analysis.filename)
+            reported_file["contexts"] = contexts
         if coverage_data.has_arcs():
             summary.update(self.make_branch_summary(nums))
             reported_file["executed_branches"] = list(
@@ -154,12 +156,16 @@ class JsonReporter:
                     coverage_data,
                     narrower.narrow(region.lines),
                     region.start,
+                    region.lines,
+                    contexts,
                 )
 
             region_data[""] = self.make_region_data(
                 coverage_data,
                 narrower.narrow(outside_lines),
                 min(outside_lines, default=1),
+                outside_lines,
+                contexts,
             )
         return reported_file
 
@@ -168,6 +174,8 @@ class JsonReporter:
         coverage_data: CoverageData,
         narrowed_analysis: Analysis,
         start_line: int,
+        lines: set[TLineNo],
+        contexts: dict[TLineNo, list[str]] | None,
     ) -> JsonObj:
         """Create the data object for one region of a file."""
         narrowed_nums = narrowed_analysis.numbers
@@ -179,9 +187,10 @@ class JsonReporter:
             "excluded_lines": sorted(narrowed_analysis.excluded),
             "start_line": start_line,
         }
-        if self.config.json_show_contexts:
-            contexts = coverage_data.contexts_by_lineno(narrowed_analysis.filename)
-            this_region["contexts"] = contexts
+        if contexts is not None:
+            this_region["contexts"] = {
+                lineno: ctxs for lineno, ctxs in contexts.items() if lineno in lines
+            }
         if coverage_data.has_arcs():
             narrowed_summary.update(self.make_branch_summary(narrowed_nums))
             this_region["executed_branches"] = list(

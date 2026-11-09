@@ -560,3 +560,28 @@ class JsonReportTest(UsingModulesMixin, CoverageTest):
         cov = coverage.Coverage(branch=True)
         mod = self.start_import_stop(cov, "wtf")
         cov.json_report(mod)
+
+    def test_region_contexts(self) -> None:
+        # Each region only lists the contexts of its own lines.
+        self.make_file(
+            "two.py",
+            """\
+            def f():
+                return 1
+
+            def g():
+                return 2
+
+            f()
+            g()
+            """,
+        )
+        cov = coverage.Coverage(context="ctx")
+        cov.set_option("json:show_contexts", True)
+        mod = self.start_import_stop(cov, "two")
+        cov.json_report(mod, outfile="out.json")
+        with open("out.json", encoding="utf-8") as f:
+            functions = json.load(f)["files"]["two.py"]["functions"]
+        assert functions["f"]["contexts"] == {"2": ["ctx"]}
+        assert functions["g"]["contexts"] == {"5": ["ctx"]}
+        assert sorted(functions[""]["contexts"], key=int) == ["1", "4", "7", "8"]
