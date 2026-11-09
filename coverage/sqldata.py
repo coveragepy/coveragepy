@@ -1113,8 +1113,7 @@ class CoverageData:
         if self.has_arcs():
             arcs = self.arcs(filename)
             if arcs is not None:
-                all_lines = itertools.chain.from_iterable(arcs)
-                return list({lineno for lineno in all_lines if lineno > 0})
+                return self._lines_from_arcs(arcs)
 
         with self._connect() as con:
             file_id = self._file_id(filename)
@@ -1133,6 +1132,11 @@ class CoverageData:
                 for row in bitmaps:
                     nums.update(numbits_to_nums(row[0]))
                 return list(nums)
+
+    @staticmethod
+    def _lines_from_arcs(arcs: list[TArc]) -> list[TLineNo]:
+        """Get the positive line numbers touched by arcs."""
+        return list({lineno for lineno in itertools.chain.from_iterable(arcs) if lineno > 0})
 
     def arcs(self, filename: str) -> list[TArc] | None:
         """Get the list of arcs executed for a file.

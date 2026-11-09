@@ -32,12 +32,17 @@ def analysis_from_file_reporter(
     has_arcs = data.has_arcs()
     statements = file_reporter.lines()
     excluded = file_reporter.excluded_lines()
-    executed = file_reporter.translate_lines(data.lines(filename) or []) & statements
+    if has_arcs:
+        recorded_arcs = data.arcs(filename) or []
+        recorded_lines = data._lines_from_arcs(recorded_arcs)
+    else:
+        recorded_arcs = []
+        recorded_lines = data.lines(filename) or []
+    executed = file_reporter.translate_lines(recorded_lines) & statements
 
     if has_arcs:
         arc_possibilities_set = file_reporter.arcs()
-        arcs: Iterable[TArc] = data.arcs(filename) or []
-        arcs = file_reporter.translate_arcs(arcs)
+        arcs = file_reporter.translate_arcs(recorded_arcs)
 
         # Reduce the set of arcs to the ones that could be branches.
         dests = collections.defaultdict(set)
