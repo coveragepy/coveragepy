@@ -32,10 +32,9 @@ def multiline_map_from_tokens(tokens: Iterable[TToken]) -> dict[TLineNo, TLineNo
     """Compute the multiline map from a stream of tokens.
 
     The result maps line numbers in multi-line statements to the first line
-    number of their statement.  This is the only place the map is computed:
-    `PythonParser._raw_parse` uses it for parsing and reporting, and the
-    sys.monitoring core uses `multiline_map_from_text` to get the map without
-    paying for a full parse during measurement.
+    number of their statement.  The sys.monitoring core uses this map without
+    paying for a full parse during measurement.  `PythonParser._raw_parse`
+    builds the same map while scanning tokens for exclusions.
 
     """
     multiline_map: dict[TLineNo, TLineNo] = {}
@@ -188,9 +187,8 @@ class PythonParser:
         nesting: int = 0
 
         assert self.text is not None
-        tokens = list(generate_tokens(self.text))
-        self.multiline_map = multiline_map_from_tokens(tokens)
-        for toktype, ttext, (slineno, _), (elineno, _), ltext in tokens:
+        self.multiline_map = {}
+        for toktype, ttext, (slineno, _), (elineno, _), ltext in generate_tokens(self.text):
             if self.show_tokens:  # pragma: debugging
                 print(
                     "%10s %5s %-20r %r"
@@ -220,9 +218,9 @@ class PythonParser:
                 elif ttext in ")]}":
                     nesting -= 1
             elif toktype == token.NEWLINE:
-                # multiline_map_from_tokens() has already recorded this
-                # statement's lines; we only track first_line here for the
-                # exclusion logic.
+                if first_line and elineno != first_line:
+                    for lineno in range(first_line, elineno + 1):
+                        self.multiline_map[lineno] = first_line
                 first_line = 0
 
             if ttext.strip() and toktype != tokenize.COMMENT:
