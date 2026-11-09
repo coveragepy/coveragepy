@@ -799,7 +799,7 @@ class IncrementalChecker:
             "files": {fname: dataclasses.asdict(finfo) for fname, finfo in self.files.items()},
         }
         with open(status_file, "w", encoding="utf-8") as fout:
-            json.dump(status_data, fout, separators=(",", ":"))
+            fout.write(json.dumps(status_data, separators=(",", ":")))
 
     def check_global_data(self, *data: Any) -> None:
         """Check the global data that can affect incremental reporting.
