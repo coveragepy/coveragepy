@@ -102,7 +102,7 @@ class PythonParser:
         self.exclude = exclude
 
         # The parsed AST of the text.
-        self._ast_root: ast.AST | None = None
+        self._ast_root: ast.Module | None = None
 
         # The normalized line numbers of the statements in the code. Exclusions
         # are taken into account, and statements are adjusted to their first
@@ -237,16 +237,17 @@ class PythonParser:
                     if excluding:
                         self.excluded.add(elineno)
 
-        # Find the starts of the executable statements.
+        # Find the starts of the executable statements without parsing the text again.
+        assert self._ast_root is not None
         if not empty:
-            byte_parser = ByteParser(text=self.text, filename=self.filename)
+            code = compile(self._ast_root, self.filename, "exec", dont_inherit=True)
+            byte_parser = ByteParser(code=code)
             self.raw_statements.update(byte_parser.find_statements())
 
         self.excluded = self.first_lines(self.excluded)
 
         # AST lets us find classes, docstrings, and decorator-affected
         # functions and classes.
-        assert self._ast_root is not None
         for node in walk_statement_nodes(self._ast_root):
             # Find docstrings.
             if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef, ast.Module)):

@@ -130,6 +130,7 @@ class PythonParserTest(PythonParserTestBase):
             pytest.param("0 spaces\n  2\n 1", id="bad_indent"),
             pytest.param("'''", id="string_eof"),
             pytest.param("$hello", id="dollar"),
+            pytest.param("pass\nreturn 1\n", id="return_outside_function"),
             # on 3.10 this passes ast.parse but fails on tokenize.generate_tokens
             pytest.param(
                 "\r'\\\n'''",
