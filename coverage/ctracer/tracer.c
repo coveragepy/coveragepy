@@ -29,6 +29,9 @@ static PyObject *str__coverage_plugin;
 static PyObject *str__coverage_plugin_name;
 static PyObject *str_dynamic_source_filename;
 static PyObject *str_line_number_range;
+#if PY_VERSION_HEX >= 0x030D0000
+PyObject *str_f_trace;
+#endif
 
 int
 CTracer_intern_strings(void)
@@ -45,6 +48,9 @@ CTracer_intern_strings(void)
     INTERN_STRING(str__coverage_plugin_name, "_coverage_plugin_name")
     INTERN_STRING(str_dynamic_source_filename, "dynamic_source_filename")
     INTERN_STRING(str_line_number_range, "line_number_range")
+#if PY_VERSION_HEX >= 0x030D0000
+    INTERN_STRING(str_f_trace, "f_trace")
+#endif
 
     ret = RET_OK;
 

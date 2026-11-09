@@ -48,7 +48,10 @@
 #endif
 
 #if PY_VERSION_HEX >= 0x030D0000
-#define MyFrame_SetTrace(f, obj)    (PyObject_SetAttrString((PyObject*)(f), "f_trace", (PyObject*)(obj)))
+// The attribute name is interned once in CTracer_intern_strings, instead of
+// PyObject_SetAttrString building and interning "f_trace" on every call event.
+extern PyObject *str_f_trace;
+#define MyFrame_SetTrace(f, obj)    (PyObject_SetAttr((PyObject*)(f), str_f_trace, (PyObject*)(obj)))
 #else
 #define MyFrame_SetTrace(f, obj)    {Py_INCREF(obj); Py_XSETREF((f)->f_trace, (PyObject*)(obj));}
 #endif
