@@ -6,7 +6,9 @@
 from __future__ import annotations
 
 import sys
+from pathlib import Path
 
+from coverage import Coverage
 from coverage.plugin import FileReporter
 from coverage.python import PythonFileReporter
 from tests.coveragetest import CoverageTest, UsingModulesMixin
@@ -84,6 +86,17 @@ class FileReporterTest(UsingModulesMixin, CoverageTest):
         assert zcu > acu and zcu >= acu and zcu != acu
         assert acu < bcu and acu <= bcu and acu != bcu
         assert bcu > acu and bcu >= acu and bcu != acu
+
+    def test_analysis_and_presentation_use_the_same_source(self, tmp_path: Path) -> None:
+        filename = tmp_path / "example.py"
+        source = "def function(value):\n\tmatch value:\n\t\tcase 0:\n\t\t\treturn 1\n"
+        filename.write_text(source, encoding="utf-8")
+
+        reporter = PythonFileReporter(str(filename), Coverage(config_file=False))
+        assert reporter.lines() == {1, 2, 3, 4}
+        filename.write_text("print('changed after analysis')\n", encoding="utf-8")
+
+        assert reporter.source() == source
 
     def test_zipfile(self) -> None:
         sys.path.append("tests/zip1.zip")

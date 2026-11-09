@@ -185,9 +185,12 @@ class PythonFileReporter(FileReporter):
         assert self.coverage is not None
         if self._parser is None:
             self._parser = PythonParser(
+                text=self._source,
                 filename=self.filename,
                 exclude=self.coverage._exclude_regex("exclude"),
             )
+            # Use the same source text for analysis and reporting if the file changes.
+            self._source = self._parser.text
             self._parser.parse_source()
         return self._parser
 
