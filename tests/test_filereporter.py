@@ -106,6 +106,9 @@ class FileReporterTest(UsingModulesMixin, CoverageTest):
 
         assert reporter.source() == source
         assert [region.name for region in reporter.code_regions()] == ["function"]
+        tokens = list(reporter.source_token_lines())
+        assert tokens[1][:2] == [("ws", " " * 8), ("key", "match")]
+        assert tokens[2][:2] == [("ws", " " * 16), ("key", "case")]
 
     def test_zipfile(self) -> None:
         sys.path.append("tests/zip1.zip")
