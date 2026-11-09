@@ -12,6 +12,7 @@ import os.path
 import sys
 import time
 import xml.dom.minidom
+from contextlib import nullcontext
 from dataclasses import dataclass
 from typing import IO, TYPE_CHECKING, Any
 
@@ -98,7 +99,8 @@ class XmlReporter:
         """
         # Initial setup.
         outfile = outfile or sys.stdout
-        has_arcs = self.coverage.get_data().has_arcs()
+        data = self.coverage.get_data()
+        has_arcs = data.has_arcs()
 
         # Create the DOM that will store the data.
         impl = xml.dom.minidom.getDOMImplementation()
@@ -117,9 +119,10 @@ class XmlReporter:
         )
         xcoverage.appendChild(self.xml_out.createComment(f" Based on {DTD_URL} "))
 
-        # Call xml_file for each file in the data.
-        for fr, analysis in get_analysis_to_report(self.coverage, morfs):
-            self.xml_file(fr, analysis, has_arcs)
+        # Opening a connection with no data would create an empty database.
+        with data.keep_db_open() if data.measured_files() else nullcontext():
+            for fr, analysis in get_analysis_to_report(self.coverage, morfs):
+                self.xml_file(fr, analysis, has_arcs)
 
         xsources = self.xml_out.createElement("sources")
         xcoverage.appendChild(xsources)
