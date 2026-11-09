@@ -567,7 +567,9 @@ CTracer_handle_call(CTracer *self, PyFrameObject *frame)
     self->pcur_entry->disposition = disposition;
 
     /* Make the frame right in case settrace(gettrace()) happens. */
-    MyFrame_SetTrace(frame, self);
+    if (MyFrame_SetTrace(frame, (PyObject *)self) < 0) {
+        goto error;
+    }
 
     /* A call event is really a "start frame" event, and can happen for
      * re-entering a generator also.  How we tell the difference depends on
