@@ -796,7 +796,10 @@ class IncrementalChecker:
             "format": self.STATUS_FORMAT,
             "version": coverage.__version__,
             "globals": self.globals,
-            "files": {fname: dataclasses.asdict(finfo) for fname, finfo in self.files.items()},
+            "files": {
+                fname: {**vars(info), "index": dataclasses.asdict(info.index)}
+                for fname, info in self.files.items()
+            },
         }
         with open(status_file, "w", encoding="utf-8") as fout:
             fout.write(json.dumps(status_data, separators=(",", ":")))
