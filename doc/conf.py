@@ -76,10 +76,13 @@ release = "7.17.2"
 release_date = "November 4, 2026"
 # @@@ end
 
+min_py = "3.11"  # PYVERSIONS
+
 rst_epilog = f"""
-.. |release_date| replace:: {release_date}
+.. |release-date| replace:: {release_date}
 .. |coverage-equals-release| replace:: coverage=={release}
 .. |doc-url| replace:: https://coverage.readthedocs.io/en/{release}
+.. |min-py| replace:: {min_py}
 .. |br| raw:: html
 
   <br/>
