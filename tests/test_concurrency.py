@@ -389,7 +389,6 @@ class WithoutConcurrencyModuleTest(CoverageTest):
 
 SQUARE_OR_CUBE_WORK = """
     def work(x):
-        # Use different lines in different subprocesses.
         if x % 2:
             y = x*x
         else:
@@ -412,8 +411,8 @@ MULTI_CODE = """
     def process_worker_main(args):
         # Need to pause, or the tasks go too quickly, and some processes
         # in the pool don't get any work, and then don't record data.
-        ret = work(*args)
-        time.sleep(0.1)
+        ret = {WORK}
+        time.sleep({DELAY})
         return os.getpid(), ret
 
     if __name__ == "__main__":      # pragma: no branch
@@ -421,7 +420,7 @@ MULTI_CODE = """
         # even if we have no arguments.
         if len(sys.argv) > 1: multiprocessing.set_start_method(sys.argv[1])
         pool = multiprocessing.Pool({NPROCS})
-        inputs = [(x,) for x in range({UPTO})]
+        inputs = {INPUTS}
         outputs = pool.imap_unordered(process_worker_main, inputs)
         pids = set()
         total = 0
@@ -432,6 +431,25 @@ MULTI_CODE = """
         pool.close()
         pool.join()
     """
+
+
+def make_multi_code(nprocs: int, upto: int, *, paired: bool = False) -> str:
+    """Build the pool program with single or paired work items."""
+    if paired:
+        # Each task covers both branches, regardless of which worker runs it.
+        work = "work(args[0]) + work(args[1])"
+        delay = 0.2
+        inputs = f"[(x, x + 1) for x in range(0, {upto}, 2)]"
+    else:
+        work = "work(*args)"
+        delay = 0.1
+        inputs = f"[(x,) for x in range({upto})]"
+    return (SQUARE_OR_CUBE_WORK + MULTI_CODE).format(
+        NPROCS=nprocs,
+        WORK=work,
+        DELAY=delay,
+        INPUTS=inputs,
+    )
 
 
 @pytest.fixture(params=["fork", "spawn"], name="start_method")
@@ -496,7 +514,7 @@ class MultiprocessingTest(CoverageTest):
     def test_multiprocessing_simple(self, start_method: str) -> None:
         nprocs = 3
         upto = 30
-        code = (SQUARE_OR_CUBE_WORK + MULTI_CODE).format(NPROCS=nprocs, UPTO=upto)
+        code = make_multi_code(nprocs, upto, paired=True)
         total = sum(x * x if x % 2 else x * x * x for x in range(upto))
         expected_out = f"{nprocs} pids, {total = }"
         self.try_multiprocessing_code(
@@ -509,7 +527,7 @@ class MultiprocessingTest(CoverageTest):
     def test_multiprocessing_append(self, start_method: str) -> None:
         nprocs = 3
         upto = 30
-        code = (SQUARE_OR_CUBE_WORK + MULTI_CODE).format(NPROCS=nprocs, UPTO=upto)
+        code = make_multi_code(nprocs, upto, paired=True)
         total = sum(x * x if x % 2 else x * x * x for x in range(upto))
         expected_out = f"{nprocs} pids, total = {total}"
         self.try_multiprocessing_code(
@@ -526,7 +544,7 @@ class MultiprocessingTest(CoverageTest):
     def test_multiprocessing_with_branching(self, start_method: str) -> None:
         nprocs = 3
         upto = 30
-        code = (SQUARE_OR_CUBE_WORK + MULTI_CODE).format(NPROCS=nprocs, UPTO=upto)
+        code = make_multi_code(nprocs, upto)
         total = sum(x * x if x % 2 else x * x * x for x in range(upto))
         expected_out = f"{nprocs} pids, total = {total}"
         self.make_file("multi.py", code)
