@@ -8,6 +8,8 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import pytest
+
 from coverage import Coverage
 from coverage.plugin import FileReporter
 from coverage.python import PythonFileReporter
@@ -87,16 +89,23 @@ class FileReporterTest(UsingModulesMixin, CoverageTest):
         assert acu < bcu and acu <= bcu and acu != bcu
         assert bcu > acu and bcu >= acu and bcu != acu
 
-    def test_analysis_and_presentation_use_the_same_source(self, tmp_path: Path) -> None:
+    @pytest.mark.parametrize("branch", [False, True])
+    def test_analysis_and_presentation_use_the_same_source(
+        self, tmp_path: Path, branch: bool
+    ) -> None:
         filename = tmp_path / "example.py"
         source = "def function(value):\n\tmatch value:\n\t\tcase 0:\n\t\t\treturn 1\n"
         filename.write_text(source, encoding="utf-8")
 
         reporter = PythonFileReporter(str(filename), Coverage(config_file=False))
+        reporter._prepare_html = True
         assert reporter.lines() == {1, 2, 3, 4}
+        if branch:
+            assert reporter.arcs()
         filename.write_text("print('changed after analysis')\n", encoding="utf-8")
 
         assert reporter.source() == source
+        assert [region.name for region in reporter.code_regions()] == ["function"]
 
     def test_zipfile(self) -> None:
         sys.path.append("tests/zip1.zip")

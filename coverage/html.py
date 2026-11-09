@@ -372,7 +372,7 @@ class HtmlReporter:
         files_to_report = []
 
         have_data = False
-        for fr, analysis in get_analysis_to_report(self.coverage, morfs):
+        for fr, analysis in get_analysis_to_report(self.coverage, morfs, _prepare_html=True):
             have_data = True
             ftr = FileToReport(fr, analysis)
             if self.should_report(analysis, self.index_pages["file"]):
