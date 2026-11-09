@@ -488,11 +488,13 @@ CTracer_handle_call(CTracer *self, PyFrameObject *frame)
     if (tracename != Py_None) {
         PyObject * file_data = NULL;
 
-        /* The file almost always has its data set already.  lock_data only
-         * keeps insertions into self.data from racing with
-         * Collector._clear_data iterating it.  A lookup doesn't change the
-         * dict's size, so look first without the lock, and only take the lock
-         * (and look again) when we need to insert.
+        /* The file almost always has its data set already.  lock_data does
+         * two things: it makes look-up-then-insert atomic across tracer
+         * threads, so two threads can't each insert a set for the same file,
+         * and it keeps insertions from racing with Collector._clear_data
+         * iterating self.data.  A lookup alone needs neither, so look first
+         * without the lock, and only take the lock (and look again) when we
+         * need to insert.
          */
         if (MyDict_GetItemRef(self->data, tracename, &file_data) < 0) {
             goto error;
@@ -516,6 +518,19 @@ CTracer_handle_call(CTracer *self, PyFrameObject *frame)
             }
 
             if (file_data == NULL) {
+                /* If the disposition mentions a plugin, record that.  Do it
+                 * before adding the file to self.data: other threads find the
+                 * file there without taking the lock, and start recording its
+                 * lines, so its plugin has to be known by then.
+                 */
+                if (file_tracer != Py_None) {
+                    ret2 = PyDict_SetItem(self->file_tracers, tracename, plugin_name);
+                    if (ret2 < 0) {
+                        had_error = TRUE;
+                        goto unlock;
+                    }
+                }
+
                 file_data = PySet_New(NULL);
                 if (file_data == NULL) {
                     had_error = TRUE;
@@ -525,15 +540,6 @@ CTracer_handle_call(CTracer *self, PyFrameObject *frame)
                 if (ret2 < 0) {
                     had_error = TRUE;
                     goto unlock;
-                }
-
-                /* If the disposition mentions a plugin, record that. */
-                if (file_tracer != Py_None) {
-                    ret2 = PyDict_SetItem(self->file_tracers, tracename, plugin_name);
-                    if (ret2 < 0) {
-                        had_error = TRUE;
-                        goto unlock;
-                    }
                 }
             }
 
