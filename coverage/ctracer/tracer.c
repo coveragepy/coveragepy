@@ -487,62 +487,76 @@ CTracer_handle_call(CTracer *self, PyFrameObject *frame)
 
     if (tracename != Py_None) {
         PyObject * file_data = NULL;
-        BOOL had_error = FALSE;
-        PyObject * res;
-        PyObject * exc;
 
-        res = PyObject_CallFunctionObjArgs(self->lock_data, NULL);
-        if (res == NULL) {
-            goto error;
-        }
-        Py_DECREF(res);
-
+        /* The file almost always has its data set already.  lock_data only
+         * keeps insertions into self.data from racing with
+         * Collector._clear_data iterating it.  A lookup doesn't change the
+         * dict's size, so look first without the lock, and only take the lock
+         * (and look again) when we need to insert.
+         */
         if (MyDict_GetItemRef(self->data, tracename, &file_data) < 0) {
-            had_error = TRUE;
-            goto unlock;
+            goto error;
         }
 
         if (file_data == NULL) {
-            file_data = PySet_New(NULL);
-            if (file_data == NULL) {
-                had_error = TRUE;
-                goto unlock;
+            BOOL had_error = FALSE;
+            PyObject * res;
+            PyObject * exc;
+
+            res = PyObject_CallFunctionObjArgs(self->lock_data, NULL);
+            if (res == NULL) {
+                goto error;
             }
-            ret2 = PyDict_SetItem(self->data, tracename, file_data);
-            if (ret2 < 0) {
+            Py_DECREF(res);
+
+            /* Another thread may have added it since we looked. */
+            if (MyDict_GetItemRef(self->data, tracename, &file_data) < 0) {
                 had_error = TRUE;
                 goto unlock;
             }
 
-            /* If the disposition mentions a plugin, record that. */
-            if (file_tracer != Py_None) {
-                ret2 = PyDict_SetItem(self->file_tracers, tracename, plugin_name);
+            if (file_data == NULL) {
+                file_data = PySet_New(NULL);
+                if (file_data == NULL) {
+                    had_error = TRUE;
+                    goto unlock;
+                }
+                ret2 = PyDict_SetItem(self->data, tracename, file_data);
                 if (ret2 < 0) {
                     had_error = TRUE;
                     goto unlock;
                 }
+
+                /* If the disposition mentions a plugin, record that. */
+                if (file_tracer != Py_None) {
+                    ret2 = PyDict_SetItem(self->file_tracers, tracename, plugin_name);
+                    if (ret2 < 0) {
+                        had_error = TRUE;
+                        goto unlock;
+                    }
+                }
             }
-        }
 
-        unlock:
+            unlock:
 
-        /* Python code can't be called with an exception set, so hold any
-         * error aside while unlocking.
-         */
-        exc = MyErr_GetRaisedException();
-        res = PyObject_CallFunctionObjArgs(self->unlock_data, NULL);
-        if (res == NULL) {
-            /* As with try/finally, an error while unlocking wins. */
-            Py_XDECREF(exc);
-            Py_XDECREF(file_data);
-            goto error;
-        }
-        Py_DECREF(res);
-        MyErr_SetRaisedException(exc);
+            /* Python code can't be called with an exception set, so hold any
+             * error aside while unlocking.
+             */
+            exc = MyErr_GetRaisedException();
+            res = PyObject_CallFunctionObjArgs(self->unlock_data, NULL);
+            if (res == NULL) {
+                /* As with try/finally, an error while unlocking wins. */
+                Py_XDECREF(exc);
+                Py_XDECREF(file_data);
+                goto error;
+            }
+            Py_DECREF(res);
+            MyErr_SetRaisedException(exc);
 
-        if (had_error) {
-            Py_XDECREF(file_data);
-            goto error;
+            if (had_error) {
+                Py_XDECREF(file_data);
+                goto error;
+            }
         }
 
         Py_XDECREF(self->pcur_entry->file_data);

@@ -314,8 +314,15 @@ class MemoryFumblingTest(CoverageTest):
             from coverage.tracer import CTracer, CFileDisposition
 
             class BadKey(str):
+                # The tracer looks for the file's data first without the lock.
+                # Let that lookup succeed, and fail the second one, made while
+                # holding the lock.
+                hashes = 0
                 def __hash__(self):
-                    raise ValueError("can't hash BadKey")
+                    BadKey.hashes += 1
+                    if BadKey.hashes > 1:
+                        raise ValueError("can't hash BadKey")
+                    return str.__hash__(self)
 
             disp = CFileDisposition()
             disp.original_filename = disp.canonical_filename = __file__
@@ -332,8 +339,9 @@ class MemoryFumblingTest(CoverageTest):
             tracer.should_trace = None
             tracer.concur_id_func = None
             tracer.should_start_context = None
-            tracer.lock_data = lambda: None
-            tracer.unlock_data = lambda: None
+            events = []
+            tracer.lock_data = lambda: events.append("lock")
+            tracer.unlock_data = lambda: events.append("unlock")
 
             def f():
                 pass
@@ -346,10 +354,57 @@ class MemoryFumblingTest(CoverageTest):
             finally:
                 tracer.stop()
                 sys.settrace(None)
+            print(events)
             """,
         )
         out = self.run_command("python bad_key.py")
-        assert out == "ValueError: can't hash BadKey\n"
+        assert out == "ValueError: can't hash BadKey\n['lock', 'unlock']\n"
+
+    @pytest.mark.skipif(not testenv.C_TRACER, reason="Only the C tracer has this code")
+    def test_ctracer_locks_only_to_add_files(self) -> None:
+        # The C tracer takes lock_data only when it adds a file to the data,
+        # not on every call into a file it already has.
+        self.make_file(
+            "lock_count.py",
+            """\
+            import sys
+            from coverage.tracer import CTracer, CFileDisposition
+
+            disp = CFileDisposition()
+            disp.original_filename = disp.canonical_filename = __file__
+            disp.source_filename = __file__
+            disp.trace = True
+            disp.reason = ""
+            disp.file_tracer = None
+            disp.has_dynamic_filename = False
+
+            tracer = CTracer()
+            tracer.data = {}
+            tracer.should_trace_cache = {__file__: disp}
+            tracer.trace_arcs = False
+            tracer.should_trace = None
+            tracer.concur_id_func = None
+            tracer.should_start_context = None
+            locks = []
+            tracer.lock_data = lambda: locks.append("lock")
+            tracer.unlock_data = lambda: locks.append("unlock")
+
+            def f():
+                return 1
+
+            sys.settrace(tracer.start())
+            try:
+                for _ in range(5):
+                    f()
+            finally:
+                tracer.stop()
+                sys.settrace(None)
+            print(locks)
+            print(sorted(tracer.data[__file__]))
+            """,
+        )
+        out = self.run_command("python lock_count.py")
+        assert out == "['lock', 'unlock']\n[24]\n"
 
     @pytest.mark.skipif(not testenv.C_TRACER, reason="Only the C tracer has refcounting issues")
     def test_dropping_none(self) -> None:  # pragma: not covered
