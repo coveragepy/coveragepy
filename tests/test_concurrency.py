@@ -422,7 +422,10 @@ MULTI_CODE = """
         if len(sys.argv) > 1: multiprocessing.set_start_method(sys.argv[1])
         pool = multiprocessing.Pool({NPROCS})
         inputs = [(x,) for x in range({UPTO})]
-        outputs = pool.imap_unordered(process_worker_main, inputs)
+        # Hand out the inputs in pairs (one even, one odd), so every process
+        # that gets any work runs the same lines of work(), and combine can
+        # skip their identical data files.
+        outputs = pool.imap_unordered(process_worker_main, inputs, chunksize=2)
         pids = set()
         total = 0
         for pid, sq in outputs:
