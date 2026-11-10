@@ -20,9 +20,9 @@
         $ make release_version
 - Update source files with release facts, and get useful snippets:
     $ make edit_for_release cheats
-- Edit supported Python version numbers. Search for "PYVERSIONS".
-    - Especially README.rst and doc/index.rst
 - Look over CHANGES.rst
+- Edit supported Python version numbers. Search for "PYVERSION".
+    - Especially README.rst and doc/index.rst
 - Update docs
     - IF PRE-RELEASE:
         - Version of latest stable release in doc/index.rst

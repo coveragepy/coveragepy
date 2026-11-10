@@ -5,3 +5,8 @@
 
 # Sphinx 9 wants to move the theme back to 0.5.1, but the newer theme is ok too.
 sphinx-rtd-theme>=3.0.2
+
+# Pytest 9.2.0 broke pytest-xdist grouping by name.
+# Might be fixed by a new xdist: https://github.com/pytest-dev/pytest-xdist/pull/1402
+# Pytest tracking issue: https://github.com/pytest-dev/pytest/issues/15303
+pytest<9.2.0

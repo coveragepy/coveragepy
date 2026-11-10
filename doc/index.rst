@@ -13,7 +13,7 @@ Coverage measurement is typically used to gauge the effectiveness of tests. It
 can show which parts of your code are being exercised by tests, and which are
 not.
 
-The latest version is coverage.py |release|, released |release_date|.  It is
+The latest version is coverage.py |release|, released |release-date|.  It is
 supported on:
 
 .. PYVERSIONS

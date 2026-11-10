@@ -63,7 +63,7 @@ of the docs.
 .. _Quick Start section: https://coverage.readthedocs.io/#quick-start
 
 
-Change history
+Change History
 --------------
 
 The complete history of changes is on the `change history page`_.
@@ -84,8 +84,13 @@ Community Code of Conduct`_.
 Contributing
 ------------
 
-Found a bug? Want to help improve the code or documentation? See the
-`Contributing section`_ of the docs.
+The `Contributing section`_ of the docs has full details about contributing to
+coverage.py, but importantly:
+
+- Communicate concisely.
+- Check for pull requests in progress.
+- Include tests but don't over-mock.
+- Describe user-visible changes in a scriv changelog fragment.
 
 .. _Contributing section: https://coverage.readthedocs.io/en/latest/contributing.html
 

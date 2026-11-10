@@ -23,13 +23,10 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
-- Fix: the JSON report keys functions and classes by name, but names can
-  repeat, for example a property getter and setter. Only the last one was
-  kept, so the others were missing from the report. Now repeated names get a
-  ``@<line number>`` suffix, as in the LCOV report.
+See ``news/*.rst`` files for upcoming changelog fragments.
 
 
-.. start-releases
+.. scriv-insert-here
 
 .. _changes_7-17-2:
 
@@ -2858,7 +2855,7 @@ Version 5.3 — 2020-09-13
 .. _issue 1011: https://github.com/coveragepy/coveragepy/issues/1011
 
 
-.. endchangesinclude
+.. scriv-end-here
 
 Older changes
 -------------

@@ -27,6 +27,7 @@ include setup.py
 include tox.ini
 
 recursive-include lab *
+recursive-include news *
 recursive-include tools *
 recursive-include .github *
 

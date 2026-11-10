@@ -5,19 +5,6 @@
 
 .DEFAULT_GOAL := help
 
-
-### Utilities
-
-.PHONY: help _clean_platform debug_clean clean_platform clean sterile venv install
-
-help:					#- Show this help.
-	@# Adapted from https://www.thapaliya.com/en/writings/well-documented-makefiles/
-	@# Markdown-inspired syntax is used in comments to print help.
-	@# Lines starting with '###' are section headers.
-	@# Targets with '#- ' comments are shown.
-	@echo Available targets:
-	@awk -F ':.*#-' '/^[^: ]+:.*#-/{printf "  \033[1m%-20s\033[m %s\n",$$1,$$2} /^###/{printf "\n%s\n",substr($$0,5)}' $(MAKEFILE_LIST)
-
 # For managing development tooling, use uv if it's available, otherwise pip.
 HAS_UV := $(shell command -v uv 2>/dev/null)
 ifdef HAS_UV
@@ -27,48 +14,17 @@ ifdef HAS_UV
 	INSTALL_R := uv pip sync
 	UNINSTALL := uv pip uninstall
 else
+	# PYVERSIONS
 	VENV := python3.11 -m venv .venv
 	INSTALL := python -m pip install
 	INSTALL_R := python -m pip install -r
 	UNINSTALL := python -m pip uninstall -y
 endif
 
-_clean_platform:
-	@rm -f *.so */*.so
-	@rm -f *.pyd */*.pyd
-	@rm -rf __pycache__ */__pycache__ */*/__pycache__ */*/*/__pycache__ */*/*/*/__pycache__ */*/*/*/*/__pycache__
-	@rm -f *.pyc */*.pyc */*/*.pyc */*/*/*.pyc */*/*/*/*.pyc */*/*/*/*/*.pyc
-	@rm -f *.pyo */*.pyo */*/*.pyo */*/*/*.pyo */*/*/*/*.pyo */*/*/*/*/*.pyo
-	@rm -f .DS_Store */.DS_Store */*/.DS_Store */*/*/.DS_Store */*/*/*/.DS_Store
 
-debug_clean:				#- Delete various debugging artifacts.
-	@rm -rf /tmp/dis /tmp/foo.out $$COVERAGE_DEBUG_FILE
+### Create the dev world
 
-clean: debug_clean _clean_platform	#- Remove artifacts of test execution, installation, etc.
-	@echo "Cleaning..."
-	@-$(UNINSTALL) -q coverage
-	@mkdir -p build	# so the chmod won't fail if build doesn't exist
-	@chmod -R 777 build
-	@rm -rf build coverage.egg-info dist htmlcov
-	@rm -f *.bak */*.bak */*/*.bak */*/*/*.bak */*/*/*/*.bak */*/*/*/*/*.bak
-	@rm -f coverage/*,cover
-	@rm -f MANIFEST
-	@rm -f .coverage .coverage.* .metacov*
-	@rm -f coverage.xml coverage.json coverage.lcov
-	@rm -f .tox/*/lib/*/site-packages/a0_metacov.pth
-	@rm -f */.coverage */*/.coverage */*/*/.coverage */*/*/*/.coverage */*/*/*/*/.coverage */*/*/*/*/*/.coverage
-	@rm -f tests/covmain.zip tests/zipmods.zip tests/zip1.zip
-	@rm -rf doc/_build doc/_spell
-	@rm -rf tmp
-	@rm -rf a1_coverage.pth
-	@rm -rf .*cache */.*cache */*/.*cache */*/*/.*cache .hypothesis
-	@rm -rf tests/actual
-	@-make -C tests/gold/html clean
-
-sterile: clean				#- Remove all non-controlled content, even if expensive.
-	rm -rf .venv
-	rm -rf .tox
-	rm -f cheats.txt
+.PHONY: venv install _install_e
 
 venv: .venv				#- Create a virtualenv in .venv.
 .venv:
@@ -76,6 +32,9 @@ venv: .venv				#- Create a virtualenv in .venv.
 
 install: venv				#- Install the developer tools.
 	$(INSTALL_R) requirements/dev.txt
+
+_install_e:
+	$(INSTALL) -e .
 
 
 ### Tests and quality checks
@@ -99,6 +58,7 @@ test:					#- Run the test suite.
 test_js:				#- Run the JavaScript tests in a headless browser.
 	tox -q -e js
 
+
 ### Metacov: coverage measurement of coverage.py itself
 # See tools/metacov.ini for details.
 
@@ -108,7 +68,7 @@ metacov:				#- Run meta-coverage, measuring ourself.
 	COVERAGE_COVERAGE=yes tox -q $(ARGS)
 
 metahtml:				#- Produce meta-coverage HTML reports.
-	tox exec -q $(ARGS) -- python3 tools/igor.py combine_html
+	tox exec -q $(ARGS) -- python tools/igor.py combine_html
 
 
 ### Requirements management
@@ -187,27 +147,7 @@ workflows:				#- Run cog on the workflows to keep them up-to-date.
 prebuild: css workflows cogdoc		#- One command for all source prep.
 
 
-### Sample HTML reports
-
-.PHONY: sample_html
-
-SAMPLE_HTML = doc/_extra/sample_html
-
-sample_html: clean			#- Generate sample HTML report.
-	$(INSTALL) -e .
-	cd ~/cog; \
-		rm -rf htmlcov; \
-		PYTEST_ADDOPTS= coverage run --branch --source=cogapp -m pytest -k CogTestsInMemory; \
-		coverage combine; \
-		coverage html
-	rm -rf $(SAMPLE_HTML)
-	cp -r ~/cog/htmlcov/ $(SAMPLE_HTML)/
-	rm $(SAMPLE_HTML)/.gitignore $(SAMPLE_HTML)/status.json
-	@# The file names have hashes that change, so new files need to be added.
-	git add -A $(SAMPLE_HTML)
-
-
-### Kitting: making releases
+### Packaging: making releases
 
 .PHONY: release_version edit_for_release cheats relbranch relcommit
 .PHONY: kit pypi_upload test_upload build_kits update_rtd
@@ -216,15 +156,17 @@ sample_html: clean			#- Generate sample HTML report.
 
 REPO_OWNER = coveragepy/coveragepy
 RTD_PROJECT = coverage
+IGOR = PYTHONPATH=. python tools/igor.py
 
 release_version:			# Update the version for a release.
-	python tools/igor.py release_version
+	$(IGOR) release_version
 
 edit_for_release:			# Edit sources to insert release facts (see tools/release.txt).
-	python tools/igor.py edit_for_release
+	python -m scriv collect
+	$(IGOR) edit_for_release
 
-cheats:					#- Create some useful snippets for releasing.
-	python tools/igor.py cheats | tee cheats.txt
+cheats:				#- Create some useful snippets for releasing.
+	$(IGOR) cheats | tee cheats.txt
 
 relbranch:				# Create the branch for releasing (see tools/release.txt).
 	git switch -c nedbat/release-$$(date +%Y%m%d-%H%M%S)
@@ -269,14 +211,14 @@ update_rtd:				# Update ReadTheDocs with the versions to show.
 
 bump_version:				# Edit sources to bump the version after a release (see tools/release.txt).
 	git switch -c nedbat/bump-version
-	python tools/igor.py bump_version
+	$(IGOR) bump_version
 	git commit -a -m "build: bump version to $$(python setup.py --version | sed 's/a.*//')"
 	git push -u origin @
 
 
 ### Documentation
 
-.PHONY: cogdoc dochtml docdev docspell
+.PHONY: cogdoc sample_html dochtml docdev docspell
 
 SPHINXOPTS = -aE
 SPHINXBUILD = $(DOCBIN)/sphinx-build $(SPHINXOPTS)
@@ -287,6 +229,20 @@ $(DOCBIN):
 
 cogdoc: $(DOCBIN)			#- Run docs through cog.
 	$(DOCBIN)/python -m cogapp -crP --verbosity=1 doc/*.rst doc/*/*.rst
+
+SAMPLE_HTML = doc/_extra/sample_html
+
+sample_html: clean _install_e		#- Generate sample HTML report.
+	cd ~/cog; \
+		rm -rf htmlcov; \
+		PYTEST_ADDOPTS= coverage run --branch --source=cogapp -m pytest -k CogTestsInMemory; \
+		coverage combine; \
+		coverage html
+	rm -rf $(SAMPLE_HTML)
+	cp -r ~/cog/htmlcov/ $(SAMPLE_HTML)/
+	rm $(SAMPLE_HTML)/.gitignore $(SAMPLE_HTML)/status.json
+	@# The file names have hashes that change, so new files need to be added.
+	git add -A $(SAMPLE_HTML)
 
 dochtml: cogdoc $(DOCBIN)		#- Build the docs HTML output.
 	$(SPHINXBUILD) -b html doc doc/_build/html
@@ -318,7 +274,62 @@ $(SCRIV_SOURCE): $(CHANGES_MD)
 	sed -r -e 's@]\(([a-zA-Z0-9_]+)\.rst#([^)]+)\)@](https://coverage.readthedocs.io/en/latest/\1.html#\2)@g' < tmp/trimmed.md > $(SCRIV_SOURCE)
 
 github_releases: $(SCRIV_SOURCE)	#- Update GitHub releases.
-	$(DOCBIN)/python -m scriv github-release --all --repo=coveragepy/coveragepy
+	$(DOCBIN)/python -m scriv github-release --config=tools/gh_release.toml --dry-run --all --repo=$(REPO_OWNER)
 
 comment_on_fixes: $(SCRIV_SOURCE)	#- Add a comment to issues that were fixed.
 	python tools/comment_on_fixes.py $(REPO_OWNER)
+
+
+### Clean up
+
+.PHONY: _clean_platform debug_clean clean_platform clean sterile
+
+_clean_platform:
+	@rm -f *.so */*.so
+	@rm -f *.pyd */*.pyd
+	@rm -rf __pycache__ */__pycache__ */*/__pycache__ */*/*/__pycache__ */*/*/*/__pycache__ */*/*/*/*/__pycache__
+	@rm -f *.pyc */*.pyc */*/*.pyc */*/*/*.pyc */*/*/*/*.pyc */*/*/*/*/*.pyc
+	@rm -f *.pyo */*.pyo */*/*.pyo */*/*/*.pyo */*/*/*/*.pyo */*/*/*/*/*.pyo
+	@rm -f .DS_Store */.DS_Store */*/.DS_Store */*/*/.DS_Store */*/*/*/.DS_Store
+
+debug_clean:				#- Delete various debugging artifacts.
+	@rm -rf /tmp/dis /tmp/foo.out $$COVERAGE_DEBUG_FILE
+
+clean: debug_clean _clean_platform	#- Remove artifacts of test execution, installation, etc.
+	@echo "Cleaning..."
+	@-$(UNINSTALL) -q coverage
+	@mkdir -p build	# so the chmod won't fail if build doesn't exist
+	@chmod -R 777 build
+	@rm -rf build coverage.egg-info dist htmlcov
+	@rm -f *.bak */*.bak */*/*.bak */*/*/*.bak */*/*/*/*.bak */*/*/*/*/*.bak
+	@rm -f coverage/*,cover
+	@rm -f MANIFEST
+	@rm -f .coverage .coverage.* .metacov*
+	@rm -f coverage.xml coverage.json coverage.lcov
+	@rm -f .tox/*/lib/*/site-packages/a0_metacov.pth
+	@rm -f */.coverage */*/.coverage */*/*/.coverage */*/*/*/.coverage */*/*/*/*/.coverage */*/*/*/*/*/.coverage
+	@rm -f tests/covmain.zip tests/zipmods.zip tests/zip1.zip
+	@rm -rf doc/_build doc/_spell
+	@rm -rf tmp
+	@rm -rf a1_coverage.pth
+	@rm -rf .*cache */.*cache */*/.*cache */*/*/.*cache .hypothesis
+	@rm -rf tests/actual
+	@-make -C tests/gold/html clean
+
+sterile: clean				#- Remove all non-controlled content, even if expensive.
+	rm -rf .venv
+	rm -rf .tox
+	rm -f cheats.txt
+
+
+### Help
+
+.PHONY: help
+
+help:					#- Show this help.
+	@# Adapted from https://www.thapaliya.com/en/writings/well-documented-makefiles/
+	@# Markdown-inspired syntax is used in comments to print help.
+	@# Lines starting with '###' are section headers.
+	@# Targets with '#- ' comments are shown.
+	@echo Available targets:
+	@awk -F ':.*#-' '/^[^: ]+:.*#-/{printf "  \033[1m%-20s\033[m %s\n",$$1,$$2} /^###/{printf "\n%s\n",substr($$0,5)}' $(MAKEFILE_LIST)
