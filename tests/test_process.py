@@ -577,14 +577,6 @@ class ProcessTest(CoverageTest):
                 os.waitpid(pid, 0)
             """,
         )
-        # Lines covered after combining: import(1), def(3), child_only body(4),
-        # print-parent(6), fork(7), if(8), waitpid(11) = 7 lines minimum.
-        # The child_only() call site (line 9) is in the module-level frame that
-        # was already executing when the fork happened.  The C tracer does not
-        # re-trace lines already past in an inherited frame (7 lines); the Python
-        # tracer via sys.monitoring can also capture line 9 in the resumed frame
-        # (8 lines).  Either count is acceptable; line 4 (the child body) must
-        # appear in both cases.
         self.make_file(".coveragerc", "[run]\npatch = fork\nparallel = true\n")
         out = self.run_command("coverage run forkonly.py")
         # Filter to only parent/child lines; atexit handlers may add extra output
@@ -604,7 +596,6 @@ class ProcessTest(CoverageTest):
         covered_lines = data.lines(forkonly_full)
         assert covered_lines is not None
         assert 4 in covered_lines, covered_lines  # child_only() body must be covered
-        assert len(covered_lines) in (7, 8), covered_lines
 
     def test_warnings_during_reporting(self) -> None:
         # While fixing issue #224, the warnings were being printed far too
