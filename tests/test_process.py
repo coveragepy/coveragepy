@@ -554,6 +554,83 @@ class ProcessTest(CoverageTest):
             assert seen < total_lines
         self.assert_doesnt_exist("impossible.txt")
 
+    @pytest.mark.skipif(not hasattr(os, "fork"), reason="Can't test os.fork, it doesn't exist.")
+    def test_patch_fork_only_child_coverage(self) -> None:
+        """patch=fork without patch=subprocess must still collect child coverage.
+
+        _after_fork_in_child() was calling process_startup() which requires
+        COVERAGE_PROCESS_START; without it the child ran untraced.
+        """
+        self.make_file(
+            "forkonly.py",
+            """\
+            import os
+
+            def child_only():
+                print(f"child,{os.getpid()}", flush=True)
+
+            print(f"parent,{os.getpid()}", flush=True)
+            pid = os.fork()
+            if pid == 0:
+                child_only()
+            else:
+                os.waitpid(pid, 0)
+            """,
+        )
+        self.make_file(".coveragerc", "[run]\npatch = fork\nparallel = true\n")
+        out = self.run_command("coverage run forkonly.py")
+        # Filter to only parent/child lines; atexit handlers may add extra output
+        # when running under metacoverage.
+        pid_lines = [l for l in out.splitlines() if l.startswith(("parent,", "child,"))]
+        pids = {key: int(pid) for key, pid in csv.reader(pid_lines)}
+        assert set(pids) == {"parent", "child"}
+        self.run_command("coverage combine")
+        data = coverage.CoverageData()
+        data.read()
+        forkonly_full = self.get_measured_filenames(data)["forkonly.py"]
+        covered_lines = data.lines(forkonly_full)
+        assert covered_lines is not None
+        assert 4 in covered_lines, covered_lines  # child_only() body must be covered
+
+    @pytest.mark.skipif(not hasattr(os, "fork"), reason="Can't test os.fork, it doesn't exist.")
+    def test_patch_fork_after_stop(self) -> None:
+        # The fork hook can't be unregistered, so it still runs after coverage
+        # has stopped, when there is no current Coverage object.
+        self.make_file(
+            "stop_then_fork.py",
+            """\
+            import os
+            import coverage
+            import coverage.control
+
+            startups = []
+            real_startup = coverage.control.process_startup
+            def spy_startup(**kwargs):
+                startups.append(kwargs)
+                return real_startup(**kwargs)
+            coverage.control.process_startup = spy_startup
+
+            cov = coverage.Coverage()
+            cov.start()
+            cov.stop()
+
+            pid = os.fork()
+            if pid == 0:
+                print(f"child: {coverage.Coverage.current()} {startups}", flush=True)
+                os._exit(0)
+            os.waitpid(pid, 0)
+            print("parent done", flush=True)
+            """,
+        )
+        self.make_file(".coveragerc", "[run]\npatch = fork\n")
+        # Metacov sets COVERAGE_PROCESS_START, which would start coverage in the child.
+        self.del_environ("COVERAGE_PROCESS_START")
+        self.del_environ("COVERAGE_PROCESS_CONFIG")
+        out = self.run_command("python stop_then_fork.py")
+        assert "child: None [{'force': True, 'slug': 'fork'}]\n" in out
+        assert "parent done\n" in out
+        self.assert_file_count(".coverage*", 1)  # only .coveragerc
+
     def test_warnings_during_reporting(self) -> None:
         # While fixing issue #224, the warnings were being printed far too
         # often.  Make sure they're not any more.
@@ -1455,9 +1532,7 @@ class ProcessStartupTest(CoverageTest):
         # measured automatically.  Create the data file here with bogus data in
         # it.
         self.make_main_and_sub()
-        data = coverage.CoverageData(".mycovdata")
-        data.add_lines({os.path.abspath("sub.py"): range(100)})
-        data.write()
+        self.make_data_file(".mycovdata", lines={os.path.abspath("sub.py"): range(100)})
 
         self.make_file(
             "coverage.ini",

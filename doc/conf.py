@@ -77,7 +77,7 @@ release_date = "November 4, 2026"
 # @@@ end
 
 rst_epilog = f"""
-.. |release_date| replace:: {release_date}
+.. |release-date| replace:: {release_date}
 .. |coverage-equals-release| replace:: coverage=={release}
 .. |doc-url| replace:: https://coverage.readthedocs.io/en/{release}
 .. |br| raw:: html
