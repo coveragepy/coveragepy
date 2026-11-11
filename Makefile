@@ -243,6 +243,7 @@ sample_html: clean _install_e		#- Generate sample HTML report.
 	rm $(SAMPLE_HTML)/.gitignore $(SAMPLE_HTML)/status.json
 	@# The file names have hashes that change, so new files need to be added.
 	git add -A $(SAMPLE_HTML)
+	git commit -m "docs: sample HTML for $$(python setup.py --version)"
 
 dochtml: cogdoc $(DOCBIN)		#- Build the docs HTML output.
 	$(SPHINXBUILD) -b html doc doc/_build/html
