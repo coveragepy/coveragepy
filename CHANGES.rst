@@ -28,6 +28,42 @@ See ``news/*.rst`` files for upcoming changelog fragments.
 
 .. scriv-insert-here
 
+.. _changelog-7.17.3:
+
+Version 7.17.3 — 2026-11-11
+---------------------------
+
+- Fix: using ``patch = fork``, a child process wasn't measured unless ``patch =
+  subprocess`` was also used, as described in `issue 2340`_.  This is now fixed
+  in `pull 2342`_.
+
+- Fix: the JSON report keys functions and classes by name, but names can
+  repeat, for example a property getter and setter. Only the last one was
+  kept, so the others were missing from the report. Now repeated names get a
+  ``@<line number>`` suffix, as in the LCOV report. `pull 2353`_.
+
+- Fix: when combining parallel data files, a file that disappears after it
+  has been listed (for example, when the process writing it is still finishing
+  its write) is now reported with a warning, instead of stopping the combine
+  with a ``DataError``. This was a regression in 7.17.1. Closes `issue
+  2364`_.
+
+- Fix: with ``patch = subprocess`` on Python 3.13, a measured subprocess that
+  was stopped with SIGINT would exit with status 1 instead of dying from the
+  signal. This was a regression in 7.17.1, and is now fixed, closing `issue
+  2362`_.
+
+- Performance: on Python 3.13 and later, using the C tracer should result in
+  test suites running about 8% to 12% faster (`pull 2371`_).
+
+.. _issue 2340: https://github.com/coveragepy/coveragepy/issues/2340
+.. _pull 2342: https://github.com/coveragepy/coveragepy/pull/2342
+.. _pull 2353: https://github.com/coveragepy/coveragepy/pull/2353
+.. _issue 2364: https://github.com/coveragepy/coveragepy/issues/2364
+.. _issue 2362: https://github.com/coveragepy/coveragepy/issues/2362
+.. _pull 2371: https://github.com/coveragepy/coveragepy/pull/2371
+
+
 .. _changes_7-17-2:
 
 Version 7.17.2 — 2026-11-04
