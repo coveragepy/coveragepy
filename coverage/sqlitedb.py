@@ -83,6 +83,7 @@ class SqliteDb:
         self.filename = filename
         self.no_disk = no_disk
         self.read_only = read_only
+        self.journal_checked = False
         self.nest = 0
         self.con: sqlite3.Connection | None = None
 
@@ -111,8 +112,12 @@ class SqliteDb:
         if not filename.startswith("file:"):
             if self.read_only:
                 filename = read_only_uri(filename)
-            else:
+            elif not self.journal_checked:
+                # We reconnect for every outermost `with` block, so only probe
+                # the first time: the probe is costly, and it runs during
+                # interpreter shutdown, when less work is safer.  #2362
                 check_hot_journal(filename)
+                self.journal_checked = True
         try:
             # uri=True is needed for memory and read-only URIs, and is harmless
             # for plain file names. It also makes ATTACH honor URIs.

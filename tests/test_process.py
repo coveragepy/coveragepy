@@ -1527,6 +1527,42 @@ class ProcessStartupTest(CoverageTest):
         assert line_counts(data)["main.py"] == 3
         assert line_counts(data)["sub.py"] == 3
 
+    @pytest.mark.skipif(env.WINDOWS, reason="Windows doesn't deliver SIGINT this way")
+    def test_patch_subprocess_sigint(self) -> None:
+        # A measured subprocess killed by SIGINT should still die from the
+        # signal, as it would without coverage. This was a bug on 3.13. #2362
+        self.make_file(
+            "main.py",
+            """\
+            import os, signal, subprocess, sys, time
+            proc = subprocess.Popen(
+                [sys.executable, "sub.py"], stderr=subprocess.DEVNULL,
+            )
+            deadline = time.monotonic() + 30
+            while not os.path.exists("ready.txt") and time.monotonic() < deadline:
+                time.sleep(0.05)
+            proc.send_signal(signal.SIGINT)
+            print(f"child status: {proc.wait()}")
+            """,
+        )
+        self.make_file(
+            "sub.py",
+            """\
+            import time
+            open("ready.txt", "w").close()
+            time.sleep(30)
+            """,
+        )
+        self.make_file(
+            ".coveragerc",
+            """\
+            [run]
+            patch = subprocess
+            """,
+        )
+        out = self.run_command("coverage run main.py")
+        assert out == f"child status: {-signal.SIGINT}\n"
+
     def test_subprocess_with_pth_files(self) -> None:
         # An existing data file should not be read when a subprocess gets
         # measured automatically.  Create the data file here with bogus data in
