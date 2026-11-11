@@ -936,6 +936,49 @@ class CoverageDataFilesTest(CoverageTest):
         assert covdata.data_filename() == data_file
         self.assert_file_count(".coverage.*", 1)
 
+    def test_true_suffix_with_data_written_by_another_object(self) -> None:
+        # nbval points a notebook kernel's Coverage at pytest-cov's parallel
+        # data file, so the kernel writes its data into a file it doesn't
+        # own. The hash in the file name has to include that data, or
+        # combining skips the file as a duplicate of a file with no data, like
+        # one from a subprocess that measured nothing, and deletes it.
+        # https://github.com/coveragepy/coveragepy/issues/2370
+        owner = DebugCoverageData(suffix=True)
+        owner.add_lines({})
+        kernel = DebugCoverageData(basename=owner.data_filename())
+        kernel.read()
+        kernel.add_lines(LINES_1)
+        kernel.write()
+        owner.write()
+
+        empty = DebugCoverageData(suffix=True)
+        empty.add_lines({})
+        empty.write()
+
+        classifier = DataFileClassifier()
+        assert classifier.classify(empty.data_filename()) == "combine"
+        assert classifier.classify(owner.data_filename()) == "combine"
+
+        covdata = DebugCoverageData()
+        combine_parallel_data(covdata)
+        assert_line_counts(covdata, SUMMARY_1)
+
+    def test_true_suffix_with_data_from_update(self) -> None:
+        # Data added with update() also has to be in the hash in the file name.
+        other = DebugCoverageData(basename="other")
+        other.add_lines(LINES_1)
+        owner = DebugCoverageData(suffix=True)
+        owner.update(other)
+        owner.write()
+
+        empty = DebugCoverageData(suffix=True)
+        empty.add_lines({})
+        empty.write()
+
+        classifier = DataFileClassifier()
+        assert classifier.classify(empty.data_filename()) == "combine"
+        assert classifier.classify(owner.data_filename()) == "combine"
+
     def test_combining(self) -> None:
         self.assert_file_count(".coverage.*", 0)
 
