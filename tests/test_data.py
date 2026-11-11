@@ -879,16 +879,15 @@ class CoverageDataFilesTest(CoverageTest):
         covdata1.add_lines(LINES_1)
         covdata1.write()
         self.assert_doesnt_exist(".coverage")
-        data_files1 = glob.glob(".coverage.*")
-        assert len(data_files1) == 1
+        self.assert_file_count(".coverage.*", 1)
 
         # Another suffix=True will choose a different name.
         covdata2 = DebugCoverageData(suffix=True)
         covdata2.add_lines(LINES_1)
         covdata2.write()
         self.assert_doesnt_exist(".coverage")
+        self.assert_file_count(".coverage.*", 2)
         data_files2 = glob.glob(".coverage.*")
-        assert len(data_files2) == 2
 
         # In addition to being different, the suffixes have the pid in them.
         assert all(str(os.getpid()) in fn for fn in data_files2)
@@ -903,8 +902,8 @@ class CoverageDataFilesTest(CoverageTest):
             covdata.write()
             covdata.add_lines(more_lines)
             covdata.write()
+        self.assert_file_count(".coverage.*", 2)
         data_files = glob.glob(".coverage.*")
-        assert len(data_files) == 2
         assert all(good_filename_match(fn)["hash"] for fn in data_files)
 
         covdata3 = DebugCoverageData()
