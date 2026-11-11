@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import fnmatch
 import glob
-import io
 import os
 import os.path
 import re
@@ -1161,9 +1160,7 @@ class ReportIncludeOmitTest(IncludeOmitTestsMixin, CoverageTest):
         cov = coverage.Coverage()
         with cov.collect():
             import usepkgs  # pylint: disable=import-error, unused-import
-        report = io.StringIO()
-        cov.report(file=report, **kwargs)
-        return report.getvalue()
+        return self.get_report(cov, squeeze=False, **kwargs)
 
 
 class XmlIncludeOmitTest(IncludeOmitTestsMixin, CoverageTest):
@@ -1304,11 +1301,15 @@ class TestRunnerPluginTest(CoverageTest):
         self.start_import_stop(cov, "prog")
         cov.combine()
         cov.save()
-        report = io.StringIO()
-        cov.report(
-            show_missing=None, ignore_errors=True, file=report, skip_covered=None, skip_empty=None
+        report = self.get_report(
+            cov,
+            squeeze=False,
+            show_missing=None,
+            ignore_errors=True,
+            skip_covered=None,
+            skip_empty=None,
         )
-        assert report.getvalue() == textwrap.dedent("""\
+        assert report == textwrap.dedent("""\
             Name      Stmts   Miss  Cover
             -----------------------------
             prog.py       4      1    75%
