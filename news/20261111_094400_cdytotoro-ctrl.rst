@@ -1,0 +1,7 @@
+- Fix: when combining parallel data files, a file that disappears after it
+  has been listed (for example, when the process writing it is still finishing
+  its write) is now reported with a warning, instead of stopping the combine
+  with a ``DataError``.  This was a regression in 7.17.1, closing `issue
+  2364`_.
+
+.. _issue 2364: https://github.com/coveragepy/coveragepy/issues/2364
