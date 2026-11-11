@@ -215,8 +215,7 @@ class ApiTest(CoverageTest):
         with mock.patch.object(coverage.inorout, "sysconfig", FakeSysconfig()):
             cov = coverage.Coverage()
             self.start_import_stop(cov, "mymain")
-        files = cov.get_data().measured_files()
-        assert not any(os.path.basename(f) == "colorsys.py" for f in files)
+        assert "colorsys.py" not in self.get_measured_filenames(cov.get_data())
 
     def test_exclude_list(self) -> None:
         cov = coverage.Coverage()
