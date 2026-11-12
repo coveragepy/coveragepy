@@ -48,7 +48,7 @@ mypy:					#- Run the type checker.
 	tox -q -e mypy
 
 precommit:				#- Run the pre-commit checks.
-	PYTHONWARNDEFAULTENCODING= pre-commit run --all-files
+	PYTHONWARNDEFAULTENCODING= pre-commit run --all-files --show-diff-on-failure
 
 quality: lint mypy precommit		#- Run all the quality checks.
 
