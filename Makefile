@@ -243,6 +243,7 @@ sample_html: clean _install_e		#- Generate sample HTML report.
 	rm $(SAMPLE_HTML)/.gitignore $(SAMPLE_HTML)/status.json
 	@# The file names have hashes that change, so new files need to be added.
 	git add -A $(SAMPLE_HTML)
+	git commit -m "docs: sample HTML for $$(python setup.py --version)"
 
 dochtml: cogdoc $(DOCBIN)		#- Build the docs HTML output.
 	$(SPHINXBUILD) -b html doc doc/_build/html
@@ -274,7 +275,7 @@ $(SCRIV_SOURCE): $(CHANGES_MD)
 	sed -r -e 's@]\(([a-zA-Z0-9_]+)\.rst#([^)]+)\)@](https://coverage.readthedocs.io/en/latest/\1.html#\2)@g' < tmp/trimmed.md > $(SCRIV_SOURCE)
 
 github_releases: $(SCRIV_SOURCE)	#- Update GitHub releases.
-	$(DOCBIN)/python -m scriv github-release --config=tools/gh_release.toml --dry-run --all --repo=$(REPO_OWNER)
+	$(DOCBIN)/python -m scriv github-release --config=tools/gh_release.toml --all --repo=$(REPO_OWNER)
 
 comment_on_fixes: $(SCRIV_SOURCE)	#- Add a comment to issues that were fixed.
 	python tools/comment_on_fixes.py $(REPO_OWNER)

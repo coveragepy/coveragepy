@@ -116,6 +116,10 @@ jobs:
           #               if the_arch == "aarch64":
           #                   # https://github.com/pypa/cibuildwheel/issues/2257
           #                   them["os-version"] = "22.04-arm"
+          #               if the_arch == "i686":
+          #                   # Can't resolve DNS in the container on ubuntu 26.04.
+          #                   # https://github.com/actions/runner-images/issues/15312
+          #                   them["os-version"] = "24.04"
           #               if the_arch == "ppc64le":
           #                   them["os-version"] = "24.04-ppc64le"
           #               print(f"- {json.dumps(them)}")
@@ -138,11 +142,11 @@ jobs:
           - {"os": "ubuntu", "py": "cp313", "arch": "x86_64", "cipy": "3.11"}
           - {"os": "ubuntu", "py": "cp314", "arch": "x86_64", "cipy": "3.11"}
           - {"os": "ubuntu", "py": "cp315", "arch": "x86_64", "cipy": "3.11"}
-          - {"os": "ubuntu", "py": "cp311", "arch": "i686", "cipy": "3.11"}
-          - {"os": "ubuntu", "py": "cp312", "arch": "i686", "cipy": "3.11"}
-          - {"os": "ubuntu", "py": "cp313", "arch": "i686", "cipy": "3.11"}
-          - {"os": "ubuntu", "py": "cp314", "arch": "i686", "cipy": "3.11"}
-          - {"os": "ubuntu", "py": "cp315", "arch": "i686", "cipy": "3.11"}
+          - {"os": "ubuntu", "py": "cp311", "arch": "i686", "cipy": "3.11", "os-version": "24.04"}
+          - {"os": "ubuntu", "py": "cp312", "arch": "i686", "cipy": "3.11", "os-version": "24.04"}
+          - {"os": "ubuntu", "py": "cp313", "arch": "i686", "cipy": "3.11", "os-version": "24.04"}
+          - {"os": "ubuntu", "py": "cp314", "arch": "i686", "cipy": "3.11", "os-version": "24.04"}
+          - {"os": "ubuntu", "py": "cp315", "arch": "i686", "cipy": "3.11", "os-version": "24.04"}
           - {"os": "ubuntu", "py": "cp311", "arch": "aarch64", "cipy": "3.11", "os-version": "22.04-arm"}
           - {"os": "ubuntu", "py": "cp312", "arch": "aarch64", "cipy": "3.11", "os-version": "22.04-arm"}
           - {"os": "ubuntu", "py": "cp313", "arch": "aarch64", "cipy": "3.11", "os-version": "22.04-arm"}
@@ -195,7 +199,7 @@ jobs:
           - {"os": "macos", "py": "cp313", "arch": "arm64_iphonesimulator", "cipy": "3.11", "platform": "ios", "os-version": "26"}
           - {"os": "macos", "py": "cp314", "arch": "arm64_iphonesimulator", "cipy": "3.11", "platform": "ios", "os-version": "26"}
           - {"os": "macos", "py": "cp315", "arch": "arm64_iphonesimulator", "cipy": "3.11", "platform": "ios", "os-version": "26"}
-        # [[[end]]] (sum: f3kjK8N7/g)
+        # [[[end]]] (sum: LvtBpYV0Q0)
         #            ^^^^^^^^^^^^^^^
         # If a check fails and points to this checksum line, it means you edited
         # the matrix directly instead of editing the Python code in the comment
