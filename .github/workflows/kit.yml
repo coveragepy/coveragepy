@@ -248,6 +248,7 @@ jobs:
           CIBW_PLATFORM: ${{ matrix.platform || 'auto' }}
           CIBW_BUILD: ${{ matrix.py }}*-*
           CIBW_ARCHS: ${{ matrix.arch }}
+          CIBW_BUILD_FRONTEND: "${{ matrix.arch == 'i686' && 'build; args: --no-isolation' || 'build' }}"
           CIBW_ENVIRONMENT: PIP_DISABLE_PIP_VERSION_CHECK=1
         run: |
           python -m cibuildwheel --output-dir wheelhouse
