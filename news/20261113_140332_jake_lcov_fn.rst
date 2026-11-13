@@ -1,0 +1,5 @@
+- |
+  Fix: ``lcov`` output now marks functions as starting on the first non-signature line, fixing
+  errors about "inconsistent" tracefiles during combination.  Closed `issue 2394`_.
+
+  .. _issue 2394: https://github.com/coveragepy/coveragepy/issues/2394
