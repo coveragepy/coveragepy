@@ -350,6 +350,105 @@ class MemoryFumblingTest(CoverageTest):
         out = self.run_command("python bad_key.py")
         assert out == "ValueError: can't hash BadKey\n"
 
+    # A CTracer driven by hand, for the tests of how it adds new files to its
+    # data when other threads could be doing the same.
+    TRACER_RIG = """\
+        import sys
+        from coverage.disposition import disposition_init
+        from coverage.tracer import CTracer, CFileDisposition
+
+        def make_tracer(fn):
+            \"\"\"A CTracer measuring the file the function `fn` is in.\"\"\"
+            filename = fn.__code__.co_filename
+            disp = disposition_init(CFileDisposition, filename)
+            disp.source_filename = filename
+            disp.trace = True
+            tracer = CTracer()
+            tracer.data = {}
+            tracer.file_tracers = {}
+            tracer.should_trace_cache = {filename: disp}
+            tracer.trace_arcs = False
+            tracer.should_trace = None
+            tracer.concur_id_func = None
+            tracer.should_start_context = None
+            tracer.lock_data = lambda: None
+            tracer.unlock_data = lambda: None
+            return tracer
+
+        def run_traced(tracer, fn):
+            \"\"\"Call `fn` under `tracer`, printing any error.\"\"\"
+            sys.settrace(tracer.start())
+            try:
+                fn()
+            except Exception as exc:
+                print(f"{type(exc).__name__}: {exc}")
+            finally:
+                tracer.stop()
+                sys.settrace(None)
+        """
+
+    @pytest.mark.skipif(not testenv.C_TRACER, reason="Only the C tracer has this code")
+    def test_ctracer_rechecks_under_lock(self) -> None:
+        # Another thread can add the file between the first lookup and taking
+        # the lock.  The tracer must use that thread's set, not replace it, or
+        # the lines that thread records are lost.
+        self.make_file("tracer_rig.py", self.TRACER_RIG)
+        self.make_file(
+            "recheck.py",
+            """\
+            from tracer_rig import make_tracer, run_traced
+
+            def f():
+                return 1
+
+            tracer = make_tracer(f)
+            filename = f.__code__.co_filename
+            theirs = set()
+
+            def lock_data():
+                # Another thread added the file while we waited for the lock.
+                tracer.data.setdefault(filename, theirs)
+
+            tracer.lock_data = lock_data
+            run_traced(tracer, f)
+            print(tracer.data[filename] is theirs)
+            print(theirs == {f.__code__.co_firstlineno + 1})
+            """,
+        )
+        out = self.run_command("python recheck.py")
+        assert out == "True\nTrue\n"
+
+    @pytest.mark.skipif(not testenv.C_TRACER, reason="Only the C tracer has this code")
+    def test_ctracer_registers_plugin_before_data(self) -> None:
+        # Other threads find a file in the data without taking the lock, and
+        # start recording its lines, so its plugin must be registered first.
+        # If registering the plugin fails, the file must not be in the data.
+        self.make_file("tracer_rig.py", self.TRACER_RIG)
+        self.make_file(
+            "plugin_order.py",
+            """\
+            from tracer_rig import make_tracer, run_traced
+
+            class Plugin:
+                _coverage_plugin_name = "fake.Plugin"
+
+            class FileTracer:
+                _coverage_plugin = Plugin()
+
+            def f():
+                pass
+
+            tracer = make_tracer(f)
+            tracer.should_trace_cache[f.__code__.co_filename].file_tracer = FileTracer()
+            tracer.file_tracers = ()    # Not a dict, so recording the plugin fails.
+            run_traced(tracer, f)
+            print(tracer.data)
+            """,
+        )
+        out = self.run_command("python plugin_order.py")
+        assert out.startswith("SystemError: ")
+        assert out.splitlines()[1:] == ["{}"]
+
     @pytest.mark.skipif(not testenv.C_TRACER, reason="Only the C tracer has refcounting issues")
     def test_dropping_none(self) -> None:  # pragma: not covered
         # TODO: Mark this so it will only be run sometimes.
