@@ -62,6 +62,48 @@ class ApiTest(CoverageTest):
         here = self.clean_files(here, ["*.pyc", "__pycache__", "*$py.class"])
         assert_count_equal(here, files)
 
+    @pytest.mark.skipif(env.PYPY, reason="PyPy has no gc.callbacks")
+    def test_switch_context_gc_deadlock(self) -> None:
+        # https://github.com/coveragepy/coveragepy/issues/2348
+        # switch_context() used to clear the collected data while holding the
+        # data lock.  If the GC ran measured code then, the tracer took the
+        # lock again on the same thread and deadlocked.  The subprocess gives
+        # up after 10 seconds, so a deadlock fails this test instead of
+        # hanging the suite.
+        self.make_file(
+            "measured.py",
+            """\
+            def work():
+                return 1
+
+            def on_gc(phase, info):
+                # A new code object each time, so sysmon sees new code too.
+                exec(compile("x = 1", __file__, "exec"))
+            """,
+        )
+        self.make_file(
+            "switcher.py",
+            """\
+            import faulthandler, gc
+            import coverage
+
+            faulthandler.dump_traceback_later(10, exit=True)
+            cov = coverage.Coverage(include=["measured.py"])
+            with cov.collect():
+                import measured
+                gc.callbacks.append(measured.on_gc)
+                gc.set_threshold(1)
+                for i in range(100):
+                    measured.work()
+                    cov.switch_context(f"test{i}")
+                gc.callbacks.clear()
+            faulthandler.cancel_dump_traceback_later()
+            print("done")
+            """,
+        )
+        out = self.run_command("python switcher.py")
+        assert out.endswith("done\n")
+
     def test_unexecuted_file(self) -> None:
         cov = coverage.Coverage()
 
