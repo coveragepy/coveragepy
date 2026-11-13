@@ -281,6 +281,8 @@ class ConcurrencyTest(CoverageTest):
         code = SIMPLE.format(QLIMIT=self.QLIMIT)
         self.try_some_code(code, "greenlet", greenlet)
 
+    @pytest.mark.skipif(greenlet is None, reason="greenlet isn't installed")
+    @pytest.mark.skipif(not testenv.C_TRACER, reason="Only CTracer supports greenlet concurrency")
     def test_greenlet_switch_records_lines_in_the_right_file(self) -> None:
         # https://github.com/coveragepy/coveragepy/issues/841
         # Switching into a greenlet resumes its frame without a call event.
@@ -316,11 +318,7 @@ class ConcurrencyTest(CoverageTest):
         )
         self.make_file("prog.py", "import parent\nprint(parent.main())\n")
 
-        _, out = self.run_command_status("coverage run --branch --concurrency=greenlet prog.py")
-        expected_cant_trace = cant_trace_msg("greenlet", greenlet)
-        if expected_cant_trace is not None:
-            assert expected_cant_trace in out
-            pytest.skip(f"Can't test: {expected_cant_trace}")
+        out = self.run_command("coverage run --branch --concurrency=greenlet prog.py")
         assert out == "6\n"
 
         data = coverage.CoverageData(".coverage")
