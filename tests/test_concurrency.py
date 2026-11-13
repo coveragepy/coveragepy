@@ -249,6 +249,62 @@ class ConcurrencyTest(CoverageTest):
         code = SIMPLE.format(QLIMIT=self.QLIMIT)
         self.try_some_code(code, "thread", threading)
 
+    # https://github.com/nedbat/coveragepy/issues/2383
+    @pytest.mark.skipif(env.WINDOWS, reason="pthread_kill is Unix-only")
+    @pytest.mark.skipif(
+        not testenv.CAN_MEASURE_THREADS, reason="Can't measure threads with this core."
+    )
+    def test_keyboard_interrupt_releases_data_lock(self) -> None:
+        # A KeyboardInterrupt while the tracer holds data_lock must not
+        # leave it locked, or the final save() hangs.
+        self.make_file(
+            "new_file.py",
+            "x = 1\n",
+        )
+        self.make_file(
+            "repro_lock.py",
+            """\
+            import faulthandler
+            import signal
+            import threading
+            import time
+
+            import coverage
+
+            cov = coverage.Coverage(data_file=".coverage_lock", include=["new_file.py"])
+            cov.start()
+            lock = cov._collector.data_lock
+            held = threading.Event()
+
+            def helper():
+                lock.acquire()
+                held.set()
+                time.sleep(0.3)
+                signal.pthread_kill(threading.get_ident(), signal.SIGINT)
+                time.sleep(0.1)
+                lock.release()
+
+            t = threading.Thread(target=helper)
+            t.start()
+            held.wait()
+            try:
+                import new_file
+            except KeyboardInterrupt:
+                print("KeyboardInterrupt")
+            t.join()
+            print("data_lock still locked:", lock.locked())
+
+            faulthandler.dump_traceback_later(5, exit=True)
+            cov.stop()
+            print("saving...", flush=True)
+            cov.save()
+            print("saved")
+            """,
+        )
+        out = self.run_command("python repro_lock.py")
+        assert "data_lock still locked: False" in out
+        assert "saved" in out
+
     # https://github.com/coveragepy/coveragepy/issues/663
     @pytest.mark.skipif(env.WINDOWS, reason="gevent has problems on Windows: #663")
     def test_gevent(self) -> None:
