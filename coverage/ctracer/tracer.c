@@ -70,6 +70,7 @@ CTracer_init(CTracer *self, PyObject *args_unused, PyObject *kwds_unused)
     }
 
     self->pdata_stack = &self->data_stack;
+    self->pcur_entry = &self->empty_entry;
 
     self->context = Py_None;
     Py_INCREF(self->context);
@@ -214,6 +215,20 @@ error:
     Py_XDECREF(packed_obj);
 
     return ret;
+}
+
+/* Point self->pcur_entry at the top of the current data stack.  When the
+   stack is empty, use an empty entry rather than pointing before the array.
+   */
+static void
+CTracer_set_pcur_entry(CTracer *self)
+{
+    if (self->pdata_stack->depth >= 0) {
+        self->pcur_entry = &self->pdata_stack->stack[self->pdata_stack->depth];
+    }
+    else {
+        self->pcur_entry = &self->empty_entry;
+    }
 }
 
 /* Set self->pdata_stack to the proper data_stack to use. */
@@ -824,7 +839,7 @@ CTracer_handle_return(CTracer *self, PyFrameObject *frame)
         /* Pop the stack. */
         SHOWLOG(PyFrame_GetLineNumber(frame), MyFrame_BorrowCode(frame)->co_filename, "return");
         self->pdata_stack->depth--;
-        self->pcur_entry = &self->pdata_stack->stack[self->pdata_stack->depth];
+        CTracer_set_pcur_entry(self);
     }
 
     ret = RET_OK;
@@ -1033,6 +1048,24 @@ CTracer_stop(CTracer *self, PyObject *args_unused)
 }
 
 static PyObject *
+CTracer_greenlet_switched(CTracer *self, PyObject *args_unused)
+{
+    /* A greenlet.settrace() callback.  Switching into a greenlet resumes its
+       frame without a call event, so the line events that follow would be
+       recorded with the previous greenlet's entry.  The callback runs as the
+       target greenlet, so pick up its data stack now.
+       */
+    if (atomic_load(&self->started)) {
+        if (CTracer_set_pdata_stack(self) < 0) {
+            return NULL;
+        }
+        CTracer_set_pcur_entry(self);
+    }
+
+    Py_RETURN_NONE;
+}
+
+static PyObject *
 CTracer_activity(CTracer *self, PyObject *args_unused)
 {
     if (atomic_load(&self->activity)) {
@@ -1132,6 +1165,9 @@ CTracer_methods[] = {
 
     { "reset_activity", (PyCFunction) CTracer_reset_activity, METH_VARARGS,
             PyDoc_STR("Reset the activity flag") },
+
+    { "greenlet_switched", (PyCFunction) CTracer_greenlet_switched, METH_VARARGS,
+            PyDoc_STR("Callback for greenlet.settrace") },
 
     { NULL }
 };
