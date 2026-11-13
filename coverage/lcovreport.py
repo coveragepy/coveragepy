@@ -81,14 +81,12 @@ def lcov_functions(
     # where, for whatever reason, when collecting data in --branch mode,
     # top-level functions have an empty lines array.  Instead we just don't
     # emit function records for those.
-
-    # suppressions because of https://github.com/pylint-dev/pylint/issues/9923
+    #
+    # We ignore the `region.start` here because lcov 2.4+ consider a file
+    # "inconsistent" if the line data says any line (including the
+    # signature) is hit but the function data says it wasn't.
     functions = [
-        (
-            min(region.start, min(region.lines)),  # pylint: disable=nested-min-max
-            max(region.start, max(region.lines)),  # pylint: disable=nested-min-max
-            region,
-        )
+        (min(region.lines), max(region.lines), region)
         for region in fr.code_regions()
         if region.kind == "function" and region.lines
     ]
@@ -115,7 +113,7 @@ def lcov_functions(
 
         name = lcov_field(region.name)
         if name in function_names:
-            name += f"@{first_line}"
+            name += f"@{region.start}"
         else:
             function_names.add(name)
         outfile.write(f"FN:{first_line},{last_line},{name}\n")
