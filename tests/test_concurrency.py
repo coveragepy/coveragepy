@@ -281,6 +281,54 @@ class ConcurrencyTest(CoverageTest):
         code = SIMPLE.format(QLIMIT=self.QLIMIT)
         self.try_some_code(code, "greenlet", greenlet)
 
+    @pytest.mark.skipif(greenlet is None, reason="greenlet isn't installed")
+    @pytest.mark.skipif(not testenv.C_TRACER, reason="Only CTracer supports greenlet concurrency")
+    def test_greenlet_switch_records_lines_in_the_right_file(self) -> None:
+        # https://github.com/coveragepy/coveragepy/issues/841
+        # Switching into a greenlet resumes its frame without a call event.
+        # The lines after the switch used to be recorded in the file of the
+        # greenlet that switched away, or lost if it had finished.
+        self.make_file(
+            "parent.py",
+            """\
+            import greenlet
+            import child
+
+            def main():
+                g = greenlet.greenlet(child.run)
+                g.switch()
+                x = 1
+                y = 2
+                g.switch()
+                z = 3
+                return x + y + z
+            """,
+        )
+        self.make_file(
+            "child.py",
+            """\
+            import greenlet
+
+            def run():
+                greenlet.getcurrent().parent.switch()
+                p = 10
+                q = 20
+                return p + q
+            """,
+        )
+        self.make_file("prog.py", "import parent\nprint(parent.main())\n")
+
+        out = self.run_command("coverage run --branch --concurrency=greenlet prog.py")
+        assert out == "6\n"
+
+        data = coverage.CoverageData(".coverage")
+        data.read()
+        assert sorted(data.lines(abs_file("parent.py")) or []) == [1, 2, 4, 5, 6, 7, 8, 9, 10, 11]
+        assert sorted(data.lines(abs_file("child.py")) or []) == [1, 3, 4, 5, 6, 7]
+        parent_arcs = data.arcs(abs_file("parent.py")) or []
+        assert (6, 7) in parent_arcs
+        assert (9, 10) in parent_arcs
+
     # The code in tracer.c that went with this test doesn't seem particular to
     # eventlet. I don't want to remove this test, but I don't know how to
     # rewrite it to demonstrate the original problem without eventlet.
