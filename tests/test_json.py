@@ -666,3 +666,40 @@ class JsonReportTest(UsingModulesMixin, CoverageTest):
         cov = coverage.Coverage(branch=True)
         mod = self.start_import_stop(cov, "wtf")
         cov.json_report(mod)
+
+    def test_context_coverage_regions(self) -> None:
+        """Test that show_contexts filters contexts per region (issue 2374)."""
+        self.make_file(
+            "config",
+            """\
+            [json]
+            show_contexts = True
+            """,
+        )
+        cov = coverage.Coverage(context="main_test", config_file="config")
+        self.make_file(
+            "regions_ctx.py",
+            """\
+            def func_one():
+                a = 2
+                return a
+
+            def func_two():
+                b = 6
+                return b
+
+            func_one()
+            func_two()
+            """,
+        )
+        mod = self.start_import_stop(cov, "regions_ctx")
+        output_path = os.path.join(self.temp_dir, "regions_ctx.json")
+        cov.json_report(mod, outfile=output_path)
+        with open(output_path, encoding="utf-8") as f:
+            data = json.load(f)
+
+        funcs = data["files"]["regions_ctx.py"]["functions"]
+        assert "func_one" in funcs
+        assert "func_two" in funcs
+        assert set(funcs["func_one"]["contexts"].keys()) == {"2", "3"}
+        assert set(funcs["func_two"]["contexts"].keys()) == {"6", "7"}
