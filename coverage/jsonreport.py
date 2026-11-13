@@ -124,7 +124,9 @@ class JsonReporter:
         }
         file_contexts = None
         if self.config.json_show_contexts:
-            reported_file["contexts"] = file_contexts = coverage_data.contexts_by_lineno(analysis.filename)
+            reported_file["contexts"] = file_contexts = coverage_data.contexts_by_lineno(
+                analysis.filename
+            )
         if coverage_data.has_arcs():
             summary.update(self.make_branch_summary(nums))
             reported_file["executed_branches"] = list(
