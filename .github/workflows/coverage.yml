@@ -39,12 +39,12 @@ jobs:
       workflow: ${{ steps.filter.outputs.workflow }}
     steps:
       - name: "Check out the repo"
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
 
       - name: "Examine changed files"
-        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        uses: dorny/paths-filter@v4.0.3
         id: filter
         with:
           filters: |
@@ -114,12 +114,12 @@ jobs:
 
     steps:
       - name: "Check out the repo"
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
 
       - name: "Set up Python"
-        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        uses: actions/setup-python@v7.1.0
         with:
           python-version: "${{ matrix.python-version }}"
           allow-prereleases: true
@@ -158,7 +158,7 @@ jobs:
           mv .metacov ".metacov.$MATRIX_ID"
 
       - name: "Upload coverage data"
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: metacov-${{ env.MATRIX_ID }}
           path: .metacov.*
@@ -175,13 +175,13 @@ jobs:
 
     steps:
       - name: "Check out the repo"
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 200
 
       - name: "Set up Python"
-        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        uses: actions/setup-python@v7.1.0
         with:
           python-version: "3.11" # Minimum of PYVERSIONS
           cache: pip
@@ -202,7 +202,7 @@ jobs:
           python tools/igor.py zip_mods
 
       - name: "Download coverage data"
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        uses: actions/download-artifact@v8.0.2
         with:
           pattern: metacov-*
           merge-multiple: true
@@ -216,14 +216,14 @@ jobs:
           python tools/igor.py combine_html
 
       - name: "Upload HTML report"
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: html_report
           path: htmlcov
           include-hidden-files: true
 
       - name: "Upload other reports"
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: json_xml
           path: |
@@ -333,7 +333,7 @@ jobs:
 
       - name: "Download coverage HTML report"
         if: ${{ github.ref == 'refs/heads/main' }}
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        uses: actions/download-artifact@v8.0.2
         with:
           name: html_report
           path: reports_repo/${{ env.report_dir }}
@@ -370,7 +370,7 @@ jobs:
           github.repository_owner == 'coveragepy'
           && github.ref == 'refs/heads/main'
         # https://gist.githubusercontent.com/nedbat/8c6980f77988a327348f9b02bbaf67f5
-        uses: schneegans/dynamic-badges-action@28b0fa8bdeb46170ac397105ece0c1fe58f68910 # v1.9.0
+        uses: schneegans/dynamic-badges-action@v1.9.0
         with:
           # Personal access token: gist access
           auth: ${{ secrets.METACOV_GIST_SECRET }}

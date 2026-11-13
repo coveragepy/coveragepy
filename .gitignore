@@ -34,7 +34,7 @@ wheelhouse
 .tox
 .noseids
 .cache
-.pytest_cache
+.*_cache
 .hypothesis
 .ruby-version
 .venv

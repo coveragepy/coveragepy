@@ -954,6 +954,10 @@ class CoverageData:
         if os.path.exists(self._filename):
             with self._connect():
                 self._have_used = True
+        elif self._read_only:
+            # A read-only data file can't be created, so a missing one is an
+            # error now, not later when it's used.
+            raise DataError(f"Couldn't use data file {self._filename!r}: it doesn't exist")
 
     def _hash_data(self) -> Hasher:
         """Hash the measurement data that is in the data file."""
