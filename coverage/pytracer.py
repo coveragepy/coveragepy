@@ -229,8 +229,8 @@ class PyTracer(Tracer):
                 if disp.trace:
                     tracename = disp.source_filename
                     assert tracename is not None
-                    self.lock_data()
                     try:
+                        self.lock_data()
                         if tracename not in self.data:
                             self.data[tracename] = set()
                     finally:
