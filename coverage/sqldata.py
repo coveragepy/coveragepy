@@ -317,6 +317,10 @@ class CoverageData:
     @contextlib.contextmanager
     def keep_db_open(self) -> Iterator[None]:
         """Keep the reporting database connection open for a block."""
+        if not self._no_disk and not self._dbs and not os.path.exists(self._filename):
+            # Don't create an empty data file just to report on nothing.
+            yield
+            return
         db = self._connect()
         try:
             with db:
