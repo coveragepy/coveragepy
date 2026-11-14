@@ -14,6 +14,7 @@ http://aosabook.org/en/500L/a-template-engine.html
 
 from __future__ import annotations
 
+import keyword
 import re
 from collections.abc import Callable
 from typing import Any, NoReturn, cast
@@ -120,13 +121,22 @@ class Templite:
 
     """
 
-    def __init__(self, text: str, *contexts: dict[str, Any]) -> None:
+    def __init__(
+        self,
+        text: str,
+        *contexts: dict[str, Any],
+        attribute_roots: tuple[str, ...] = (),
+    ) -> None:
         """Construct a Templite with the given `text`.
 
         `contexts` are dictionaries of values to use for future renderings.
         These are good for filters and global values.
 
+        `attribute_roots` names variables whose dotted paths use plain attribute
+        access, without item lookup or automatic method calls.
+
         """
+        self.attribute_roots = attribute_roots
         self.context = {}
         for context in contexts:
             self.context.update(context)
@@ -263,9 +273,14 @@ class Templite:
                 self._variable(func, self.all_vars)
                 code = f"c_{func}({code})"
         elif "." in expr:
-            dots = expr.split(".")
-            code = self._expr_code(dots[0])
-            args = ", ".join(repr(d) for d in dots[1:])
+            root, *attrs = expr.split(".")
+            code = self._expr_code(root)
+            if root in self.attribute_roots and all(
+                attr.isascii() and attr.isidentifier() and not keyword.iskeyword(attr)
+                for attr in attrs
+            ):
+                return f"{code}.{'.'.join(attrs)}"
+            args = ", ".join(repr(attr) for attr in attrs)
             code = f"do_dots({code}, {args})"
         else:
             self._variable(expr, self.all_vars)

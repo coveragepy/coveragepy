@@ -130,6 +130,7 @@ class PythonParserTest(PythonParserTestBase):
             pytest.param("0 spaces\n  2\n 1", id="bad_indent"),
             pytest.param("'''", id="string_eof"),
             pytest.param("$hello", id="dollar"),
+            pytest.param("pass\nreturn 1\n", id="return_outside_function"),
             # on 3.10 this passes ast.parse but fails on tokenize.generate_tokens
             pytest.param(
                 "\r'\\\n'''",
@@ -1563,10 +1564,9 @@ class MultilineMapTest(CoverageTest):
         ],
     )
     def test_agrees_with_python_parser(self, text: str) -> None:
-        # PythonParser._raw_parse gets its multiline map from the same code,
-        # but through a different path (tokenizing to a list first).  The two
-        # must never drift apart: the sys.monitoring core uses this map to
-        # attribute branch arcs to the lines that reports are keyed by.
+        # The parser computes the map during its exclusion scan.  The
+        # sys.monitoring core must use the same mapping to attribute branch
+        # arcs to the lines that reports are keyed by.
         parser = PythonParser(text=textwrap.dedent(text))
         parser.parse_source()
         assert multiline_map_from_text(text) == parser.multiline_map

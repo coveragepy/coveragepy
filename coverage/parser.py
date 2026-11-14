@@ -32,10 +32,9 @@ def multiline_map_from_tokens(tokens: Iterable[TToken]) -> dict[TLineNo, TLineNo
     """Compute the multiline map from a stream of tokens.
 
     The result maps line numbers in multi-line statements to the first line
-    number of their statement.  This is the only place the map is computed:
-    `PythonParser._raw_parse` uses it for parsing and reporting, and the
-    sys.monitoring core uses `multiline_map_from_text` to get the map without
-    paying for a full parse during measurement.
+    number of their statement.  The sys.monitoring core uses this map without
+    paying for a full parse during measurement.  `PythonParser._raw_parse`
+    builds the same map while scanning tokens for exclusions.
 
     """
     multiline_map: dict[TLineNo, TLineNo] = {}
@@ -102,7 +101,7 @@ class PythonParser:
         self.exclude = exclude
 
         # The parsed AST of the text.
-        self._ast_root: ast.AST | None = None
+        self._ast_root: ast.Module | None = None
 
         # The normalized line numbers of the statements in the code. Exclusions
         # are taken into account, and statements are adjusted to their first
@@ -188,9 +187,8 @@ class PythonParser:
         nesting: int = 0
 
         assert self.text is not None
-        tokens = list(generate_tokens(self.text))
-        self.multiline_map = multiline_map_from_tokens(tokens)
-        for toktype, ttext, (slineno, _), (elineno, _), ltext in tokens:
+        self.multiline_map = {}
+        for toktype, ttext, (slineno, _), (elineno, _), ltext in generate_tokens(self.text):
             if self.show_tokens:  # pragma: debugging
                 print(
                     "%10s %5s %-20r %r"
@@ -220,9 +218,9 @@ class PythonParser:
                 elif ttext in ")]}":
                     nesting -= 1
             elif toktype == token.NEWLINE:
-                # multiline_map_from_tokens() has already recorded this
-                # statement's lines; we only track first_line here for the
-                # exclusion logic.
+                if first_line and elineno != first_line:
+                    for lineno in range(first_line, elineno + 1):
+                        self.multiline_map[lineno] = first_line
                 first_line = 0
 
             if ttext.strip() and toktype != tokenize.COMMENT:
@@ -237,16 +235,17 @@ class PythonParser:
                     if excluding:
                         self.excluded.add(elineno)
 
-        # Find the starts of the executable statements.
+        # Find the starts of the executable statements without parsing the text again.
+        assert self._ast_root is not None
         if not empty:
-            byte_parser = ByteParser(text=self.text, filename=self.filename)
+            code = compile(self._ast_root, self.filename, "exec", dont_inherit=True)
+            byte_parser = ByteParser(code=code)
             self.raw_statements.update(byte_parser.find_statements())
 
         self.excluded = self.first_lines(self.excluded)
 
         # AST lets us find classes, docstrings, and decorator-affected
         # functions and classes.
-        assert self._ast_root is not None
         for node in walk_statement_nodes(self._ast_root):
             # Find docstrings.
             if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef, ast.Module)):

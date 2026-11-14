@@ -15,10 +15,10 @@ from coverage import env
 from coverage.exceptions import CoverageException, NoSource
 from coverage.files import canonical_filename, relative_filename, zip_location
 from coverage.misc import isolate_module, join_regex
-from coverage.parser import PythonParser
-from coverage.phystokens import source_encoding, source_token_lines
+from coverage.parser import PythonParser, walk_statement_nodes
+from coverage.phystokens import _find_soft_key_lines, _source_token_lines, source_encoding
 from coverage.plugin import CodeRegion, FileReporter
-from coverage.regions import code_regions
+from coverage.regions import _code_regions_from_ast, code_regions
 from coverage.types import TArc, TLineNo, TMorf, TSourceTokenLines
 
 if TYPE_CHECKING:
@@ -172,6 +172,9 @@ class PythonFileReporter(FileReporter):
 
         self._source: str | None = None
         self._parser: PythonParser | None = None
+        self._prepare_html = False
+        self._code_regions: list[CodeRegion] | None = None
+        self._soft_key_lines: set[TLineNo] | None = None
 
     def __repr__(self) -> str:
         return f"<PythonFileReporter {self.filename!r}>"
@@ -185,9 +188,12 @@ class PythonFileReporter(FileReporter):
         assert self.coverage is not None
         if self._parser is None:
             self._parser = PythonParser(
+                text=self._source,
                 filename=self.filename,
                 exclude=self.coverage._exclude_regex("exclude"),
             )
+            # Use the same source text for analysis and reporting if the file changes.
+            self._source = self._parser.text
             self._parser.parse_source()
         return self._parser
 
@@ -217,7 +223,15 @@ class PythonFileReporter(FileReporter):
         return no_branch
 
     def arcs(self) -> set[TArc]:
-        return self.parser.arcs()
+        parser = self.parser
+        if self._prepare_html and parser._ast_root is not None:
+            # Arc analysis releases the AST. Keep just what the HTML report needs.
+            self._code_regions = _code_regions_from_ast(parser._ast_root)
+            self._soft_key_lines = _find_soft_key_lines(
+                parser.text,
+                walk_statement_nodes(parser._ast_root),
+            )
+        return parser.arcs()
 
     def exit_counts(self) -> dict[TLineNo, int]:
         return self.parser.exit_counts()
@@ -259,9 +273,19 @@ class PythonFileReporter(FileReporter):
         return False
 
     def source_token_lines(self) -> TSourceTokenLines:
-        return source_token_lines(self.source())
+        source = self.source()
+        soft_key_lines = self._soft_key_lines
+        if self._parser is not None and self._parser._ast_root is not None:
+            soft_key_lines = _find_soft_key_lines(
+                source, walk_statement_nodes(self._parser._ast_root)
+            )
+        return _source_token_lines(source, soft_key_lines)
 
     def code_regions(self) -> Iterable[CodeRegion]:
+        if self._code_regions is not None:
+            return self._code_regions
+        if self._parser is not None and self._parser._ast_root is not None:
+            return _code_regions_from_ast(self._parser._ast_root)
         return code_regions(self.source())
 
     def code_region_kinds(self) -> Iterable[tuple[str, str]]:

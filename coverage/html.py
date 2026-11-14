@@ -64,7 +64,8 @@ def read_data(fname: str) -> str:
 
 def write_html(fname: str, html: str) -> None:
     """Write `html` to `fname`, properly encoded."""
-    html = re.sub(r"(\A\s+)|(\s+$)", "", html, flags=re.MULTILINE) + "\n"
+    lines = map(str.rstrip, html.lstrip().split("\n"))
+    html = "\n".join(filter(None, lines)) + "\n"
     with open(fname, "wb") as fout:
         fout.write(html.encode("ascii", "xmlcharrefreplace"))
 
@@ -339,9 +340,17 @@ class HtmlReporter:
                 "run2": "run run2",
             },
         }
-        self.index_tmpl = Templite(read_data("index.html"), self.template_globals)
+        self.index_tmpl = Templite(
+            read_data("index.html"),
+            self.template_globals,
+            attribute_roots=("region", "totals"),
+        )
         self.pyfile_html_source = read_data("pyfile.html")
-        self.source_tmpl = Templite(self.pyfile_html_source, self.template_globals)
+        self.source_tmpl = Templite(
+            self.pyfile_html_source,
+            self.template_globals,
+            attribute_roots=("line", "nums"),
+        )
 
     def new_index_page(self, noun: str, plural_noun: str) -> IndexPage:
         """Create an IndexPage for a kind of region."""
@@ -371,7 +380,7 @@ class HtmlReporter:
         files_to_report = []
 
         have_data = False
-        for fr, analysis in get_analysis_to_report(self.coverage, morfs):
+        for fr, analysis in get_analysis_to_report(self.coverage, morfs, _prepare_html=True):
             have_data = True
             ftr = FileToReport(fr, analysis)
             if self.should_report(analysis, self.index_pages["file"]):
@@ -795,10 +804,13 @@ class IncrementalChecker:
             "format": self.STATUS_FORMAT,
             "version": coverage.__version__,
             "globals": self.globals,
-            "files": {fname: dataclasses.asdict(finfo) for fname, finfo in self.files.items()},
+            "files": {
+                fname: {**vars(info), "index": dataclasses.asdict(info.index)}
+                for fname, info in self.files.items()
+            },
         }
         with open(status_file, "w", encoding="utf-8") as fout:
-            json.dump(status_data, fout, separators=(",", ":"))
+            fout.write(json.dumps(status_data, separators=(",", ":")))
 
     def check_global_data(self, *data: Any) -> None:
         """Check the global data that can affect incremental reporting.
