@@ -5,16 +5,67 @@
 
 from __future__ import annotations
 
+import sys
 from unittest import mock
 
 import pytest
 
-from coverage import env
+from coverage import Coverage, env
+from coverage.collector import Collector
+from coverage.files import abs_file
 from coverage.sysmon import SysMonitor, compute_multiline_map
 from tests.coveragetest import CoverageTest
+from tests.testenv import SYS_MON
 
 MULTI_PY = "x = (\n    1 +\n    2\n)\ny = 5\n"
 MULTI_MAP = {1: 1, 2: 1, 3: 1, 4: 1}
+
+
+@pytest.mark.skipif(
+    not SYS_MON or not env.PYBEHAVIOR.branch_right_left,
+    reason="Requires branch coverage with SysMonitor",
+)
+class SysMonitorArcsTest(CoverageTest):
+    """Tests of arcs recorded by SysMonitor."""
+
+    def test_exception_exit_does_not_link_calls(self) -> None:
+        filename = self.make_file(
+            "unwind.py",
+            """\
+            def f(mode):
+                if mode == 0:
+                    raise ValueError
+                if mode == 1:
+                    result = 1
+                else:
+                    result = 2
+                return result
+
+            for mode in (0, 1, 2):
+                try:
+                    f(mode)
+                except ValueError:
+                    pass
+            """,
+        )
+        cov = Coverage(branch=True)
+        unwind = SysMonitor.sysmon_py_unwind
+        # Keep metacov running alongside this collector and allow it to trace
+        # the unwind callback, where Python normally suppresses tracing.
+        with (
+            mock.patch.object(Collector, "_collectors", []),
+            mock.patch.object(
+                SysMonitor,
+                "sysmon_py_unwind",
+                lambda *args: sys.call_tracing(unwind, args),
+            ),
+        ):
+            self.start_import_stop(cov, "unwind")
+        arcs = cov.get_data().arcs(abs_file(filename))
+        assert arcs is not None
+        assert (2, 3) in arcs
+        assert (2, 4) in arcs
+        assert (3, 4) not in arcs
 
 
 class ComputeMultilineMapTest(CoverageTest):
