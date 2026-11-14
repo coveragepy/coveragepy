@@ -422,7 +422,10 @@ MULTI_CODE = """
         if len(sys.argv) > 1: multiprocessing.set_start_method(sys.argv[1])
         pool = multiprocessing.Pool({NPROCS})
         inputs = [(x,) for x in range({UPTO})]
-        outputs = pool.imap_unordered(process_worker_main, inputs)
+        # Hand out the inputs in pairs (one even, one odd), so every process
+        # that gets any work runs the same lines of work(), and combine can
+        # skip their identical data files.
+        outputs = pool.imap_unordered(process_worker_main, inputs, chunksize=2)
         pids = set()
         total = 0
         for pid, sq in outputs:
@@ -472,7 +475,7 @@ class MultiprocessingTest(CoverageTest):
         cmd = f"coverage run {args} multi.py {start_method}"
         _, out = self.run_command_status(cmd)
         assert out.rstrip() == expected_out
-        assert len(glob.glob(".coverage.*")) == nprocs + 1
+        self.assert_file_count(".coverage.*", nprocs + 1)
 
         out = self.run_command("coverage combine --debug=combine")
         out_lines = out.splitlines()
@@ -487,7 +490,7 @@ class MultiprocessingTest(CoverageTest):
         )
         # Combines the main and one subprocess, the other subprocesses are skipped.
         assert out_lines[-1] == f"Combined 2 files, skipped {nprocs - 1}"
-        assert len(glob.glob(".coverage.*")) == 0
+        self.assert_file_count(".coverage.*", 0)
         out = self.run_command("coverage report -m")
 
         last_line = self.squeezed_lines(out)[-1]

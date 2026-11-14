@@ -21,7 +21,7 @@
 - Update source files with release facts, and get useful snippets:
     $ make edit_for_release cheats
 - Look over CHANGES.rst
-- Edit supported Python version numbers. Search for "PYVERSIONS".
+- Edit supported Python version numbers. Search for "PYVERSION".
     - Especially README.rst and doc/index.rst
 - Update docs
     - IF PRE-RELEASE:
@@ -31,10 +31,10 @@
     - Don't forget the man page: doc/python-coverage.1.txt
     - Check that the docs build correctly:
         $ tox -e doc
+- Commit the release-prep changes
+    $ make relcommit
 - Generate a new sample HTML report for the docs:
     $ make sample_html install
-- commit the release-prep changes
-    $ make relcommit
 - Done with changes to source files
     $ g puo; gshipit
         - check them in on the release prep branch

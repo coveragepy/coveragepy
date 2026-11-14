@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import inspect
-import os.path
 from typing import Any
 from unittest import mock
 
@@ -72,7 +71,7 @@ class StaticContextTest(CoverageTest):
 
             assert combined.measured_contexts() == {"red", "blue"}
 
-            full_names = {os.path.basename(f): f for f in combined.measured_files()}
+            full_names = self.get_measured_filenames(combined)
             assert_count_equal(full_names, ["red.py", "blue.py"])
 
             fred = full_names["red.py"]
@@ -93,9 +92,7 @@ class StaticContextTest(CoverageTest):
 
         # The exact arc data changes depending on the core and the version.
         # Extract the red arc data for comparisons below.
-        arc_data = red_data.arcs(
-            next(fname for fname in red_data.measured_files() if "red.py" in fname)
-        )
+        arc_data = red_data.arcs(self.get_measured_filenames(red_data)["red.py"])
         assert arc_data is not None
 
         for datas in [[red_data, blue_data], [blue_data, red_data]]:
@@ -105,7 +102,7 @@ class StaticContextTest(CoverageTest):
 
             assert combined.measured_contexts() == {"red", "blue"}
 
-            full_names = {os.path.basename(f): f for f in combined.measured_files()}
+            full_names = self.get_measured_filenames(combined)
             assert_count_equal(full_names, ["red.py", "blue.py"])
 
             fred = full_names["red.py"]
@@ -170,7 +167,7 @@ class DynamicContextTest(CoverageTest):
         self.start_import_stop(cov, "two_tests")
         data = cov.get_data()
 
-        full_names = {os.path.basename(f): f for f in data.measured_files()}
+        full_names = self.get_measured_filenames(data)
         fname = full_names["two_tests.py"]
         assert_count_equal(
             data.measured_contexts(),
@@ -192,7 +189,7 @@ class DynamicContextTest(CoverageTest):
         self.start_import_stop(cov, "two_tests")
         data = cov.get_data()
 
-        full_names = {os.path.basename(f): f for f in data.measured_files()}
+        full_names = self.get_measured_filenames(data)
         fname = full_names["two_tests.py"]
         assert_count_equal(
             data.measured_contexts(),
