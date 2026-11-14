@@ -340,9 +340,17 @@ class HtmlReporter:
                 "run2": "run run2",
             },
         }
-        self.index_tmpl = Templite(read_data("index.html"), self.template_globals)
+        self.index_tmpl = Templite(
+            read_data("index.html"),
+            self.template_globals,
+            attribute_roots=("region", "totals"),
+        )
         self.pyfile_html_source = read_data("pyfile.html")
-        self.source_tmpl = Templite(self.pyfile_html_source, self.template_globals)
+        self.source_tmpl = Templite(
+            self.pyfile_html_source,
+            self.template_globals,
+            attribute_roots=("line", "nums"),
+        )
 
     def new_index_page(self, noun: str, plural_noun: str) -> IndexPage:
         """Create an IndexPage for a kind of region."""
