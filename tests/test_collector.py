@@ -216,7 +216,10 @@ class CollectorTest(CoverageTest):
             cmd_q.put("quit")
             flusher_thread.join()
 
-        assert {1, 2, 3, 4, 5, 6, 7} <= mid_run_lines
+        # On free-threaded Python, lock_done.release() on line 6 can wake the
+        # main thread before the worker advances to line 7; lines 5 and 6 are
+        # guaranteed to have executed after the mid-frame flushes.
+        assert {1, 2, 3, 4, 5, 6} <= mid_run_lines
         assert set(cov.get_data().lines(target_file) or ()) == {1, 2, 3, 4, 5, 6, 7, 8}
 
     @pytest.mark.parametrize("branch", [False, True])
