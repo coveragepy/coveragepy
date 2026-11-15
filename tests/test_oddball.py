@@ -356,65 +356,70 @@ class MemoryFumblingTest(CoverageTest):
         # previous frame's file data there, so the frame's return event
         # recorded arcs into the wrong file.
         # https://github.com/coveragepy/coveragepy/issues/2385
+        #
+        # This happens for real when a not-yet-seen file is called near the
+        # recursion limit: should_trace is invoked from handle_call after the
+        # push, RecursionError is raised, and the caller catches it.  The test
+        # uses setrecursionlimit only to put the process in that state
+        # deterministically.
         self.make_file("a_mod.py", "def f():\n    x = 1\n    return x\n")
         self.make_file("b_mod.py", "# padding\n" * 9 + "def g():\n    return 2\n")
         self.make_file(
             "failed_call.py",
             """\
             import sys
-            from coverage.disposition import disposition_init
-            from coverage.tracer import CTracer, CFileDisposition
-
             import a_mod
             import b_mod
+            import coverage
 
-            def lock_data():
-                if not lock_data.failed:
-                    lock_data.failed = True
-                    raise RuntimeError("failed adding b_mod.py")
-            lock_data.failed = False
-
-            tracer = CTracer()
-            tracer.data = {}
-            tracer.file_tracers = {}
-            tracer.should_trace_cache = {}
-            for mod in [a_mod, b_mod]:
-                disp = disposition_init(CFileDisposition, mod.__file__)
-                disp.source_filename = mod.__file__
-                disp.trace = True
-                tracer.should_trace_cache[mod.__file__] = disp
-            tracer.trace_arcs = True
-            tracer.should_trace = lambda fname, frame: disposition_init(CFileDisposition, fname)
-            tracer.concur_id_func = None
-            tracer.should_start_context = None
-            tracer.lock_data = lambda: None
-            tracer.unlock_data = lambda: None
-
-            def run():
+            def descend(left):
+                if left:
+                    return descend(left - 1)
+                depth = 0
+                frame = sys._getframe()
+                while frame is not None:
+                    depth += 1
+                    frame = frame.f_back
+                # Record a_mod at this depth, then fail in should_trace for b_mod.
                 a_mod.f()
-                tracer.lock_data = lock_data
+                old_limit = sys.getrecursionlimit()
+                caught = False
                 try:
-                    b_mod.g()
-                except RuntimeError as exc:
-                    print(f"RuntimeError: {exc}")
+                    for slack in range(1, 40):
+                        try:
+                            sys.setrecursionlimit(depth + slack)
+                        except RecursionError:
+                            sys.setrecursionlimit(old_limit)
+                            continue
+                        try:
+                            b_mod.g()
+                        except RecursionError:
+                            caught = True
+                            break
+                        else:
+                            break
+                        finally:
+                            sys.setrecursionlimit(old_limit)
+                finally:
+                    sys.setrecursionlimit(old_limit)
+                return caught
 
-            sys.settrace(tracer.start())
+            cov = coverage.Coverage(branch=True, source=["."], data_file=None)
+            cov.start()
             try:
-                run()
+                a_mod.f()
+                caught = descend(20)
             finally:
-                tracer.stop()
-                sys.settrace(None)
+                cov.stop()
 
-            def unpack(packed):
-                l1 = packed & 0xFFFFFFF
-                l2 = (packed >> 28) & 0xFFFFFFF
-                return (-l1 if packed & (1 << 56) else l1, -l2 if packed & (1 << 57) else l2)
-
-            print(sorted(unpack(p) for p in tracer.data[a_mod.__file__]))
+            data = cov.get_data()
+            a_file = next(f for f in data.measured_files() if f.endswith("a_mod.py"))
+            print("caught RecursionError" if caught else "no RecursionError")
+            print(sorted(data.arcs(a_file) or []))
             """,
         )
         out = self.run_command("python failed_call.py")
-        assert out == "RuntimeError: failed adding b_mod.py\n[(-1, 2), (2, 3), (3, -1)]\n"
+        assert out == "caught RecursionError\n[(-1, 2), (2, 3), (3, -1)]\n"
 
     @pytest.mark.skipif(not testenv.C_TRACER, reason="Only the C tracer has refcounting issues")
     def test_dropping_none(self) -> None:  # pragma: not covered
