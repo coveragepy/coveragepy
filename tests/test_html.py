@@ -275,9 +275,11 @@ class HtmlDeltaTest(HtmlTestHelpers, CoverageTest):
         self.assert_htmlcov_files_exist()
 
     @pytest.mark.parametrize("branch", [False, True])
-    def test_file_hash_is_order_independent(self, branch: bool) -> None:
+    @pytest.mark.parametrize("show_contexts", [False, True])
+    def test_file_hash_is_order_independent(self, branch: bool, show_contexts: bool) -> None:
         self.make_file("example.py", "x = 1\ny = 2\n")
         cov = Coverage(config_file=False, data_file=None)
+        cov.set_option("html:show_contexts", show_contexts)
         data = cov.get_data()
         if branch:
             data.add_arcs({abs_file("example.py"): {(-1, 1), (1, 2), (2, -1)}})
@@ -287,16 +289,24 @@ class HtmlDeltaTest(HtmlTestHelpers, CoverageTest):
         fr = PythonFileReporter("example.py", cov)
         method = "arcs" if branch else "_line_bitmaps"
         values = [(-1, 1), (1, 2), (2, -1)] if branch else [b"\x02", b"\x04\0"]
+        contexts = {1: ["first", "second\0\N{SNOWMAN}"], 2: ["first"]}
         with mock.patch.object(data, method, return_value=values):
-            expected = reporter.file_hash(fr)
+            with mock.patch.object(data, "contexts_by_lineno", return_value=contexts):
+                expected = reporter.file_hash(fr)
+        reversed_contexts = {
+            line: list(reversed(names)) for line, names in reversed(contexts.items())
+        }
         reversed_values = list(reversed(values)) if branch else [b"\x04", b"\x02"]
         with mock.patch.object(data, method, return_value=reversed_values):
-            assert reporter.file_hash(fr) == expected
+            with mock.patch.object(data, "contexts_by_lineno", return_value=reversed_contexts):
+                assert reporter.file_hash(fr) == expected
 
     @pytest.mark.parametrize("branch", [False, True])
-    def test_file_hash_respects_context_filter(self, branch: bool) -> None:
+    @pytest.mark.parametrize("show_contexts", [False, True])
+    def test_file_hash_respects_context_filter(self, branch: bool, show_contexts: bool) -> None:
         self.make_file("example.py", "x = 1\ny = 2\n")
         cov = Coverage(config_file=False, data_file=None)
+        cov.set_option("html:show_contexts", show_contexts)
         cov.set_option("report:contexts", ["selected"])
         data = cov.get_data()
         data.set_context("selected")
@@ -315,10 +325,45 @@ class HtmlDeltaTest(HtmlTestHelpers, CoverageTest):
                 data.add_lines({abs_file("example.py"): {2}})
             assert (reporter.file_hash(fr) == expected) == (context == "other")
 
-    def test_arc_change_invalidates_page_with_same_covered_lines(self) -> None:
+    @pytest.mark.parametrize("context", ["", "selected"])
+    def test_line_hash_with_contexts_does_not_read_bitmap(self, context: str) -> None:
+        self.make_file("example.py", "x = 1\ny = 2\n")
+        cov = Coverage(config_file=False, data_file=None)
+        cov.set_option("html:show_contexts", True)
+        cov.set_option("report:contexts", [f"^{context}$"])
+        data = cov.get_data()
+        data.set_context(context)
+        data.add_lines({abs_file("example.py"): {1}})
+        reporter = coverage.html.HtmlReporter(cov)
+        fr = PythonFileReporter("example.py", cov)
+        with mock.patch.object(data, "_line_bitmaps", side_effect=AssertionError):
+            original = reporter.file_hash(fr)
+            data.set_context("other")
+            data.add_lines({abs_file("example.py"): {2}})
+            assert reporter.file_hash(fr) == original
+            data.set_context(context)
+            data.add_lines({abs_file("example.py"): {2}})
+            assert reporter.file_hash(fr) != original
+
+    def test_context_labels_invalidate_page_with_same_covered_lines(self) -> None:
+        self.make_file("example.py", "x = 1\n")
+        for label in ("first-test", "second-test"):
+            cov = Coverage(config_file=False, data_file=None)
+            data = cov.get_data()
+            data.set_context(label)
+            data.add_lines({abs_file("example.py"): {1}})
+            cov.html_report(show_contexts=True)
+
+        page = self.get_html_report_content("example.py")
+        assert "second-test" in page
+        assert "first-test" not in page
+
+    @pytest.mark.parametrize("show_contexts", [False, True])
+    def test_arc_change_invalidates_page_with_same_covered_lines(self, show_contexts: bool) -> None:
         self.make_file("example.py", "if cond:\n    x = 1\nelse:\n    x = 2\ny = x\n")
         arcs = {(-1, 1), (1, 2), (2, 5), (4, 5), (5, -1)}
         cov = Coverage(config_file=False, data_file=None)
+        cov.set_option("html:show_contexts", show_contexts)
         data = cov.get_data()
         data.add_arcs({abs_file("example.py"): arcs})
         before = cov.html_report()

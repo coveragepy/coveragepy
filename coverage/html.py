@@ -594,7 +594,18 @@ class HtmlReporter:
         filename = self.coverage._file_mapper(fr.filename)
         h.update(self.data.file_tracer(filename))
 
-        if not self.has_arcs:
+        if self.config.show_contexts:
+            # Contexts include every covered line, even in the empty context,
+            # so line coverage doesn't also need the bitmap.
+            contexts = self.data.contexts_by_lineno(filename)
+            lines_by_context: dict[str, list[TLineNo]] = collections.defaultdict(list)
+            for line, names in sorted(contexts.items()):
+                for name in names:
+                    lines_by_context[name].append(line)
+            for name, lines in sorted(lines_by_context.items()):
+                h.update(name)
+                h.update(struct.pack(f"<{len(lines)}q", *lines))
+        elif not self.has_arcs:
             bitmaps = self.data._line_bitmaps(filename) or []
             h.update(functools.reduce(numbits_union, bitmaps, b"").rstrip(b"\0"))
 
