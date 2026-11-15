@@ -259,7 +259,9 @@ class PythonFileReporter(FileReporter):
         return False
 
     def source_token_lines(self) -> TSourceTokenLines:
-        return source_token_lines(self.source())
+        # Reuse the parser's soft keyword lines if we've already parsed.
+        soft_key_lines = self._parser.soft_key_lines if self._parser else None
+        return source_token_lines(self.source(), soft_key_lines=soft_key_lines)
 
     def code_regions(self) -> Iterable[CodeRegion]:
         return code_regions(self.source())
