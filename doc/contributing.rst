@@ -1,6 +1,11 @@
 .. Licensed under the Apache License: http://www.apache.org/licenses/LICENSE-2.0
 .. For details: https://github.com/coveragepy/coveragepy/blob/main/NOTICE.txt
 
+.. This file is symlinked as .github/CONTRIBUTING.rst, so only use .rst that
+.. will work in GitHub's rendering.
+
+.. PYVERSIONS: search for "3" through this file to update min/max versions
+
 .. _contributing:
 
 ===========================
@@ -9,7 +14,7 @@ Contributing to coverage.py
 
 .. highlight:: console
 
-I welcome contributions to coverage.py.  Over the years, hundreds of people
+We welcome contributions to coverage.py.  Over the years, hundreds of people
 have provided contributions of various sizes to add features, fix bugs, or just
 help diagnose thorny issues.  This page should have all the information you
 need to make a contribution.
@@ -24,8 +29,8 @@ ideas.
 Before you begin
 ----------------
 
-If you have an idea for coverage.py, run it by me before you begin writing
-code.  This way, I can get you going in the right direction, or point you to
+If you have an idea for coverage.py, run it by us before you begin writing
+code.  This way, we can get you going in the right direction, or point you to
 previous work in the area.  Things are not always as straightforward as they
 seem, and having the benefit of lessons learned by those before you can save
 you frustration.
@@ -38,7 +43,7 @@ We have a `#coverage channel in the Python Discord <discord_>`_ that can be a
 good place to explore ideas, get help, or help people with coverage.py.
 `Come there <discord_>`_ after `joining the Python Discord server <join_>`_.
 
-Cooperation and communication are essential. If you make a pull request, I
+Cooperation and communication are essential. If you make a pull request, others
 might make comments. You need to respond. Be concise and helpful.
 
 .. _discord: https://discord.com/channels/267624335836053506/1253355750684753950
@@ -59,8 +64,7 @@ these steps:
 
 #.  (Optional) Create a virtualenv to work in, and activate it.  There are a
     number of ways to do this.  Use the method you are comfortable with.
-    Ideally, use Python |min-py| (the lowest version coverage.py currently
-    supports).
+    Ideally use Python 3.11, the lowest version coverage.py currently supports.
 
 #.  Clone the repository::
 
@@ -90,16 +94,17 @@ are run with pytest running under `tox`_. They will run automatically via
 GitHub actions when you push your changes to GitHub, but it's also a good idea
 to run them locally for faster feedback::
 
-    $ tox -e py310
+    $ make test
 
-Tox runs the complete test suite a few times for each version of Python you
-have installed.  The first run uses the C implementation of the trace function,
-the second uses the Python implementation.  If `sys.monitoring`_ is available,
-the suite will be run again with that core.
+This uses tox to run the complete test suite a few times for each version of
+Python you have installed.  The first run uses the C implementation of the
+trace function, the second uses the Python implementation.  If
+`sys.monitoring`_ is available, the suite will be run again with that core.
 
-To limit tox to just a few versions of Python, use the ``-e`` switch::
+To limit tox to just a few versions of Python, run it directly using the ``-e``
+option::
 
-    $ tox -e py38,py39
+    $ tox -e py311,py315
 
 On the tox command line, options after ``--`` are passed to pytest.  To run
 just a few tests, you can use `pytest test selectors`_::
@@ -113,7 +118,7 @@ respectively.  The pytest ``-k`` option selects tests based on a word in their
 name, which can be very convenient for ad-hoc test selection.  Of course you
 can combine tox and pytest options::
 
-    $ tox -q -e py310 -- -n 0 -vv -k hash
+    $ tox -q -e py311 -- -n 0 -vv -k hash
 
 You can also affect the test runs with environment variables:
 
@@ -132,8 +137,8 @@ You can also affect the test runs with environment variables:
 - ``COVERAGE_AST_DUMP=1`` will dump the AST tree as it is being used during
   code parsing.
 
-There are other environment variables that affect tests.  I use `set_env.py`_
-as a simple terminal interface to see and set them.
+There are other environment variables that affect tests. `set_env.py`_ is a
+simple terminal interface to see and set them.
 
 Of course, run all the tests on every version of Python you have before
 submitting a change.
@@ -171,20 +176,20 @@ appear as covered, even though they are executed.
 Quality checks
 --------------
 
-Keep the coverage.py source as clean as possible.  We use pylint to
-alert me to possible problems::
+Keep the coverage.py source as clean as possible.  We use pylint and mypy to
+catch possible problems. All of the quality checks can be run together::
 
-    $ make lint
+    $ make quality
 
 The source is pylint-clean, even if it's because there are pragmas quieting
 some warnings.  Try to keep it that way, but don't let pylint warnings
-keep you from sending patches.  I can clean them up.
+keep you from sending change. We can clean them up for you if you ask.
 
-Lines should be kept to a 100-character maximum length.  I recommend an
+Lines should be kept to a 100-character maximum length.  We recommend an
 `editorconfig.org`_ plugin for your editor of choice, which will also help with
 indentation, line endings and so on.  Source files are formatted with `ruff`_.
 
-I use `pre-commit`_ to run checks and formatting when making commits, you
+We use `pre-commit`_ to run checks and formatting when making commits, you
 should also.
 
 Other style questions are best answered by looking at the existing code.
@@ -205,8 +210,9 @@ on the users' perspective.
 Changelog
 .........
 
-User-visible changes are described in CHANGES.rst, but don't edit that file.
-Use `scriv`_ to create a changelog fragment as part of your pull request::
+Changes to the public experience are described in CHANGES.rst, but don't edit
+that file directly.  Use `scriv`_ to create a changelog fragment as part of
+your pull request::
 
     $ scriv create
 
@@ -235,12 +241,20 @@ output.  The top of the file you edited will have instructions.
 .. _cog: https://cog.readthedocs.io
 
 
-Continuous integration
-----------------------
+Your pull request
+-----------------
 
-When you make a pull request, `GitHub actions`_ will run all of the Python
-tests and quality checks on your changes.  If any fail, either fix them or ask
-for help.
+When you are ready to contribute a change, make a GitHub pull request. Be
+concise in your description of the change.
+
+Be clear about how you want to stay involved in finishing it and merging it: do
+you want to cross all the t's and dot the i's, or do you want us to make the
+final changes?
+
+Always include tests, documentation, and a changelog fragment as needed.
+
+`GitHub actions`_ will run all of the Python tests and quality checks on your
+changes. If any fail, either fix them or ask for help.
 
 CI includes checks for things like missing coverage. There should be messages
 explaining what went wrong.
@@ -251,27 +265,17 @@ explaining what went wrong.
 Dependencies
 ------------
 
-Coverage.py has no direct runtime dependencies, and I would like to keep it
-that way.
+Coverage.py has no runtime dependencies.
 
 It has many development dependencies.  These are specified generically in the
 ``requirements/*.in`` files.  The .in files should have no versions specified
 in them.  The specific versions to use are pinned in ``requirements/*.txt``
 files.  These are created by running ``make upgrade``.
 
-It's important to use Python |min-py| to run ``make upgrade`` so that the
-pinned versions will work on all of the Python versions currently supported by
+It's important to use Python 3.11 to run ``make upgrade`` so that the pinned
+versions will work on all of the Python versions currently supported by
 coverage.py.
 
 If for some reason we need to constrain a version of a dependency, the
 constraint should be specified in the ``requirements/pins.txt`` file, with a
 detailed reason for the pin.
-
-
-Contributing
-------------
-
-When you are ready to contribute a change, make a GitHub pull request. Be clear
-about how you want to stay involved in finishing it and merging it.
-
-Always include test, documentation, and a changelog fragment as appropriate.

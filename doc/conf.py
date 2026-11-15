@@ -69,20 +69,17 @@ project = "Coverage.py"
 # @@@ editable
 copyright = "2009–2026, Ned Batchelder"  # pylint: disable=redefined-builtin
 # The short X.Y.Z version.
-version = "7.17.2"
+version = "7.17.3"
 # The full version, including alpha/beta/rc tags.
-release = "7.17.2"
+release = "7.17.3"
 # The date of release, in "monthname day, year" format.
-release_date = "November 4, 2026"
+release_date = "November 11, 2026"
 # @@@ end
-
-min_py = "3.11"  # PYVERSIONS
 
 rst_epilog = f"""
 .. |release-date| replace:: {release_date}
 .. |coverage-equals-release| replace:: coverage=={release}
 .. |doc-url| replace:: https://coverage.readthedocs.io/en/{release}
-.. |min-py| replace:: {min_py}
 .. |br| raw:: html
 
   <br/>
@@ -248,7 +245,7 @@ linkcheck_ignore = [
     # the docs have been published.  So don't check those links.
     rf"https://coverage.readthedocs.io/en/{release}$",
     # Linkcheck looks for local files in the source tree, not html_extra_path.
-    r"^sample_html/",
+    r".*/?sample_html/index.html",
 ]
 
 # https://github.com/executablebooks/sphinx-tabs/pull/54
