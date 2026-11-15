@@ -56,7 +56,8 @@ class HandyConfigParser(configparser.ConfigParser):
         encoding_unused: str | None = None,
     ) -> list[str]:
         """Read a file name as UTF-8 configuration data."""
-        return super().read(filenames, encoding="utf-8")
+        # utf-8-sig also accepts a file that starts with a byte order mark.
+        return super().read(filenames, encoding="utf-8-sig")
 
     def real_section(self, section: str) -> str | None:
         """Get the actual name of a section."""
