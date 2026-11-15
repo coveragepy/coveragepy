@@ -3,6 +3,8 @@
 
 """Code parsing for coverage.py."""
 
+# pragma: enforce 100% coverage
+
 from __future__ import annotations
 
 import ast
@@ -20,13 +22,13 @@ from coverage.bytecode import ByteParser
 from coverage.debug import short_stack
 from coverage.exceptions import NoSource, NotPython
 from coverage.misc import isolate_module, nice_pair
-from coverage.phystokens import generate_tokens
+from coverage.phystokens import TToken, generate_tokens
 from coverage.types import TArc, TLineNo
 
 os = isolate_module(os)
 
 
-def multiline_map_from_tokens(tokens: Iterable[tokenize.TokenInfo]) -> dict[TLineNo, TLineNo]:
+def multiline_map_from_tokens(tokens: Iterable[TToken]) -> dict[TLineNo, TLineNo]:
     """Compute the multiline map from a stream of tokens.
 
     The result maps line numbers in multi-line statements to the first line
@@ -134,10 +136,9 @@ class PythonParser:
         # Lazily-created arc data, and missing arc descriptions.
         self._all_arcs: set[TArc] | None = None
         self._missing_arc_fragments: TArcFragments | None = None
-        self._with_jump_fixers: dict[TArc, tuple[TArc, TArc]] = {}
+        self._with_jump_fixers: dict[TArc, TArc | None] = {}
 
         self._first_line_cache: dict[TLineNo, TLineNo] = {}
-        self._exit_counts: dict[TLineNo, int] | None = None
 
     def lines_matching(self, regex: str) -> set[TLineNo]:
         """Find the lines matching a regex.
@@ -381,31 +382,17 @@ class PythonParser:
         it to the user as if it had been 1, 2, 3, 4.  The arc 3->1 should be
         replaced with 3->4, and 1->4 should be removed.
 
-        For this code, the fixers dict is {(3, 1): ((1, 4), (3, 4))}.  The key
-        is the actual measured arc from the end of the with block back to the
-        start of the with-statement.  The values are start_next (the with
-        statement to the next statement after the with), and end_next (the end
-        of the with-statement to the next statement after the with).
-
-        With nested with-statements, we have to trace through a few levels to
-        correct a longer chain of arcs.
+        For this code, the fixers dict is {(3, 1): (3, 4), (1, 4): None}.  The
+        keys are arcs to adjust.  The values are the arcs to use instead, or
+        None if the arc should be removed.
 
         """
-        to_remove = set()
-        to_add = set()
+        fixed = set()
         for arc in arcs:
-            if arc in self._with_jump_fixers:
-                end0 = arc[0]
-                to_remove.add(arc)
-                start_next, end_next = self._with_jump_fixers[arc]
-                while start_next in self._with_jump_fixers:
-                    to_remove.add(start_next)
-                    start_next, end_next = self._with_jump_fixers[start_next]
-                    to_remove.add(end_next)
-                to_add.add((end0, end_next[1]))
-                to_remove.add(start_next)
-        arcs = (set(arcs) | to_add) - to_remove
-        return arcs
+            new_arc = self._with_jump_fixers.get(arc, arc)
+            if new_arc is not None:
+                fixed.add(new_arc)
+        return fixed
 
     def exit_counts(self) -> dict[TLineNo, int]:
         """Get a count of exits from that each line.
@@ -413,20 +400,18 @@ class PythonParser:
         Excluded lines are excluded.
 
         """
-        if self._exit_counts is None:
-            exit_counts: dict[TLineNo, int] = collections.defaultdict(int)
-            for l1, l2 in self.arcs():
-                assert l1 > 0, f"{l1=} should be greater than zero in {self.filename}"
-                if l1 in self.excluded:
-                    # Don't report excluded lines as line numbers.
-                    continue
-                if l2 in self.excluded:
-                    # Arcs to excluded lines shouldn't count.
-                    continue
-                exit_counts[l1] += 1
-            self._exit_counts = exit_counts
+        exit_counts: dict[TLineNo, int] = collections.defaultdict(int)
+        for l1, l2 in self.arcs():
+            assert l1 > 0, f"{l1=} should be greater than zero in {self.filename}"
+            if l1 in self.excluded:
+                # Don't report excluded lines as line numbers.
+                continue
+            if l2 in self.excluded:
+                # Arcs to excluded lines shouldn't count.
+                continue
+            exit_counts[l1] += 1
 
-        return self._exit_counts
+        return exit_counts
 
     def _finish_action_msg(self, action_msg: str | None, end: TLineNo) -> str:
         """Apply some defaulting and formatting to an arc's description."""
@@ -459,10 +444,7 @@ class PythonParser:
 
     def arc_description(self, start: TLineNo, end: TLineNo) -> str:
         """Provide an English description of an arc's effect."""
-        if self._missing_arc_fragments is None:
-            self._analyze_ast()
-            assert self._missing_arc_fragments is not None
-
+        assert self._missing_arc_fragments is not None
         fragment_pairs = self._missing_arc_fragments.get((start, end), [(None, None)])
         action_msg = self._finish_action_msg(fragment_pairs[0][1], end)
         return action_msg
@@ -771,30 +753,53 @@ class AstArcAnalyzer:
             elif isinstance(node, ast.Module):
                 self._code_object__Module(node)
 
-    def with_jump_fixers(self) -> dict[TArc, tuple[TArc, TArc]]:
+    def with_jump_fixers(self) -> dict[TArc, TArc | None]:
         """Get a dict with data for fixing jumps out of with statements.
 
-        Returns a dict.  The keys are arcs leaving a with-statement by jumping
-        back to its start.  The values are pairs: first, the arc from the start
-        to the next statement, then the arc that exits the with without going
-        to the start.
+        Returns a dict.  The keys are arcs that need adjusting: arcs jumping
+        back to the start of a with-statement at the end of its body, and arcs
+        from the start of a with-statement to the next statement.  The values
+        are the arcs to use instead, or None if the arc should be removed.
 
         """
-        fixers = {}
         with_nexts = {
             arc
             for arc in self.arcs
             if arc[0] in self.all_with_starts and arc not in self.with_entries
         }
+        nexts: dict[TLineNo, TLineNo] = {}
         for start in self.all_with_starts:
-            nexts = {arc[1] for arc in with_nexts if arc[0] == start}
-            if not nexts:
+            start_nexts = {arc[1] for arc in with_nexts if arc[0] == start}
+            if not start_nexts:
                 continue
-            assert len(nexts) == 1, f"Expected one arc, got {nexts} with {start = }"
-            nxt = nexts.pop()
-            ends = {arc[0] for arc in self.with_exits if arc[1] == start}
-            for end in ends:
-                fixers[(end, start)] = ((start, nxt), (end, nxt))
+            assert len(start_nexts) == 1, f"Expected one arc, got {start_nexts} with {start = }"
+            nexts[start] = start_nexts.pop()
+
+        def final_next(start: TLineNo) -> TLineNo:
+            # A with-statement ending the body of an outer with-statement jumps
+            # to the start of the outer one, which then jumps to its own next
+            # statement, and so on.  We want where the chain finally lands.
+            nxt = nexts[start]
+            while (start, nxt) in self.with_exits and nxt in nexts:
+                start, nxt = nxt, nexts[nxt]
+            return nxt
+
+        fixers: dict[TArc, TArc | None] = {}
+        for end, start in self.with_exits:
+            # A `with` statement can have no onward arc, for example if it
+            # ends a `finally` clause whose `try` clause can't complete
+            # normally.  There is nowhere to redirect the jump to, so the
+            # arc is left alone.
+            if start in nexts:
+                fixers[(end, start)] = (end, final_next(start))
+        for start, nxt in nexts.items():
+            # Leaving a body on its own lines jumps back to the start, and that
+            # jump is fixed above, so the arc onward from the start is
+            # redundant, even when it's an inner with jumping to an outer one.
+            # A body on the same line as the start doesn't jump back, so the
+            # arc onward from the start is the only record of leaving the with.
+            if (start, start) not in self.with_exits:
+                fixers[(start, nxt)] = None
         return fixers
 
     # Code object dispatchers: _code_object__*

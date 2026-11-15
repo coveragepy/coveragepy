@@ -37,13 +37,11 @@ tracer_exec(PyObject *mod)
     /* Initialize CFileDisposition */
     CFileDispositionType.tp_new = PyType_GenericNew;
     if (PyType_Ready(&CFileDispositionType) < 0) {
-        Py_DECREF(&CTracerType);
         return -1;
     }
 
     Py_INCREF(&CFileDispositionType);
     if (PyModule_AddObject(mod, "CFileDisposition", (PyObject *)&CFileDispositionType) < 0) {
-        Py_DECREF(&CTracerType);
         Py_DECREF(&CFileDispositionType);
         return -1;
     }

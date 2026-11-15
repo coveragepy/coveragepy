@@ -98,7 +98,7 @@ class DebugControl:
         if exc is not None:
             self.output.write("".join(traceback.format_exception(None, exc, exc.__traceback__)))
         if self.should("self"):
-            caller_self = inspect.stack()[1][0].f_locals.get("self")
+            caller_self = inspect.stack()[1].frame.f_locals.get("self")
             if caller_self is not None:
                 self.output.write(f"self: {caller_self!r}\n")
         if self.should("callers"):

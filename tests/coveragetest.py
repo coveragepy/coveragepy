@@ -3,6 +3,8 @@
 
 """Base test case class for coverage.py testing."""
 
+# pragma: enforce 100% coverage
+
 from __future__ import annotations
 
 import collections
@@ -463,7 +465,7 @@ class CoverageTest(
         return report
 
     def report_lines(self, report: str) -> list[str]:
-        """Return the lines of the report, as a list."""
+        """Return the lines of the report, as a list, but without the last empty line."""
         lines = report.split("\n")
         assert lines[-1] == ""
         return lines[:-1]

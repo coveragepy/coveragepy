@@ -10,6 +10,7 @@
 # PyPI requirements for running tests.
 -r tox.in
 -r pytest.in
+-r js.in
 
 # for linting.
 actionlint-py

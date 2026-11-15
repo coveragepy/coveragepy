@@ -3,6 +3,7 @@
 
 """Trigger a repository_dispatch GitHub action."""
 
+import json
 import sys
 import time
 
@@ -26,7 +27,12 @@ def latest_action_run(repo_owner, event):
         f"https://api.github.com/repos/{repo_owner}/actions/runs?event={event}"
     )
     resp.raise_for_status()
-    return resp.json()["workflow_runs"][0]
+    try:
+        return resp.json()["workflow_runs"][0]
+    except Exception as e:
+        print("Couldn't get workflow_runs from:")
+        print(json.dumps(resp.json(), indent=4))
+        raise RuntimeError("Stopping") from e
 
 
 def dispatch_action(repo_owner, event_type):

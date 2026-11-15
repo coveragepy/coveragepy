@@ -1,0 +1,8 @@
+# Enrollment for the OSS Scanner: https://github.com/anthropics/oss-scanner
+# This file belongs in that repository at projects/coveragepy/project.yaml.
+# It is kept here as the source of truth.
+repo: https://github.com/coveragepy/coveragepy
+primary_contact: ned@nedbatchelder.com
+homepage: https://coverage.readthedocs.io
+dockerfile: tests/oss-scanner/Dockerfile
+threat_model: tests/oss-scanner/threat_model.md

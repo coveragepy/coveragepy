@@ -14,6 +14,8 @@ the future.  Use these functions to work with those binary blobs of data.
 
 """
 
+# pragma: enforce 100% coverage
+
 from __future__ import annotations
 
 import json

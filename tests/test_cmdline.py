@@ -6,9 +6,11 @@
 from __future__ import annotations
 
 import ast
+import contextlib
 import os
 import pprint
 import re
+import sqlite3
 import sys
 import textwrap
 from collections.abc import Mapping
@@ -486,9 +488,13 @@ class CmdLineTest(BaseCmdLineTest):
         out = self.stdout()
         assert "sqlite3_sqlite_version:" in out
         assert "sqlite3_compile_options:" in out
-        assert len(out.splitlines()) > 15
-        # Lots of lines of indented SQLite compile-time options.
-        assert len(re_lines(r"^ {20,35}[A-Z]{3}", out)) > 12
+        with contextlib.closing(sqlite3.connect(":memory:")) as con:
+            copts = [row[0] for row in con.execute("pragma compile_options")]
+        assert copts
+        for copt in copts:
+            assert f"{copt}\n" in out
+        # The options are on indented lines.
+        assert re_lines(r"^ {20,35}[A-Z]{3}", out)
 
     def test_erase(self) -> None:
         # coverage erase
@@ -1799,6 +1805,15 @@ class FailUnderTest(CoverageTest):
                 "Coverage failure: total of 20.12345 is less than fail-under=20.12350\n",
             ),
             (20.12339, "report --fail-under=20.1234 --precision=4", 0, ""),
+            # Issue 2295: near-zero total + fractional fail_under at precision 0
+            # must not claim "1 is less than 0".
+            (0.4, "report --fail-under=0.3 --precision=0", 0, ""),
+            (
+                0.4,
+                "report --fail-under=0.5 --precision=0",
+                2,
+                "Coverage failure: total of 0.4 is less than fail-under=0.5\n",
+            ),
         ],
     )
     def test_fail_under_with_precision(self, result: float, cmd: str, ret: int, msg: str) -> None:
@@ -1806,3 +1821,16 @@ class FailUnderTest(CoverageTest):
         with mock.patch("coverage.cmdline.Coverage", lambda *a, **kw: cov):
             self.command_line(cmd, ret)
         assert self.stdout() == msg
+
+    @pytest.mark.parametrize("fail_under, ret", [(0.3, 0), (0.5, 2)])
+    def test_fractional_fail_under_from_config(
+        self,
+        fail_under: float,
+        ret: int,
+    ) -> None:
+        cov = CoverageReportingFake(report_result=0.4)
+        cov.set_option("report:fail_under", fail_under)
+        with mock.patch("coverage.cmdline.Coverage", lambda *a, **kw: cov):
+            self.command_line("report", ret)
+        expected = "Coverage failure: total of 0.4 is less than fail-under=0.5\n" if ret else ""
+        assert self.stdout() == expected

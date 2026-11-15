@@ -3,6 +3,8 @@
 
 """OS information for testing."""
 
+# pragma: enforce 100% coverage
+
 from __future__ import annotations
 
 import sys

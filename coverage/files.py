@@ -577,7 +577,7 @@ def find_python_files(dirname: str, include_namespace_packages: bool) -> Iterabl
             # We're only interested in files that look like reasonable Python
             # files: Must end with .py or .pyw, and must not have certain funny
             # characters that probably mean they are editor junk.
-            if re.match(r"^[^.#~!$@%^&*()+=,]+\.pyw?$", filename):
+            if re.fullmatch(r"[^.#~!$@%^&*()+=,]+\.pyw?", filename):
                 yield os.path.join(dirpath, filename)
 
 

@@ -14,6 +14,8 @@ CFileDisposition_dealloc(CFileDisposition *self)
     Py_XDECREF(self->reason);
     Py_XDECREF(self->file_tracer);
     Py_XDECREF(self->has_dynamic_filename);
+
+    Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
 static PyMemberDef

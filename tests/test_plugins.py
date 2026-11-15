@@ -979,6 +979,65 @@ class BadFileTracerTest(FileTracerTest):
         )
         self.run_bad_plugin("bad_plugin", "Plugin")
 
+    def test_dynamic_source_filename_fails_after_other_file(self) -> None:
+        # The CTracer reuses its data stack entries.  When dynamic_source_filename
+        # failed, the entry was left as it was, so g's lines were recorded into
+        # other.py, whose f had been called at the same depth.
+        self.make_file(
+            "bad_plugin.py",
+            """\
+            import coverage.plugin
+            class Plugin(coverage.plugin.CoveragePlugin):
+                def file_tracer(self, filename):
+                    if filename.endswith("plugged.py"):
+                        return BadFileTracer()
+
+            class BadFileTracer(coverage.plugin.FileTracer):
+                def has_dynamic_source_filename(self):
+                    return True
+                def dynamic_source_filename(self, filename, frame):
+                    if frame.f_code.co_name == "g":
+                        101/0
+                    return None
+
+            def coverage_init(reg, options):
+                reg.add_file_tracer(Plugin())
+            """,
+        )
+        self.make_file(
+            "simple.py",
+            """\
+            import other, plugged
+            other.f()
+            plugged.g()
+            """,
+        )
+        self.make_file(
+            "other.py",
+            """\
+            def f():
+                a = 2
+            """,
+        )
+        self.make_file(
+            "plugged.py",
+            """\
+            a = 1  # Put g's lines past the end of other.py.
+            a = 2
+            a = 3
+
+            def g():
+                c = 6
+                d = 7
+            """,
+        )
+
+        cov = coverage.Coverage()
+        cov.set_option("run:plugins", ["bad_plugin"])
+        with pytest.warns(CoverageWarning, match="Disabling plug-in 'bad_plugin.Plugin'"):
+            self.start_import_stop(cov, "simple")
+        assert sorted_lines(cov.get_data(), os.path.abspath("other.py")) == [1, 2]
+
     def test_line_number_range_raises_error(self) -> None:
         self.make_file(
             "bad_plugin.py",

@@ -3,6 +3,8 @@
 
 """Config file for coverage.py"""
 
+# pragma: enforce 100% coverage
+
 from __future__ import annotations
 
 import base64
@@ -14,11 +16,12 @@ import os
 import os.path
 import re
 from collections.abc import Callable, Iterable, Mapping
+from tomllib import TOMLDecodeError
 from typing import Any, Final
 
 from coverage.exceptions import ConfigError
 from coverage.misc import human_sorted_items, isolate_module, substitute_variables
-from coverage.tomlconfig import TomlConfigParser, TomlDecodeError
+from coverage.tomlconfig import TomlConfigParser
 from coverage.types import (
     TConfigSectionIn,
     TConfigSectionOut,
@@ -53,7 +56,8 @@ class HandyConfigParser(configparser.ConfigParser):
         encoding_unused: str | None = None,
     ) -> list[str]:
         """Read a file name as UTF-8 configuration data."""
-        return super().read(filenames, encoding="utf-8")
+        # utf-8-sig also accepts a file that starts with a byte order mark.
+        return super().read(filenames, encoding="utf-8-sig")
 
     def real_section(self, section: str) -> str | None:
         """Get the actual name of a section."""
@@ -322,7 +326,7 @@ class CoverageConfig(TConfigurable, TPluginConfig):
 
         try:
             files_read = cp.read(filename)
-        except (configparser.Error, TomlDecodeError) as err:
+        except (configparser.Error, TOMLDecodeError) as err:
             raise ConfigError(f"Couldn't read config file {filename}: {err}") from err
         if not files_read:
             return False
