@@ -371,18 +371,23 @@ class HtmlReporter:
         files_to_report = []
 
         have_data = False
+        skipped = []
         for fr, analysis in get_analysis_to_report(self.coverage, morfs):
             have_data = True
             ftr = FileToReport(fr, analysis)
             if self.should_report(analysis.numbers, self.index_pages["file"]):
                 files_to_report.append(ftr)
             else:
-                file_be_gone(os.path.join(self.directory, ftr.html_filename))
+                skipped.append(ftr.html_filename)
 
         if not have_data:
             raise NoDataError("No data to report.")
 
         self.make_directory()
+        # A failed write must not leave a status describing partially updated pages.
+        self.incr.invalidate()
+        for filename in skipped:
+            file_be_gone(os.path.join(self.directory, filename))
         self.make_local_static_report_files()
 
         if files_to_report:
@@ -780,6 +785,10 @@ class IncrementalChecker:
             self.globals = status["globals"]
         else:
             self._reset()
+
+    def invalidate(self) -> None:
+        """Discard the on-disk status before changing report output."""
+        file_be_gone(os.path.join(self.directory, self.STATUS_FILE))
 
     def write(self) -> None:
         """Write the current status."""

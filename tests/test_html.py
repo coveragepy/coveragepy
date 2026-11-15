@@ -455,6 +455,23 @@ class HtmlDeltaTest(HtmlTestHelpers, CoverageTest):
         assert "htmlcov/helper2_py.html" in self.files_written
         assert "htmlcov/main_file_py.html" in self.files_written
 
+    def test_failed_report_does_not_leave_stale_status(self) -> None:
+        self.make_file("example.py", "x = 1\ny = 2\n")
+        cov = Coverage(config_file=False, data_file=None)
+        cov.get_data().add_lines({abs_file("example.py"): {1}})
+        assert cov.html_report() == 50
+
+        cov.get_data().add_lines({abs_file("example.py"): {2}})
+        with mock.patch("coverage.html.HtmlReporter.write_file_index_page", side_effect=OSError):
+            with pytest.raises(OSError):
+                cov.html_report()
+        assert '<p class="mis show_mis">' not in self.get_html_report_content("example.py")
+
+        cov = Coverage(config_file=False, data_file=None)
+        cov.get_data().add_lines({abs_file("example.py"): {1}})
+        assert cov.html_report() == 50
+        assert '<p class="mis show_mis">' in self.get_html_report_content("example.py")
+
     def test_dont_overwrite_gitignore(self) -> None:
         self.create_initial_files()
         self.make_file("htmlcov/.gitignore", "# ignore nothing")
