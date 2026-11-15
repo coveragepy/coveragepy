@@ -33,8 +33,8 @@ workflows:
     '.github/workflows/quality.yml':
         - 'actions/checkout@v7.0.1'
         - 'actions/setup-python@v7.1.0'
-        - 'astral-sh/setup-uv@v10.3.3'
         - 'dorny/paths-filter@v4.0.3'
+        - 'j178/prek-action@v3.1.0'
     '.github/workflows/testsuite.yml':
         - 'actions/checkout@v7.0.1'
         - 'actions/setup-python@v7.1.0'
@@ -88,11 +88,6 @@ dependencies:
         commit: 'sha1-cf430e030ddbb5b0abf93d22962f4752f3646cd9'
         owner_id: 44036562
         repo_id: 192625955
-    'astral-sh/setup-uv@v10.3.3':
-        ref: 'v10.3.3'
-        commit: 'sha1-68559e99cc807c1eb7e9238fd43a15bba460eec2'
-        owner_id: 115962839
-        repo_id: 846733598
     'docker/setup-qemu-action@v4.4.0':
         ref: 'v4.4.0'
         commit: 'sha1-99012661954931238ded8c8b007157a8430204e1'
@@ -108,6 +103,11 @@ dependencies:
         commit: 'sha1-1fc58d04a4d4374f921bdac573c3811c240f9c26'
         owner_id: 9919
         repo_id: 259445878
+    'j178/prek-action@v3.1.0':
+        ref: 'v3.1.0'
+        commit: 'sha1-44924fe9ef4a6f88253c4b6b1bf11c689d3ce53d'
+        owner_id: 10510431
+        repo_id: 1052387486
     'octokit/request-action@v3.0.0':
         ref: 'v3.0.0'
         commit: 'sha1-b91aabaa861c777dcdb14e2387e30eddf04619ae'

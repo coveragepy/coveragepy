@@ -184,12 +184,22 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: "Install uv"
-        uses: astral-sh/setup-uv@v10.3.3
+      - name: "Install prek"
+        uses: j178/prek-action@v3.1.0
         with:
-          enable-cache: false
+          prek-version: latest-known
+          # Only to run zizmor at the version pinned in .pre-commit-config.yaml.
+          install-only: true
 
       - name: "Run zizmor"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: uvx zizmor --pedantic .github/workflows
+        run: |
+          prek exec zizmor -- zizmor --pedantic .github/workflows
+
+      - name: "Verify the actions lockfile"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh extension install github/gh-actions-lock --pin v0.4.1
+          gh actions-lock --verify
