@@ -8,6 +8,7 @@ from __future__ import annotations
 import collections
 import datetime
 import glob
+import gzip
 import json
 import os
 import os.path
@@ -313,15 +314,15 @@ class HtmlDeltaTest(HtmlTestHelpers, CoverageTest):
     def test_incomplete_region_cache_rebuilds_report(self, missing: str) -> None:
         self.create_initial_files()
         self.run_coverage()
-        status_path = Path("htmlcov/status.json")
-        with open(status_path, "r", encoding="utf-8") as status_file:
+        status_path = Path("htmlcov/status.json.gz")
+        with gzip.open(status_path, "rt", encoding="utf-8") as status_file:
             status = json.load(status_file)
         cached = status["files"]["helper1_py"]
         if missing == "regions":
             del cached["regions"]
         else:
             del cached["regions"][missing]
-        with open(status_path, "w", encoding="utf-8") as status_file:
+        with gzip.open(status_path, "wt", encoding="utf-8") as status_file:
             json.dump(status, status_file)
 
         self.run_coverage()
@@ -626,12 +627,12 @@ class HtmlDeltaTest(HtmlTestHelpers, CoverageTest):
         self.create_initial_files()
         self.run_coverage()
 
-        with open("htmlcov/status.json", "r", encoding="utf-8") as status_json:
+        with gzip.open("htmlcov/status.json.gz", "rt", encoding="utf-8") as status_json:
             status_data = json.load(status_json)
 
         assert status_data["format"] == 6
         status_data["format"] = 99
-        with open("htmlcov/status.json", "w", encoding="utf-8") as status_json:
+        with gzip.open("htmlcov/status.json.gz", "wt", encoding="utf-8") as status_json:
             json.dump(status_data, status_json)
 
         self.run_coverage()
@@ -642,6 +643,54 @@ class HtmlDeltaTest(HtmlTestHelpers, CoverageTest):
         assert "htmlcov/helper1_py.html" in self.files_written
         assert "htmlcov/helper2_py.html" in self.files_written
         assert "htmlcov/main_file_py.html" in self.files_written
+
+    @pytest.mark.parametrize("damage", ["truncated", "invalid_block"])
+    def test_corrupted_gzip_status_rebuilds_report(self, damage: str) -> None:
+        self.create_initial_files()
+        self.run_coverage()
+        status_path = Path("htmlcov/status.json.gz")
+        status = status_path.read_bytes()
+        if damage == "truncated":
+            status_path.write_bytes(status[:-1])
+        else:
+            status = gzip.compress(gzip.decompress(status), mtime=0)
+            # Set the first DEFLATE block type to the reserved value.
+            status_path.write_bytes(status[:10] + b"\xff" + status[11:])
+
+        self.run_coverage()
+
+        self.assert_htmlcov_files_exist()
+        assert "htmlcov/helper1_py.html" in self.files_written
+        assert "htmlcov/helper2_py.html" in self.files_written
+        assert "htmlcov/main_file_py.html" in self.files_written
+        assert json.loads(gzip.decompress(status_path.read_bytes()))["format"] == 6
+
+    @pytest.mark.parametrize("stale_gzip", [False, True])
+    def test_legacy_status_rebuilds_report(self, stale_gzip: bool) -> None:
+        self.make_file("example.py", "x = 1\ny = 2\n")
+        cov = Coverage(config_file=False, data_file=None)
+        cov.get_data().add_lines({abs_file("example.py"): {1}})
+        assert cov.html_report() == 50
+        status_path = Path("htmlcov/status.json.gz")
+        original_status = status_path.read_bytes()
+
+        cov.get_data().add_lines({abs_file("example.py"): {2}})
+        assert cov.html_report() == 100
+        # Simulate an older version updating the pages and its plain JSON cache,
+        # possibly leaving a gzip cache from a previous newer-version report.
+        legacy_path = Path("htmlcov/status.json")
+        legacy_path.write_bytes(gzip.decompress(status_path.read_bytes()))
+        if stale_gzip:
+            status_path.write_bytes(original_status)
+        else:
+            status_path.unlink()
+
+        cov = Coverage(config_file=False, data_file=None)
+        cov.get_data().add_lines({abs_file("example.py"): {1}})
+        assert cov.html_report() == 50
+        assert '<p class="mis show_mis">' in self.get_html_report_content("example.py")
+        assert not legacy_path.exists()
+        assert status_path.exists()
 
     def test_failed_report_does_not_leave_stale_status(self) -> None:
         self.make_file("example.py", "x = 1\ny = 2\n")

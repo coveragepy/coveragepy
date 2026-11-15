@@ -240,7 +240,7 @@ sample_html: clean _install_e		#- Generate sample HTML report.
 		coverage html
 	rm -rf $(SAMPLE_HTML)
 	cp -r ~/cog/htmlcov/ $(SAMPLE_HTML)/
-	rm $(SAMPLE_HTML)/.gitignore $(SAMPLE_HTML)/status.json
+	rm $(SAMPLE_HTML)/.gitignore $(SAMPLE_HTML)/status.json.gz
 	@# The file names have hashes that change, so new files need to be added.
 	git add -A $(SAMPLE_HTML)
 	git commit -m "docs: sample HTML for $$(python setup.py --version)"

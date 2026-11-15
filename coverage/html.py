@@ -11,6 +11,7 @@ import collections
 import dataclasses
 import datetime
 import functools
+import gzip
 import itertools
 import json
 import os
@@ -18,6 +19,7 @@ import re
 import string
 import struct
 import sys
+import zlib
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from html import escape
@@ -837,7 +839,7 @@ class IncrementalChecker:
 
     """
 
-    STATUS_FILE = "status.json"
+    STATUS_FILE = "status.json.gz"
     STATUS_FORMAT = 6
     NOTE = (
         "This file is an internal implementation detail to speed up HTML report"
@@ -857,9 +859,12 @@ class IncrementalChecker:
     def read(self) -> None:
         """Read the information we stored last time."""
         self._reset()
+        # Ignore the gzip cache: an older coverage.py may have rewritten the pages.
+        if os.path.exists(os.path.join(self.directory, "status.json")):
+            return
         try:
             status_file = os.path.join(self.directory, self.STATUS_FILE)
-            with open(status_file, encoding="utf-8") as fstatus:
+            with gzip.open(status_file, "rt", encoding="utf-8") as fstatus:
                 status = json.load(fstatus)
             if status["format"] != self.STATUS_FORMAT or status["version"] != coverage.__version__:
                 return
@@ -880,12 +885,14 @@ class IncrementalChecker:
                 )
                 self.files[filename] = fileinfo
             self.globals = status["globals"]
-        except (OSError, ValueError, KeyError, TypeError, AttributeError):
+        except (OSError, EOFError, zlib.error, ValueError, KeyError, TypeError, AttributeError):
             self._reset()
 
     def invalidate(self) -> None:
         """Discard the on-disk status before changing report output."""
         file_be_gone(os.path.join(self.directory, self.STATUS_FILE))
+        # Don't let an older coverage.py reuse a cache for pages we replace.
+        file_be_gone(os.path.join(self.directory, "status.json"))
 
     def write(self) -> None:
         """Write the current status."""
@@ -905,7 +912,7 @@ class IncrementalChecker:
                 for fname, finfo in self.files.items()
             },
         }
-        with open(status_file, "w", encoding="utf-8") as fout:
+        with gzip.open(status_file, "wt", compresslevel=1, encoding="utf-8") as fout:
             json.dump(status_data, fout, separators=(",", ":"))
 
     def check_global_data(self, *data: Any) -> None:
