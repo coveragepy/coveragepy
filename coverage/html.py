@@ -16,13 +16,14 @@ import json
 import os
 import re
 import string
+import struct
+import sys
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from html import escape
 from typing import TYPE_CHECKING, Any
 
 import coverage
-from coverage.data import CoverageData, add_data_to_hash
 from coverage.exceptions import NoDataError
 from coverage.files import flat_rootname
 from coverage.misc import (
@@ -35,6 +36,7 @@ from coverage.misc import (
     plural,
     stdout_link,
 )
+from coverage.numbits import numbits_union
 from coverage.report_core import get_analysis_to_report
 from coverage.results import Analysis, AnalysisNarrower, Numbers
 from coverage.templite import Templite
@@ -235,6 +237,7 @@ class FileToReport:
     def __init__(self, fr: FileReporter, analysis: Analysis) -> None:
         self.fr = fr
         self.analysis = analysis
+        self.info: FileInfo
         self.rootname = flat_rootname(fr.relative_filename())
         self.html_filename = self.rootname + ".html"
         self.prev_html = self.next_html = ""
@@ -364,7 +367,9 @@ class HtmlReporter:
         # Read the status data and check that this run used the same
         # global data as the last run.
         self.incr.read()
-        self.incr.check_global_data(self.config, self.pyfile_html_source)
+        self.incr.check_global_data(
+            self.config, self.pyfile_html_source, self.has_arcs, sys.version, sys.flags.optimize
+        )
 
         # Process all the files. For each page we need to supply a link
         # to the next and previous page.
@@ -413,6 +418,7 @@ class HtmlReporter:
 
         # Write function and class index pages.
         self.write_region_index_pages(files_to_report)
+        self.incr.write()
 
         return (
             self.index_pages["file"].totals.n_statements
@@ -479,9 +485,23 @@ class HtmlReporter:
         only does page summary bookkeeping.
 
         """
-        # Find out if the page on disk is already correct.
-        if self.incr.can_skip_file(self.data, ftr):
-            self.index_pages["file"].summaries.append(self.incr.index_info(ftr.rootname))
+        this_hash = self.file_hash(ftr.fr)
+        cached = self.incr.files.get(ftr.rootname)
+        if cached is not None and this_hash == cached.hash:
+            ftr.info = cached
+        else:
+            ftr.info = FileInfo(
+                hash=this_hash,
+                index=IndexItem(
+                    url=ftr.html_filename,
+                    file=ftr.fr.relative_filename(),
+                    nums=ftr.analysis.numbers,
+                ),
+            )
+        self.incr.files[ftr.rootname] = ftr.info
+        self.index_pages["file"].summaries.append(ftr.info.index)
+        links = [ftr.prev_html, ftr.next_html]
+        if ftr.info.links == links:
             return
 
         # Write the HTML page for this source file.
@@ -565,14 +585,26 @@ class HtmlReporter:
         )
         write_html(html_path, html)
 
-        # Save this file's information for the index page.
-        index_info = IndexItem(
-            url=ftr.html_filename,
-            file=ftr.fr.relative_filename(),
-            nums=ftr.analysis.numbers,
-        )
-        self.index_pages["file"].summaries.append(index_info)
-        self.incr.set_index_info(ftr.rootname, index_info)
+        ftr.info.links = links
+
+    def file_hash(self, fr: FileReporter) -> str:
+        """Hash the source and recorded coverage, independently of page links."""
+        h = Hasher()
+        h.update(fr.source().encode("utf-8"))
+        filename = self.coverage._file_mapper(fr.filename)
+        h.update(self.data.file_tracer(filename))
+
+        if not self.has_arcs:
+            bitmaps = self.data._line_bitmaps(filename) or []
+            h.update(functools.reduce(numbits_union, bitmaps, b"").rstrip(b"\0"))
+
+        if self.has_arcs:
+            pack_arc = struct.Struct("<qq").pack
+            packed = b"".join(
+                pack_arc(start, end) for start, end in sorted(self.data.arcs(filename) or [])
+            )
+            h.update(packed)
+        return h.hexdigest()
 
     def write_file_index_page(self, first_html: str, final_html: str) -> None:
         """Write the file index page for this report."""
@@ -585,15 +617,15 @@ class HtmlReporter:
         print_href = stdout_link(index_file, f"file://{os.path.abspath(index_file)}")
         self.coverage._message(f"Wrote HTML report to {print_href}")
 
-        # Write the latest hashes for next time.
-        self.incr.write()
-
     def write_region_index_pages(self, files_to_report: Iterable[FileToReport]) -> None:
         """Write the other index pages for this report."""
         for ftr in files_to_report:
-            for noun, summaries in self.region_summaries(ftr).items():
+            if not ftr.info.regions:
+                ftr.info.regions = self.region_summaries(ftr)
+            for noun, summaries in ftr.info.regions.items():
                 page_data = self.index_pages[noun]
-                for name, start, nums in summaries:
+                for name, start, counts in summaries:
+                    nums = Numbers(self.config.precision, 1, *counts)
                     if not self.should_report(nums, page_data):
                         continue
                     if name is None:
@@ -636,7 +668,13 @@ class HtmlReporter:
             narrower.add_regions(lines for _, _, lines in entries)
             summaries = []
             for name, start, lines in entries:
-                summaries.append((name, start, narrower.narrow(lines).numbers))
+                nums = narrower.narrow(lines).numbers
+                counts = [nums.n_statements, nums.n_excluded, nums.n_missing]
+                if self.has_arcs:
+                    counts.extend(
+                        [nums.n_branches, nums.n_partial_branches, nums.n_missing_branches]
+                    )
+                summaries.append((name, start, counts))
             result[noun] = summaries
         return result
 
@@ -681,7 +719,7 @@ class HtmlReporter:
         return index_file
 
 
-RegionSummary = tuple[str | None, int | None, Numbers]
+RegionSummary = tuple[str | None, int | None, list[int]]
 
 
 @dataclass
@@ -690,6 +728,8 @@ class FileInfo:
 
     hash: str = ""
     index: IndexItem = field(default_factory=IndexItem)
+    links: list[str] | None = None
+    regions: dict[str, list[RegionSummary]] = field(default_factory=dict)
 
 
 class IncrementalChecker:
@@ -704,14 +744,15 @@ class IncrementalChecker:
     know whether an HTML page for a .py file needs to be regenerated or not.
     The data file also needs to store all the information needed to create the
     entry for the file on the index page so that if the HTML page is reused,
-    the index page can still be created to refer to it.
+    the index page can still be created to refer to it. Region summaries let
+    the function and class indexes be rebuilt from the same cache.
 
     The data looks like::
 
         {
             "note": "This file is an internal implementation detail ...",
             // A fixed number indicating the data format.  STATUS_FORMAT
-            "format": 5,
+            "format": 6,
             // The version of coverage.py
             "version": "7.4.4",
             // A hash of a number of global things, including the configuration
@@ -720,8 +761,10 @@ class IncrementalChecker:
             "files": {
                 // An entry for each source file keyed by the flat_rootname().
                 "z_7b071bdc2a35fa80___init___py": {
-                    // Hash of the source, the text of the .py file.
+                    // Hash of the source and recorded coverage.
                     "hash": "e45581a5b48f879f301c0f30bf77a50c",
+                    // Previous and next page links, checked separately.
+                    "links": ["index.html", "other_py.html"],
                     // Information for the index.html file.
                     "index": {
                         "url": "z_7b071bdc2a35fa80___init___py.html",
@@ -729,7 +772,9 @@ class IncrementalChecker:
                         "description": "",
                         // The Numbers for this file.
                         "nums": { "precision": 2, "n_files": 1, "n_statements": 43, ... }
-                    }
+                    },
+                    // Region name, anchor line, and counts, grouped by kind.
+                    "regions": {"function": [["example", 3, [4, 0, 1]]]}
                 },
                 ...
             }
@@ -738,7 +783,7 @@ class IncrementalChecker:
     """
 
     STATUS_FILE = "status.json"
-    STATUS_FORMAT = 5
+    STATUS_FORMAT = 6
     NOTE = (
         "This file is an internal implementation detail to speed up HTML report"
         + " generation. Its format can change at any time. You might be looking"
@@ -756,23 +801,13 @@ class IncrementalChecker:
 
     def read(self) -> None:
         """Read the information we stored last time."""
+        self._reset()
         try:
             status_file = os.path.join(self.directory, self.STATUS_FILE)
             with open(status_file, encoding="utf-8") as fstatus:
                 status = json.load(fstatus)
-        except (OSError, ValueError):
-            # Status file is missing or malformed.
-            usable = False
-        else:
-            if status["format"] != self.STATUS_FORMAT:
-                usable = False
-            elif status["version"] != coverage.__version__:
-                usable = False
-            else:
-                usable = True
-
-        if usable:
-            self.files = {}
+            if status["format"] != self.STATUS_FORMAT or status["version"] != coverage.__version__:
+                return
             for filename, filedict in status["files"].items():
                 indexdict = filedict["index"]
                 index_item = IndexItem(**indexdict)
@@ -780,10 +815,17 @@ class IncrementalChecker:
                 fileinfo = FileInfo(
                     hash=filedict["hash"],
                     index=index_item,
+                    links=filedict["links"],
+                    regions={
+                        # Convert JSON lists to tuples and validate each entry's length.
+                        # pylint: disable=unnecessary-comprehension
+                        noun: [(name, start, counts) for name, start, counts in summaries]
+                        for noun, summaries in filedict.get("regions", {}).items()
+                    },
                 )
                 self.files[filename] = fileinfo
             self.globals = status["globals"]
-        else:
+        except (OSError, ValueError, KeyError, TypeError, AttributeError):
             self._reset()
 
     def invalidate(self) -> None:
@@ -798,7 +840,15 @@ class IncrementalChecker:
             "format": self.STATUS_FORMAT,
             "version": coverage.__version__,
             "globals": self.globals,
-            "files": {fname: dataclasses.asdict(finfo) for fname, finfo in self.files.items()},
+            "files": {
+                fname: {
+                    "hash": finfo.hash,
+                    "index": dataclasses.asdict(finfo.index),
+                    "links": finfo.links,
+                    "regions": finfo.regions,
+                }
+                for fname, finfo in self.files.items()
+            },
         }
         with open(status_file, "w", encoding="utf-8") as fout:
             json.dump(status_data, fout, separators=(",", ":"))
@@ -818,41 +868,6 @@ class IncrementalChecker:
         if self.globals != these_globals:
             self._reset()
             self.globals = these_globals
-
-    def can_skip_file(self, data: CoverageData, ftr: FileToReport) -> bool:
-        """Can we skip reporting this file?
-
-        `data` is a CoverageData object, and `ftr` is the `FileToReport`.
-
-        Returns True if the HTML page is fine as-is, False if we need to recreate
-        the HTML page.
-
-        """
-        h = Hasher()
-        h.update(ftr.fr.source().encode("utf-8"))
-        add_data_to_hash(data, ftr.fr.filename, h)
-        # The page links to the previous and next pages.
-        h.update(ftr.prev_html)
-        h.update(ftr.next_html)
-        this_hash = h.hexdigest()
-
-        file_info = self.files.setdefault(ftr.rootname, FileInfo())
-
-        if this_hash == file_info.hash:
-            # Nothing has changed to require the file to be reported again.
-            return True
-        else:
-            # File has changed, record the latest hash and force regeneration.
-            file_info.hash = this_hash
-            return False
-
-    def index_info(self, fname: str) -> IndexItem:
-        """Get the information for index.html for `fname`."""
-        return self.files.get(fname, FileInfo()).index
-
-    def set_index_info(self, fname: str, info: IndexItem) -> None:
-        """Set the information for index.html for `fname`."""
-        self.files.setdefault(fname, FileInfo()).index = info
 
 
 # Helpers for templates and generating HTML

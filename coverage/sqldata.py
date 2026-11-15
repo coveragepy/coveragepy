@@ -1116,23 +1116,29 @@ class CoverageData:
                 all_lines = itertools.chain.from_iterable(arcs)
                 return list({lineno for lineno in all_lines if lineno > 0})
 
+        bitmaps = self._line_bitmaps(filename)
+        if bitmaps is None:
+            return None
+        nums = set()
+        for bits in bitmaps:
+            nums.update(numbits_to_nums(bits))
+        return list(nums)
+
+    def _line_bitmaps(self, filename: str) -> list[bytes] | None:
+        """Get the stored bitmaps for the selected contexts of a file."""
+        self._start_using()
         with self._connect() as con:
             file_id = self._file_id(filename)
             if file_id is None:
                 return None
-            else:
-                query = "SELECT numbits FROM line_bits WHERE file_id = ?"
-                data = [file_id]
-                if self._query_context_ids is not None:
-                    ids_array = ", ".join("?" * len(self._query_context_ids))
-                    query += " AND context_id IN (" + ids_array + ")"
-                    data += self._query_context_ids
-                with con.execute(query, data) as cur:
-                    bitmaps = list(cur)
-                nums = set()
-                for row in bitmaps:
-                    nums.update(numbits_to_nums(row[0]))
-                return list(nums)
+            query = "SELECT numbits FROM line_bits WHERE file_id = ?"
+            data = [file_id]
+            if self._query_context_ids is not None:
+                ids_array = ", ".join("?" * len(self._query_context_ids))
+                query += " AND context_id IN (" + ids_array + ")"
+                data += self._query_context_ids
+            with con.execute(query, data) as cur:
+                return [row[0] for row in cur]
 
     def arcs(self, filename: str) -> list[TArc] | None:
         """Get the list of arcs executed for a file.

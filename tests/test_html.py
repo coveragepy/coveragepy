@@ -26,7 +26,9 @@ from coverage import Coverage, env
 from coverage.exceptions import NoDataError, NoSource, NotPython
 from coverage.files import abs_file, flat_rootname
 from coverage.misc import import_local_file
+from coverage.python import PythonFileReporter
 from coverage.report_core import get_analysis_to_report
+from coverage.results import Numbers
 from coverage.types import TLineNo, TMorf
 from tests import testenv
 from tests.coveragetest import TESTS_DIR, CoverageTest
@@ -272,6 +274,61 @@ class HtmlDeltaTest(HtmlTestHelpers, CoverageTest):
         self.run_coverage()
         self.assert_htmlcov_files_exist()
 
+    @pytest.mark.parametrize("branch", [False, True])
+    def test_file_hash_is_order_independent(self, branch: bool) -> None:
+        self.make_file("example.py", "x = 1\ny = 2\n")
+        cov = Coverage(config_file=False, data_file=None)
+        data = cov.get_data()
+        if branch:
+            data.add_arcs({abs_file("example.py"): {(-1, 1), (1, 2), (2, -1)}})
+        else:
+            data.add_lines({abs_file("example.py"): {1, 2}})
+        reporter = coverage.html.HtmlReporter(cov)
+        fr = PythonFileReporter("example.py", cov)
+        method = "arcs" if branch else "_line_bitmaps"
+        values = [(-1, 1), (1, 2), (2, -1)] if branch else [b"\x02", b"\x04\0"]
+        with mock.patch.object(data, method, return_value=values):
+            expected = reporter.file_hash(fr)
+        reversed_values = list(reversed(values)) if branch else [b"\x04", b"\x02"]
+        with mock.patch.object(data, method, return_value=reversed_values):
+            assert reporter.file_hash(fr) == expected
+
+    @pytest.mark.parametrize("branch", [False, True])
+    def test_file_hash_respects_context_filter(self, branch: bool) -> None:
+        self.make_file("example.py", "x = 1\ny = 2\n")
+        cov = Coverage(config_file=False, data_file=None)
+        cov.set_option("report:contexts", ["selected"])
+        data = cov.get_data()
+        data.set_context("selected")
+        if branch:
+            data.add_arcs({abs_file("example.py"): {(-1, 1), (1, -1)}})
+        else:
+            data.add_lines({abs_file("example.py"): {1}})
+        reporter = coverage.html.HtmlReporter(cov)
+        fr = PythonFileReporter("example.py", cov)
+        expected = reporter.file_hash(fr)
+        for context in ("other", "selected"):
+            data.set_context(context)
+            if branch:
+                data.add_arcs({abs_file("example.py"): {(1, 2), (2, -1)}})
+            else:
+                data.add_lines({abs_file("example.py"): {2}})
+            assert (reporter.file_hash(fr) == expected) == (context == "other")
+
+    def test_arc_change_invalidates_page_with_same_covered_lines(self) -> None:
+        self.make_file("example.py", "if cond:\n    x = 1\nelse:\n    x = 2\ny = x\n")
+        arcs = {(-1, 1), (1, 2), (2, 5), (4, 5), (5, -1)}
+        cov = Coverage(config_file=False, data_file=None)
+        data = cov.get_data()
+        data.add_arcs({abs_file("example.py"): arcs})
+        before = cov.html_report()
+        partial_line = '<p class="par run show_par">'
+        assert partial_line in self.get_html_report_content("example.py")
+        data.add_arcs({abs_file("example.py"): {(1, 4)}})
+
+        assert before < cov.html_report()
+        assert partial_line not in self.get_html_report_content("example.py")
+
     def test_html_delta_from_source_change(self) -> None:
         # HTML generation can create only the files that have changed.
         # In this case, helper1 changes because its source is different.
@@ -434,14 +491,43 @@ class HtmlDeltaTest(HtmlTestHelpers, CoverageTest):
         assert "htmlcov/helper1_py.html" in self.files_written
         assert "htmlcov/helper3_py.html" in self.files_written
 
+    @pytest.mark.parametrize("branch", [False, True])
+    def test_status_regional_counts_round_trip(self, branch: bool) -> None:
+        counts = [20, 3, 4, 10, 2, 5] if branch else [20, 3, 4]
+        nums = Numbers(2, 1, *counts)
+        checker = coverage.html.IncrementalChecker(".")
+        checker.files["example_py"] = coverage.html.FileInfo(
+            index=coverage.html.IndexItem(nums=nums),
+            regions={"function": [("example", 3, counts)]},
+        )
+        with mock.patch("coverage.html.json.dump", wraps=json.dump) as dump:
+            checker.write()
+        status = json.loads(json.dumps(dump.call_args.args[0]))
+        fileinfo = status["files"]["example_py"]
+        assert fileinfo["index"]["nums"] == {
+            "precision": 2,
+            "n_files": 1,
+            "n_statements": 20,
+            "n_excluded": 3,
+            "n_missing": 4,
+            "n_branches": 10 if branch else 0,
+            "n_partial_branches": 2 if branch else 0,
+            "n_missing_branches": 5 if branch else 0,
+        }
+        assert fileinfo["regions"] == {"function": [["example", 3, counts]]}
+
+        restored = coverage.html.IncrementalChecker(".")
+        restored.read()
+        assert restored.files == checker.files
+
     def test_status_format_change(self) -> None:
         self.create_initial_files()
         self.run_coverage()
 
-        with open("htmlcov/status.json", encoding="utf-8") as status_json:
+        with open("htmlcov/status.json", "r", encoding="utf-8") as status_json:
             status_data = json.load(status_json)
 
-        assert status_data["format"] == 5
+        assert status_data["format"] == 6
         status_data["format"] = 99
         with open("htmlcov/status.json", "w", encoding="utf-8") as status_json:
             json.dump(status_data, status_json)
