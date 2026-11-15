@@ -24,7 +24,7 @@ from html import escape
 from typing import TYPE_CHECKING, Any
 
 import coverage
-from coverage.exceptions import NoDataError
+from coverage.exceptions import NoDataError, NoSource
 from coverage.files import flat_rootname
 from coverage.misc import (
     Hasher,
@@ -37,10 +37,11 @@ from coverage.misc import (
     stdout_link,
 )
 from coverage.numbits import numbits_union
-from coverage.report_core import get_analysis_to_report
+from coverage.python import PythonFileReporter
+from coverage.report_core import analyze_file, get_files_to_report
 from coverage.results import Analysis, AnalysisNarrower, Numbers
 from coverage.templite import Templite
-from coverage.types import TLineNo, TMorfs
+from coverage.types import TLineNo, TMorf, TMorfs
 from coverage.version import __url__
 
 if TYPE_CHECKING:
@@ -234,9 +235,10 @@ class HtmlDataGeneration:
 class FileToReport:
     """A file we're considering reporting."""
 
-    def __init__(self, fr: FileReporter, analysis: Analysis) -> None:
+    def __init__(self, fr: FileReporter, morf: TMorf) -> None:
         self.fr = fr
-        self.analysis = analysis
+        self.morf = morf
+        self.analysis: Analysis | None = None
         self.info: FileInfo
         self.rootname = flat_rootname(fr.relative_filename())
         self.html_filename = self.rootname + ".html"
@@ -377,13 +379,25 @@ class HtmlReporter:
 
         have_data = False
         skipped = []
-        for fr, analysis in get_analysis_to_report(self.coverage, morfs):
+        for fr, morf in get_files_to_report(self.coverage, morfs):
+            ftr = FileToReport(fr, morf)
+            cached = self.incr.files.get(ftr.rootname)
+            if not self.prepare_file(ftr, cached):
+                continue
             have_data = True
-            ftr = FileToReport(fr, analysis)
-            if self.should_report(analysis.numbers, self.index_pages["file"]):
+            if self.should_report(ftr.info.index.nums, self.index_pages["file"]):
+                if not ftr.info.hash:
+                    # Plugins can require analysis before source is read.
+                    ftr.info.hash = self.file_hash(fr)
+                    if cached is not None and ftr.info.hash == cached.hash:
+                        ftr.info.links = cached.links
                 files_to_report.append(ftr)
+                self.incr.files[ftr.rootname] = ftr.info
             else:
+                ftr.info.links = None
                 skipped.append(ftr.html_filename)
+                if ftr.info.hash:
+                    self.incr.files[ftr.rootname] = ftr.info
 
         if not have_data:
             raise NoDataError("No data to report.")
@@ -424,6 +438,44 @@ class HtmlReporter:
             self.index_pages["file"].totals.n_statements
             and self.index_pages["file"].totals.pc_covered
         )
+
+    def prepare_file(self, ftr: FileToReport, cached: FileInfo | None) -> bool:
+        """Reuse valid summaries or analyze the file to obtain them."""
+        # Plugin subclasses may require analysis before reading source.
+        is_python = type(ftr.fr) is PythonFileReporter  # pylint: disable=unidiomatic-typecheck
+        this_hash = ""
+        if is_python and cached is not None:
+            try:
+                this_hash = self.file_hash(ftr.fr)
+            except (NoSource, OSError):
+                # Let the normal analysis path handle source errors.
+                pass
+            if (
+                this_hash
+                and this_hash == cached.hash
+                and (
+                    cached.links is None
+                    or all(noun in cached.regions for noun, _ in ftr.fr.code_region_kinds())
+                )
+            ):
+                ftr.info = cached
+                return True
+
+        analysis = analyze_file(self.coverage, ftr.fr, ftr.morf)
+        if analysis is None:
+            return False
+        ftr.analysis = analysis
+        if is_python and not this_hash:
+            this_hash = self.file_hash(ftr.fr)
+        ftr.info = FileInfo(
+            hash=this_hash,
+            index=IndexItem(
+                url=ftr.html_filename,
+                file=ftr.fr.relative_filename(),
+                nums=analysis.numbers,
+            ),
+        )
+        return True
 
     def make_directory(self) -> None:
         """Make sure our htmlcov directory exists."""
@@ -485,25 +537,15 @@ class HtmlReporter:
         only does page summary bookkeeping.
 
         """
-        this_hash = self.file_hash(ftr.fr)
-        cached = self.incr.files.get(ftr.rootname)
-        if cached is not None and this_hash == cached.hash:
-            ftr.info = cached
-        else:
-            ftr.info = FileInfo(
-                hash=this_hash,
-                index=IndexItem(
-                    url=ftr.html_filename,
-                    file=ftr.fr.relative_filename(),
-                    nums=ftr.analysis.numbers,
-                ),
-            )
-        self.incr.files[ftr.rootname] = ftr.info
         self.index_pages["file"].summaries.append(ftr.info.index)
         links = [ftr.prev_html, ftr.next_html]
         if ftr.info.links == links:
             return
 
+        if ftr.analysis is None:
+            # The summaries are valid, but the page's links need updating.
+            ftr.analysis = analyze_file(self.coverage, ftr.fr, ftr.morf)
+        assert ftr.analysis is not None
         # Write the HTML page for this source file.
         file_data = self.datagen.data_for_file(ftr.fr, ftr.analysis)
 
@@ -664,6 +706,7 @@ class HtmlReporter:
 
     def region_summaries(self, ftr: FileToReport) -> dict[str, list[RegionSummary]]:
         """Compute the anchors and counts needed for the region indexes."""
+        assert ftr.analysis is not None
         result = {}
         num_lines = len(ftr.fr.source().splitlines())
         regions = list(ftr.fr.code_regions())
@@ -756,7 +799,8 @@ class IncrementalChecker:
     The data file also needs to store all the information needed to create the
     entry for the file on the index page so that if the HTML page is reused,
     the index page can still be created to refer to it. Region summaries let
-    the function and class indexes be rebuilt from the same cache.
+    the function and class indexes be rebuilt from the same cache, without
+    analyzing unchanged Python files.
 
     The data looks like::
 

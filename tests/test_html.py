@@ -15,6 +15,7 @@ import re
 import sys
 from contextlib import chdir
 from html.parser import HTMLParser
+from pathlib import Path
 from typing import IO, Any
 from unittest import mock
 
@@ -273,6 +274,62 @@ class HtmlDeltaTest(HtmlTestHelpers, CoverageTest):
         self.create_initial_files()
         self.run_coverage()
         self.assert_htmlcov_files_exist()
+
+    @pytest.mark.parametrize("branch", [False, True])
+    def test_unchanged_files_rebuild_region_indexes_without_parsing(self, branch: bool) -> None:
+        self.create_initial_files()
+        self.run_coverage(covargs=dict(branch=branch))
+        for noun in ("function", "class"):
+            Path(f"htmlcov/{noun}_index.html").unlink()
+
+        with mock.patch("coverage.parser.PythonParser.parse_source", side_effect=AssertionError):
+            self.run_coverage(covargs=dict(branch=branch))
+
+        self.assert_htmlcov_files_exist()
+        assert "func1" in Path("htmlcov/function_index.html").read_text(encoding="utf-8")
+        assert "htmlcov/helper1_py.html" not in self.files_written
+
+    def test_missing_source_after_cached_report(self) -> None:
+        self.make_file("example.py", "x = 1\n")
+        cov = Coverage(config_file=False, data_file=None)
+        cov.get_data().add_lines({abs_file("example.py"): {1}})
+        assert cov.html_report() == 100
+
+        Path("example.py").unlink()
+        with pytest.raises(NoSource, match="No source for code: .*example.py"):
+            cov.html_report()
+
+    def test_branch_report_includes_file_without_arcs(self) -> None:
+        self.make_file("example.py", "x = 1\n")
+        cov = Coverage(config_file=False, data_file=None)
+        data = cov.get_data()
+        data.add_arcs({})
+        data.touch_file(abs_file("example.py"))
+
+        assert cov.html_report() == 0
+        assert '<p class="mis show_mis">' in self.get_html_report_content("example.py")
+
+    @pytest.mark.parametrize("missing", ["regions", "class"])
+    def test_incomplete_region_cache_rebuilds_report(self, missing: str) -> None:
+        self.create_initial_files()
+        self.run_coverage()
+        status_path = Path("htmlcov/status.json")
+        with open(status_path, "r", encoding="utf-8") as status_file:
+            status = json.load(status_file)
+        cached = status["files"]["helper1_py"]
+        if missing == "regions":
+            del cached["regions"]
+        else:
+            del cached["regions"][missing]
+        with open(status_path, "w", encoding="utf-8") as status_file:
+            json.dump(status, status_file)
+
+        self.run_coverage()
+
+        self.assert_htmlcov_files_exist()
+        assert "func1" in Path("htmlcov/function_index.html").read_text(encoding="utf-8")
+        assert "htmlcov/helper1_py.html" in self.files_written
+        assert "htmlcov/helper2_py.html" not in self.files_written
 
     @pytest.mark.parametrize("branch", [False, True])
     @pytest.mark.parametrize("show_contexts", [False, True])

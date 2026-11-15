@@ -20,6 +20,7 @@ import coverage.plugin
 from coverage import Coverage
 from coverage.data import line_counts, sorted_lines
 from coverage.exceptions import CoverageWarning, NoSource, PluginError
+from coverage.files import abs_file
 from coverage.misc import import_local_file
 from coverage.plugin_support import Plugins
 from coverage.types import TConfigSectionOut, TLineNo, TPluginConfig
@@ -513,12 +514,22 @@ class GoodFileTracerTest(FileTracerTest):
 
         self.start_import_stop(cov, "caller")
 
-        total = cov.html_report(include=["*.html"], omit=["uni*.html"])
+        total = cov.html_report(include=["*.html"], omit=["uni*.html"], skip_covered=True)
         assert math.isclose(total, 4 / 11 * 100)
 
         self.assert_exists("htmlcov/index.html")
         self.assert_exists("htmlcov/bar_4_html.html")
         self.assert_exists("htmlcov/foo_7_html.html")
+
+        page = "htmlcov/bar_4_html.html"
+        os.utime(page, (1000, 1000))
+        assert cov.html_report(include=["*.html"], omit=["uni*.html"], skip_covered=True) == total
+        assert os.path.getmtime(page) == 1000
+
+        cov.get_data().add_arcs({abs_file("bar_4.html"): {(1, 1), (4, 4)}})
+        total = cov.html_report(include=["*.html"], omit=["uni*.html"], skip_covered=True)
+        assert math.isclose(total, 6 / 11 * 100)
+        self.assert_doesnt_exist(page)
 
     def test_plugin2_with_xml_report(self) -> None:
         self.make_render_and_caller()
