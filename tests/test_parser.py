@@ -37,6 +37,17 @@ class PythonParserTestBase(CoverageTest):
 class PythonParserTest(PythonParserTestBase):
     """Tests of coverage.parser."""
 
+    def test_arcs_after_code_regions(self) -> None:
+        # Finding regions releases the AST, but arcs can still be computed.
+        text = """\
+            if x:
+                a = 1
+            b = 2
+            """
+        parser = self.parse_text(text)
+        parser.code_regions()
+        assert parser.arcs() == self.parse_text(text).arcs()
+
     def test_exit_counts(self) -> None:
         parser = self.parse_text("""\
             # check some basic branch counting
