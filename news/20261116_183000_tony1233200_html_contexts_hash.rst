@@ -1,0 +1,1 @@
+Fixed the HTML report keeping stale context labels on incremental re-runs, closing `issue 2372`_.  The incremental check now includes the contexts measured for each file in the data it hashes, so re-running ``coverage html`` after measuring with different contexts regenerates the affected pages instead of reusing pages that show the old contexts.

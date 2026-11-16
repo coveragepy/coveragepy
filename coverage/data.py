@@ -65,6 +65,11 @@ def add_data_to_hash(data: CoverageData, filename: str, hasher: Hasher) -> None:
     else:
         hasher.update(sorted_lines(data, filename))
     hasher.update(data.file_tracer(filename))
+    # Contexts are results data also: reports can display them (the HTML
+    # report does with show_contexts), so a change in contexts alone must
+    # change the hash.
+    contexts = data.contexts_by_lineno(filename)
+    hasher.update({lineno: sorted(names) for lineno, names in contexts.items()})
 
 
 def combinable_files(data_file: str, data_paths: Iterable[str] | None = None) -> list[str]:
