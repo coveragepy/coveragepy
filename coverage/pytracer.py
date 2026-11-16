@@ -305,7 +305,12 @@ class PyTracer(Tracer):
                         real_return = True
                 if real_return:
                     # Python 3.14 can report a new line only on the return event.
-                    if env.PYVERSION >= (3, 14) and frame.f_lineno != self.last_line:
+                    # f_lineno can be None here, for example after an except* handler.
+                    if (
+                        env.PYVERSION >= (3, 14)
+                        and frame.f_lineno is not None
+                        and frame.f_lineno != self.last_line
+                    ):
                         cast(set_TArc, self.cur_file_data).add((self.last_line, frame.f_lineno))
                         self.last_line = frame.f_lineno
                     first = frame.f_code.co_firstlineno
