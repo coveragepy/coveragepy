@@ -48,7 +48,7 @@ mypy:					#- Run the type checker.
 	tox -q -e mypy
 
 precommit:				#- Run the pre-commit checks.
-	PYTHONWARNDEFAULTENCODING= pre-commit run --all-files
+	PYTHONWARNDEFAULTENCODING= pre-commit run --all-files --show-diff-on-failure
 
 quality: lint mypy precommit		#- Run all the quality checks.
 
@@ -100,6 +100,7 @@ PIP_COMPILE = uv pip compile -q --universal --generate-hashes ${COMPILE_OPTS}
 upgrade: export UV_EXCLUDE_NEWER=P10D
 upgrade: 				#- Update the *.txt files with the latest packages satisfying *.in files.
 	$(MAKE) _upgrade COMPILE_OPTS="--upgrade"
+	prek update --cooldown-days 10
 
 # Upgrade just one package, with no cooldown.
 upgrade_one:				#- Update the *.txt files for one package. `make upgrade_one package=...`
@@ -117,7 +118,6 @@ _upgrade: $(DOCBIN) $(KITBIN)
 	$(PIP_COMPILE) -o requirements/mypy.txt requirements/mypy.in
 	$(PIP_COMPILE) -o requirements/js.txt requirements/js.in
 	$(PIP_COMPILE) -p $(DOCBIN)/python3 -o doc/requirements.txt doc/requirements.in
-	PYTHONWARNDEFAULTENCODING= pre-commit autoupdate
 
 diff_upgrade:				#- Summarize the last `make upgrade`.
 	@# The sort flags sort by the package name first, then by the -/+, and
@@ -243,6 +243,7 @@ sample_html: clean _install_e		#- Generate sample HTML report.
 	rm $(SAMPLE_HTML)/.gitignore $(SAMPLE_HTML)/status.json
 	@# The file names have hashes that change, so new files need to be added.
 	git add -A $(SAMPLE_HTML)
+	git commit -m "docs: sample HTML for $$(python setup.py --version)"
 
 dochtml: cogdoc $(DOCBIN)		#- Build the docs HTML output.
 	$(SPHINXBUILD) -b html doc doc/_build/html
@@ -274,7 +275,7 @@ $(SCRIV_SOURCE): $(CHANGES_MD)
 	sed -r -e 's@]\(([a-zA-Z0-9_]+)\.rst#([^)]+)\)@](https://coverage.readthedocs.io/en/latest/\1.html#\2)@g' < tmp/trimmed.md > $(SCRIV_SOURCE)
 
 github_releases: $(SCRIV_SOURCE)	#- Update GitHub releases.
-	$(DOCBIN)/python -m scriv github-release --config=tools/gh_release.toml --dry-run --all --repo=$(REPO_OWNER)
+	$(DOCBIN)/python -m scriv github-release --config=tools/gh_release.toml --all --repo=$(REPO_OWNER)
 
 comment_on_fixes: $(SCRIV_SOURCE)	#- Add a comment to issues that were fixed.
 	python tools/comment_on_fixes.py $(REPO_OWNER)

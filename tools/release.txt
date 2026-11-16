@@ -31,10 +31,10 @@
     - Don't forget the man page: doc/python-coverage.1.txt
     - Check that the docs build correctly:
         $ tox -e doc
+- Commit the release-prep changes
+    $ make relcommit
 - Generate a new sample HTML report for the docs:
     $ make sample_html install
-- commit the release-prep changes
-    $ make relcommit
 - Done with changes to source files
     $ g puo; gshipit
         - check them in on the release prep branch
