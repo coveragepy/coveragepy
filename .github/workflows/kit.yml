@@ -148,7 +148,7 @@ jobs:
           #                   # https://github.com/actions/runner-images/issues/15312
           #                   them["os-version"] = "24.04"
           #               if the_arch == "ppc64le":
-          #                   them["os-version"] = "24.04-ppc64le"
+          #                   them["os-version"] = "24.04-ppc64le-p10"
           #               print(f"- {json.dumps(them)}")
           #   for (the_os, the_platform, the_os_version), archs in mobile_os_archs.items():
           #       for the_arch in archs:
@@ -184,11 +184,11 @@ jobs:
           - {"os": "ubuntu", "py": "cp313", "arch": "riscv64", "cipy": "3.11"}
           - {"os": "ubuntu", "py": "cp314", "arch": "riscv64", "cipy": "3.11"}
           - {"os": "ubuntu", "py": "cp315", "arch": "riscv64", "cipy": "3.11"}
-          - {"os": "ubuntu", "py": "cp311", "arch": "ppc64le", "cipy": "3.11", "os-version": "24.04-ppc64le"}
-          - {"os": "ubuntu", "py": "cp312", "arch": "ppc64le", "cipy": "3.11", "os-version": "24.04-ppc64le"}
-          - {"os": "ubuntu", "py": "cp313", "arch": "ppc64le", "cipy": "3.11", "os-version": "24.04-ppc64le"}
-          - {"os": "ubuntu", "py": "cp314", "arch": "ppc64le", "cipy": "3.11", "os-version": "24.04-ppc64le"}
-          - {"os": "ubuntu", "py": "cp315", "arch": "ppc64le", "cipy": "3.11", "os-version": "24.04-ppc64le"}
+          - {"os": "ubuntu", "py": "cp311", "arch": "ppc64le", "cipy": "3.11", "os-version": "24.04-ppc64le-p10"}
+          - {"os": "ubuntu", "py": "cp312", "arch": "ppc64le", "cipy": "3.11", "os-version": "24.04-ppc64le-p10"}
+          - {"os": "ubuntu", "py": "cp313", "arch": "ppc64le", "cipy": "3.11", "os-version": "24.04-ppc64le-p10"}
+          - {"os": "ubuntu", "py": "cp314", "arch": "ppc64le", "cipy": "3.11", "os-version": "24.04-ppc64le-p10"}
+          - {"os": "ubuntu", "py": "cp315", "arch": "ppc64le", "cipy": "3.11", "os-version": "24.04-ppc64le-p10"}
           - {"os": "macos", "py": "cp311", "arch": "arm64", "cipy": "3.11", "os-version": "26"}
           - {"os": "macos", "py": "cp312", "arch": "arm64", "cipy": "3.11", "os-version": "26"}
           - {"os": "macos", "py": "cp313", "arch": "arm64", "cipy": "3.11", "os-version": "26"}
@@ -226,7 +226,7 @@ jobs:
           - {"os": "macos", "py": "cp313", "arch": "arm64_iphonesimulator", "cipy": "3.11", "platform": "ios", "os-version": "26"}
           - {"os": "macos", "py": "cp314", "arch": "arm64_iphonesimulator", "cipy": "3.11", "platform": "ios", "os-version": "26"}
           - {"os": "macos", "py": "cp315", "arch": "arm64_iphonesimulator", "cipy": "3.11", "platform": "ios", "os-version": "26"}
-        # [[[end]]] (sum: LvtBpYV0Q0)
+        # [[[end]]] (sum: rFAKSFojuw)
         #            ^^^^^^^^^^^^^^^
         # If a check fails and points to this checksum line, it means you edited
         # the matrix directly instead of editing the Python code in the comment
