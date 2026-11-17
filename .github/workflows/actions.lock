@@ -22,6 +22,7 @@ workflows:
         - 'actions/setup-python@v7.1.0'
         - 'actions/upload-artifact@v7.0.2'
         - 'docker/setup-qemu-action@v4.4.0'
+        - 'dorny/paths-filter@v4.0.3'
         - 'sigstore/gh-action-sigstore-python@v3.5.0'
     '.github/workflows/publish.yml':
         - 'actions/attest-build-provenance@v4.2.2'
