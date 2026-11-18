@@ -1593,6 +1593,21 @@ class HtmlWithContextsTest(HtmlTestHelpers, CoverageTest):
         cov.html_report(mod, directory="out/contexts")
         compare_html(gold_path("html/contexts"), "out/contexts")
 
+    def test_incremental_context_change(self) -> None:
+        self.make_file("two_tests.py", "x = 1\n")
+
+        for context in ["ctx_one", "ctx_two"]:
+            self.clean_local_file_imports()
+            cov = Coverage()
+            cov.set_option("html:show_contexts", True)
+            with cov.collect():
+                cov.switch_context(context)
+                mod = import_local_file("two_tests")
+            cov.html_report(mod, directory="htmlcov")
+
+            html = self.get_html_report_content("two_tests.py")
+            assert context in html
+
     def test_filtered_dynamic_contexts(self) -> None:
         self.make_file("two_tests.py", self.SOURCE)
         cov = coverage.Coverage(source=["."])
