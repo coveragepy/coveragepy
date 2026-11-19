@@ -1,0 +1,6 @@
+- Feature: the Cobertura XML report now populates the ``<methods>`` element
+  of each class with the functions in the file, each with its own line-rate,
+  branch-rate, and per-line hits, using the same region data as the HTML
+  report's function pages. Fixes `issue 2056`_.
+
+.. _issue 2056: https://github.com/coveragepy/coveragepy/issues/2056
