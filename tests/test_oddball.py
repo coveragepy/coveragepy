@@ -5,7 +5,6 @@
 
 from __future__ import annotations
 
-import os.path
 import re
 import sys
 
@@ -785,7 +784,7 @@ class ExecTest(CoverageTest):
         self.start_import_stop(cov, "bug891")
         # Saving would fail trying to encode \udcff.py
         cov.save()
-        files = [os.path.basename(f) for f in cov.get_data().measured_files()]
+        files = self.get_measured_filenames(cov.get_data())
         assert "bug891.py" in files
 
 

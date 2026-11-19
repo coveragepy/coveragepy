@@ -879,16 +879,15 @@ class CoverageDataFilesTest(CoverageTest):
         covdata1.add_lines(LINES_1)
         covdata1.write()
         self.assert_doesnt_exist(".coverage")
-        data_files1 = glob.glob(".coverage.*")
-        assert len(data_files1) == 1
+        self.assert_file_count(".coverage.*", 1)
 
         # Another suffix=True will choose a different name.
         covdata2 = DebugCoverageData(suffix=True)
         covdata2.add_lines(LINES_1)
         covdata2.write()
         self.assert_doesnt_exist(".coverage")
+        self.assert_file_count(".coverage.*", 2)
         data_files2 = glob.glob(".coverage.*")
-        assert len(data_files2) == 2
 
         # In addition to being different, the suffixes have the pid in them.
         assert all(str(os.getpid()) in fn for fn in data_files2)
@@ -903,8 +902,8 @@ class CoverageDataFilesTest(CoverageTest):
             covdata.write()
             covdata.add_lines(more_lines)
             covdata.write()
+        self.assert_file_count(".coverage.*", 2)
         data_files = glob.glob(".coverage.*")
-        assert len(data_files) == 2
         assert all(good_filename_match(fn)["hash"] for fn in data_files)
 
         covdata3 = DebugCoverageData()
@@ -935,6 +934,49 @@ class CoverageDataFilesTest(CoverageTest):
         covdata.write()
         assert covdata.data_filename() == data_file
         self.assert_file_count(".coverage.*", 1)
+
+    def test_true_suffix_with_data_written_by_another_object(self) -> None:
+        # nbval points a notebook kernel's Coverage at pytest-cov's parallel
+        # data file, so the kernel writes its data into a file it doesn't
+        # own. The hash in the file name has to include that data, or
+        # combining skips the file as a duplicate of a file with no data, like
+        # one from a subprocess that measured nothing, and deletes it.
+        # https://github.com/coveragepy/coveragepy/issues/2370
+        owner = DebugCoverageData(suffix=True)
+        owner.add_lines({})
+        kernel = DebugCoverageData(basename=owner.data_filename())
+        kernel.read()
+        kernel.add_lines(LINES_1)
+        kernel.write()
+        owner.write()
+
+        empty = DebugCoverageData(suffix=True)
+        empty.add_lines({})
+        empty.write()
+
+        classifier = DataFileClassifier()
+        assert classifier.classify(empty.data_filename()) == "combine"
+        assert classifier.classify(owner.data_filename()) == "combine"
+
+        covdata = DebugCoverageData()
+        combine_parallel_data(covdata)
+        assert_line_counts(covdata, SUMMARY_1)
+
+    def test_true_suffix_with_data_from_update(self) -> None:
+        # Data added with update() also has to be in the hash in the file name.
+        other = DebugCoverageData(basename="other")
+        other.add_lines(LINES_1)
+        owner = DebugCoverageData(suffix=True)
+        owner.update(other)
+        owner.write()
+
+        empty = DebugCoverageData(suffix=True)
+        empty.add_lines({})
+        empty.write()
+
+        classifier = DataFileClassifier()
+        assert classifier.classify(empty.data_filename()) == "combine"
+        assert classifier.classify(owner.data_filename()) == "combine"
 
     def test_combining(self) -> None:
         self.assert_file_count(".coverage.*", 0)
@@ -1178,6 +1220,39 @@ class CoverageDataFilesTest(CoverageTest):
         assert_line_counts(covdata2, SUMMARY_1)
         self.assert_exists("victim.txt")
         self.assert_doesnt_exist(".coverage.1")
+
+    def test_combining_with_vanishing_file(self) -> None:
+        # A process still finishing its write renames its data file after
+        # combine has listed it.  The vanished file is reported, not fatal.
+        covdata1 = DebugCoverageData(suffix="1")
+        covdata1.add_lines(LINES_1)
+        covdata1.write()
+        self.make_file(".coverage.2", "")
+
+        real_read = CoverageData.read
+
+        def renaming_read(self: CoverageData) -> None:
+            fname = self.data_filename()
+            if fname.endswith(".coverage.2") and os.path.exists(fname):
+                os.rename(fname, fname + ".Hdeadbeefh")
+            real_read(self)
+
+        warnings: list[str] = []
+        covdata2 = DebugCoverageData(warn=warnings.append)
+        with mock.patch.object(CoverageData, "read", renaming_read):
+            combine_parallel_data(covdata2)
+
+        assert_line_counts(covdata2, SUMMARY_1)
+        assert len(warnings) == 1
+        assert re.search(r"Couldn't use data file '.*\.coverage\.2': it doesn't exist", warnings[0])
+        self.assert_doesnt_exist(".coverage.1")
+        self.assert_exists(".coverage.2.Hdeadbeefh")
+
+    def test_reading_missing_read_only_file(self) -> None:
+        covdata = DebugCoverageData("nope", read_only=True)
+        msg = r"Couldn't use data file '.*nope': it doesn't exist"
+        with pytest.raises(DataError, match=msg):
+            covdata.read()
 
     def test_reading_with_hostile_journal(self) -> None:
         # The main data file has to be opened read-write, so a data file with a

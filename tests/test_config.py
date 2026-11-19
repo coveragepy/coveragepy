@@ -57,6 +57,25 @@ class ConfigTest(CoverageTest):
         assert not cov.config.branch
         assert cov.config.data_file == ".hello_kitty.data"
 
+    @pytest.mark.parametrize(
+        "filename, section",
+        [
+            (".coveragerc", "run"),
+            ("setup.cfg", "coverage:run"),
+            ("tox.ini", "coverage:run"),
+            ("pyproject.toml", "tool.coverage.run"),
+        ],
+    )
+    def test_config_file_with_bom(self, filename: str, section: str) -> None:
+        # Editors on Windows can save files as "UTF-8 with BOM".
+        value = "true" if filename.endswith(".toml") else "True"
+        self.make_file(
+            filename,
+            bytes=f"\ufeff[{section}]\ntimid = {value}\n".encode("utf-8"),
+        )
+        cov = coverage.Coverage()
+        assert cov.config.timid
+
     @pytest.mark.parametrize("file_class", FilePathClasses)
     def test_named_config_file(self, file_class: FilePathType) -> None:
         # You can name the config file what you like.
