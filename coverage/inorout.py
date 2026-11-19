@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import glob
 import importlib.util
 import inspect
 import itertools
@@ -216,7 +217,21 @@ class InOrOut:
         self.source_pkgs: list[str] = list(config.source_pkgs)
         self.source_dirs: list[str] = list(config.source_dirs)
         for src in config.source or []:
-            if os.path.isdir(src):
+            if glob.has_magic(src):
+                # A glob pattern in `source`: expand it to the paths it
+                # matches, and classify each match like a literal entry.
+                matches = sorted(glob.glob(src, recursive=True))
+                if not matches:
+                    self.warn(
+                        f"Source glob pattern {src!r} matched no files or directories.",
+                        slug="source-glob-no-match",
+                    )
+                for match in matches:
+                    if os.path.isdir(match):
+                        self.source_dirs.append(match)
+                    else:
+                        self.source_pkgs.append(match)
+            elif os.path.isdir(src):
                 self.source_dirs.append(src)
             else:
                 self.source_pkgs.append(src)
