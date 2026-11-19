@@ -8,8 +8,21 @@ from __future__ import annotations
 import os.path
 
 import coverage
+from coverage.types import TTraceData
 from tests.coveragetest import CoverageTest
 from tests.helpers import CheckUniqueFilenames
+
+
+class RecordingSet(set[int]):
+    """A per-file data set that records another file name when it is cleared."""
+
+    def __init__(self, data: TTraceData) -> None:
+        super().__init__({1})
+        self.data = data
+
+    def clear(self) -> None:
+        self.data["added.py"] = set()
+        super().clear()
 
 
 class CollectorTest(CoverageTest):
@@ -55,3 +68,22 @@ class CollectorTest(CoverageTest):
         abs_files = {os.path.abspath(f) for f in should_trace_hook.filenames}
         assert os.path.abspath("f1.py") in abs_files
         assert os.path.abspath("f2.py") in abs_files
+
+    def test_clear_data_when_a_file_is_recorded_while_clearing(self) -> None:
+        # Clearing the per-file data runs traced code: the GC can call a
+        # __del__ or a gc.callbacks hook, and that code is measured, so a
+        # tracer can record a new file name in self.data while we are in the
+        # middle of clearing.  _clear_data() has to iterate a snapshot of the
+        # values, not the live dict.
+        cov = coverage.Coverage(include=["f1.py"])
+        cov.start()
+        cov.stop()
+        collector = cov._collector
+        assert collector is not None
+        data = collector.data
+
+        data["stale.py"] = RecordingSet(data)
+        collector._clear_data()
+
+        assert data["stale.py"] == set()
+        assert data["added.py"] == set()
