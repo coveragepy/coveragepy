@@ -252,5 +252,5 @@ class CollectorTest(CoverageTest):
             worker.join()
 
         measured = set(cov.get_data().lines(os.path.abspath("many_funcs.py")) or ())
-        expected = {4 * i + 2 for i in range(num_funcs)} | {4 * i + 3 for i in range(num_funcs)}
-        assert expected <= measured
+        expected = {4 * i + n for i in range(num_funcs) for n in (1, 2, 3)}
+        assert measured == expected
