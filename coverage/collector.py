@@ -247,8 +247,13 @@ class Collector:
         """Start a new Tracer object, and store it in self.tracers."""
         tracer = self.core.tracer_class(**self.core.tracer_kwargs)
         tracer.data = self.data
-        tracer.lock_data = self.lock_data
-        tracer.unlock_data = self.unlock_data
+        # Hand the tracer the lock's own C methods, so no Python code (and no
+        # signal handler) can run while the lock is held.
+        if self.data_lock is not None:
+            tracer.lock_data = self.data_lock.acquire
+            tracer.unlock_data = self.data_lock.release
+        else:
+            tracer.lock_data = tracer.unlock_data = lambda: None
         tracer.trace_arcs = self.branch
         tracer.should_trace = self.should_trace
         tracer.should_trace_cache = self.should_trace_cache
