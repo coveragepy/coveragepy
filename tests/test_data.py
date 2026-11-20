@@ -816,6 +816,13 @@ class CoverageDataFilesTest(CoverageTest):
         covdata.read()
         assert_line_counts(covdata, {})
 
+    def test_keep_db_open_missing(self) -> None:
+        # Holding the connection open shouldn't create a data file.
+        covdata = DebugCoverageData()
+        with covdata.keep_db_open():
+            assert_line_counts(covdata, {})
+        self.assert_doesnt_exist(".coverage")
+
     def test_writing_and_reading(self) -> None:
         covdata1 = DebugCoverageData()
         covdata1.add_lines(LINES_1)
