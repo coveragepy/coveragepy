@@ -5,7 +5,6 @@
 
 from __future__ import annotations
 
-import contextlib
 import functools
 import os
 import sys
@@ -174,18 +173,6 @@ class Collector:
         """Return the class name of the tracer we're using."""
         return self.core.tracer_class.__name__
 
-    def _clear_data(self) -> None:
-        """Clear out existing data, but stay ready for more collection."""
-        # We used to use self.data.clear(), but that would remove filename
-        # keys and data values that were still in use higher up the stack
-        # when we are called as part of switch_context.
-        with self.data_lock or contextlib.nullcontext():
-            for d in self.data.values():
-                d.clear()
-
-        for tracer in self.tracers:
-            tracer.reset_activity()
-
     def reset(self) -> None:
         """Clear collected data, and prepare to collect more."""
         self.data_lock = self.threading.Lock() if self.threading else None
@@ -230,8 +217,6 @@ class Collector:
 
         # Our active Tracers.
         self.tracers: list[Tracer] = []
-
-        self._clear_data()
 
     def lock_data(self) -> None:
         """Lock self.data_lock, for use by tracers."""
