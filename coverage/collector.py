@@ -119,6 +119,7 @@ class Collector:
         self.origin = short_stack()
 
         self.concur_id_func = None
+        self.greenlet_settrace: Callable[[Any], Any] | None = None
 
         do_threading = False
 
@@ -139,6 +140,12 @@ class Collector:
                 import gevent
 
                 self.concur_id_func = gevent.getcurrent
+
+            if self.concur_id_func is not None:
+                # greenlet, eventlet, and gevent are all built on greenlet.
+                import greenlet
+
+                self.greenlet_settrace = greenlet.settrace
 
             if "thread" in concurrency:
                 do_threading = True
@@ -256,6 +263,8 @@ class Collector:
 
         if hasattr(tracer, "concur_id_func"):
             tracer.concur_id_func = self.concur_id_func
+            if self.greenlet_settrace is not None:
+                self._trace_greenlet_switches(tracer)
         if hasattr(tracer, "file_tracers"):
             tracer.file_tracers = self.file_tracers
         if hasattr(tracer, "threading"):
@@ -273,6 +282,25 @@ class Collector:
         self.tracers.append(tracer)
 
         return fn
+
+    def _trace_greenlet_switches(self, tracer: Any) -> None:
+        """Tell `tracer` about greenlet switches on this thread.
+
+        Switching into a greenlet resumes its frame without a call event, so
+        the tracer needs to hear about the switch to use the right data stack.
+        The greenlet trace function is per-thread, so this has to run on the
+        thread `tracer` will trace.
+
+        """
+        assert self.greenlet_settrace is not None
+        previous = self.greenlet_settrace(tracer.greenlet_switched)
+        if previous is not None:
+            # Keep calling the trace function that was already installed.
+            def greenlet_trace(event: str, args: Any) -> Any:
+                tracer.greenlet_switched(event, args)
+                return previous(event, args)
+
+            self.greenlet_settrace(greenlet_trace)
 
     # The trace function has to be set individually on each thread before
     # execution begins.  Ironically, the only support the threading module has
