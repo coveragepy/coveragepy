@@ -350,6 +350,77 @@ class MemoryFumblingTest(CoverageTest):
         out = self.run_command("python bad_key.py")
         assert out == "ValueError: can't hash BadKey\n"
 
+    @pytest.mark.skipif(not testenv.C_TRACER, reason="Only the C tracer has this issue")
+    def test_ctracer_failed_call_records_nothing(self) -> None:
+        # A call event that failed after pushing its data stack slot left the
+        # previous frame's file data there, so the frame's return event
+        # recorded arcs into the wrong file.
+        # https://github.com/coveragepy/coveragepy/issues/2385
+        #
+        # This happens for real when a not-yet-seen file is called near the
+        # recursion limit: should_trace is invoked from handle_call after the
+        # push, RecursionError is raised, and the caller catches it.  The test
+        # uses setrecursionlimit only to put the process in that state
+        # deterministically.
+        self.make_file("a_mod.py", "def f():\n    x = 1\n    return x\n")
+        self.make_file("b_mod.py", "# padding\n" * 9 + "def g():\n    return 2\n")
+        self.make_file(
+            "failed_call.py",
+            """\
+            import sys
+            import a_mod
+            import b_mod
+            import coverage
+
+            def descend(left):
+                if left:
+                    return descend(left - 1)
+                depth = 0
+                frame = sys._getframe()
+                while frame is not None:
+                    depth += 1
+                    frame = frame.f_back
+                # Record a_mod at this depth, then fail in should_trace for b_mod.
+                a_mod.f()
+                old_limit = sys.getrecursionlimit()
+                caught = False
+                try:
+                    for slack in range(1, 40):
+                        try:
+                            sys.setrecursionlimit(depth + slack)
+                        except RecursionError:
+                            sys.setrecursionlimit(old_limit)
+                            continue
+                        try:
+                            b_mod.g()
+                        except RecursionError:
+                            caught = True
+                            break
+                        else:
+                            break
+                        finally:
+                            sys.setrecursionlimit(old_limit)
+                finally:
+                    sys.setrecursionlimit(old_limit)
+                return caught
+
+            cov = coverage.Coverage(branch=True, source=["."], data_file=None)
+            cov.start()
+            try:
+                a_mod.f()
+                caught = descend(20)
+            finally:
+                cov.stop()
+
+            data = cov.get_data()
+            a_file = next(f for f in data.measured_files() if f.endswith("a_mod.py"))
+            print("caught RecursionError" if caught else "no RecursionError")
+            print(sorted(data.arcs(a_file) or []))
+            """,
+        )
+        out = self.run_command("python failed_call.py")
+        assert out == "caught RecursionError\n[(-1, 2), (2, 3), (3, -1)]\n"
+
     @pytest.mark.skipif(not testenv.C_TRACER, reason="Only the C tracer has refcounting issues")
     def test_dropping_none(self) -> None:  # pragma: not covered
         # TODO: Mark this so it will only be run sometimes.
