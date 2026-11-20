@@ -9,7 +9,6 @@ import os.path
 import queue
 import threading
 import time
-from typing import Any, cast
 
 import pytest
 
@@ -64,89 +63,6 @@ class CollectorTest(CoverageTest):
         assert os.path.abspath("f2.py") in abs_files
 
     @pytest.mark.parametrize("branch", [False, True])
-    def test_data_added_during_flush(self, branch: bool) -> None:
-        # Data added to live per-file sets (or new file entries) while
-        # flush_data() is writing to CoverageData must not be cleared, and must
-        # still be flushed on the next get_data() even if no new frame call
-        # sets tracer._activity.
-        self.make_file(
-            "prog.py",
-            """\
-            def f(x):
-                if x:
-                    return 1
-                return 2
-            """,
-        )
-        self.make_file("other.py", "x = 1\n")
-
-        cov = coverage.Coverage(branch=branch, include=["prog.py", "other.py"])
-        with cov.collect():
-            mod = import_local_file("prog")
-            mod.f(True)
-
-        collector = cov._collector
-        assert collector is not None
-        prog_fname = next(fname for fname in collector.data if fname.endswith("prog.py"))
-        other_fname = os.path.join(os.path.dirname(prog_fname), "other.py")
-        live_set = cast(set[Any], collector.data[prog_fname])
-        assert live_set
-
-        cov._init_data(suffix=None)
-        assert cov._data is not None
-        injected = False
-
-        if branch:
-            orig_add_arcs = cov._data.add_arcs
-            extra_prog: Any = (2 | (4 << 28)) if collector.core.packed_arcs else (2, 4)
-            extra_other: Any = (
-                (1 | (1 << 28) | (1 << 56)) if collector.core.packed_arcs else (-1, 1)
-            )
-
-            def hooked_add_arcs(arc_data: Any) -> None:
-                nonlocal injected
-                orig_add_arcs(arc_data)
-                if not injected:
-                    injected = True
-                    live_set.add(extra_prog)
-                    collector.data[other_fname] = {extra_other}
-
-            cov._data.add_arcs = hooked_add_arcs  # type: ignore[method-assign]
-        else:
-            orig_add_lines = cov._data.add_lines
-
-            def hooked_add_lines(line_data: Any) -> None:
-                nonlocal injected
-                orig_add_lines(line_data)
-                if not injected:
-                    injected = True
-                    live_set.add(4)
-                    collector.data[other_fname] = {1}
-
-            cov._data.add_lines = hooked_add_lines  # type: ignore[method-assign]
-
-        # First flush writes the initial snapshot while hooked_add_* simulates
-        # another thread recording into both an existing live set and a new file.
-        cov.get_data()
-        assert injected
-        assert collector.data[prog_fname] is live_set
-        assert len(live_set) == 1
-        assert all(not tracer.activity() for tracer in collector.tracers)
-
-        # Second flush must still detect the unflushed items even though all
-        # tracer activity flags are False, and drain them cleanly.
-        data = cov.get_data()
-        assert not live_set
-        assert not collector.data[other_fname]
-        assert set(data.lines(os.path.abspath("prog.py")) or ()) == {1, 2, 3, 4}
-        assert set(data.lines(os.path.abspath("other.py")) or ()) == {1}
-        if branch:
-            assert (2, 4) in (data.arcs(os.path.abspath("prog.py")) or ())
-
-        # With all sets drained and no tracer activity, another flush is a no-op.
-        assert not collector.flush_data()
-
-    @pytest.mark.parametrize("branch", [False, True])
     def test_in_frame_thread_across_flush(self, branch: bool) -> None:
         # A worker thread that stays inside an already-entered frame across a
         # flush (producing no new call / PY_START event) must not lose lines
@@ -170,6 +86,9 @@ class CollectorTest(CoverageTest):
         cov = coverage.Coverage(branch=branch, include=["in_frame.py"])
         target_file = os.path.abspath("in_frame.py")
 
+        # Flush from a thread started before collection, so it has no tracer.
+        # Flushing from a traced thread would set that tracer's activity flag
+        # and hide the bug: the flushes need to see every activity flag False.
         def _flusher() -> None:  # pragma: nested
             while True:
                 cmd = cmd_q.get()
@@ -254,3 +173,42 @@ class CollectorTest(CoverageTest):
         measured = set(cov.get_data().lines(os.path.abspath("many_funcs.py")) or ())
         expected = {4 * i + n for i in range(num_funcs) for n in (1, 2, 3)}
         assert measured == expected
+
+    @pytest.mark.parametrize("branch", [False, True])
+    def test_new_files_during_flush(self, branch: bool) -> None:
+        # Files first executed by another thread while get_data() flushes must
+        # keep all their lines.
+        num_mods = 100
+        for i in range(num_mods):
+            self.make_file(f"newmod{i}.py", "def f():\n    a = 1\n    b = 2\n    return a + b\n")
+
+        # Import before collecting so that the first traced execution of each
+        # file is a plain function call.  Importing in the worker does file
+        # I/O, and the GIL contention with the flushing loop makes each import
+        # take most of a second.
+        mods = [import_local_file(f"newmod{i}") for i in range(num_mods)]
+
+        cov = coverage.Coverage(data_file=None, branch=branch, include=["newmod*.py"])
+        # The flushing loop can call get_data() before the worker has run.
+        cov.set_option("run:disable_warnings", ["no-data-collected"])
+        with cov.collect():
+            done = threading.Event()
+
+            def _worker() -> None:
+                for mod in mods:
+                    mod.f()
+                done.set()
+
+            worker = threading.Thread(target=_worker)
+            worker.start()
+            while not done.is_set():
+                cov.get_data()
+            worker.join()
+
+        data = cov.get_data()
+        incomplete = {
+            i: lines
+            for i in range(num_mods)
+            if (lines := set(data.lines(os.path.abspath(f"newmod{i}.py")) or ())) != {2, 3, 4}
+        }
+        assert incomplete == {}
