@@ -348,6 +348,40 @@ class HtmlDeltaTest(HtmlTestHelpers, CoverageTest):
         index2 = self.get_html_index_content()
         assert index1 == index2
 
+    def test_html_delta_from_contexts_change(self) -> None:
+        # helper1 runs the same lines both times, but from a different test,
+        # so its page has to be written again to show the new context.
+        self.create_initial_files()
+        self.make_file(
+            "main_file.py",
+            """\
+            import helper1, helper2
+            def test_one():
+                helper1.func1(12)
+            test_one()
+            helper2.func2(12)
+            """,
+        )
+        self.make_file(".coveragerc", "[run]\ndynamic_context = test_function\n")
+        self.run_coverage(htmlargs=dict(show_contexts=True))
+        assert "test_one" in self.get_html_report_content("helper1.py")
+
+        self.make_file(
+            "main_file.py",
+            """\
+            import helper1, helper2
+            def test_two():
+                helper1.func1(12)
+            test_two()
+            helper2.func2(12)
+            """,
+        )
+        self.run_coverage(htmlargs=dict(show_contexts=True))
+
+        assert "htmlcov/helper1_py.html" in self.files_written
+        assert "htmlcov/helper2_py.html" not in self.files_written
+        assert "test_two" in self.get_html_report_content("helper1.py")
+
     def test_html_delta_from_coverage_version_change(self) -> None:
         # HTML generation can create only the files that have changed.
         # In this case, everything changes because the coverage.py version has
