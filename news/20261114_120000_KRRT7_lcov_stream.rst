@@ -1,0 +1,6 @@
+- Perf: the LCOV report kept every file's analysis until the end of the
+  report, so its memory use grew with the size of the project. Now each file's
+  record is written as soon as the file is analyzed, using up to 90% less
+  memory on large projects. `pull 2398`_.
+
+.. _pull 2398: https://github.com/coveragepy/coveragepy/pull/2398
