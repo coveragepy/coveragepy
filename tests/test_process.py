@@ -1870,12 +1870,11 @@ class ProcessStartupWithSourceTest(CoverageTest):
         # Main will run sub.py.
         self.make_file(
             path("main.py"),
-            """\
-            import %s
+            f"""\
+            import {fullname("sub")}
             a = 2
             b = 3
-            """
-            % fullname("sub"),
+            """,
         )
         if package:
             self.make_file(path("__init__.py"), "")
@@ -1890,19 +1889,18 @@ class ProcessStartupWithSourceTest(CoverageTest):
         )
         self.make_file(
             "coverage.ini",
-            """\
+            f"""\
             [run]
-            source = %s
-            """
-            % fullname(source),
+            source = {fullname(source)}
+            """,
         )
 
         self.set_environ("COVERAGE_PROCESS_START", "coverage.ini")
 
         if dashm:
-            cmd = "python -m %s" % fullname("main")
+            cmd = f"python -m {fullname('main')}"
         else:
-            cmd = "python %s" % path("main.py")
+            cmd = f"python {path('main.py')}"
 
         self.run_command(cmd)
 

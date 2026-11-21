@@ -136,7 +136,7 @@ class DevNullDebug(NoDebugging):
 
 def info_header(label: str) -> str:
     """Make a nice header string."""
-    return "--{:-<60s}".format(" " + label + " ")
+    return f"--{' ' + label + ' ':-<60s}"
 
 
 def info_formatter(info: Iterable[tuple[str, Any]]) -> Iterable[str]:
@@ -604,7 +604,7 @@ def show_calls(
             extra = ""
             if show_args:
                 eargs = ", ".join(map(repr, args))
-                ekwargs = ", ".join("{}={!r}".format(*item) for item in kwargs.items())
+                ekwargs = ", ".join(f"{k}={v!r}" for k, v in kwargs.items())
                 extra += "("
                 extra += eargs
                 if eargs and ekwargs:
