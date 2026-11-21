@@ -774,7 +774,7 @@ def show_help(
             print(help_msg.format(**help_params))
         else:
             print(f"Don't know topic {topic!r}")
-    print("Full documentation is at {__url__}".format(**help_params))
+    print(f"Full documentation is at {__url__}")
 
 
 OK, ERR, FAIL_UNDER = 0, 1, 2

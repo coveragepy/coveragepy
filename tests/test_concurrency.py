@@ -65,7 +65,7 @@ def line_count(s: str) -> int:
 def print_simple_annotation(code: str, linenos: Iterable[int]) -> None:
     """Print the lines in `code` with X for each line number in `linenos`."""
     for lineno, line in enumerate(code.splitlines(), start=1):
-        print(" {} {}".format("X" if lineno in linenos else " ", line))
+        print(f" {'X' if lineno in linenos else ' '} {line}")
 
 
 class LineCountTest(CoverageTest):
@@ -216,7 +216,7 @@ class ConcurrencyTest(CoverageTest):
             # We can fully measure the code if we are using the C tracer, which
             # can support all the concurrency, or if we are using threads.
             if expected_out is None:
-                expected_out = "%d\n" % (sum(range(self.QLIMIT)))
+                expected_out = f"{sum(range(self.QLIMIT))}\n"
             print(code)
             assert out == expected_out
 

@@ -626,14 +626,11 @@ class Coverage(TConfigurable):
 
         # Early warning if we aren't going to be able to support plugins.
         if self._plugins.file_tracers and not self._core.supports_plugins:
-            self._warn(
-                "Plugin file tracers ({}) aren't supported with {}".format(
-                    ", ".join(
-                        plugin._coverage_plugin_name for plugin in self._plugins.file_tracers
-                    ),
-                    self._collector.tracer_name(),
-                ),
+            plug_names = ", ".join(
+                plugin._coverage_plugin_name for plugin in self._plugins.file_tracers
             )
+            tracer = self._collector.tracer_name()
+            self._warn(f"Plugin file tracers ({plug_names}) aren't supported with {tracer}")
             for plugin in self._plugins.file_tracers:
                 plugin._coverage_enabled = False
 

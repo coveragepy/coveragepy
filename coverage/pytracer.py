@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+# pragma: exclude file from coverage
+
 import atexit
 import dis
 import itertools
@@ -37,7 +39,7 @@ set_TArc = set[TArc]
 
 
 # We need the YIELD_VALUE opcode below, in a comparison-friendly form.
-# PYVERSIONS: RESUME is new in CPython 3.11
+# PYVERSIONS: RESUME is new in CPython 3.11, but it's not in PyPy still in 3.12.
 RESUME = dis.opmap.get("RESUME")
 RETURN_VALUE = dis.opmap["RETURN_VALUE"]
 # PyPy attributes the exception-handler PUSH_EXC_INFO to the try/else line.
@@ -135,7 +137,7 @@ class PyTracer(Tracer):
                 f.write(  # type: ignore[unreachable]
                     f".{self.thread.ident:x}.{self.threading.current_thread().ident:x}"
                 )
-            f.write(" {}".format(" ".join(map(str, args))))
+            f.write(" " + " ".join(map(str, args)))
             if 0:  # if you want callers..
                 f.write(" | ")  # type: ignore[unreachable]
                 stack = " / ".join(
@@ -305,7 +307,12 @@ class PyTracer(Tracer):
                         real_return = True
                 if real_return:
                     # Python 3.14 can report a new line only on the return event.
-                    if env.PYVERSION >= (3, 14) and frame.f_lineno != self.last_line:
+                    # f_lineno can be None here, for example after an except* handler.
+                    if (
+                        env.PYVERSION >= (3, 14)
+                        and frame.f_lineno is not None
+                        and frame.f_lineno != self.last_line
+                    ):
                         cast(set_TArc, self.cur_file_data).add((self.last_line, frame.f_lineno))
                         self.last_line = frame.f_lineno
                     first = frame.f_code.co_firstlineno
