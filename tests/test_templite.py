@@ -107,6 +107,22 @@ class TempliteTest(CoverageTest):
         obj = WithMemberFns(txt="Once")
         self.try_render("{{obj.ditto}}", locals(), "OnceOnce")
 
+    def test_direct_attribute_paths(self) -> None:
+        template = Templite(
+            "{{obj.child.callback|callable}} {{mapping.a}}",
+            {"callable": callable},
+            attribute_roots=("obj",),
+        )
+        obj = SimpleNamespace(child=SimpleNamespace(callback=lambda: "called"))
+        assert template.render({"obj": obj, "mapping": {"a": "Ay"}}) == "True Ay"
+
+    def test_attribute_root_falls_back_for_item_names(self) -> None:
+        template = Templite(
+            "{{obj.class}} {{obj.non-name}} {{obj.K}}",
+            attribute_roots=("obj",),
+        )
+        assert template.render({"obj": {"class": 1, "non-name": 2, "K": 3}}) == "1 2 3"
+
     def test_item_access(self) -> None:
         # Variables' items can be used.
         d = {"a": 17, "b": 23}

@@ -15,6 +15,7 @@ from coverage.exceptions import NoDataError, NotPython
 from coverage.files import GlobMatcher, prep_patterns
 from coverage.misc import ensure_dir_for_file, file_be_gone
 from coverage.plugin import FileReporter
+from coverage.python import PythonFileReporter
 from coverage.results import Analysis
 from coverage.types import TMorfs
 
@@ -74,12 +75,17 @@ def render_report(
 def get_analysis_to_report(
     coverage: Coverage,
     morfs: TMorfs,
+    *,
+    _prepare_html: bool = False,
 ) -> Iterable[tuple[FileReporter, Analysis]]:
     """Get the files to report on.
 
     For each morf in `morfs`, if it should be reported on (based on the omit
     and include configuration options), yield a pair, the `FileReporter` and
     `Analysis` for the morf.
+
+    `_prepare_html` saves the Python AST details needed for HTML reports before
+    branch analysis discards the AST.
 
     """
     fr_morfs = coverage._get_file_reporters(morfs)
@@ -103,6 +109,8 @@ def get_analysis_to_report(
     fr_morfs.sort(reverse=True)
     while fr_morfs:
         fr, morf = fr_morfs.pop()
+        if _prepare_html and isinstance(fr, PythonFileReporter):
+            fr._prepare_html = True
         try:
             analysis = coverage._analyze(morf, file_reporter=fr)
         except NotPython:

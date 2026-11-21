@@ -15,6 +15,7 @@ import re
 import sys
 from contextlib import chdir
 from html.parser import HTMLParser
+from pathlib import Path
 from typing import IO, Any
 from unittest import mock
 
@@ -1685,3 +1686,19 @@ class HtmlHelpersTest(HtmlTestHelpers, CoverageTest):
 )
 def test_encode_int(n: int, key: str) -> None:
     assert coverage.html.encode_int(n) == key
+
+
+@pytest.mark.parametrize(
+    "html, expected",
+    [
+        ("\t\r\n\u2028\u2003\xa0", b"\n"),
+        (
+            "\t<ul>\r\n  \u2003 \r\n \t<li>β</li> \xa0\r\n</ul>\n",
+            b"<ul>\n \t<li>&#946;</li>\n</ul>\n",
+        ),
+    ],
+)
+def test_write_html_normalizes_whitespace(tmp_path: Path, html: str, expected: bytes) -> None:
+    output = tmp_path / "page.html"
+    coverage.html.write_html(str(output), html)
+    assert output.read_bytes() == expected
