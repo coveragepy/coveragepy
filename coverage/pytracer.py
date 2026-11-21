@@ -137,7 +137,7 @@ class PyTracer(Tracer):
                 f.write(  # type: ignore[unreachable]
                     f".{self.thread.ident:x}.{self.threading.current_thread().ident:x}"
                 )
-            f.write(" {}".format(" ".join(map(str, args))))
+            f.write(" " + " ".join(map(str, args)))
             if 0:  # if you want callers..
                 f.write(" | ")  # type: ignore[unreachable]
                 stack = " / ".join(

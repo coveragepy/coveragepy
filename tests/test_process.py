@@ -1318,7 +1318,7 @@ class AliasedCommandTest(CoverageTest):
 
     def test_major_version_works(self) -> None:
         # "coverage3" works on py3
-        cmd = "coverage%d" % sys.version_info[0]
+        cmd = f"coverage{sys.version_info.major}"
         out = self.run_command(cmd)
         assert "deprecated" in out
         assert "Code coverage for Python" in out
@@ -1333,7 +1333,7 @@ class AliasedCommandTest(CoverageTest):
 
     def test_specific_alias_works(self) -> None:
         # "coverage-3.9" works on py3.9
-        cmd = "coverage-%d.%d" % sys.version_info[:2]
+        cmd = f"coverage-{sys.version_info.major}.{sys.version_info.minor}"
         out = self.run_command(cmd)
         assert "deprecated" in out
         assert "Code coverage for Python" in out
@@ -1342,8 +1342,8 @@ class AliasedCommandTest(CoverageTest):
         "cmd",
         [
             "coverage",
-            "coverage%d" % sys.version_info[0],
-            "coverage-%d.%d" % sys.version_info[:2],
+            f"coverage{sys.version_info.major}",
+            f"coverage-{sys.version_info.major}.{sys.version_info.minor}",
         ],
     )
     def test_aliases_used_in_messages(self, cmd: str) -> None:

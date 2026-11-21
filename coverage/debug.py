@@ -333,11 +333,8 @@ def auto_repr(self: Any) -> str:
         and not inspect.ismethod(v)
         and k not in AUTO_REPR_IGNORE
     )
-    return "<{klass} @{id:#x}{attrs}>".format(
-        klass=self.__class__.__name__,
-        id=id(self),
-        attrs="".join(f" {k}={v!r}" for k, v in show_attrs),
-    )
+    attrs = "".join(f" {k}={v!r}" for k, v in show_attrs)
+    return f"<{self.__class__.__name__} @{id(self):#x}{attrs}>"
 
 
 def simplify(v: Any) -> Any:  # pragma: debugging
