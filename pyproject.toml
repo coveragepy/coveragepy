@@ -97,7 +97,6 @@ disable = [
     # Messages that are noisy for now, eventually maybe we'll turn them on:
     "invalid-name",
     "protected-access",
-    "unspecified-encoding",
     "consider-using-f-string",
     "duplicate-code",
     "cyclic-import",
