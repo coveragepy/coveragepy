@@ -536,6 +536,29 @@ class CoverageDataTest(CoverageTest):
         with pytest.raises(DataError, match=msg):
             covdata2.update(covdata1)
 
+    def test_update_file_tracer_vs_touched_file(self) -> None:
+        covdata1 = DebugCoverageData(suffix="1")
+        covdata1.add_lines({"p1.html": [1, 2, 3]})
+        covdata1.add_file_tracers({"p1.html": "html.plugin"})
+
+        # A file that was touched but never executed holds no measurements, so
+        # it makes no claim about which plugin owns the file.  It shouldn't
+        # conflict with plugin-measured data for the same file, and the plugin
+        # association should survive the merge in either direction.
+        covdata2 = DebugCoverageData(suffix="2")
+        covdata2.add_lines({})
+        covdata2.touch_files(["p1.html"])
+
+        covdata1.update(covdata2)
+        assert covdata1.file_tracer("p1.html") == "html.plugin"
+
+        covdata3 = DebugCoverageData(suffix="3")
+        covdata3.add_lines({})
+        covdata3.touch_files(["p1.html"])
+
+        covdata3.update(covdata1)
+        assert covdata3.file_tracer("p1.html") == "html.plugin"
+
     def test_update_lines_empty(self) -> None:
         covdata1 = DebugCoverageData(suffix="1")
         covdata1.add_lines(LINES_1)
