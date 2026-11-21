@@ -214,6 +214,14 @@ class PythonParserTest(PythonParserTestBase):
             """)
         assert {3} == parser.statements
 
+    def test_soft_key_lines(self) -> None:
+        parser = self.parse_text("""
+            match value:
+                case 1:
+                    pass
+            """)
+        assert parser.soft_key_lines == {2, 3}
+
     def test_fuzzed_double_parse(self) -> None:
         # https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=50381
         # The second parse used to raise `TypeError: 'NoneType' object is not iterable`
