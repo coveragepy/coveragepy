@@ -77,9 +77,9 @@ class LcovTest(CoverageTest):
             DA:5,0
             LF:4
             LH:2
-            FN:1,2,cuboid_volume
+            FN:2,2,cuboid_volume
             FNDA:0,cuboid_volume
-            FN:4,5,IsItTrue
+            FN:5,5,IsItTrue
             FNDA:0,IsItTrue
             FNF:2
             FNH:0
@@ -90,6 +90,37 @@ class LcovTest(CoverageTest):
         self.start_import_stop(cov, "main_file")
         pct = cov.lcov_report()
         assert pct == 50.0
+        actual_result = self.get_lcov_report_content()
+        assert expected_result == actual_result
+
+    def test_function_record_starts_at_first_body_line(self) -> None:
+        # The FN record for a function starts at the first line of the
+        # function body, not the def line.  The def line is executed when
+        # the module is imported, so starting the record there would make
+        # an uncalled function inconsistent with its line data, which
+        # lcov rejects.  Issue 2394.
+        self.make_file(
+            "main_file.py",
+            """\
+            def f():
+                return True
+            """,
+        )
+        expected_result = textwrap.dedent("""\
+            SF:main_file.py
+            DA:1,1
+            DA:2,0
+            LF:2
+            LH:1
+            FN:2,2,f
+            FNDA:0,f
+            FNF:1
+            FNH:0
+            end_of_record
+            """)
+        cov = coverage.Coverage()
+        self.start_import_stop(cov, "main_file")
+        cov.lcov_report()
         actual_result = self.get_lcov_report_content()
         assert expected_result == actual_result
 
@@ -118,9 +149,9 @@ class LcovTest(CoverageTest):
             DA:5,0,LWILTcvARcydjFFyo9qM0A
             LF:4
             LH:2
-            FN:1,2,cuboid_volume
+            FN:2,2,cuboid_volume
             FNDA:0,cuboid_volume
-            FN:4,5,IsItTrue
+            FN:5,5,IsItTrue
             FNDA:0,IsItTrue
             FNF:2
             FNH:0
@@ -169,9 +200,9 @@ class LcovTest(CoverageTest):
             DA:5,0
             LF:4
             LH:2
-            FN:1,2,cuboid_volume
+            FN:2,2,cuboid_volume
             FNDA:0,cuboid_volume
-            FN:4,5,IsItTrue
+            FN:5,5,IsItTrue
             FNDA:0,IsItTrue
             FNF:2
             FNH:0
@@ -187,7 +218,7 @@ class LcovTest(CoverageTest):
             DA:9,0
             LF:8
             LH:4
-            FN:5,9,TestCuboid.test_volume
+            FN:6,9,TestCuboid.test_volume
             FNDA:0,TestCuboid.test_volume
             FNF:1
             FNH:0
@@ -222,7 +253,7 @@ class LcovTest(CoverageTest):
             DA:5,0
             LF:4
             LH:1
-            FN:1,5,is_it_x
+            FN:2,5,is_it_x
             FNDA:0,is_it_x
             FNF:1
             FNH:0
@@ -275,7 +306,7 @@ class LcovTest(CoverageTest):
             DA:5,0
             LF:4
             LH:1
-            FN:1,5,is_it_x
+            FN:2,5,is_it_x
             FNDA:0,is_it_x
             FNF:1
             FNH:0
@@ -293,7 +324,7 @@ class LcovTest(CoverageTest):
             DA:7,0
             LF:6
             LH:4
-            FN:5,7,TestIsItX.test_is_it_x
+            FN:6,7,TestIsItX.test_is_it_x
             FNDA:0,TestIsItX.test_is_it_x
             FNF:1
             FNH:0
@@ -460,9 +491,9 @@ class LcovTest(CoverageTest):
             DA:16,1
             LF:9
             LH:9
-            FN:8,9,Base.covered
+            FN:9,9,Base.covered
             FNDA:1,Base.covered
-            FN:12,13,Concrete.excluded_abstract
+            FN:13,13,Concrete.excluded_abstract
             FNDA:1,Concrete.excluded_abstract
             FNF:2
             FNH:2
@@ -535,7 +566,7 @@ class LcovTest(CoverageTest):
             DA:7,1
             LF:7
             LH:7
-            FN:1,3,foo
+            FN:2,3,foo
             FNDA:1,foo
             FNF:1
             FNH:1
@@ -575,7 +606,7 @@ class LcovTest(CoverageTest):
             DA:7,1
             LF:7
             LH:7
-            FN:1,3,foo
+            FN:2,3,foo
             FNDA:1,foo
             FNF:1
             FNH:1
@@ -611,7 +642,7 @@ class LcovTest(CoverageTest):
             DA:5,1
             LF:5
             LH:4
-            FN:1,3,foo
+            FN:2,3,foo
             FNDA:1,foo
             FNF:1
             FNH:1
@@ -647,7 +678,7 @@ class LcovTest(CoverageTest):
             DA:5,1
             LF:5
             LH:5
-            FN:1,3,foo
+            FN:2,3,foo
             FNDA:1,foo
             FNF:1
             FNH:1
@@ -679,7 +710,7 @@ class LcovTest(CoverageTest):
             DA:3,0
             LF:3
             LH:1
-            FN:1,3,foo
+            FN:2,3,foo
             FNDA:0,foo
             FNF:1
             FNH:0
@@ -795,14 +826,14 @@ class LcovTest(CoverageTest):
         self.start_import_stop(cov, "getter_setter")
         cov.lcov_report()
         expected_result = textwrap.dedent("""\
-            FN:3,4,C.x
+            FN:4,4,C.x
             FNDA:1,C.x
-            FN:7,8,C.x@7
-            FNDA:1,C.x@7
-            FN:15,16,maybe
+            FN:8,8,C.x@8
+            FNDA:1,C.x@8
+            FN:16,16,maybe
             FNDA:1,maybe
-            FN:19,20,maybe@19
-            FNDA:1,maybe@19
+            FN:20,20,maybe@20
+            FNDA:1,maybe@20
             FNF:4
             FNH:4
             """)

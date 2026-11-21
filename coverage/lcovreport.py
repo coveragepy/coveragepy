@@ -82,10 +82,18 @@ def lcov_functions(
     # top-level functions have an empty lines array.  Instead we just don't
     # emit function records for those.
 
+    # The first line of a function record is the first line of the function
+    # body, not the "def" line.  The def line is executed when the function
+    # is defined, even if the function is never called, but lcov requires
+    # the function data to agree with the line data at the function's start
+    # line.  Using the def line would make an uncalled function look
+    # inconsistent, since its def line was executed but the function was
+    # not.
+    #
     # suppressions because of https://github.com/pylint-dev/pylint/issues/9923
     functions = [
         (
-            min(region.start, min(region.lines)),  # pylint: disable=nested-min-max
+            min(region.lines),
             max(region.start, max(region.lines)),  # pylint: disable=nested-min-max
             region,
         )

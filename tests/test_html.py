@@ -1593,6 +1593,27 @@ class HtmlWithContextsTest(HtmlTestHelpers, CoverageTest):
         cov.html_report(mod, directory="out/contexts")
         compare_html(gold_path("html/contexts"), "out/contexts")
 
+    def test_context_change_regenerates_page(self) -> None:
+        # https://github.com/coveragepy/coveragepy/issues/2372
+        # Re-measuring with different contexts must regenerate the HTML page
+        # even though the source and the measured lines are unchanged.
+        self.make_file("m.py", "x = 1\n")
+        for context in ["ctx_one", "ctx_two"]:
+            cov = coverage.Coverage(context=context)
+            cov.start()
+            exec(compile("x = 1\n", "m.py", "exec"), {})
+            cov.stop()
+            cov.save()
+            # Report with a fresh Coverage object, as `coverage html` would:
+            # its configuration is the same both times, only the measured
+            # contexts in the data have changed.
+            reporter = coverage.Coverage()
+            reporter.load()
+            reporter.set_option("html:show_contexts", True)
+            reporter.html_report(directory="out/html")
+            with open("out/html/m_py.html", encoding="utf-8") as page:
+                assert context in page.read()
+
     def test_filtered_dynamic_contexts(self) -> None:
         self.make_file("two_tests.py", self.SOURCE)
         cov = coverage.Coverage(source=["."])
