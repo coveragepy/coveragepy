@@ -440,6 +440,27 @@ class ApiTest(CoverageTest):
             import_local_file("code2")
             self.check_code1_code2(cov)
 
+    def test_nested_start_stop_keeps_measuring(self) -> None:
+        # https://github.com/coveragepy/coveragepy/issues/2302
+        self.make_file(
+            "classify.py",
+            """\
+            def classify(n):
+                if n < 0:
+                    return "negative"
+                return "other"
+            """,
+        )
+        cov = coverage.Coverage()
+        with cov.collect():
+            mod = import_local_file("classify")
+            mod.classify(-1)
+            with coverage.Coverage(data_file=None).collect():
+                pass
+            mod.classify(1)
+        _, _, missing, _ = cov.analysis("classify.py")
+        assert missing == []
+
     def test_two_getdata_only_warn_once(self) -> None:
         self.make_code1_code2()
         cov = coverage.Coverage(source=["."], omit=["code1.py"])
