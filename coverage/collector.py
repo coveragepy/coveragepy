@@ -218,16 +218,6 @@ class Collector:
         # Our active Tracers.
         self.tracers: list[Tracer] = []
 
-    def lock_data(self) -> None:
-        """Lock self.data_lock, for use by tracers."""
-        if self.data_lock is not None:
-            self.data_lock.acquire()
-
-    def unlock_data(self) -> None:
-        """Unlock self.data_lock, for use by tracers."""
-        if self.data_lock is not None:
-            self.data_lock.release()
-
     def _start_tracer(self) -> TTraceFn | None:
         """Start a new Tracer object, and store it in self.tracers."""
         tracer = self.core.tracer_class(**self.core.tracer_kwargs)
