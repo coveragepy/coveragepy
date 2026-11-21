@@ -8,6 +8,7 @@ from __future__ import annotations
 import collections
 import datetime
 import glob
+import gzip
 import json
 import os
 import os.path
@@ -15,6 +16,7 @@ import re
 import sys
 from contextlib import chdir
 from html.parser import HTMLParser
+from pathlib import Path
 from typing import IO, Any
 from unittest import mock
 
@@ -26,7 +28,9 @@ from coverage import Coverage, env
 from coverage.exceptions import NoDataError, NoSource, NotPython
 from coverage.files import abs_file, flat_rootname
 from coverage.misc import import_local_file
+from coverage.python import PythonFileReporter
 from coverage.report_core import get_analysis_to_report
+from coverage.results import Numbers
 from coverage.types import TLineNo, TMorf
 from tests import testenv
 from tests.coveragetest import TESTS_DIR, CoverageTest
@@ -272,6 +276,162 @@ class HtmlDeltaTest(HtmlTestHelpers, CoverageTest):
         self.run_coverage()
         self.assert_htmlcov_files_exist()
 
+    @pytest.mark.parametrize("branch", [False, True])
+    def test_unchanged_files_rebuild_region_indexes_without_parsing(self, branch: bool) -> None:
+        self.create_initial_files()
+        self.run_coverage(covargs=dict(branch=branch))
+        for noun in ("function", "class"):
+            Path(f"htmlcov/{noun}_index.html").unlink()
+
+        with mock.patch("coverage.parser.PythonParser.parse_source", side_effect=AssertionError):
+            self.run_coverage(covargs=dict(branch=branch))
+
+        self.assert_htmlcov_files_exist()
+        assert "func1" in Path("htmlcov/function_index.html").read_text(encoding="utf-8")
+        assert "htmlcov/helper1_py.html" not in self.files_written
+
+    def test_missing_source_after_cached_report(self) -> None:
+        self.make_file("example.py", "x = 1\n")
+        cov = Coverage(config_file=False, data_file=None)
+        cov.get_data().add_lines({abs_file("example.py"): {1}})
+        assert cov.html_report() == 100
+
+        Path("example.py").unlink()
+        with pytest.raises(NoSource, match="No source for code: .*example.py"):
+            cov.html_report()
+
+    def test_branch_report_includes_file_without_arcs(self) -> None:
+        self.make_file("example.py", "x = 1\n")
+        cov = Coverage(config_file=False, data_file=None)
+        data = cov.get_data()
+        data.add_arcs({})
+        data.touch_file(abs_file("example.py"))
+
+        assert cov.html_report() == 0
+        assert '<p class="mis show_mis">' in self.get_html_report_content("example.py")
+
+    @pytest.mark.parametrize("missing", ["regions", "class"])
+    def test_incomplete_region_cache_rebuilds_report(self, missing: str) -> None:
+        self.create_initial_files()
+        self.run_coverage()
+        status_path = Path("htmlcov/status.json.gz")
+        with gzip.open(status_path, "rt", encoding="utf-8") as status_file:
+            status = json.load(status_file)
+        cached = status["files"]["helper1_py"]
+        if missing == "regions":
+            del cached["regions"]
+        else:
+            del cached["regions"][missing]
+        with gzip.open(status_path, "wt", encoding="utf-8") as status_file:
+            json.dump(status, status_file)
+
+        self.run_coverage()
+
+        self.assert_htmlcov_files_exist()
+        assert "func1" in Path("htmlcov/function_index.html").read_text(encoding="utf-8")
+        assert "htmlcov/helper1_py.html" in self.files_written
+        assert "htmlcov/helper2_py.html" not in self.files_written
+
+    @pytest.mark.parametrize("branch", [False, True])
+    @pytest.mark.parametrize("show_contexts", [False, True])
+    def test_file_hash_is_order_independent(self, branch: bool, show_contexts: bool) -> None:
+        self.make_file("example.py", "x = 1\ny = 2\n")
+        cov = Coverage(config_file=False, data_file=None)
+        cov.set_option("html:show_contexts", show_contexts)
+        data = cov.get_data()
+        if branch:
+            data.add_arcs({abs_file("example.py"): {(-1, 1), (1, 2), (2, -1)}})
+        else:
+            data.add_lines({abs_file("example.py"): {1, 2}})
+        reporter = coverage.html.HtmlReporter(cov)
+        fr = PythonFileReporter("example.py", cov)
+        method = "arcs" if branch else "_line_bitmaps"
+        values = [(-1, 1), (1, 2), (2, -1)] if branch else [b"\x02", b"\x04\0"]
+        contexts = {1: ["first", "second\0\N{SNOWMAN}"], 2: ["first"]}
+        with mock.patch.object(data, method, return_value=values):
+            with mock.patch.object(data, "contexts_by_lineno", return_value=contexts):
+                expected = reporter.file_hash(fr)
+        reversed_contexts = {
+            line: list(reversed(names)) for line, names in reversed(contexts.items())
+        }
+        reversed_values = list(reversed(values)) if branch else [b"\x04", b"\x02"]
+        with mock.patch.object(data, method, return_value=reversed_values):
+            with mock.patch.object(data, "contexts_by_lineno", return_value=reversed_contexts):
+                assert reporter.file_hash(fr) == expected
+
+    @pytest.mark.parametrize("branch", [False, True])
+    @pytest.mark.parametrize("show_contexts", [False, True])
+    def test_file_hash_respects_context_filter(self, branch: bool, show_contexts: bool) -> None:
+        self.make_file("example.py", "x = 1\ny = 2\n")
+        cov = Coverage(config_file=False, data_file=None)
+        cov.set_option("html:show_contexts", show_contexts)
+        cov.set_option("report:contexts", ["selected"])
+        data = cov.get_data()
+        data.set_context("selected")
+        if branch:
+            data.add_arcs({abs_file("example.py"): {(-1, 1), (1, -1)}})
+        else:
+            data.add_lines({abs_file("example.py"): {1}})
+        reporter = coverage.html.HtmlReporter(cov)
+        fr = PythonFileReporter("example.py", cov)
+        expected = reporter.file_hash(fr)
+        for context in ("other", "selected"):
+            data.set_context(context)
+            if branch:
+                data.add_arcs({abs_file("example.py"): {(1, 2), (2, -1)}})
+            else:
+                data.add_lines({abs_file("example.py"): {2}})
+            assert (reporter.file_hash(fr) == expected) == (context == "other")
+
+    @pytest.mark.parametrize("context", ["", "selected"])
+    def test_line_hash_with_contexts_does_not_read_bitmap(self, context: str) -> None:
+        self.make_file("example.py", "x = 1\ny = 2\n")
+        cov = Coverage(config_file=False, data_file=None)
+        cov.set_option("html:show_contexts", True)
+        cov.set_option("report:contexts", [f"^{context}$"])
+        data = cov.get_data()
+        data.set_context(context)
+        data.add_lines({abs_file("example.py"): {1}})
+        reporter = coverage.html.HtmlReporter(cov)
+        fr = PythonFileReporter("example.py", cov)
+        with mock.patch.object(data, "_line_bitmaps", side_effect=AssertionError):
+            original = reporter.file_hash(fr)
+            data.set_context("other")
+            data.add_lines({abs_file("example.py"): {2}})
+            assert reporter.file_hash(fr) == original
+            data.set_context(context)
+            data.add_lines({abs_file("example.py"): {2}})
+            assert reporter.file_hash(fr) != original
+
+    def test_context_labels_invalidate_page_with_same_covered_lines(self) -> None:
+        self.make_file("example.py", "x = 1\n")
+        for label in ("first-test", "second-test"):
+            cov = Coverage(config_file=False, data_file=None)
+            data = cov.get_data()
+            data.set_context(label)
+            data.add_lines({abs_file("example.py"): {1}})
+            cov.html_report(show_contexts=True)
+
+        page = self.get_html_report_content("example.py")
+        assert "second-test" in page
+        assert "first-test" not in page
+
+    @pytest.mark.parametrize("show_contexts", [False, True])
+    def test_arc_change_invalidates_page_with_same_covered_lines(self, show_contexts: bool) -> None:
+        self.make_file("example.py", "if cond:\n    x = 1\nelse:\n    x = 2\ny = x\n")
+        arcs = {(-1, 1), (1, 2), (2, 5), (4, 5), (5, -1)}
+        cov = Coverage(config_file=False, data_file=None)
+        cov.set_option("html:show_contexts", show_contexts)
+        data = cov.get_data()
+        data.add_arcs({abs_file("example.py"): arcs})
+        before = cov.html_report()
+        partial_line = '<p class="par run show_par">'
+        assert partial_line in self.get_html_report_content("example.py")
+        data.add_arcs({abs_file("example.py"): {(1, 4)}})
+
+        assert before < cov.html_report()
+        assert partial_line not in self.get_html_report_content("example.py")
+
     def test_html_delta_from_source_change(self) -> None:
         # HTML generation can create only the files that have changed.
         # In this case, helper1 changes because its source is different.
@@ -434,16 +594,45 @@ class HtmlDeltaTest(HtmlTestHelpers, CoverageTest):
         assert "htmlcov/helper1_py.html" in self.files_written
         assert "htmlcov/helper3_py.html" in self.files_written
 
+    @pytest.mark.parametrize("branch", [False, True])
+    def test_status_regional_counts_round_trip(self, branch: bool) -> None:
+        counts = [20, 3, 4, 10, 2, 5] if branch else [20, 3, 4]
+        nums = Numbers(2, 1, *counts)
+        checker = coverage.html.IncrementalChecker(".")
+        checker.files["example_py"] = coverage.html.FileInfo(
+            index=coverage.html.IndexItem(nums=nums),
+            regions={"function": [("example", 3, counts)]},
+        )
+        with mock.patch("coverage.html.json.dump", wraps=json.dump) as dump:
+            checker.write()
+        status = json.loads(json.dumps(dump.call_args.args[0]))
+        fileinfo = status["files"]["example_py"]
+        assert fileinfo["index"]["nums"] == {
+            "precision": 2,
+            "n_files": 1,
+            "n_statements": 20,
+            "n_excluded": 3,
+            "n_missing": 4,
+            "n_branches": 10 if branch else 0,
+            "n_partial_branches": 2 if branch else 0,
+            "n_missing_branches": 5 if branch else 0,
+        }
+        assert fileinfo["regions"] == {"function": [["example", 3, counts]]}
+
+        restored = coverage.html.IncrementalChecker(".")
+        restored.read()
+        assert restored.files == checker.files
+
     def test_status_format_change(self) -> None:
         self.create_initial_files()
         self.run_coverage()
 
-        with open("htmlcov/status.json", encoding="utf-8") as status_json:
+        with gzip.open("htmlcov/status.json.gz", "rt", encoding="utf-8") as status_json:
             status_data = json.load(status_json)
 
-        assert status_data["format"] == 5
+        assert status_data["format"] == 6
         status_data["format"] = 99
-        with open("htmlcov/status.json", "w", encoding="utf-8") as status_json:
+        with gzip.open("htmlcov/status.json.gz", "wt", encoding="utf-8") as status_json:
             json.dump(status_data, status_json)
 
         self.run_coverage()
@@ -454,6 +643,71 @@ class HtmlDeltaTest(HtmlTestHelpers, CoverageTest):
         assert "htmlcov/helper1_py.html" in self.files_written
         assert "htmlcov/helper2_py.html" in self.files_written
         assert "htmlcov/main_file_py.html" in self.files_written
+
+    @pytest.mark.parametrize("damage", ["truncated", "invalid_block"])
+    def test_corrupted_gzip_status_rebuilds_report(self, damage: str) -> None:
+        self.create_initial_files()
+        self.run_coverage()
+        status_path = Path("htmlcov/status.json.gz")
+        status = status_path.read_bytes()
+        if damage == "truncated":
+            status_path.write_bytes(status[:-1])
+        else:
+            status = gzip.compress(gzip.decompress(status), mtime=0)
+            # Set the first DEFLATE block type to the reserved value.
+            status_path.write_bytes(status[:10] + b"\xff" + status[11:])
+
+        self.run_coverage()
+
+        self.assert_htmlcov_files_exist()
+        assert "htmlcov/helper1_py.html" in self.files_written
+        assert "htmlcov/helper2_py.html" in self.files_written
+        assert "htmlcov/main_file_py.html" in self.files_written
+        assert json.loads(gzip.decompress(status_path.read_bytes()))["format"] == 6
+
+    @pytest.mark.parametrize("stale_gzip", [False, True])
+    def test_legacy_status_rebuilds_report(self, stale_gzip: bool) -> None:
+        self.make_file("example.py", "x = 1\ny = 2\n")
+        cov = Coverage(config_file=False, data_file=None)
+        cov.get_data().add_lines({abs_file("example.py"): {1}})
+        assert cov.html_report() == 50
+        status_path = Path("htmlcov/status.json.gz")
+        original_status = status_path.read_bytes()
+
+        cov.get_data().add_lines({abs_file("example.py"): {2}})
+        assert cov.html_report() == 100
+        # Simulate an older version updating the pages and its plain JSON cache,
+        # possibly leaving a gzip cache from a previous newer-version report.
+        legacy_path = Path("htmlcov/status.json")
+        legacy_path.write_bytes(gzip.decompress(status_path.read_bytes()))
+        if stale_gzip:
+            status_path.write_bytes(original_status)
+        else:
+            status_path.unlink()
+
+        cov = Coverage(config_file=False, data_file=None)
+        cov.get_data().add_lines({abs_file("example.py"): {1}})
+        assert cov.html_report() == 50
+        assert '<p class="mis show_mis">' in self.get_html_report_content("example.py")
+        assert not legacy_path.exists()
+        assert status_path.exists()
+
+    def test_failed_report_does_not_leave_stale_status(self) -> None:
+        self.make_file("example.py", "x = 1\ny = 2\n")
+        cov = Coverage(config_file=False, data_file=None)
+        cov.get_data().add_lines({abs_file("example.py"): {1}})
+        assert cov.html_report() == 50
+
+        cov.get_data().add_lines({abs_file("example.py"): {2}})
+        with mock.patch("coverage.html.HtmlReporter.write_file_index_page", side_effect=OSError):
+            with pytest.raises(OSError):
+                cov.html_report()
+        assert '<p class="mis show_mis">' not in self.get_html_report_content("example.py")
+
+        cov = Coverage(config_file=False, data_file=None)
+        cov.get_data().add_lines({abs_file("example.py"): {1}})
+        assert cov.html_report() == 50
+        assert '<p class="mis show_mis">' in self.get_html_report_content("example.py")
 
     def test_dont_overwrite_gitignore(self) -> None:
         self.create_initial_files()

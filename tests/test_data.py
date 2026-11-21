@@ -22,7 +22,6 @@ from coverage import env
 from coverage.data import (
     CoverageData,
     DataFileClassifier,
-    add_data_to_hash,
     combine_parallel_data,
     line_counts,
 )
@@ -576,50 +575,6 @@ class CoverageDataTest(CoverageTest):
         assert_measured_files(covdata, [])
         assert covdata.arcs("missing.py") is None
         assert_measured_files(covdata, [])
-
-    def test_add_to_hash_with_lines(self) -> None:
-        covdata = DebugCoverageData()
-        covdata.add_lines(LINES_1)
-        hasher = mock.Mock()
-        add_data_to_hash(covdata, "a.py", hasher)
-        assert hasher.method_calls == [
-            mock.call.update([1, 2]),  # lines
-            mock.call.update(""),  # file_tracer name
-        ]
-
-    def test_add_to_hash_with_arcs(self) -> None:
-        covdata = DebugCoverageData()
-        covdata.add_arcs(ARCS_3)
-        covdata.add_file_tracers({"y.py": "hologram_plugin"})
-        hasher = mock.Mock()
-        add_data_to_hash(covdata, "y.py", hasher)
-        assert hasher.method_calls == [
-            mock.call.update([(-1, 17), (17, 23), (23, -1)]),  # arcs
-            mock.call.update("hologram_plugin"),  # file_tracer name
-        ]
-
-    def test_add_to_lines_hash_with_missing_file(self) -> None:
-        # https://github.com/coveragepy/coveragepy/issues/403
-        covdata = DebugCoverageData()
-        covdata.add_lines(LINES_1)
-        hasher = mock.Mock()
-        add_data_to_hash(covdata, "missing.py", hasher)
-        assert hasher.method_calls == [
-            mock.call.update([]),
-            mock.call.update(None),
-        ]
-
-    def test_add_to_arcs_hash_with_missing_file(self) -> None:
-        # https://github.com/coveragepy/coveragepy/issues/403
-        covdata = DebugCoverageData()
-        covdata.add_arcs(ARCS_3)
-        covdata.add_file_tracers({"y.py": "hologram_plugin"})
-        hasher = mock.Mock()
-        add_data_to_hash(covdata, "missing.py", hasher)
-        assert hasher.method_calls == [
-            mock.call.update([]),
-            mock.call.update(None),
-        ]
 
     def test_empty_lines_are_still_lines(self) -> None:
         covdata = DebugCoverageData()
