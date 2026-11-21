@@ -23,6 +23,8 @@ from coverage.debug import short_stack
 from coverage.exceptions import NoSource, NotPython
 from coverage.misc import isolate_module, nice_pair
 from coverage.phystokens import TToken, generate_tokens
+from coverage.plugin import CodeRegion
+from coverage.regions import code_regions_from_ast
 from coverage.types import TArc, TLineNo
 
 os = isolate_module(os)
@@ -101,7 +103,8 @@ class PythonParser:
 
         self.exclude = exclude
 
-        # The parsed AST of the text.
+        # The parsed AST of the text. It's large, so it's released once regions
+        # are found, and will be re-parsed if needed.
         self._ast_root: ast.AST | None = None
 
         # The normalized line numbers of the statements in the code. Exclusions
@@ -347,8 +350,9 @@ class PythonParser:
         `_all_arcs` is the set of arcs in the code.
 
         """
-        assert self._ast_root is not None
-        aaa = AstArcAnalyzer(self.filename, self._ast_root, self.raw_statements, self.multiline_map)
+        aaa = AstArcAnalyzer(
+            self.filename, self._get_ast(), self.raw_statements, self.multiline_map
+        )
         aaa.analyze()
         arcs = aaa.arcs
         self._with_jump_fixers = aaa.with_jump_fixers()
@@ -364,9 +368,17 @@ class PythonParser:
 
         self._missing_arc_fragments = aaa.missing_arc_fragments
 
-        # The AST is large and no longer needed: everything derived from it is
-        # memoized above.  Release it so long-lived parsers don't hold it.
+    def _get_ast(self) -> ast.AST:
+        """Get the parsed AST, re-parsing it if it was released."""
+        if self._ast_root is None:
+            self._ast_root = ast.parse(self.text)
+        return self._ast_root
+
+    def code_regions(self) -> list[CodeRegion]:
+        """Find the function and class regions, then release the AST."""
+        regions = code_regions_from_ast(self._get_ast())
         self._ast_root = None
+        return regions
 
     def fix_with_jumps(self, arcs: Iterable[TArc]) -> set[TArc]:
         """Adjust arcs to fix jumps leaving `with` statements.

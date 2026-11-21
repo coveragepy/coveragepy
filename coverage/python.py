@@ -262,7 +262,10 @@ class PythonFileReporter(FileReporter):
         return source_token_lines(self.source())
 
     def code_regions(self) -> Iterable[CodeRegion]:
-        return code_regions(self.source())
+        if self._parser is None:
+            return code_regions(self.source())
+        # The parser releases its AST after finding regions.
+        return self._parser.code_regions()
 
     def code_region_kinds(self) -> Iterable[tuple[str, str]]:
         return [
