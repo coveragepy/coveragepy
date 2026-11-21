@@ -258,9 +258,11 @@ class SysMonitor(Tracer):
             register = functools.partial(sys_monitoring.register_callback, self.myid)
             events = sys.monitoring.events
 
-            sys_monitoring.set_events(self.myid, events.PY_START)
+            global_events = events.PY_START
             register(events.PY_START, self.sysmon_py_start)
             if self.trace_arcs:
+                global_events |= events.PY_UNWIND
+                register(events.PY_UNWIND, self.sysmon_py_unwind)
                 register(events.PY_RETURN, self.sysmon_py_return)
                 register(events.LINE, self.sysmon_line_arcs)
                 if env.PYBEHAVIOR.branch_right_left:
@@ -268,6 +270,7 @@ class SysMonitor(Tracer):
                     register(events.BRANCH_LEFT, self.sysmon_branch_either)
             else:
                 register(events.LINE, self.sysmon_line_lines)
+            sys_monitoring.set_events(self.myid, global_events)
             sys_monitoring.restart_events()
             self.sysmon_on = True
 
@@ -422,6 +425,18 @@ class SysMonitor(Tracer):
         # bogus sequential arc.
         code_info.last_line = None  # type: ignore
         return DISABLE
+
+    @panopticon("code", "@", None)
+    def sysmon_py_unwind(
+        self,
+        code: CodeType,
+        instruction_offset: TOffset,
+        exception: BaseException,
+    ) -> None:
+        """Forget the last line when a frame exits through an exception."""
+        code_info = self.code_infos.get(id(code))
+        if code_info is not None:
+            code_info.last_line = None
 
     @panopticon("code", "line")
     def sysmon_line_lines(self, code: CodeType, line_number: TLineNo) -> MonitorReturn:
