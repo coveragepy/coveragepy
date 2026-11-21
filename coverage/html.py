@@ -477,7 +477,11 @@ class HtmlReporter:
 
         """
         # Find out if the page on disk is already correct.
-        if self.incr.can_skip_file(self.data, ftr):
+        if self.incr.can_skip_file(
+            self.data,
+            ftr,
+            show_contexts=self.config.show_contexts,
+        ):
             self.index_pages["file"].summaries.append(self.incr.index_info(ftr.rootname))
             return
 
@@ -816,7 +820,13 @@ class IncrementalChecker:
             self._reset()
             self.globals = these_globals
 
-    def can_skip_file(self, data: CoverageData, ftr: FileToReport) -> bool:
+    def can_skip_file(
+        self,
+        data: CoverageData,
+        ftr: FileToReport,
+        *,
+        show_contexts: bool,
+    ) -> bool:
         """Can we skip reporting this file?
 
         `data` is a CoverageData object, and `ftr` is the `FileToReport`.
@@ -828,6 +838,9 @@ class IncrementalChecker:
         h = Hasher()
         h.update(ftr.fr.source().encode("utf-8"))
         add_data_to_hash(data, ftr.fr.filename, h)
+        if show_contexts:
+            contexts_by_lineno = data.contexts_by_lineno(ftr.fr.filename)
+            h.update({lineno: sorted(contexts) for lineno, contexts in contexts_by_lineno.items()})
         # The page links to the previous and next pages.
         h.update(ftr.prev_html)
         h.update(ftr.next_html)
