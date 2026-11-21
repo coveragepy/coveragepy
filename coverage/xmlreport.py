@@ -213,7 +213,12 @@ class XmlReporter:
 
         xclass: xml.dom.minidom.Element = self.xml_out.createElement("class")
 
-        appendChild(xclass, self.xml_out.createElement("methods"))
+        branch_stats = analysis.branch_stats()
+        missing_branch_arcs = analysis.missing_branch_arcs()
+
+        xmethods = self.xml_out.createElement("methods")
+        appendChild(xclass, xmethods)
+        self.xml_methods(fr, analysis, has_arcs, xmethods, branch_stats, missing_branch_arcs)
 
         xlines = self.xml_out.createElement("lines")
         appendChild(xclass, xlines)
@@ -222,29 +227,11 @@ class XmlReporter:
         xclass.setAttribute("filename", rel_name.replace("\\", "/"))
         xclass.setAttribute("complexity", "0")
 
-        branch_stats = analysis.branch_stats()
-        missing_branch_arcs = analysis.missing_branch_arcs()
-
         # For each statement, create an XML "line" element.
         for line in sorted(analysis.statements):
-            xline = self.xml_out.createElement("line")
-            xline.setAttribute("number", str(line))
-
-            # Q: can we get info about the number of times a statement is
-            # executed?  If so, that should be recorded here.
-            xline.setAttribute("hits", str(int(line not in analysis.missing)))
-
-            if has_arcs:
-                if line in branch_stats:
-                    total, taken = branch_stats[line]
-                    xline.setAttribute("branch", "true")
-                    xline.setAttribute(
-                        "condition-coverage",
-                        f"{100 * taken // total}% ({taken}/{total})",
-                    )
-                if line in missing_branch_arcs:
-                    annlines = ["exit" if b < 0 else str(b) for b in missing_branch_arcs[line]]
-                    xline.setAttribute("missing-branches", ",".join(annlines))
+            xline = self.make_line_element(
+                line, analysis, has_arcs, branch_stats, missing_branch_arcs
+            )
             appendChild(xlines, xline)
 
         class_lines = len(analysis.statements)
@@ -271,6 +258,75 @@ class XmlReporter:
         package.lines += class_lines
         package.br_hits += class_br_hits
         package.branches += class_branches
+
+    def make_line_element(
+        self,
+        line: int,
+        analysis: Analysis,
+        has_arcs: bool,
+        branch_stats: dict[int, tuple[int, int]],
+        missing_branch_arcs: dict[int, list[int]],
+    ) -> xml.dom.minidom.Element:
+        """Create an XML "line" element for one statement line."""
+        xline = self.xml_out.createElement("line")
+        xline.setAttribute("number", str(line))
+
+        # Q: can we get info about the number of times a statement is
+        # executed?  If so, that should be recorded here.
+        xline.setAttribute("hits", str(int(line not in analysis.missing)))
+
+        if has_arcs:
+            if line in branch_stats:
+                total, taken = branch_stats[line]
+                xline.setAttribute("branch", "true")
+                xline.setAttribute(
+                    "condition-coverage",
+                    f"{100 * taken // total}% ({taken}/{total})",
+                )
+            if line in missing_branch_arcs:
+                annlines = ["exit" if b < 0 else str(b) for b in missing_branch_arcs[line]]
+                xline.setAttribute("missing-branches", ",".join(annlines))
+        return xline
+
+    def xml_methods(
+        self,
+        fr: FileReporter,
+        analysis: Analysis,
+        has_arcs: bool,
+        xmethods: xml.dom.minidom.Element,
+        branch_stats: dict[int, tuple[int, int]],
+        missing_branch_arcs: dict[int, list[int]],
+    ) -> None:
+        """Populate a "methods" element with the functions in a file.
+
+        Each function reported by the file reporter becomes a Cobertura
+        "method" element with its own line-rate and branch-rate, computed
+        from the statements in the function's region of the file.
+        """
+        regions = [r for r in fr.code_regions() if r.kind == "function"]
+        for region in sorted(regions, key=lambda r: (r.start, r.name)):
+            statements = sorted(analysis.statements & region.lines)
+            hits = sum(1 for line in statements if line not in analysis.missing)
+
+            xmethod = self.xml_out.createElement("method")
+            appendChild(xmethods, xmethod)
+            xmethod.setAttribute("name", neutralize_control(region.name))
+            xmethod.setAttribute("signature", "")
+            xmethod.setAttribute("line-rate", rate(hits, len(statements)))
+            if has_arcs:
+                total = sum(t for line, (t, k) in branch_stats.items() if line in region.lines)
+                taken = sum(k for line, (t, k) in branch_stats.items() if line in region.lines)
+                xmethod.setAttribute("branch-rate", rate(taken, total))
+            else:
+                xmethod.setAttribute("branch-rate", "0")
+
+            xlines = self.xml_out.createElement("lines")
+            appendChild(xmethod, xlines)
+            for line in statements:
+                xline = self.make_line_element(
+                    line, analysis, has_arcs, branch_stats, missing_branch_arcs
+                )
+                appendChild(xlines, xline)
 
 
 def serialize_xml(dom: xml.dom.minidom.Document) -> str:
