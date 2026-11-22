@@ -1365,7 +1365,7 @@ class RelativePathTest(CoverageTest):
         res = cov.report()
         assert res == 100
 
-        expected = re.escape("No source for code: '{}'.".format(abs_file("foo.py")))
+        expected = re.escape(f"No source for code: '{abs_file('foo.py')}'.")
         os.remove("foo.py")
         self.make_file("new/foo.py", "a = 1")
         shutil.move(".coverage", "new/.coverage")
