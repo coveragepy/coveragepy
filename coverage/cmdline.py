@@ -879,9 +879,12 @@ class CoverageScript:
             contexts=contexts,
         )
 
-        # We need to be able to import from the current directory, because
-        # plugins may try to, for example, to read Django settings.
-        sys.path.insert(0, "")
+        # Plugins need to be able to import from the current directory, for
+        # example, to read Django settings.  It goes last: reporting shouldn't
+        # run the code being reported on, so files there must not be found
+        # instead of stdlib or installed modules.
+        if self.coverage.get_option("run:plugins"):
+            sys.path.append("")
 
         self.coverage.load()
         self.coverage.combine(strict=False, keep=bool(options.keep_combined))

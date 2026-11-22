@@ -1,0 +1,5 @@
+- Fix: the reporting commands (``report``, ``html``, ``xml``, ``json``,
+  ``lcov``, and ``annotate``) used to put the current directory first on
+  ``sys.path``, to let plugins import local files.  Now the current directory
+  is added only if plugins are configured, and at the end of ``sys.path``, so
+  local files can't replace other modules.
