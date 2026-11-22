@@ -559,6 +559,37 @@ class CoverageDataTest(CoverageTest):
         covdata3.update(covdata1)
         assert covdata3.file_tracer("p1.html") == "html.plugin"
 
+    def test_update_file_tracer_vs_touched_file_arcs(self) -> None:
+        covdata1 = DebugCoverageData(suffix="1")
+        covdata1.add_arcs({"p1.html": [(-1, 1), (1, 2), (2, -1)]})
+        covdata1.add_file_tracers({"p1.html": "html.plugin"})
+
+        covdata2 = DebugCoverageData(suffix="2")
+        covdata2.add_arcs({})
+        covdata2.touch_files(["p1.html"])
+
+        covdata2.update(covdata1)
+        assert covdata2.file_tracer("p1.html") == "html.plugin"
+        assert sorted(covdata2.arcs("p1.html") or []) == [(-1, 1), (1, 2), (2, -1)]
+
+    def test_update_file_tracer_vs_touched_file_other_tracer(self) -> None:
+        covdata1 = DebugCoverageData(suffix="1")
+        covdata1.add_lines({"p1.html": [1, 2, 3]})
+        covdata1.add_file_tracers({"p1.html": "html.plugin"})
+
+        # A file touched with a different plugin is still a conflict.
+        covdata2 = DebugCoverageData(suffix="2")
+        covdata2.add_lines({})
+        covdata2.touch_files(["p1.html"], plugin_name="html.other_plugin")
+
+        msg = "Conflicting file tracer name for 'p1.html': 'html.plugin' vs 'html.other_plugin'"
+        with pytest.raises(DataError, match=msg):
+            covdata1.update(covdata2)
+
+        msg = "Conflicting file tracer name for 'p1.html': 'html.other_plugin' vs 'html.plugin'"
+        with pytest.raises(DataError, match=msg):
+            covdata2.update(covdata1)
+
     def test_update_lines_empty(self) -> None:
         covdata1 = DebugCoverageData(suffix="1")
         covdata1.add_lines(LINES_1)

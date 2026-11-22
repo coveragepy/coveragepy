@@ -805,14 +805,14 @@ class CoverageData:
                 FROM other_db.file AS other_file
             """)
 
-            # Check for tracer conflicts before proceeding.  A file recorded
-            # without a tracer only makes a tracer claim when that data file
-            # also holds measurements for the file: a file that was touched but
-            # never executed (an unexecuted source file, say) says nothing about
-            # which plugin owns it, so it must not conflict with another data
-            # file where the file was measured by a plugin.  The tracer from the
-            # other data is adopted below, keeping the plugin association.
-            with con.execute("""
+            # Check for tracer conflicts before proceeding.  A file with no
+            # tracer and no measurements (touched but never executed) makes no
+            # claim about which plugin owns it, so it doesn't conflict: the
+            # other side's tracer is adopted below.
+            # We checked above that both sides measure the same way, so only one
+            # table can hold measurements.
+            measured = "arc" if (self._has_arcs or other_data._has_arcs) else "line_bits"
+            tracer_conflicts_query = f"""
                 SELECT other_file_mapped.mapped_path,
                        COALESCE(main.tracer.tracer, ''),
                        COALESCE(other_db.tracer.tracer, '')
@@ -820,22 +820,24 @@ class CoverageData:
                 LEFT JOIN main.tracer ON main.file.id = main.tracer.file_id
                 INNER JOIN other_file_mapped ON main.file.path = other_file_mapped.mapped_path
                 LEFT JOIN other_db.tracer ON other_file_mapped.other_file_id = other_db.tracer.file_id
-                WHERE COALESCE(main.tracer.tracer, '') != COALESCE(other_db.tracer.tracer, '')
-                  AND (
-                    EXISTS (SELECT 1 FROM main.line_bits AS lb WHERE lb.file_id = main.file.id)
-                    OR EXISTS (SELECT 1 FROM main.arc AS ma WHERE ma.file_id = main.file.id)
-                  )
-                  AND (
-                    EXISTS (
-                        SELECT 1 FROM other_db.line_bits AS olb
-                        WHERE olb.file_id = other_file_mapped.other_file_id
+                WHERE
+                    COALESCE(main.tracer.tracer, '') != COALESCE(other_db.tracer.tracer, '')
+                    AND NOT (
+                        COALESCE(main.tracer.tracer, '') = ''
+                        AND NOT EXISTS (
+                            SELECT 1 FROM main.{measured}
+                            WHERE file_id = main.file.id
+                        )
                     )
-                    OR EXISTS (
-                        SELECT 1 FROM other_db.arc AS oa
-                        WHERE oa.file_id = other_file_mapped.other_file_id
+                    AND NOT (
+                        COALESCE(other_db.tracer.tracer, '') = ''
+                        AND NOT EXISTS (
+                            SELECT 1 FROM other_db.{measured}
+                            WHERE file_id = other_file_mapped.other_file_id
+                        )
                     )
-                  )
-            """) as cur:
+            """
+            with con.execute(tracer_conflicts_query) as cur:
                 conflicts = list(cur)
                 if conflicts:
                     path, this_tracer, other_tracer = conflicts[0]
