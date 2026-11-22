@@ -454,10 +454,10 @@ class ApiTest(CoverageTest):
         cov = coverage.Coverage()
         with cov.collect():
             mod = import_local_file("classify")
-            mod.classify(-1)
+            assert mod.classify(-1) == "negative"
             with coverage.Coverage(data_file=None).collect():
                 pass
-            mod.classify(1)
+            assert mod.classify(1) == "other"
         _, _, missing, _ = cov.analysis("classify.py")
         assert missing == []
 
