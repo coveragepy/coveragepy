@@ -1572,6 +1572,23 @@ class ExceptionArcTest(CoverageTest):
             branchz_missing="",
         )
 
+    def test_exception_group_in_function(self) -> None:
+        # The return event after an except* handler can have f_lineno None.
+        self.check_coverage(
+            """\
+            def func():
+                try:
+                    raise ExceptionGroup("Zero!", [ZeroDivisionError()])
+                except* ZeroDivisionError:
+                    pass
+            func()
+            """,
+            lines=[1, 2, 3, 4, 5, 6],
+            missing="",
+            branchz="",
+            branchz_missing="",
+        )
+
 
 class YieldTest(CoverageTest):
     """Arc tests for generators."""

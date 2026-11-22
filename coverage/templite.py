@@ -151,9 +151,9 @@ class Templite:
         def flush_output() -> None:
             """Force `buffered` to the code builder."""
             if len(buffered) == 1:
-                code.add_line("append_result(%s)" % buffered[0])
+                code.add_line(f"append_result({buffered[0]})")
             elif len(buffered) > 1:
-                code.add_line("extend_result([%s])" % ", ".join(buffered))
+                code.add_line(f"extend_result([{', '.join(buffered)}])")
             del buffered[:]
 
         ops_stack = []
@@ -176,7 +176,7 @@ class Templite:
                 elif token.startswith("{{"):
                     # An expression to evaluate.
                     expr = self._expr_code(token[start:end].strip())
-                    buffered.append("to_str(%s)" % expr)
+                    buffered.append(f"to_str({expr})")
                 else:
                     # token.startswith("{%")
                     # Action tag: split into words and parse further.
@@ -188,7 +188,7 @@ class Templite:
                         if len(words) != 2:
                             self._syntax_error("Don't understand if", token)
                         ops_stack.append("if")
-                        code.add_line("if %s:" % self._expr_code(words[1]))
+                        code.add_line(f"if {self._expr_code(words[1])}:")
                         code.indent()
                     elif words[0] == "else":
                         if len(words) != 1:
@@ -269,7 +269,7 @@ class Templite:
             code = f"do_dots({code}, {args})"
         else:
             self._variable(expr, self.all_vars)
-            code = "c_%s" % expr
+            code = f"c_{expr}"
         return code
 
     def _syntax_error(self, msg: str, thing: Any) -> NoReturn:

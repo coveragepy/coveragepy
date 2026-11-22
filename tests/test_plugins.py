@@ -432,7 +432,7 @@ class GoodFileTracerTest(FileTracerTest):
         # source files.
         def lines(n: int) -> str:
             """Make a string with n lines of text."""
-            return "".join("line %d\n" % i for i in range(n))
+            return "".join(f"line {i}\n" for i in range(n))
 
         self.make_file("bar_4.html", lines(4))
         self.make_file("foo_7.html", lines(7))

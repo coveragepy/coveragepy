@@ -5,7 +5,6 @@
 
 from __future__ import annotations
 
-import contextlib
 import functools
 import os
 import sys
@@ -174,18 +173,6 @@ class Collector:
         """Return the class name of the tracer we're using."""
         return self.core.tracer_class.__name__
 
-    def _clear_data(self) -> None:
-        """Clear out existing data, but stay ready for more collection."""
-        # We used to use self.data.clear(), but that would remove filename
-        # keys and data values that were still in use higher up the stack
-        # when we are called as part of switch_context.
-        with self.data_lock or contextlib.nullcontext():
-            for d in self.data.values():
-                d.clear()
-
-        for tracer in self.tracers:
-            tracer.reset_activity()
-
     def reset(self) -> None:
         """Clear collected data, and prepare to collect more."""
         self.data_lock = self.threading.Lock() if self.threading else None
@@ -231,24 +218,17 @@ class Collector:
         # Our active Tracers.
         self.tracers: list[Tracer] = []
 
-        self._clear_data()
-
-    def lock_data(self) -> None:
-        """Lock self.data_lock, for use by tracers."""
-        if self.data_lock is not None:
-            self.data_lock.acquire()
-
-    def unlock_data(self) -> None:
-        """Unlock self.data_lock, for use by tracers."""
-        if self.data_lock is not None:
-            self.data_lock.release()
-
     def _start_tracer(self) -> TTraceFn | None:
         """Start a new Tracer object, and store it in self.tracers."""
         tracer = self.core.tracer_class(**self.core.tracer_kwargs)
         tracer.data = self.data
-        tracer.lock_data = self.lock_data
-        tracer.unlock_data = self.unlock_data
+        # Hand the tracer the lock's own C methods, so no Python code (and no
+        # signal handler) can run while the lock is held.
+        if self.data_lock is not None:
+            tracer.lock_data = self.data_lock.acquire
+            tracer.unlock_data = self.data_lock.release
+        else:
+            tracer.lock_data = tracer.unlock_data = lambda: None
         tracer.trace_arcs = self.branch
         tracer.should_trace = self.should_trace
         tracer.should_trace_cache = self.should_trace_cache
@@ -380,10 +360,11 @@ class Collector:
     def _activity(self) -> bool:
         """Has any activity been traced?
 
-        Returns a boolean, True if any trace function was invoked.
+        Returns a boolean, True if any trace function was invoked or any
+        unflushed data remains.
 
         """
-        return any(tracer.activity() for tracer in self.tracers)
+        return any(tracer.activity() for tracer in self.tracers) or any(self.data.copy().values())
 
     def switch_context(self, new_context: str | None) -> str | None:
         """Switch to a new dynamic context."""
@@ -447,6 +428,11 @@ class Collector:
         if not self._activity():
             return False
 
+        # Reset tracer activity before snapshotting so that any execution in
+        # other threads during the flush marks their tracers active again.
+        for tracer in self.tracers:
+            tracer.reset_activity()
+
         # dict.copy() and set.copy() are atomic in CPython (the GIL is
         # held for the duration of the C-level copy), so we get clean
         # snapshots of the dict and each per-file set even while tracers
@@ -454,6 +440,9 @@ class Collector:
         # add_arcs() and add_lines() iterate the live sets and can fail
         # with "RuntimeError: Set changed size during iteration" when a
         # tracer thread mutates them mid-iteration.
+        raw_data = cast(dict[str, set[Any]], self.data).copy()
+        snapshots = {fname: live_set.copy() for fname, live_set in raw_data.items()}
+
         if self.branch:
             arc_data: dict[str, Collection[TArc]]
             if self.core.packed_arcs:
@@ -461,11 +450,10 @@ class Collector:
                 # tracer.c:CTracer_record_pair for the C code that creates
                 # these packed ints.
                 arc_data = {}
-                packed_data = cast(dict[str, set[int]], self.data)
 
-                for fname, packeds in packed_data.copy().items():
+                for fname, packeds in cast(dict[str, set[int]], snapshots).items():
                     tuples = []
-                    for packed in packeds.copy():
+                    for packed in packeds:
                         l1 = packed & 0xFFFFFFF
                         l2 = (packed & (0xFFFFFFF << 28)) >> 28
                         if packed & (1 << 56):
@@ -475,16 +463,10 @@ class Collector:
                         tuples.append((l1, l2))
                     arc_data[fname] = tuples
             else:
-                arc_data = {
-                    fname: arcs.copy()
-                    for fname, arcs in cast(dict[str, set[TArc]], self.data).copy().items()
-                }
+                arc_data = cast(dict[str, Collection[TArc]], snapshots)
             self.covdata.add_arcs(self.mapped_file_dict(arc_data))
         else:
-            line_data = {
-                fname: linenos.copy()
-                for fname, linenos in cast(dict[str, set[int]], self.data).copy().items()
-            }
+            line_data = cast(dict[str, Collection[int]], snapshots)
             self.covdata.add_lines(self.mapped_file_dict(line_data))
 
         # Tracers in other threads add to file_tracers too, so iterate a
@@ -496,5 +478,9 @@ class Collector:
         }
         self.covdata.add_file_tracers(file_tracers)
 
-        self._clear_data()
+        # Remove only the snapshotted items from each live set, keeping each set
+        # object in place for active frames and preserving items recorded by
+        # other threads during the flush.
+        for fname, snapshot in snapshots.items():
+            raw_data[fname].difference_update(snapshot)
         return True
