@@ -12,6 +12,7 @@ workflows:
         - 'actions/setup-python@v7.1.0'
         - 'actions/upload-artifact@v7.0.2'
         - 'dorny/paths-filter@v4.0.3'
+        - 're-actors/alls-green@v1.3.0'
         - 'schneegans/dynamic-badges-action@v1.9.0'
     '.github/workflows/dependency-review.yml':
         - 'actions/checkout@v7.0.1'
