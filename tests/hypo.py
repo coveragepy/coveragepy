@@ -3,6 +3,8 @@
 
 """A Hypothesis wrapper so we can turn it off completely in environments it doesn't support."""
 
+# pragma: enforce 100% coverage
+
 from __future__ import annotations
 
 from typing import Any
@@ -17,17 +19,11 @@ from tests import testenv
 if testenv.USE_HYPOTHESIS:
     from hypothesis import (
         example as example,
-    )
-    from hypothesis import (
         given as given,
-    )
-    from hypothesis import (
         settings as settings,
     )
     from hypothesis.strategies import (
         integers as integers,
-    )
-    from hypothesis.strategies import (
         sets as sets,
     )
 else:

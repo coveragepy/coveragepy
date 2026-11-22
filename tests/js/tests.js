@@ -225,3 +225,43 @@ QUnit.test("Jump from a line selected", function (assert) {
         });
     });
 });
+
+// Tests of coverage.display_covered.
+
+// The total in the footer of the index page is recomputed here in the browser
+// when rows are filtered, and has to clamp the way the server does: rounding
+// can never produce "0" or "100".  See issue 2256.
+QUnit.module("Display covered");
+
+[
+    // [pc, precision, expected]
+
+    // The same cases as test_results.py's test_display_covered.
+    [47.87, 0, "48"],
+    [47.87, 1, "47.9"],
+    [99.995, 0, "99"],
+    [99.99995, 2, "99.99"],
+
+    // Rounding must not turn "not quite all" into "all": these used to show
+    // 100%, or 0% for the last one.
+    [249 * 100 / 250, 0, "99"],
+    [199 * 100 / 200, 0, "99"],
+    [999 * 100 / 1000, 0, "99"],
+    [4 * 100 / 1000, 0, "1"],
+
+    // Truly zero and truly 100 are kept.
+    [0, 0, "0"],
+    [100, 0, "100"],
+    [0, 2, "0.00"],
+    [100, 2, "100.00"],
+
+    // Nothing to cover is reported as 100%, like Numbers._percent() does.
+    [100, 1, "100.0"]
+].forEach(function (params) {
+    QUnit.test(
+        "display_covered " + params[0] + " at precision " + params[1],
+        function (assert) {
+            assert.equal(coverage.display_covered(params[0], params[1]), params[2]);
+        }
+    );
+});

@@ -8,7 +8,8 @@
 
 diff-cover
 flaky
-hypothesis; platform_python_implementation != "PyPy" or python_version != "3.10"
+# Hypothesis seems to only support PyPy if it's 3.11
+hypothesis; platform_python_implementation == "CPython" or python_version == "3.11"
 pygments    # so that pytest will syntax-color.
 pytest
 pytest-xdist

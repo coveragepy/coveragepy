@@ -9,7 +9,9 @@ import os
 import os.path
 import re
 from collections.abc import Iterable
+from contextlib import chdir
 from typing import Any
+from unittest import mock
 from xml.etree import ElementTree
 
 import pytest
@@ -20,9 +22,10 @@ from coverage import Coverage, env
 from coverage.exceptions import NoDataError
 from coverage.files import abs_file
 from coverage.misc import import_local_file
+from coverage.xmlreport import rate
 from tests.coveragetest import CoverageTest
 from tests.goldtest import compare, gold_path
-from tests.helpers import assert_coverage_warnings, change_dir
+from tests.helpers import assert_coverage_warnings
 
 
 class XmlTestHelpers(CoverageTest):
@@ -33,7 +36,7 @@ class XmlTestHelpers(CoverageTest):
         self.make_file("sub/__init__.py")
         self.make_file("sub/doit.py", "print('doit!')")
         self.make_file("main.py", "import sub.doit")
-        cov = coverage.Coverage(source=["."])
+        cov = coverage.Coverage()
         self.start_import_stop(cov, "main")
         return cov
 
@@ -100,6 +103,24 @@ class XmlTestHelpersTest(XmlTestHelpers, CoverageTest):
             self.assert_source(dom, "foo")
         with pytest.raises(AssertionError):
             self.assert_source(dom, "thing")
+
+    @pytest.mark.parametrize(
+        ("hit", "num", "expected"),
+        [
+            (0, 0, "1"),
+            (0, 10, "0"),
+            (10, 10, "1"),
+            (2, 3, "0.6667"),
+            (4, 5, "0.8"),
+            (1, 2, "0.5"),
+            (25000, 25001, "0.9999"),
+            (99999, 100000, "0.9999"),
+            (1, 100000, "0.0001"),
+            (1, 1000000, "0.0001"),
+        ],
+    )
+    def test_rate(self, hit: int, num: int, expected: str) -> None:
+        assert rate(hit, num) == expected
 
 
 class XmlReportTest(XmlTestHelpers, CoverageTest):
@@ -193,6 +214,26 @@ class XmlReportTest(XmlTestHelpers, CoverageTest):
         assert len(elts) == 1
         assert elts[0].get("filename") == "sub/doit.py"
 
+    @pytest.mark.skipif(
+        env.WINDOWS, reason="Control characters are disallowed in Windows filenames."
+    )
+    def test_control_character_in_filename_is_neutralized(self) -> None:
+        # A POSIX file name may contain control characters that aren't valid in
+        # XML 1.0. Written verbatim they make the report non-well-formed, so no
+        # XML or Cobertura consumer can parse it. Control characters in a field
+        # are replaced.
+        evil = "a\x0c\x07b.py"
+        self.make_file(evil, "a = 1\n")
+        self.make_data_file(lines={abs_file(evil): [1]})
+        cov = coverage.Coverage()
+        cov.load()
+        cov.xml_report()
+        # The report is still well-formed XML (ElementTree.parse would raise
+        # otherwise), and the control characters are gone.
+        dom = ElementTree.parse("coverage.xml")
+        elts = dom.findall(".//class[@filename='a??b.py']")
+        assert len(elts) == 1
+
     def test_reporting_on_nothing(self) -> None:
         # Used to raise a zero division error:
         # https://github.com/coveragepy/coveragepy/issues/250
@@ -214,6 +255,37 @@ class XmlReportTest(XmlTestHelpers, CoverageTest):
         elts = dom.findall(".//class[@name='__init__.py']")
         assert len(elts) == 1
         assert elts[0].get("line-rate") == "1"
+
+    def test_rates_come_from_rate_function(self) -> None:
+        # The rate() edge cases are tested directly in test_rate. A fake rate()
+        # shows that every rate in the report uses it, with the right counts.
+        self.make_file(
+            "sub/doit.py",
+            """\
+            a = 1
+            if a == 2:
+                b = 3
+            c = 4
+            """,
+        )
+        self.make_file("main.py", "import sub.doit\nif sub.doit.a == 2:\n    x = 3\n")
+        cov = coverage.Coverage(branch=True)
+        self.start_import_stop(cov, "main")
+        with mock.patch("coverage.xmlreport.rate", side_effect=lambda hit, num: f"{hit}/{num}"):
+            cov.xml_report()
+        dom = ElementTree.parse("coverage.xml")
+        rates = [
+            (elt.tag, elt.get("name"), elt.get("line-rate"), elt.get("branch-rate"))
+            for elt in dom.iter()
+            if elt.get("line-rate") is not None
+        ]
+        assert rates == [
+            ("coverage", None, "5/7", "2/4"),
+            ("package", ".", "2/3", "1/2"),
+            ("class", "main.py", "2/3", "1/2"),
+            ("package", "sub", "3/4", "1/2"),
+            ("class", "doit.py", "3/4", "1/2"),
+        ]
 
     def test_empty_file_is_skipped(self) -> None:
         cov = self.run_doit()
@@ -280,7 +352,7 @@ class XmlReportTest(XmlTestHelpers, CoverageTest):
     def test_nonascii_directory(self) -> None:
         # https://github.com/coveragepy/coveragepy/issues/573
         self.make_file("테스트/program.py", "a = 1")
-        with change_dir("테스트"):
+        with chdir("테스트"):
             cov = coverage.Coverage()
             self.start_import_stop(cov, "program")
             cov.xml_report()
@@ -541,7 +613,7 @@ def compare_xml(expected: str, actual: str, actual_extra: bool = False) -> None:
     scrubs = [
         (r' timestamp="\d+"', ' timestamp="TIMESTAMP"'),
         (r' version="[-.\w]+"', ' version="VERSION"'),
-        (r"<source>\s*.*?\s*</source>", "<source>%s</source>" % re.escape(source_path)),
+        (r"<source>\s*.*?\s*</source>", f"<source>{re.escape(source_path)}</source>"),
         (r"/coverage\.readthedocs\.io/?[-.\w/]*", "/coverage.readthedocs.io/VER"),
     ]
     compare(expected, actual, scrubs=scrubs, actual_extra=actual_extra)

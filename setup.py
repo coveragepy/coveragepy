@@ -47,15 +47,6 @@ def get_long_description(url: str) -> str:
     return long_description
 
 
-def count_contributors() -> int:
-    """Read CONTRIBUTORS.txt to count how many people have helped."""
-    with open("CONTRIBUTORS.txt", "rb") as contributors:
-        paras = contributors.read().split(b"\n\n")
-        num_others = len(paras[-1].splitlines())
-        num_others += 1  # Count Gareth Rees, who is mentioned in the top paragraph.
-    return num_others
-
-
 # PYVERSIONS
 CLASSIFIERS = textwrap.dedent("""\
     Development Status :: 5 - Production/Stable
@@ -64,7 +55,6 @@ CLASSIFIERS = textwrap.dedent("""\
     Operating System :: OS Independent
     Programming Language :: Python
     Programming Language :: Python :: 3
-    Programming Language :: Python :: 3.10
     Programming Language :: Python :: 3.11
     Programming Language :: Python :: 3.12
     Programming Language :: Python :: 3.13
@@ -130,7 +120,7 @@ class BuildFailed(Exception):
 
     def __init__(self) -> None:
         Exception.__init__(self)
-        self.cause = sys.exc_info()[1]  # work around py 2/3 different syntax
+        self.cause = sys.exception()
 
 
 class ve_build_ext(build_ext):  # type: ignore[misc]
@@ -169,6 +159,7 @@ make_pth_file()
 
 # Create the keyword arguments for setup()
 
+py_major, py_minor = sys.version_info[:2]
 setup_args = dict(
     name="coverage",
     version=version_data["__version__"],
@@ -187,13 +178,15 @@ setup_args = dict(
             # Install a script as "coverage".
             "coverage = coverage.cmdline:main",
             # And as "coverage3", and as "coverage-3.7" (or whatever), but deprecated.
-            "coverage%d = coverage.cmdline:main_deprecated" % sys.version_info[:1],
-            "coverage-%d.%d = coverage.cmdline:main_deprecated" % sys.version_info[:2],
+            f"coverage{py_major} = coverage.cmdline:main_deprecated",
+            f"coverage-{py_major}.{py_minor} = coverage.cmdline:main_deprecated",
         ],
     },
     extras_require={
-        # Enable pyproject.toml support.
-        "toml": ['tomli; python_full_version<="3.11.0a6"'],
+        # Before Python 3.11, this installed optional toml support.
+        # 3.11 doesn't need a library for toml, but we keep the empty extra so
+        # that people who were installing with it are not broken.
+        "toml": [],
     },
     cmdclass={
         "build_ext": ve_build_ext,
@@ -201,7 +194,7 @@ setup_args = dict(
     },
     # We need to get HTML assets from our htmlfiles directory.
     zip_safe=False,
-    author=f"Ned Batchelder and {count_contributors()} others",
+    author="Ned Batchelder and many others",
     author_email="ned@nedbatchelder.com",
     description=__doc__,
     long_description=get_long_description(url=version_data["__url__"]),
@@ -221,7 +214,7 @@ setup_args = dict(
         "Mastodon": "https://hachyderm.io/@coveragepy",
         "Mastodon (nedbat)": "https://hachyderm.io/@nedbat",
     },
-    python_requires=">=3.10",  # minimum of PYVERSIONS
+    python_requires=">=3.11",  # minimum of PYVERSIONS
 )
 
 # There are a few reasons we might not be able to compile the C extension.

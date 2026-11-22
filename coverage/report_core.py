@@ -3,6 +3,8 @@
 
 """Reporter foundation for coverage.py."""
 
+# pragma: enforce 100% coverage
+
 from __future__ import annotations
 
 import sys
@@ -27,6 +29,7 @@ class Reporter(Protocol):
 
     def report(self, morfs: TMorfs, outfile: IO[str]) -> float:
         """Generate a report of `morfs`, written to `outfile`."""
+        ...
 
 
 def render_report(

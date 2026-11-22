@@ -3,10 +3,13 @@
 
 """SQLite coverage data."""
 
+# pragma: enforce 100% coverage
+
 from __future__ import annotations
 
 import base64
 import collections
+import contextlib
 import datetime
 import functools
 import glob
@@ -22,7 +25,7 @@ import textwrap
 import threading
 import uuid
 import zlib
-from collections.abc import Callable, Collection, Mapping, Sequence
+from collections.abc import Callable, Collection, Iterator, Mapping, Sequence
 from typing import Any, Concatenate, ParamSpec, TypeAlias, TypeVar, cast
 
 from coverage.debug import NoDebugging, auto_repr, file_summary
@@ -34,7 +37,7 @@ from coverage.numbits import (
     nums_to_numbits,
     register_sqlite_functions,
 )
-from coverage.sqlitedb import SqliteDb
+from coverage.sqlitedb import SqliteDb, read_only_uri
 from coverage.types import FilePath, TArc, TDebugCtl, TLineNo, TWarnFn
 from coverage.version import __version__
 
@@ -231,6 +234,7 @@ class CoverageData:
         no_disk: bool = False,
         warn: TWarnFn | None = None,
         debug: TDebugCtl | None = None,
+        read_only: bool = False,
     ) -> None:
         """Create a :class:`CoverageData` object to hold coverage-measured data.
 
@@ -244,9 +248,12 @@ class CoverageData:
             warn: a warning callback function, accepting a warning message
                 argument.
             debug: a `DebugControl` object (optional)
+            read_only (bool): if True, the data file will only be read, never
+                written. Use this for data files from other sources.
 
         """
         self._no_disk = no_disk
+        self._read_only = read_only
         self._basename = os.path.abspath(basename or ".coverage")
         self._suffix = suffix
         self._our_suffix = suffix is True
@@ -263,7 +270,6 @@ class CoverageData:
         self._lock = threading.RLock()
 
         self._wrote_hash = False
-        self._hasher = Hasher()
 
         # Are we in sync with the data file?
         self._have_used = False
@@ -307,10 +313,26 @@ class CoverageData:
             db.close(force=force)
         self._dbs = {}
 
+    @contextlib.contextmanager
+    def keep_db_open(self) -> Iterator[None]:
+        """Keep the reporting database connection open for a block."""
+        db = self._connect()
+        try:
+            with db:
+                yield
+        finally:
+            if not self._no_disk:
+                self.close(force=True)
+
     def _open_db(self) -> None:
         """Open an existing db file, and read its metadata."""
         self._debug_dataio("Opening data file", self._filename)
-        self._dbs[threading.get_ident()] = SqliteDb(self._filename, self._debug, self._no_disk)
+        self._dbs[threading.get_ident()] = SqliteDb(
+            self._filename,
+            self._debug,
+            no_disk=self._no_disk,
+            read_only=self._read_only,
+        )
         self._read_db()
 
     def _read_db(self) -> None:
@@ -320,7 +342,11 @@ class CoverageData:
                 row = db.execute_one("select version from coverage_schema")
                 assert row is not None
             except Exception as exc:
-                if "no such table: coverage_schema" in str(exc):
+                if "no such table: coverage_schema" in str(exc) and not self._read_only:
+                    # There's no schema, so this is a new, empty data file.
+                    # Give it our schema to get started, unless we can only
+                    # read it: a read-only data file isn't ours to fix up, and
+                    # it might not be a coverage data file at all.
                     self._init_db(db)
                 else:
                     raise DataError(
@@ -449,7 +475,9 @@ class CoverageData:
                 f"Unrecognized serialization: {data[:40]!r} (head of {len(data)} bytes)",
             )
         script = zlib.decompress(data[1:]).decode("utf-8")
-        self._dbs[threading.get_ident()] = db = SqliteDb(self._filename, self._debug, self._no_disk)
+        self._dbs[threading.get_ident()] = db = SqliteDb(
+            self._filename, self._debug, no_disk=self._no_disk
+        )
         with db:
             db.executescript(script)
         self._read_db()
@@ -500,7 +528,6 @@ class CoverageData:
         old_context = self._current_context
         self._current_context = context
         self._current_context_id = None
-        self._hasher.update(context)
         return old_context
 
     def _set_context_id(self) -> None:
@@ -553,9 +580,7 @@ class CoverageData:
         with self._connect() as con:
             self._set_context_id()
             for filename, linenos in line_data.items():
-                self._hasher.update(filename)
                 line_bits = nums_to_numbits(linenos)
-                self._hasher.update(line_bits)
                 file_id = self._file_id(filename, add=True)
                 query = "SELECT numbits FROM line_bits WHERE file_id = ? AND context_id = ?"
                 with con.execute(query, (file_id, self._current_context_id)) as cur:
@@ -594,8 +619,6 @@ class CoverageData:
         with self._connect() as con:
             self._set_context_id()
             for filename, arcs in arc_data.items():
-                self._hasher.update(filename)
-                self._hasher.update(arcs)
                 if not arcs:
                     continue
                 file_id = self._file_id(filename, add=True)
@@ -643,8 +666,6 @@ class CoverageData:
         self._start_using()
         with self._connect() as con:
             for filename, plugin_name in file_tracers.items():
-                self._hasher.update(filename)
-                self._hasher.update(plugin_name)
                 file_id = self._file_id(filename, add=True)
                 existing_plugin = self.file_tracer(filename)
                 if existing_plugin:
@@ -726,11 +747,17 @@ class CoverageData:
             self._debug.write(f"Updating with data from {other_filename!r}")
         if self._has_lines and other_data._has_arcs:
             raise DataError(
-                "Can't combine branch coverage data with statement data", slug="cant-combine"
+                "Can't combine branch coverage data with statement data: "
+                + f"data file {other_data.data_filename()!r} measured branch coverage, "
+                + f"but data file {self.data_filename()!r} didn't",
+                slug="cant-combine",
             )
         if self._has_arcs and other_data._has_lines:
             raise DataError(
-                "Can't combine statement coverage data with branch data", slug="cant-combine"
+                "Can't combine statement coverage data with branch data: "
+                + f"data file {other_data.data_filename()!r} didn't measure branch coverage, "
+                + f"but data file {self.data_filename()!r} did",
+                slug="cant-combine",
             )
 
         # Force the database we're writing to to exist before we start nesting contexts.
@@ -743,7 +770,12 @@ class CoverageData:
 
         with self._connect() as con:
             assert con.con is not None
-            con.con.isolation_level = "IMMEDIATE"
+            # Use a deferred transaction, not IMMEDIATE: BEGIN IMMEDIATE asks for
+            # a write lock on every attached database, and SQLite before 3.34.0
+            # refuses that for our read-only other_db.  The first statement in
+            # the transaction is a write to main anyway.
+            # https://github.com/coveragepy/coveragepy/issues/2356
+            con.con.isolation_level = "DEFERRED"
 
             # Register functions for SQLite
             register_sqlite_functions(con.con)
@@ -756,8 +788,13 @@ class CoverageData:
 
             con.con.create_function("map_path", 1, map_with_fixed_slashes)
 
-            # Attach the other database
-            con.execute_void("ATTACH DATABASE ? AS other_db", (other_data.data_filename(),))
+            # Attach the other database, read-only: we never write to it, and
+            # it might have come from somewhere else, so be as careful as
+            # possible.
+            other_filename = other_data.data_filename()
+            if not other_filename.startswith("file:"):
+                other_filename = read_only_uri(other_filename)
+            con.execute_void("ATTACH DATABASE ? AS other_db", (other_filename,))
 
             # Create temporary table with mapped file paths to avoid repeated map_path() calls
             con.execute_void("""
@@ -768,8 +805,14 @@ class CoverageData:
                 FROM other_db.file AS other_file
             """)
 
-            # Check for tracer conflicts before proceeding
-            with con.execute("""
+            # Check for tracer conflicts before proceeding.  A file with no
+            # tracer and no measurements (touched but never executed) makes no
+            # claim about which plugin owns it, so it doesn't conflict: the
+            # other side's tracer is adopted below.
+            # We checked above that both sides measure the same way, so only one
+            # table can hold measurements.
+            measured = "arc" if (self._has_arcs or other_data._has_arcs) else "line_bits"
+            tracer_conflicts_query = f"""
                 SELECT other_file_mapped.mapped_path,
                        COALESCE(main.tracer.tracer, ''),
                        COALESCE(other_db.tracer.tracer, '')
@@ -777,8 +820,24 @@ class CoverageData:
                 LEFT JOIN main.tracer ON main.file.id = main.tracer.file_id
                 INNER JOIN other_file_mapped ON main.file.path = other_file_mapped.mapped_path
                 LEFT JOIN other_db.tracer ON other_file_mapped.other_file_id = other_db.tracer.file_id
-                WHERE COALESCE(main.tracer.tracer, '') != COALESCE(other_db.tracer.tracer, '')
-            """) as cur:
+                WHERE
+                    COALESCE(main.tracer.tracer, '') != COALESCE(other_db.tracer.tracer, '')
+                    AND NOT (
+                        COALESCE(main.tracer.tracer, '') = ''
+                        AND NOT EXISTS (
+                            SELECT 1 FROM main.{measured}
+                            WHERE file_id = main.file.id
+                        )
+                    )
+                    AND NOT (
+                        COALESCE(other_db.tracer.tracer, '') = ''
+                        AND NOT EXISTS (
+                            SELECT 1 FROM other_db.{measured}
+                            WHERE file_id = other_file_mapped.other_file_id
+                        )
+                    )
+            """
+            with con.execute(tracer_conflicts_query) as cur:
                 conflicts = list(cur)
                 if conflicts:
                     path, this_tracer, other_tracer = conflicts[0]
@@ -917,25 +976,72 @@ class CoverageData:
         if os.path.exists(self._filename):
             with self._connect():
                 self._have_used = True
+        elif self._read_only:
+            # A read-only data file can't be created, so a missing one is an
+            # error now, not later when it's used.
+            raise DataError(f"Couldn't use data file {self._filename!r}: it doesn't exist")
+
+    def _hash_data(self) -> Hasher:
+        """Hash the measurement data that is in the data file."""
+        hasher = Hasher()
+        with self._connect() as con:
+            for query in [
+                "SELECT id, path FROM file ORDER BY id",
+                "SELECT id, context FROM context ORDER BY id",
+                "SELECT file_id, context_id, numbits FROM line_bits ORDER BY file_id, context_id",
+                "SELECT file_id, context_id, fromno, tono FROM arc"
+                + " ORDER BY file_id, context_id, fromno, tono",
+                "SELECT file_id, tracer FROM tracer ORDER BY file_id",
+            ]:
+                hasher.update(query)
+                with con.execute(query) as cur:
+                    while rows := cur.fetchmany(1000):
+                        hasher.update(repr(rows))
+        return hasher
+
+    def _data_hash(self, hasher: Hasher) -> str:
+        """The short hash of the data, for the data file name."""
+        return base64.b64encode(hasher.digest(), altchars=b"01").decode()[:NHASH]
 
     def write(self) -> None:
         """Ensure the data is written to the data file."""
-        if self._our_suffix and not self._wrote_hash:
+        if not self._our_suffix:
+            self._debug_dataio("Writing (no-op) data file", self._filename)
+            return
+        # Hash the data in the file, not only the data added through this
+        # object. Other data can be there too: from update() or loads(), or
+        # from another CoverageData writing to this file, as nbval does with
+        # pytest-cov's data file.
+        # https://github.com/coveragepy/coveragepy/issues/2370
+        hasher = self._hash_data()
+        data_hash = self._data_hash(hasher)
+        unhashed_filename = None
+        if not self._wrote_hash:
+            unhashed_filename = self._filename
+        elif (
+            (m := filename_match(self._filename))
+            and m["hash"]
+            and not self._filename.endswith(f".H{data_hash}h")
+        ):
+            # More data was recorded after the hash went into the file name.
+            # Update the name, or combining would skip this file as a
+            # duplicate of another one that only shared its earlier data.
+            unhashed_filename = self._filename[: m.start("hash") - len(".H")]
+        if unhashed_filename is not None:
             self._debug_dataio("Finishing data file", self._filename)
             with self._connect() as con:
                 con.execute_void(
-                    "INSERT OR IGNORE INTO meta (key, value) VALUES ('hash', ?)",
-                    (self._hasher.hexdigest(),),
+                    "INSERT OR REPLACE INTO meta (key, value) VALUES ('hash', ?)",
+                    (hasher.hexdigest(),),
                 )
             self.close()
-            data_hash = base64.b64encode(self._hasher.digest(), altchars=b"01").decode()[:NHASH]
             current_filename = self._filename
-            self._filename += f".H{data_hash}h"
+            self._filename = unhashed_filename + f".H{data_hash}h"
             self._debug_dataio("Renaming data file to", self._filename)
             os.rename(current_filename, self._filename)
             self._wrote_hash = True
         else:
-            self._debug_dataio("Writing (no-op) data file", self._filename)
+            self._debug_dataio("Data file name is up to date", self._filename)
 
     def _start_using(self) -> None:
         """Call this before using the database at all."""
@@ -1163,7 +1269,6 @@ class CoverageData:
                 temp_store = [row[0] for row in cur]
             with db.execute("PRAGMA compile_options") as cur:
                 copts = [row[0] for row in cur]
-            copts = textwrap.wrap(", ".join(copts), width=75)
 
         return [
             ("sqlite3_sqlite_version", sqlite3.sqlite_version),

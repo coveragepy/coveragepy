@@ -36,14 +36,15 @@ jobs:
       pull-requests: read   # Needed for this check to run on pull requests
     outputs:
       run_tests: ${{ steps.filter.outputs.run_tests }}
+      run_js_tests: ${{ steps.filter.outputs.run_js_tests }}
     steps:
       - name: "Check out the repo"
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
 
       - name: "Examine changed files"
-        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        uses: dorny/paths-filter@v4.0.3
         id: filter
         with:
           filters: |
@@ -51,17 +52,25 @@ jobs:
               - "*.py"
               - "coverage/**.py"
               - "tests/**.py"
+              - "tools/igor.py"
               - "**.h"
               - "**.c"
               - ".github/workflows/testsuite.yml"
               - "tox.ini"
+              - "pyproject.toml"
               - "requirements/*.txt"
               - "tests/gold/**"
+            run_js_tests:
+              - "coverage/htmlfiles/*.js"
+              - "tests/js/**"
+              - ".github/workflows/testsuite.yml"
+              - "tox.ini"
+              - "requirements/js.txt"
 
   tests:
     name: "${{ matrix.python-version }} on ${{ matrix.os }}"
     runs-on: "${{ matrix.os }}-${{ matrix.os-version }}"
-    timeout-minutes: 15
+    timeout-minutes: 30
 
     # Don't run tests if the branch name includes "-notests".
     # Only run tests if files that affect tests have changed.
@@ -87,7 +96,6 @@ jobs:
           # Available versions:
           # https://github.com/actions/python-versions/blob/main/versions-manifest.json
           # https://github.com/actions/setup-python/blob/main/docs/advanced-usage.md#available-versions-of-python-and-pypy
-          - "3.10"
           - "3.11"
           - "3.12"
           - "3.13"
@@ -95,7 +103,8 @@ jobs:
           - "3.14t"
           - "3.15"
           - "3.15t"
-          - "pypy-3.10"
+          - "3.16"
+          - "3.16t"
           - "pypy-3.11"
 
         #
@@ -116,12 +125,12 @@ jobs:
 
     steps:
       - name: "Check out the repo"
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
 
       - name: "Set up Python"
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        uses: actions/setup-python@v7.1.0
         with:
           python-version: "${{ matrix.python-version }}"
           allow-prereleases: true
@@ -161,6 +170,86 @@ jobs:
           # `exit 1` makes sure that the job remains red with flaky runs
           python -m tox -- -rfsEX --lf -vvvvv && exit 1
 
+  js_tests:
+    name: "JavaScript tests"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    # Don't run tests if the branch name includes "-notests".
+    # Only run tests if files that affect the JavaScript tests have changed.
+    needs: changed
+    if:
+      needs.changed.outputs.run_js_tests == 'true'
+      && !contains(github.ref, '-notests')
+
+    steps:
+      - name: "Check out the repo"
+        uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: "Set up Python"
+        uses: actions/setup-python@v7.1.0
+        with:
+          python-version: "3.11" # Minimum of PYVERSIONS
+          cache: pip
+          cache-dependency-path: 'requirements/*.txt'
+
+      - name: "Install dependencies"
+        run: |
+          set -xe
+          python -m pip install -r requirements/tox.txt
+
+      - name: "Run the JavaScript tests"
+        run: |
+          python -m tox -e js
+
+  old_sqlite:
+    # SQLite before 3.34.0 behaves differently in ways that have broken us:
+    # https://github.com/coveragepy/coveragepy/issues/2357
+    # Rocky 8 has SQLite 3.26.0 and a Python new enough to run coverage.py.
+    name: "3.12 on old SQLite 3.26"
+    runs-on: ubuntu-latest
+    container: rockylinux:8@sha256:9794037624aaa6212aeada1d28861ef5e0a935adaf93e4ef79837119f2a2d04c
+    timeout-minutes: 30
+
+    # Don't run tests if the branch name includes "-notests".
+    # Only run tests if files that affect tests have changed.
+    needs: changed
+    if:
+      needs.changed.outputs.run_tests == 'true'
+      && !contains(github.ref, '-notests')
+
+    steps:
+      # Git has to be installed before checkout, or checkout downloads a
+      # tarball instead of making a repo.
+      - name: "Install system packages"
+        run: |
+          set -xe
+          dnf -y install python3.12 python3.12-pip python3.12-devel gcc git
+
+      - name: "Check out the repo"
+        uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: "Show environment"
+        run: |
+          set -xe
+          python3.12 -VV
+          python3.12 -c "import sqlite3; print(sqlite3.sqlite_version)"
+          env | sort
+          whoami
+
+      - name: "Install dependencies"
+        run: |
+          set -xe
+          python3.12 -m pip install -r requirements/tox.txt
+
+      - name: "Run tox for 3.12"
+        run: |
+          python3.12 -m tox -e py312 -- -rfsEX
+
   # This job aggregates test results. It's the required check for branch protection.
   # https://github.com/marketplace/actions/alls-green#why
   # https://github.com/orgs/community/discussions/33579
@@ -168,9 +257,16 @@ jobs:
     name: "Tests successful"
     needs:
       - tests
+      - js_tests
+      - old_sqlite
+    # Without this, GitHub skips this job when `tests` doesn't succeed, so the
+    # gate reports "skipped" instead of failing.  `allowed-skips` keeps the
+    # deliberate skips (-notests branches, no test-relevant files) passing.
+    if: always()
     runs-on: ubuntu-latest
     steps:
       - name: "Decide success or failure"
-        uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
+        uses: re-actors/alls-green@v1.3.0
         with:
           jobs: ${{ toJSON(needs) }}
+          allowed-skips: tests, js_tests, old_sqlite

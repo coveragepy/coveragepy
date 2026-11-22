@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import inspect
-import os.path
 from typing import Any
 from unittest import mock
 
@@ -72,7 +71,7 @@ class StaticContextTest(CoverageTest):
 
             assert combined.measured_contexts() == {"red", "blue"}
 
-            full_names = {os.path.basename(f): f for f in combined.measured_files()}
+            full_names = self.get_measured_filenames(combined)
             assert_count_equal(full_names, ["red.py", "blue.py"])
 
             fred = full_names["red.py"]
@@ -93,9 +92,7 @@ class StaticContextTest(CoverageTest):
 
         # The exact arc data changes depending on the core and the version.
         # Extract the red arc data for comparisons below.
-        arc_data = red_data.arcs(
-            next(fname for fname in red_data.measured_files() if "red.py" in fname)
-        )
+        arc_data = red_data.arcs(self.get_measured_filenames(red_data)["red.py"])
         assert arc_data is not None
 
         for datas in [[red_data, blue_data], [blue_data, red_data]]:
@@ -105,7 +102,7 @@ class StaticContextTest(CoverageTest):
 
             assert combined.measured_contexts() == {"red", "blue"}
 
-            full_names = {os.path.basename(f): f for f in combined.measured_files()}
+            full_names = self.get_measured_filenames(combined)
             assert_count_equal(full_names, ["red.py", "blue.py"])
 
             fred = full_names["red.py"]
@@ -165,12 +162,12 @@ class DynamicContextTest(CoverageTest):
 
     def test_dynamic_alone(self) -> None:
         self.make_file("two_tests.py", self.SOURCE)
-        cov = coverage.Coverage(source=["."])
+        cov = coverage.Coverage()
         cov.set_option("run:dynamic_context", "test_function")
         self.start_import_stop(cov, "two_tests")
         data = cov.get_data()
 
-        full_names = {os.path.basename(f): f for f in data.measured_files()}
+        full_names = self.get_measured_filenames(data)
         fname = full_names["two_tests.py"]
         assert_count_equal(
             data.measured_contexts(),
@@ -187,12 +184,12 @@ class DynamicContextTest(CoverageTest):
 
     def test_static_and_dynamic(self) -> None:
         self.make_file("two_tests.py", self.SOURCE)
-        cov = coverage.Coverage(context="stat", source=["."])
+        cov = coverage.Coverage(context="stat")
         cov.set_option("run:dynamic_context", "test_function")
         self.start_import_stop(cov, "two_tests")
         data = cov.get_data()
 
-        full_names = {os.path.basename(f): f for f in data.measured_files()}
+        full_names = self.get_measured_filenames(data)
         fname = full_names["two_tests.py"]
         assert_count_equal(
             data.measured_contexts(),
@@ -207,15 +204,43 @@ class DynamicContextTest(CoverageTest):
         assert_context_lines("stat|two_tests.test_one", self.TEST_ONE_LINES)
         assert_context_lines("stat|two_tests.test_two", self.TEST_TWO_LINES)
 
+    def test_static_and_class_methods(self) -> None:
+        # Test methods without a `self` argument also get a context, issue 1923.
+        self.make_file(
+            "class_tests.py",
+            """\
+            class TestSomething:
+                @staticmethod
+                def test_static():
+                    x = 4
+
+                @classmethod
+                def test_class(cls):
+                    x = 8
+
+            TestSomething.test_static()
+            TestSomething.test_class()
+            """,
+        )
+        cov = coverage.Coverage()
+        cov.set_option("run:dynamic_context", "test_function")
+        self.start_import_stop(cov, "class_tests")
+        data = cov.get_data()
+
+        assert_count_equal(
+            data.measured_contexts(),
+            ["", "class_tests.TestSomething.test_static", "class_tests.TestSomething.test_class"],
+        )
+
 
 def get_qualname() -> str | None:
     """Helper to return qualname_from_frame for the caller."""
     stack = inspect.stack()[1:]
-    if any(sinfo[0].f_code.co_name == "get_qualname" for sinfo in stack):
+    if any(sinfo.frame.f_code.co_name == "get_qualname" for sinfo in stack):
         # We're calling ourselves recursively, maybe because we're testing
         # properties. Return an int to try to get back on track.
         return 17  # type: ignore[return-value]
-    caller_frame = stack[0][0]
+    caller_frame = stack[0].frame
     return qualname_from_frame(caller_frame)
 
 
@@ -259,6 +284,16 @@ def patch_meth(self: Any) -> str | None:
     return get_qualname()
 
 
+class StaticAndClass:
+    @staticmethod
+    def a_static() -> str | None:
+        return get_qualname()
+
+    @classmethod
+    def a_class(cls) -> str | None:
+        return get_qualname()
+
+
 # pylint: enable=missing-class-docstring, missing-function-docstring, unused-argument
 
 
@@ -290,6 +325,14 @@ class QualnameTest(CoverageTest):
 
     def test_property(self) -> None:
         assert Parent().a_property == "tests.test_context.Parent.a_property"
+
+    def test_staticmethod(self) -> None:
+        assert StaticAndClass.a_static() == "tests.test_context.StaticAndClass.a_static"
+        assert StaticAndClass().a_static() == "tests.test_context.StaticAndClass.a_static"
+
+    def test_classmethod(self) -> None:
+        assert StaticAndClass.a_class() == "tests.test_context.StaticAndClass.a_class"
+        assert StaticAndClass().a_class() == "tests.test_context.StaticAndClass.a_class"
 
     def test_changeling(self) -> None:
         c = Child()

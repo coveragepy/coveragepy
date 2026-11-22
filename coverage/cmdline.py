@@ -26,7 +26,7 @@ from coverage.data import CoverageData, combinable_files, debug_data_file
 from coverage.debug import info_header, short_stack, write_formatted_info
 from coverage.exceptions import CoverageException, NoSource, _ExceptionDuringRun
 from coverage.execfile import PyRunner
-from coverage.results import display_covered, should_fail_under
+from coverage.results import format_fail_under_msg, should_fail_under
 from coverage.version import __url__
 
 # When adding to this file, alphabetization is important.  Look for
@@ -774,7 +774,7 @@ def show_help(
             print(help_msg.format(**help_params))
         else:
             print(f"Don't know topic {topic!r}")
-    print("Full documentation is at {__url__}".format(**help_params))
+    print(f"Full documentation is at {__url__}")
 
 
 OK, ERR, FAIL_UNDER = 0, 1, 2
@@ -856,7 +856,11 @@ class CoverageScript:
         # plugins may try to, for example, to read Django settings.  The "run"
         # command is excluded: PyRunner.prepare() owns sys.path[0] there.
         if options.action != "run":
-            sys.path.insert(0, "")
+            if self.coverage.get_option("run:plugins"):
+                # It goes last: reporting shouldn't run the code being reported
+                # on, so files in the current directory must not be found
+                # instead of stdlib or installed modules.
+                sys.path.append("")
 
         if options.action == "debug":
             return self.do_debug(args)
@@ -944,12 +948,7 @@ class CoverageScript:
             fail_under = cast(float, self.coverage.get_option("report:fail_under"))
             precision = cast(int, self.coverage.get_option("report:precision"))
             if should_fail_under(total, fail_under, precision):
-                msg = "total of {total} is less than fail-under={fail_under:.{p}f}".format(
-                    total=display_covered(total, precision),
-                    fail_under=fail_under,
-                    p=precision,
-                )
-                print("Coverage failure:", msg)
+                print("Coverage failure:", format_fail_under_msg(total, fail_under, precision))
                 return FAIL_UNDER
 
         return OK
@@ -1178,7 +1177,7 @@ def main(argv: list[str] | None = None) -> int | None:
         # An exception was caught while running the product code.  The
         # sys.exc_info() return tuple is packed into an _ExceptionDuringRun
         # exception.
-        traceback.print_exception(*err.args)  # pylint: disable=no-value-for-parameter
+        traceback.print_exception(*err.args)
         status = ERR
     except CoverageException as err:
         # A controlled error inside coverage.py: print the message to the user.

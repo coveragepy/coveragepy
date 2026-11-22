@@ -325,6 +325,11 @@ def globs_to_regex_params(
                     matches=["a+b/foo", "a+b/foobar", "x{y}z/foobar"],
                     nomatches=["aab/foo", "ab/foo", "xyz/foo"],
                 ),
+                globs_to_regex_params(
+                    ["foo/a\nb*"],
+                    matches=["foo/a\nb", "foo/a\nbc"],
+                    nomatches=["foo/ab", "foo/axb"],
+                ),
             ]
         )
     ),
@@ -455,7 +460,7 @@ class MatcherTest(CoverageTest):
         self.assertMatches(fnm, filepath, expected_match)
 
     def test_glob_matcher_overload(self) -> None:
-        fnm = GlobMatcher(["*x%03d*.txt" % i for i in range(500)])
+        fnm = GlobMatcher([f"*x{i:03d}*.txt" for i in range(500)])
         self.assertMatches(fnm, "x007foo.txt", True)
         self.assertMatches(fnm, "x123foo.txt", True)
         self.assertMatches(fnm, "x798bar.txt", False)
@@ -600,6 +605,20 @@ class PathAliasesTest(CoverageTest):
         msg = "Pattern must not end with wildcards."
         with pytest.raises(ConfigError, match=msg):
             aliases.add(badpat, "fooey")
+
+    @pytest.mark.parametrize(
+        "result",
+        [
+            "*/site-packages/",
+            "*/step*series/",
+            "*/step?series/",
+        ],
+    )
+    def test_result_cant_have_wildcards(self, result: str) -> None:
+        aliases = PathAliases()
+        msg = f"Result path must not contain wildcards: {result!r}"
+        with pytest.raises(ConfigError, match=re.escape(msg)):
+            aliases.add("*/stepseries/", result)
 
     def test_no_accidental_munging(self) -> None:
         aliases = PathAliases()

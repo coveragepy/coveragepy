@@ -38,12 +38,12 @@ jobs:
       workflow: ${{ steps.filter.outputs.workflow }}
     steps:
       - name: "Check out the repo"
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
 
       - name: "Examine changed files"
-        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        uses: dorny/paths-filter@v4.0.3
         id: filter
         with:
           filters: |
@@ -75,14 +75,14 @@ jobs:
 
     steps:
       - name: "Check out the repo"
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
 
       - name: "Install Python"
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        uses: actions/setup-python@v7.1.0
         with:
-          python-version: "3.10" # Minimum of PYVERSIONS
+          python-version: "3.11" # Minimum of PYVERSIONS
           cache: pip
           cache-dependency-path: 'requirements/*.txt'
 
@@ -105,14 +105,14 @@ jobs:
 
     steps:
       - name: "Check out the repo"
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
 
       - name: "Install Python"
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        uses: actions/setup-python@v7.1.0
         with:
-          python-version: "3.10" # Minimum of PYVERSIONS
+          python-version: "3.11" # Minimum of PYVERSIONS
           cache: pip
           cache-dependency-path: 'requirements/*.txt'
 
@@ -135,7 +135,7 @@ jobs:
 
     steps:
       - name: "Check out the repo"
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
 
@@ -145,7 +145,7 @@ jobs:
           git fetch origin main --depth=1
 
       - name: "Install Python"
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        uses: actions/setup-python@v7.1.0
         with:
           python-version: "3.12" # Doc version from PYVERSIONS
           cache: pip
@@ -170,8 +170,6 @@ jobs:
   zizmor:
     name: "Zizmor GHA security check"
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
 
     needs: changed
     if:
@@ -180,16 +178,49 @@ jobs:
 
     steps:
       - name: "Check out the repo"
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
 
-      - name: "Install uv"
-        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+      - name: "Install prek"
+        uses: j178/prek-action@v3.1.0
         with:
-          enable-cache: false
+          prek-version: latest-known
+          # Only to run zizmor at the version pinned in .pre-commit-config.yaml.
+          install-only: true
 
       - name: "Run zizmor"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: uvx zizmor --pedantic .github/workflows
+        run: |
+          prek exec zizmor -- zizmor --pedantic .github/workflows
+
+      - name: "Verify the actions lockfile"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh extension install github/gh-actions-lock --pin v0.4.1
+          gh actions-lock --verify
+
+  # This job aggregates quality results. It's the required check for branch protection.
+  # https://github.com/marketplace/actions/alls-green#why
+  # https://github.com/orgs/community/discussions/33579
+  success:
+    name: "Quality successful"
+    needs:
+      - changed
+      - lint
+      - mypy
+      - doc
+      - zizmor
+    # Without this, GitHub skips this job when a needed job doesn't succeed, so
+    # the gate reports "skipped" instead of failing.  `allowed-skips` keeps the
+    # deliberate skips (no relevant files changed) passing.
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Decide success or failure"
+        uses: re-actors/alls-green@v1.3.0
+        with:
+          jobs: ${{ toJSON(needs) }}
+          allowed-skips: lint, mypy, doc, zizmor

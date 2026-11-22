@@ -23,10 +23,266 @@ upgrading your version of coverage.py.
 Unreleased
 ----------
 
-Nothing yet.
+See ``news/*.rst`` files for upcoming changelog fragments.
 
 
-.. start-releases
+.. scriv-insert-here
+
+.. _changelog-7.17.4:
+
+Version 7.17.4 — 2026-11-20
+---------------------------
+
+- Fix: since 7.13.1, a parallel data file could be named with the hash of
+  different data than it held, for example when nbval records a notebook's
+  coverage into pytest-cov's data file. Combining could then skip it as a
+  duplicate and lose its data. Now the hash comes from the data in the file
+  when it is saved. Fixes `issue 2370`_ with `pull 2387`_.
+
+- Fix: lines or arcs recorded by other threads while data was being flushed
+  (for example during ``Coverage.get_data()``, ``Coverage.save()``, or dynamic
+  context switches) could be lost. This is now fixed, closing `issue 2384`_.
+
+- Fix: on Python 3.14 with the pure-Python tracer (``COVERAGE_CORE=pytrace``)
+  and branch measurement, a function that returned right after an ``except*``
+  handler recorded an arc with no line number. Reporting on the data then
+  failed with a ``TypeError``. Now that arc is not recorded. `pull 2403`_.
+
+- Fix: in the JSON report with ``show_contexts``, each function and class had
+  the contexts for every line in the file. Now they only have the contexts for
+  their own lines. Closes `issue 2374`_.
+
+- The first entry in a ``[paths]`` list is the result path, and must be an
+  actual file path.  If it contained wildcards, the rule could never be used
+  and was silently ignored.  It is now reported as a configuration error.
+  Closes `issue 1531`_.
+
+- Fix: a configuration file (``.coveragerc``, ``setup.cfg``, ``tox.ini`` or
+  ``pyproject.toml``) saved with a UTF-8 byte order mark couldn't be read.
+  Now a leading BOM is ignored. `pull 2388`_.
+
+.. _issue 1531: https://github.com/coveragepy/coveragepy/issues/1531
+.. _issue 2370: https://github.com/coveragepy/coveragepy/issues/2370
+.. _issue 2374: https://github.com/coveragepy/coveragepy/issues/2374
+.. _issue 2384: https://github.com/coveragepy/coveragepy/issues/2384
+.. _pull 2387: https://github.com/coveragepy/coveragepy/pull/2387
+.. _pull 2388: https://github.com/coveragepy/coveragepy/pull/2388
+.. _pull 2403: https://github.com/coveragepy/coveragepy/pull/2403
+
+
+.. _changelog-7.17.3:
+
+Version 7.17.3 — 2026-11-11
+---------------------------
+
+- Fix: using ``patch = fork``, a child process wasn't measured unless ``patch =
+  subprocess`` was also used, as described in `issue 2340`_.  This is now fixed
+  in `pull 2342`_.
+
+- Fix: the JSON report keys functions and classes by name, but names can
+  repeat, for example a property getter and setter. Only the last one was
+  kept, so the others were missing from the report. Now repeated names get a
+  ``@<line number>`` suffix, as in the LCOV report. `pull 2353`_.
+
+- Fix: when combining parallel data files, a file that disappears after it
+  has been listed (for example, when the process writing it is still finishing
+  its write) is now reported with a warning, instead of stopping the combine
+  with a ``DataError``. This was a regression in 7.17.1. Closes `issue
+  2364`_.
+
+- Fix: with ``patch = subprocess`` on Python 3.13, a measured subprocess that
+  was stopped with SIGINT would exit with status 1 instead of dying from the
+  signal. This was a regression in 7.17.1, and is now fixed, closing `issue
+  2362`_.
+
+- Performance: on Python 3.13 and later, using the C tracer should result in
+  test suites running about 8% to 12% faster (`pull 2371`_).
+
+.. _issue 2340: https://github.com/coveragepy/coveragepy/issues/2340
+.. _pull 2342: https://github.com/coveragepy/coveragepy/pull/2342
+.. _pull 2353: https://github.com/coveragepy/coveragepy/pull/2353
+.. _issue 2364: https://github.com/coveragepy/coveragepy/issues/2364
+.. _issue 2362: https://github.com/coveragepy/coveragepy/issues/2362
+.. _pull 2371: https://github.com/coveragepy/coveragepy/pull/2371
+
+
+.. _changes_7-17-2:
+
+Version 7.17.2 — 2026-11-04
+---------------------------
+
+- Fix: two different scenarios failed with "attempt to write a readonly
+  database". These were regressions in 7.17.1. They are fixed, closing `issue
+  2356`_:
+
+  - When using a version of SQLite older than 3.34.0, such as on RHEL 8 or
+    Ubuntu 20.04, ``coverage combine`` (and pytest-cov, which combines
+    automatically) always failed.
+
+  - ``coverage combine`` and ``coverage debug data`` failed when a data file
+    existed but had no coverage schema, for example an empty file left behind
+    by a worker that died. A file we can't read is now reported like any other
+    unusable data file, and is left in place.
+
+.. _issue 2356: https://github.com/coveragepy/coveragepy/issues/2356
+
+
+.. _changes_7-17-1:
+
+Version 7.17.1 — 2026-11-03
+---------------------------
+
+- Fix: a one-line class or function body immediately followed by another
+  statement (such as ``class Foo: ...`` on its own line) was incorrectly
+  reported as a missing branch when using the sys.monitoring core. This is now
+  fixed, closing `issue 2167`_ and `issue 2337`_.
+
+- Fix: the HTML report only rewrites a file's page when the file or its data
+  has changed, but each page also links to the previous and next files. When
+  the set of reported files changed, unchanged pages kept their old links. For
+  example, with ``skip_covered``, a file that became 100% covered had its page
+  deleted, but the pages next to it still linked to it. Now a page is also
+  rewritten when its neighbors change.
+
+- Fix: ``--fail-under`` now uses at least the decimal precision of the
+  threshold for both the comparison and failure message.  With ``precision=0``,
+  a total of 0.4 now passes ``--fail-under=0.3`` and fails ``--fail-under=0.5``
+  with the message "total of 0.4 is less than fail-under=0.5".  Previously, the
+  comparison rounded the total to zero and the message could claim "1 is less
+  than 0". Closes `issue 2295`_.
+
+- Fix: the HTML report escaped file names twice, so a name with ``&``, ``<``,
+  or quotes in it was shown with entities like ``&amp;``. Now they are properly
+  escaped only once.
+
+- Fix: ``--source=/`` measured no files. A file system root can't be a source
+  directory, so now it is an error. Closes `issue 2291`_.
+
+- In an abundance of caution, prevent forged SQLite journal files from deleting
+  files they shouldn't.
+
+.. _issue 2167: https://github.com/coveragepy/coveragepy/issues/2167
+.. _issue 2291: https://github.com/coveragepy/coveragepy/issues/2291
+.. _issue 2295: https://github.com/coveragepy/coveragepy/issues/2295
+.. _issue 2337: https://github.com/coveragepy/coveragepy/issues/2337
+
+
+.. _changes_7-17-0:
+
+Version 7.17.0 — 2026-10-22
+---------------------------
+
+- Dropped support for Python 3.10.
+
+- Binary wheels are now provided for iOS and Android. This allows the use of
+  the optimized C tracer on mobile platforms.
+
+- Fix: three or more levels of nested ``with`` statements could make a ``with``
+  line look like a branch with an exit that can never happen. Using the
+  sys.monitoring core, these phantom branches were reported as partial. Other
+  cores hid the problem but still counted the phantom branches in the total.
+  Closes `issue 1987`_.
+
+- Fix: a comment or string that merely mentioned ``if True:`` or
+  ``while True:`` could mark its line as a branch that is known to be partial,
+  so a branch that never ran was reported as taken.  These built-in patterns
+  now only match at the start of the statement. Closes `issue 2314`_.
+
+- Fix: region detection missed functions defined in unusual places, such as
+  ``else`` and ``except`` clauses. This is now fixed.
+
+- Fix: recent versions of the lcov tool complain if the same function name
+  appears more than once in a report. Python can have multiple same-named
+  functions in a few ways, for example, getters/setters or conditionally
+  defined functions. These are now disambiguated by adding a ``@<line number>``
+  suffix to the function name. Fixes `issue 2335`.
+
+- Fix: The "Can't combine statement coverage data with branch data" error now
+  names the two data files it couldn't combine. The :ref:`error description
+  <error_cant_combine>` in the docs now lists common causes and how to find the
+  process that wrote the file.
+
+- Fix: at coverage totals close to 0 or 100, the XML report could get incorrect
+  ``line-rate`` values like ``8.333e-05`` or ``1``. This is now fixed, closing
+  `issue 2293`_ and `issue 2294`_.
+
+- Fix: a parallel data file saved more than once kept the hash of its first
+  save in its file name. Combining could then skip it as a duplicate of another
+  file that had the same data at that point, and delete it, losing the data
+  recorded after the first save. Each save now updates the hash. This had been
+  a problem since 7.13.1. Fixes `issue 2338`_.
+
+- Fixes for obscure but legal file names:
+
+  - File names (and plugin names) can contain control characters, which are
+    legal in POSIX paths but unsafe in reports: in XML 1.0 they make the
+    document non-well-formed, and in a terminal they act as escape sequences
+    (colors, title/clipboard sequences, cursor moves that forge output). Now
+    the XML report, the text and Markdown summary reports, and ``coverage debug
+    data`` replace non-printable characters in names. Printable names are
+    unchanged.
+
+  - A file pattern (from ``include``, ``omit``, or a ``[paths]`` alias)
+    containing a newline sent the glob-to-regex translation into an infinite
+    loop, hanging the process. Newlines in patterns are now handled like any
+    other character.
+
+- Fixes in the implementation of the C tracer:
+
+  - If a plugin's ``dynamic_source_filename`` method raised an exception, lines
+    in that function could be recorded as belonging to a different file. Also
+    fixed some minor memory leaks in the C tracer.
+
+  - The refcount of ``None`` was mismanaged during function calls, including
+    comprehensions. This was unlikely to cause an actual problem, but is now
+    fixed. Thanks, Andrew Dalke.
+
+  - The C tracer held borrowed references to dictionary values, which was
+    unsafe on free-threaded Python.  Now it takes its own references.
+
+  - An internal error while recording a new file could be reported as a
+    confusing ``SystemError`` instead of the actual exception.
+
+- Performance: the text summary report (``coverage report``) held on to every
+  file's parsed source until it finished, so its memory use grew with the size
+  of the project: ten times or more what 7.14 used on large projects.  Now it
+  keeps only what it needs to print. Fixes `issue 2277`_.
+
+- Performance: HTML reports should be about 5% faster to produce.
+
+- Kept the political banner in the README. Closes `issue 2344`_.
+
+.. _issue 1987: https://github.com/coveragepy/coveragepy/issues/1987
+.. _issue 2277: https://github.com/coveragepy/coveragepy/issues/2277
+.. _issue 2293: https://github.com/coveragepy/coveragepy/issues/2293
+.. _issue 2294: https://github.com/coveragepy/coveragepy/issues/2294
+.. _issue 2314: https://github.com/coveragepy/coveragepy/issues/2314
+.. _issue 2335: https://github.com/coveragepy/coveragepy/issues/2335
+.. _issue 2338: https://github.com/coveragepy/coveragepy/issues/2338
+.. _issue 2344: https://github.com/coveragepy/coveragepy/issues/2344
+
+
+.. _changes_7-16-2:
+
+Version 7.16.2 — 2026-09-27
+---------------------------
+
+- Fix: on Python 3.14 and later, a ``for`` loop completing immediately before a
+  function return could mistakenly report an uncovered branch. This is now
+  fixed, closing `issue 2168`_.
+
+- Fix: on Python 3.14 and later, the ``else`` clause of a ``try`` whose body is
+  a ``with`` statement could incorrectly be reported as covered when the
+  ``with`` raised.  This is now fixed, closing `issue 2289`_.
+
+- Fix: with ``dynamic_context = test_function``, test methods written as
+  ``@staticmethod`` or ``@classmethod`` were not given a context of their own.
+  Now they are, on Python 3.11 and later.  Closes `issue 1923`_.
+
+.. _issue 1923: https://github.com/coveragepy/coveragepy/issues/1923
+.. _issue 2168: https://github.com/coveragepy/coveragepy/issues/2168
+.. _issue 2289: https://github.com/coveragepy/coveragepy/issues/2289
+
 
 .. _changes_7-16-1:
 
@@ -41,7 +297,17 @@ Version 7.16.1 — 2026-09-13
 - Fix: using :meth:`.CoverageData.update` twice on an in-memory database would
   fail, as described in `issue 2279`_. This is now fixed.
 
+- Fix: the Total row in the footer of the HTML report's index page was
+  recomputed in JavaScript with rounding that could disagree with the total
+  the server rendered in the heading, including showing ``100%`` when coverage
+  was not complete.  The footer now clamps values the way the rest of the
+  report does, and when nothing is filtered out it is shown exactly as the
+  server rendered it, so the two can't disagree.  That also keeps rows the
+  report omits (``--skip-covered`` drops fully covered files) in the total.
+  Fixes `issue 2256`_.
+
 .. _issue 1563: https://github.com/coveragepy/coveragepy/issues/1563
+.. _issue 2256: https://github.com/coveragepy/coveragepy/issues/2256
 .. _pull 2269: https://github.com/coveragepy/coveragepy/pull/2269
 .. _issue 2279: https://github.com/coveragepy/coveragepy/issues/2279
 
@@ -2667,7 +2933,7 @@ Version 5.3 — 2020-09-13
 .. _issue 1011: https://github.com/coveragepy/coveragepy/issues/1011
 
 
-.. endchangesinclude
+.. scriv-end-here
 
 Older changes
 -------------

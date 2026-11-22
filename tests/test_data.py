@@ -18,6 +18,7 @@ from unittest import mock
 
 import pytest
 
+from coverage import env
 from coverage.data import (
     CoverageData,
     DataFileClassifier,
@@ -28,6 +29,7 @@ from coverage.data import (
 from coverage.exceptions import ConfigError, DataError, NoDataError
 from coverage.files import PathAliases, canonical_filename
 from coverage.misc import first
+from coverage.sqldata import good_filename_match
 from coverage.types import FilePathClasses, FilePathType, TArc, TLineNo
 from tests import osinfo
 from tests.coveragetest import CoverageTest
@@ -137,6 +139,20 @@ def dicts_from_sets(file_data: dict[str, set[TData]]) -> dict[str, dict[TData, N
     This function helps us test that the old dict format still works.
     """
     return {k: dict.fromkeys(v) for k, v in file_data.items()}
+
+
+def hostile_journal(victim: str) -> bytes:
+    """Make the bytes of a SQLite journal naming `victim` as its super-journal.
+
+    Rolling back this journal makes SQLite delete `victim`.
+    """
+    name = os.path.abspath(victim).encode("utf-8")
+    return (
+        name
+        + len(name).to_bytes(4, "big")
+        + sum(name).to_bytes(4, "big")
+        + b"\xd9\xd5\x05\xf9\x20\xa1\x63\xd7"
+    )
 
 
 class CoverageDataTest(CoverageTest):
@@ -428,13 +444,23 @@ class CoverageDataTest(CoverageTest):
         covdata2 = DebugCoverageData(suffix="2")
         covdata2.add_arcs(ARCS_3)
 
-        msg = "Can't combine branch coverage data with statement data"
-        with pytest.raises(DataError, match=msg):
+        msg = (
+            "Can't combine branch coverage data with statement data: "
+            + r"data file '.*\.coverage\.2' measured branch coverage, "
+            + r"but data file '.*\.coverage\.1' didn't$"
+        )
+        with pytest.raises(DataError, match=msg) as excinfo:
             covdata1.update(covdata2)
+        assert excinfo.value.slug == "cant-combine"
 
-        msg = "Can't combine statement coverage data with branch data"
-        with pytest.raises(DataError, match=msg):
+        msg = (
+            "Can't combine statement coverage data with branch data: "
+            + r"data file '.*\.coverage\.1' didn't measure branch coverage, "
+            + r"but data file '.*\.coverage\.2' did$"
+        )
+        with pytest.raises(DataError, match=msg) as excinfo:
             covdata2.update(covdata1)
+        assert excinfo.value.slug == "cant-combine"
 
     def test_update_file_tracers(self) -> None:
         covdata1 = DebugCoverageData(suffix="1")
@@ -507,6 +533,60 @@ class CoverageDataTest(CoverageTest):
             covdata1.update(covdata2)
 
         msg = "Conflicting file tracer name for 'p1.html': '' vs 'html.plugin'"
+        with pytest.raises(DataError, match=msg):
+            covdata2.update(covdata1)
+
+    def test_update_file_tracer_vs_touched_file(self) -> None:
+        covdata1 = DebugCoverageData(suffix="1")
+        covdata1.add_lines({"p1.html": [1, 2, 3]})
+        covdata1.add_file_tracers({"p1.html": "html.plugin"})
+
+        # A file that was touched but never executed holds no measurements, so
+        # it makes no claim about which plugin owns the file.  It shouldn't
+        # conflict with plugin-measured data for the same file, and the plugin
+        # association should survive the merge in either direction.
+        covdata2 = DebugCoverageData(suffix="2")
+        covdata2.add_lines({})
+        covdata2.touch_files(["p1.html"])
+
+        covdata1.update(covdata2)
+        assert covdata1.file_tracer("p1.html") == "html.plugin"
+
+        covdata3 = DebugCoverageData(suffix="3")
+        covdata3.add_lines({})
+        covdata3.touch_files(["p1.html"])
+
+        covdata3.update(covdata1)
+        assert covdata3.file_tracer("p1.html") == "html.plugin"
+
+    def test_update_file_tracer_vs_touched_file_arcs(self) -> None:
+        covdata1 = DebugCoverageData(suffix="1")
+        covdata1.add_arcs({"p1.html": [(-1, 1), (1, 2), (2, -1)]})
+        covdata1.add_file_tracers({"p1.html": "html.plugin"})
+
+        covdata2 = DebugCoverageData(suffix="2")
+        covdata2.add_arcs({})
+        covdata2.touch_files(["p1.html"])
+
+        covdata2.update(covdata1)
+        assert covdata2.file_tracer("p1.html") == "html.plugin"
+        assert sorted(covdata2.arcs("p1.html") or []) == [(-1, 1), (1, 2), (2, -1)]
+
+    def test_update_file_tracer_vs_touched_file_other_tracer(self) -> None:
+        covdata1 = DebugCoverageData(suffix="1")
+        covdata1.add_lines({"p1.html": [1, 2, 3]})
+        covdata1.add_file_tracers({"p1.html": "html.plugin"})
+
+        # A file touched with a different plugin is still a conflict.
+        covdata2 = DebugCoverageData(suffix="2")
+        covdata2.add_lines({})
+        covdata2.touch_files(["p1.html"], plugin_name="html.other_plugin")
+
+        msg = "Conflicting file tracer name for 'p1.html': 'html.plugin' vs 'html.other_plugin'"
+        with pytest.raises(DataError, match=msg):
+            covdata1.update(covdata2)
+
+        msg = "Conflicting file tracer name for 'p1.html': 'html.other_plugin' vs 'html.plugin'"
         with pytest.raises(DataError, match=msg):
             covdata2.update(covdata1)
 
@@ -745,7 +825,7 @@ class CoverageDataInTempDirTest(CoverageTest):
     def test_hard_read_error(self) -> None:
         self.make_file("noperms.dat", "go away")
         os.chmod("noperms.dat", 0)
-        with pytest.raises(DataError, match=r"Couldn't .* '.*[/\\]noperms.dat': \S+"):
+        with pytest.raises(DataError, match=r"Couldn't .* '.*[/\\]noperms.dat': .*\(\S+\)$"):
             covdata = DebugCoverageData("noperms.dat")
             covdata.read()
 
@@ -813,15 +893,13 @@ class CoverageDataFilesTest(CoverageTest):
 
         print(debug.get_output())
 
-        assert re.search(
-            r"^"
-            + r"Closing dbs, force=True: {}\n"
+        assert re.fullmatch(
+            r"Closing dbs, force=True: {}\n"
             + r"Erasing data file '.*\.coverage' \(does not exist\)\n"
             + r"Opening data file '.*\.coverage' \(does not exist\)\n"
             + r"Initing data file '.*\.coverage' \(0 bytes, modified [-:. 0-9]+\)\n"
             + r"Writing \(no-op\) data file '.*\.coverage' \(\d+ bytes, modified [-:. 0-9]+\)\n"
-            + r"Opening data file '.*\.coverage' \(\d+ bytes, modified [-:. 0-9]+\)\n"
-            + r"$",
+            + r"Opening data file '.*\.coverage' \(\d+ bytes, modified [-:. 0-9]+\)\n",
             debug.get_output(),
         )
 
@@ -855,19 +933,104 @@ class CoverageDataFilesTest(CoverageTest):
         covdata1.add_lines(LINES_1)
         covdata1.write()
         self.assert_doesnt_exist(".coverage")
-        data_files1 = glob.glob(".coverage.*")
-        assert len(data_files1) == 1
+        self.assert_file_count(".coverage.*", 1)
 
         # Another suffix=True will choose a different name.
         covdata2 = DebugCoverageData(suffix=True)
         covdata2.add_lines(LINES_1)
         covdata2.write()
         self.assert_doesnt_exist(".coverage")
+        self.assert_file_count(".coverage.*", 2)
         data_files2 = glob.glob(".coverage.*")
-        assert len(data_files2) == 2
 
         # In addition to being different, the suffixes have the pid in them.
         assert all(str(os.getpid()) in fn for fn in data_files2)
+
+    def test_true_suffix_written_twice(self) -> None:
+        # Two files start with the same data, then record different data and
+        # are written again. Both have to be combined, so the second write has
+        # to update the hash in the file name.
+        for more_lines in [LINES_2, {"d.py": {4}}]:
+            covdata = DebugCoverageData(suffix=True)
+            covdata.add_lines(LINES_1)
+            covdata.write()
+            covdata.add_lines(more_lines)
+            covdata.write()
+        self.assert_file_count(".coverage.*", 2)
+        data_files = glob.glob(".coverage.*")
+        assert all(good_filename_match(fn)["hash"] for fn in data_files)
+
+        covdata3 = DebugCoverageData()
+        combine_parallel_data(covdata3)
+        assert_line_counts(covdata3, {"a.py": 3, "b.py": 1, "c.py": 1, "d.py": 1})
+        self.assert_file_count(".coverage.*", 0)
+
+    def test_true_suffix_written_twice_same_data(self) -> None:
+        # Files with the same data are still skipped as duplicates when they
+        # were written more than once.
+        data_files = []
+        for _ in range(2):
+            covdata = DebugCoverageData(suffix=True)
+            covdata.add_lines(LINES_1)
+            covdata.write()
+            covdata.add_lines(LINES_2)
+            covdata.write()
+            data_files.append(covdata.data_filename())
+        classifier = DataFileClassifier()
+        assert classifier.classify(data_files[0]) == "combine"
+        assert classifier.classify(data_files[1]) == "skip"
+
+    def test_true_suffix_written_again_without_new_data(self) -> None:
+        covdata = DebugCoverageData(suffix=True)
+        covdata.add_lines(LINES_1)
+        covdata.write()
+        data_file = covdata.data_filename()
+        covdata.write()
+        assert covdata.data_filename() == data_file
+        self.assert_file_count(".coverage.*", 1)
+
+    def test_true_suffix_with_data_written_by_another_object(self) -> None:
+        # nbval points a notebook kernel's Coverage at pytest-cov's parallel
+        # data file, so the kernel writes its data into a file it doesn't
+        # own. The hash in the file name has to include that data, or
+        # combining skips the file as a duplicate of a file with no data, like
+        # one from a subprocess that measured nothing, and deletes it.
+        # https://github.com/coveragepy/coveragepy/issues/2370
+        owner = DebugCoverageData(suffix=True)
+        owner.add_lines({})
+        kernel = DebugCoverageData(basename=owner.data_filename())
+        kernel.read()
+        kernel.add_lines(LINES_1)
+        kernel.write()
+        owner.write()
+
+        empty = DebugCoverageData(suffix=True)
+        empty.add_lines({})
+        empty.write()
+
+        classifier = DataFileClassifier()
+        assert classifier.classify(empty.data_filename()) == "combine"
+        assert classifier.classify(owner.data_filename()) == "combine"
+
+        covdata = DebugCoverageData()
+        combine_parallel_data(covdata)
+        assert_line_counts(covdata, SUMMARY_1)
+
+    def test_true_suffix_with_data_from_update(self) -> None:
+        # Data added with update() also has to be in the hash in the file name.
+        other = DebugCoverageData(basename="other")
+        other.add_lines(LINES_1)
+        owner = DebugCoverageData(suffix=True)
+        owner.update(other)
+        owner.write()
+
+        empty = DebugCoverageData(suffix=True)
+        empty.add_lines({})
+        empty.write()
+
+        classifier = DataFileClassifier()
+        assert classifier.classify(empty.data_filename()) == "combine"
+        assert classifier.classify(owner.data_filename()) == "combine"
 
     def test_combining(self) -> None:
         self.assert_file_count(".coverage.*", 0)
@@ -1058,11 +1221,187 @@ class CoverageDataFilesTest(CoverageTest):
         self.assert_exists(".coverage.xxx")
         self.assert_exists("cov2/.coverage.xxx")
 
+    @pytest.mark.skipif(env.WINDOWS, reason="Windows lets us delete files in read-only directories")
+    @pytest.mark.skipif(
+        not env.WINDOWS and os.geteuid() == 0,
+        reason="root can delete files in read-only directories",
+    )
+    def test_hostile_journal_matches_sqlite(self) -> None:
+        # hostile_journal() builds its bytes by hand.  Check them against a
+        # journal SQLite writes itself.  A commit spanning two databases names
+        # a super-journal at the end of each database's journal.  SQLite
+        # normally deletes the journals when the commit is done, but it can't
+        # delete one in a read-only directory.
+        os.mkdir("two")
+        con = sqlite3.connect("one.db", isolation_level=None)
+        con.execute("attach 'two/two.db' as two")
+        con.execute("create table main.t (x)")
+        con.execute("create table two.t (x)")
+        con.execute("begin")
+        con.execute("insert into main.t values (1)")
+        con.execute("insert into two.t values (1)")
+        os.chmod("two", 0o555)
+        try:
+            con.execute("commit")
+        finally:
+            os.chmod("two", 0o755)
+        # The super-journal is named after the main database, with SQLite's
+        # idea of its full path.  The main database is always listed first.
+        main_path = con.execute("pragma database_list").fetchone()[2]
+        con.close()
+
+        with open("two/two.db-journal", "rb") as fjournal:
+            journal = fjournal.read()
+        super_name = re.search(re.escape(main_path) + r"-mj[0-9A-F]+", journal.decode("latin-1"))
+        assert super_name is not None
+        assert journal.endswith(hostile_journal(super_name.group()))
+
+    def test_combining_with_hostile_journal(self) -> None:
+        # A data file from somewhere else might have a SQLite journal file
+        # beside it.  If we opened the data file read-write, SQLite would roll
+        # back the journal, and delete the "super-journal" it names, which can
+        # be any file at all.
+        covdata1 = DebugCoverageData(".coverage.1")
+        covdata1.add_lines(LINES_1)
+        covdata1.write()
+
+        self.make_file("victim.txt", "don't delete me")
+        self.make_file(".coverage.1-journal", bytes=hostile_journal("victim.txt"))
+
+        covdata2 = DebugCoverageData()
+        combine_parallel_data(covdata2)
+
+        assert_line_counts(covdata2, SUMMARY_1)
+        self.assert_exists("victim.txt")
+        self.assert_doesnt_exist(".coverage.1")
+
+    def test_combining_with_vanishing_file(self) -> None:
+        # A process still finishing its write renames its data file after
+        # combine has listed it.  The vanished file is reported, not fatal.
+        covdata1 = DebugCoverageData(suffix="1")
+        covdata1.add_lines(LINES_1)
+        covdata1.write()
+        self.make_file(".coverage.2", "")
+
+        real_read = CoverageData.read
+
+        def renaming_read(self: CoverageData) -> None:
+            fname = self.data_filename()
+            if fname.endswith(".coverage.2") and os.path.exists(fname):
+                os.rename(fname, fname + ".Hdeadbeefh")
+            real_read(self)
+
+        warnings: list[str] = []
+        covdata2 = DebugCoverageData(warn=warnings.append)
+        with mock.patch.object(CoverageData, "read", renaming_read):
+            combine_parallel_data(covdata2)
+
+        assert_line_counts(covdata2, SUMMARY_1)
+        assert len(warnings) == 1
+        assert re.search(r"Couldn't use data file '.*\.coverage\.2': it doesn't exist", warnings[0])
+        self.assert_doesnt_exist(".coverage.1")
+        self.assert_exists(".coverage.2.Hdeadbeefh")
+
+    def test_reading_missing_read_only_file(self) -> None:
+        covdata = DebugCoverageData("nope", read_only=True)
+        msg = r"Couldn't use data file '.*nope': it doesn't exist"
+        with pytest.raises(DataError, match=msg):
+            covdata.read()
+
+    def test_reading_with_hostile_journal(self) -> None:
+        # The main data file has to be opened read-write, so a data file with a
+        # journal SQLite would roll back is refused instead.
+        covdata1 = DebugCoverageData()
+        covdata1.add_lines(LINES_1)
+        covdata1.write()
+
+        self.make_file("victim.txt", "don't delete me")
+        self.make_file(".coverage-journal", bytes=hostile_journal("victim.txt"))
+
+        covdata2 = DebugCoverageData()
+        msg = r"Couldn't use data file '.*\.coverage': it has a journal file to roll back"
+        with pytest.raises(DataError, match=msg):
+            covdata2.read()
+        self.assert_exists("victim.txt")
+        self.assert_exists(".coverage-journal")
+
+    @pytest.mark.skipif(env.WINDOWS, reason="Windows can't make symlinks")
+    def test_reading_symlink_with_hostile_journal(self) -> None:
+        # SQLite looks for the journal beside the real file, not the link.
+        os.mkdir("real")
+        covdata1 = DebugCoverageData("real/.coverage")
+        covdata1.add_lines(LINES_1)
+        covdata1.write()
+        os.symlink("real/.coverage", ".coverage")
+
+        self.make_file("victim.txt", "don't delete me")
+        self.make_file("real/.coverage-journal", bytes=hostile_journal("victim.txt"))
+
+        covdata2 = DebugCoverageData()
+        msg = r"Couldn't use data file '.*\.coverage': it has a journal file to roll back"
+        with pytest.raises(DataError, match=msg):
+            covdata2.read()
+        self.assert_exists("victim.txt")
+
+    def test_writing_after_erasing_with_hostile_journal(self) -> None:
+        # "coverage run" erases the data file before writing it.  The journal
+        # beside it isn't refused then: SQLite discards a journal beside an
+        # empty database without rolling it back.
+        covdata1 = DebugCoverageData()
+        covdata1.add_lines(LINES_1)
+        covdata1.write()
+
+        self.make_file("victim.txt", "don't delete me")
+        self.make_file(".coverage-journal", bytes=hostile_journal("victim.txt"))
+
+        covdata2 = DebugCoverageData()
+        covdata2.erase()
+        covdata2.add_lines(LINES_1)
+        covdata2.write()
+
+        covdata3 = DebugCoverageData()
+        covdata3.read()
+        assert_line_counts(covdata3, SUMMARY_1)
+        self.assert_exists("victim.txt")
+
     def test_combining_from_nonexistent_directories(self) -> None:
         covdata = DebugCoverageData()
         msg = "Couldn't combine from non-existent path 'xyzzy'"
         with pytest.raises(NoDataError, match=msg):
             combine_parallel_data(covdata, data_paths=["xyzzy"])
+
+    @pytest.mark.parametrize("arcs_first", [False, True])
+    def test_combining_cant_mix_lines_and_arcs(self, arcs_first: bool) -> None:
+        # The error names the data file that doesn't match the data already
+        # combined, and the data file it is combined into.
+        covdata1 = DebugCoverageData(suffix="1")
+        covdata2 = DebugCoverageData(suffix="2")
+        if arcs_first:
+            covdata1.add_arcs(ARCS_3)
+            covdata2.add_lines(LINES_1)
+            msg = (
+                "Can't combine statement coverage data with branch data: "
+                + r"data file '.*\.coverage\.2' didn't measure branch coverage, "
+                + r"but data file '.*\.coverage' did$"
+            )
+        else:
+            covdata1.add_lines(LINES_1)
+            covdata2.add_arcs(ARCS_3)
+            msg = (
+                "Can't combine branch coverage data with statement data: "
+                + r"data file '.*\.coverage\.2' measured branch coverage, "
+                + r"but data file '.*\.coverage' didn't$"
+            )
+        covdata1.write()
+        covdata2.write()
+
+        covdata3 = DebugCoverageData()
+        with pytest.raises(DataError, match=msg) as excinfo:
+            combine_parallel_data(covdata3)
+        assert excinfo.value.slug == "cant-combine"
+
+        # The data file named in the message is still there to be examined.
+        self.assert_exists(".coverage.2")
 
     def test_interleaved_erasing_bug716(self) -> None:
         # pytest-cov could produce this scenario. #716

@@ -10,6 +10,7 @@
 .metacov
 .metacov.*
 *.swp
+.envrc
 
 # Data files we should ignore in the root, but need for gold files.
 /coverage.xml
@@ -29,10 +30,11 @@ dist
 htmlcov
 MANIFEST
 setuptools-*.egg
+wheelhouse
 .tox
 .noseids
 .cache
-.pytest_cache
+.*_cache
 .hypothesis
 .ruby-version
 .venv
@@ -46,8 +48,6 @@ tests/actual
 # Stuff in the doc directory.
 doc/_build
 doc/_spell
-doc/sample_html
-doc/sample_html_beta
 
 # Build intermediaries.
 tmp

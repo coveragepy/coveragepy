@@ -21,6 +21,7 @@ defaults:
 env:
   PIP_DISABLE_PIP_VERSION_CHECK: 1
   COVERAGE_IGOR_VERBOSE: 2
+  FORCE_COLOR: 1    # Get colored pytest output
   HYPOTHESIS_PROFILE: ci
 
 permissions:
@@ -59,7 +60,7 @@ jobs:
 
     steps:
       - name: "Check out the repo"
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
 

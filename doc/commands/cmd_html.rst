@@ -21,9 +21,7 @@ and which were not.  The **html** command creates an HTML report similar to the
 **report** summary, but as an HTML file.  Each module name links to the source
 file decorated to show the status of each line.
 
-Here's a `sample report`__.
-
-__ https://nedbatchelder.com/files/sample_coverage_html/index.html
+Here's a `sample report <../sample_html/index.html>`__.
 
 Lines are highlighted: green for executed, red for missing, and gray for
 excluded.  If you've used branch coverage, partial branches are yellow.  The

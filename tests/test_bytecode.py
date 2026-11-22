@@ -33,9 +33,9 @@ class BytecodeTest(CoverageTest):
         objs = list(bp.code_objects())
 
         expected = {"<module>", "f", "g", "j", "h"}
-        if env.PYVERSION < (3, 12):
+        if env.PYVERSION < (3, 12) or env.PYPY:
             # Comprehensions were compiled as implicit functions in earlier
-            # versions of Python.
+            # versions of CPython. PyPy still compiles them that way.
             expected.update({"<setcomp>", "<listcomp>"})
         assert {c.co_name for c in objs} == expected
 

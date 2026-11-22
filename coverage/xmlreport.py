@@ -3,6 +3,8 @@
 
 """XML reporting for coverage.py"""
 
+# pragma: enforce 100% coverage
+
 from __future__ import annotations
 
 import os
@@ -13,13 +15,13 @@ import xml.dom.minidom
 from dataclasses import dataclass
 from typing import IO, TYPE_CHECKING, Any
 
-from coverage import __version__, files
-from coverage.misc import human_sorted, human_sorted_items, isolate_module
+from coverage import files
+from coverage.misc import human_sorted, human_sorted_items, isolate_module, neutralize_control
 from coverage.plugin import FileReporter
 from coverage.report_core import get_analysis_to_report
 from coverage.results import Analysis
 from coverage.types import TMorfs
-from coverage.version import __url__
+from coverage.version import __url__, __version__
 
 if TYPE_CHECKING:
     from coverage import Coverage
@@ -31,11 +33,22 @@ DTD_URL = "https://raw.githubusercontent.com/cobertura/web/master/htdocs/xml/cov
 
 
 def rate(hit: int, num: int) -> str:
-    """Return the fraction of `hit`/`num`, as a string."""
+    """Return the fraction of `hit`/`num`, as a string.
+
+    Note that "0" is only returned when `hit` is truly zero, and "1"
+    is only returned when `hit == num` (or `num == 0`). Rounding can never
+    result in either "0" or "1".
+    """
     if num == 0:
+        # No lines at all counts as 100%
         return "1"
+    elif hit == num:
+        return "1"
+    elif hit == 0:
+        return "0"
     else:
-        return f"{hit / num:.4g}"
+        frac = min(max(hit / num, 0.0001), 0.9999)
+        return f"{frac:.4g}"
 
 
 @dataclass
@@ -115,7 +128,7 @@ class XmlReporter:
         for path in human_sorted(self.source_paths):
             xsource = self.xml_out.createElement("source")
             appendChild(xsources, xsource)
-            txt = self.xml_out.createTextNode(path)
+            txt = self.xml_out.createTextNode(neutralize_control(path))
             appendChild(xsource, txt)
 
         lnum_tot, lhits_tot = 0, 0
@@ -189,6 +202,8 @@ class XmlReporter:
         else:
             rel_name = fr.relative_filename().replace("\\", "/")
             self.source_paths.add(fr.filename[: -len(rel_name)].rstrip(r"\/"))
+
+        rel_name = neutralize_control(rel_name)
 
         dirname = os.path.dirname(rel_name) or "."
         dirname = "/".join(dirname.split("/")[: self.config.xml_package_depth])

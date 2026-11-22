@@ -5,6 +5,8 @@
 Types for use throughout coverage.py.
 """
 
+# pragma: enforce 100% coverage
+
 from __future__ import annotations
 
 import os
@@ -100,18 +102,23 @@ class Tracer(Protocol):
 
     def start(self) -> TTraceFn | None:
         """Start this tracer, return a trace function if based on sys.settrace."""
+        ...
 
     def stop(self) -> None:
         """Stop this tracer."""
+        ...
 
     def activity(self) -> bool:
         """Has there been any activity?"""
+        ...
 
     def reset_activity(self) -> None:
         """Reset the activity() flag."""
+        ...
 
     def get_stats(self) -> dict[str, int] | None:
         """Return a dictionary of statistics, or None."""
+        ...
 
 
 ## Coverage
@@ -143,6 +150,7 @@ class TConfigurable(Protocol):
         Returns the value of the option.
 
         """
+        ...
 
     def set_option(self, option_name: str, value: TConfigValueIn | TConfigSectionIn) -> None:
         """Set an option in the configuration.
@@ -154,6 +162,7 @@ class TConfigurable(Protocol):
         `value` is the new value for the option.
 
         """
+        ...
 
 
 class TPluginConfig(Protocol):
@@ -161,6 +170,7 @@ class TPluginConfig(Protocol):
 
     def get_plugin_options(self, plugin: str) -> TConfigSectionOut:
         """Get the options for a plugin."""
+        ...
 
 
 ## Parsing
@@ -185,9 +195,11 @@ class TDebugCtl(Protocol):
 
     def should(self, option: str) -> bool:
         """Decide whether to output debug information in category `option`."""
+        ...
 
     def write(self, msg: str) -> None:
         """Write a line of debug output."""
+        ...
 
 
 class TWritable(Protocol):
@@ -195,3 +207,4 @@ class TWritable(Protocol):
 
     def write(self, msg: str) -> None:
         """Write a message."""
+        ...

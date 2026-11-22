@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+# pragma: exclude file from coverage
+
 import atexit
 import dis
 import itertools
@@ -37,9 +39,12 @@ set_TArc = set[TArc]
 
 
 # We need the YIELD_VALUE opcode below, in a comparison-friendly form.
-# PYVERSIONS: RESUME is new in Python3.11
+# PYVERSIONS: RESUME is new in CPython 3.11, but it's not in PyPy still in 3.12.
 RESUME = dis.opmap.get("RESUME")
 RETURN_VALUE = dis.opmap["RETURN_VALUE"]
+# PyPy attributes the exception-handler PUSH_EXC_INFO to the try/else line.
+# That instruction is not the else body. Skip it so the else line stays missing.
+PUSH_EXC_INFO = dis.opmap.get("PUSH_EXC_INFO")
 if RESUME is None:
     YIELD_VALUE = dis.opmap["YIELD_VALUE"]
     YIELD_FROM = dis.opmap["YIELD_FROM"]
@@ -132,7 +137,7 @@ class PyTracer(Tracer):
                 f.write(  # type: ignore[unreachable]
                     f".{self.thread.ident:x}.{self.threading.current_thread().ident:x}"
                 )
-            f.write(" {}".format(" ".join(map(str, args))))
+            f.write(" " + " ".join(map(str, args)))
             if 0:  # if you want callers..
                 f.write(" | ")  # type: ignore[unreachable]
                 stack = " / ".join(
@@ -226,8 +231,8 @@ class PyTracer(Tracer):
                 if disp.trace:
                     tracename = disp.source_filename
                     assert tracename is not None
-                    self.lock_data()
                     try:
+                        self.lock_data()
                         if tracename not in self.data:
                             self.data[tracename] = set()
                     finally:
@@ -257,6 +262,15 @@ class PyTracer(Tracer):
         elif event == "line":
             # Record an executed line.
             if self.cur_file_data is not None:
+                if PUSH_EXC_INFO is not None:
+                    lasti = frame.f_lasti
+                    code = frame.f_code.co_code
+                    if (
+                        isinstance(lasti, int)
+                        and 0 <= lasti < len(code)
+                        and code[lasti] == PUSH_EXC_INFO
+                    ):
+                        return self._cached_bound_method_trace
                 flineno: TLineNo = frame.f_lineno
 
                 if self.trace_arcs:
@@ -292,6 +306,15 @@ class PyTracer(Tracer):
                     else:
                         real_return = True
                 if real_return:
+                    # Python 3.14 can report a new line only on the return event.
+                    # f_lineno can be None here, for example after an except* handler.
+                    if (
+                        env.PYVERSION >= (3, 14)
+                        and frame.f_lineno is not None
+                        and frame.f_lineno != self.last_line
+                    ):
+                        cast(set_TArc, self.cur_file_data).add((self.last_line, frame.f_lineno))
+                        self.last_line = frame.f_lineno
                     first = frame.f_code.co_firstlineno
                     cast(set_TArc, self.cur_file_data).add((self.last_line, -first))
 

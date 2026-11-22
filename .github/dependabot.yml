@@ -10,6 +10,8 @@ updates:
       # Check for updates to GitHub Actions once a week
       interval: "weekly"
       day: "sunday"
+    allow:
+      - dependency-type: "all"
     cooldown:
       # https://blog.yossarian.net/2025/11/21/We-should-all-be-using-dependency-cooldowns
       default-days: 10

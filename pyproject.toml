@@ -90,14 +90,13 @@ disable = [
     "too-many-lines",
     "use-implicit-booleaness-not-comparison",
     "too-many-positional-arguments",
+    "unnecessary-ellipsis",
     # Formatting stuff
     "superfluous-parens",
     "line-too-long",
     # Messages that are noisy for now, eventually maybe we'll turn them on:
     "invalid-name",
     "protected-access",
-    "unspecified-encoding",
-    "consider-using-f-string",
     "duplicate-code",
     "cyclic-import",
 ]
@@ -148,16 +147,12 @@ verbosity_assertions = "5"
 ## Scriv
 
 [tool.scriv]
-changelog = "tmp/only-changes.md"
-ghrel_template = """
-## {{title}}
-
-{{body}}
-
-:arrow_right:\u00a0 PyPI page: [coverage {{version}}](https://pypi.org/project/coverage/{{version}}).
-:arrow_right:\u00a0 To install: `python3 -m pip install coverage=={{version}}`
-
-"""
+fragment_directory = "news"
+categories = []
+changelog = "CHANGES.rst"
+rst_header_chars = "-."
+version = "command: python setup.py --version"
+entry_title_template = "Version {{ version }} — {{ date.strftime('%Y-%m-%d') }}"
 
 ## CHECK-MANIFEST
 
@@ -172,12 +167,15 @@ ignore = [
     "setup.cfg",
     # Files that we create during packaging.
     "a1_coverage.pth",
+    # The sample HTML report is only for the docs.
+    "doc/_extra/*",
 ]
 
 ## UV
 
 [tool.uv.exclude-newer-package]
-# We trust sphinx-linklint, so it needs no cooldown.
+# We trust these packages, so they need no cooldown.
+scriv = "P0D"
 sphinx-linklint = "P0D"
 
 ## RUFF
@@ -185,7 +183,7 @@ sphinx-linklint = "P0D"
 
 [tool.ruff]
 # PYVERSION
-target-version = "py310"  # Can't use [project]
+target-version = "py311"  # Can't use [project]
 line-length = 100
 
 [tool.ruff.lint]
@@ -203,6 +201,9 @@ ignore = [
 ]
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?)|[a-zA-Z0-9_]+_unused)$"
 
+[tool.ruff.lint.isort]
+combine-as-imports = true
+
 [tool.ruff.lint.per-file-ignores]
 "tests/**.py" = [
     "PT031",    # `pytest.warns()` block should contain a single simple statement
@@ -210,3 +211,11 @@ dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?)|[a-zA-Z0-9_]+_unused)$
     "RUF012",   # Mutable default value for class attribute
     "RUF024",   # Do not pass mutable objects as values to `dict.fromkeys`
 ]
+
+## CIBUILDWHEEL
+[tool.cibuildwheel]
+test-command = "python -m tests.smoke"
+test-sources = "tests/smoke.py"
+
+[tool.cibuildwheel.ios]
+xbuild-tools = []

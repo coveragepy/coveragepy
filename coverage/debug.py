@@ -98,7 +98,7 @@ class DebugControl:
         if exc is not None:
             self.output.write("".join(traceback.format_exception(None, exc, exc.__traceback__)))
         if self.should("self"):
-            caller_self = inspect.stack()[1][0].f_locals.get("self")
+            caller_self = inspect.stack()[1].frame.f_locals.get("self")
             if caller_self is not None:
                 self.output.write(f"self: {caller_self!r}\n")
         if self.should("callers"):
@@ -136,7 +136,7 @@ class DevNullDebug(NoDebugging):
 
 def info_header(label: str) -> str:
     """Make a nice header string."""
-    return "--{:-<60s}".format(" " + label + " ")
+    return f"--{' ' + label + ' ':-<60s}"
 
 
 def info_formatter(info: Iterable[tuple[str, Any]]) -> Iterable[str]:
@@ -333,11 +333,8 @@ def auto_repr(self: Any) -> str:
         and not inspect.ismethod(v)
         and k not in AUTO_REPR_IGNORE
     )
-    return "<{klass} @{id:#x}{attrs}>".format(
-        klass=self.__class__.__name__,
-        id=id(self),
-        attrs="".join(f" {k}={v!r}" for k, v in show_attrs),
-    )
+    attrs = "".join(f" {k}={v!r}" for k, v in show_attrs)
+    return f"<{self.__class__.__name__} @{id(self):#x}{attrs}>"
 
 
 def simplify(v: Any) -> Any:  # pragma: debugging
@@ -373,15 +370,12 @@ def filter_text(text: str, filters: Iterable[Callable[[str], str]]) -> str:
     run.
 
     """
-    clean_text = text.rstrip()
-    ending = text[len(clean_text) :]
-    text = clean_text
     for filter_fn in filters:
         lines = []
-        for line in text.splitlines():
-            lines.extend(filter_fn(line).splitlines())
-        text = "\n".join(lines)
-    return text + ending
+        for line in text.splitlines(keepends=True):
+            lines.extend(filter_fn(line).splitlines(keepends=True))
+        text = "".join(lines)
+    return text
 
 
 class CwdTracker:
@@ -607,7 +601,7 @@ def show_calls(
             extra = ""
             if show_args:
                 eargs = ", ".join(map(repr, args))
-                ekwargs = ", ".join("{}={!r}".format(*item) for item in kwargs.items())
+                ekwargs = ", ".join(f"{k}={v!r}" for k, v in kwargs.items())
                 extra += "("
                 extra += eargs
                 if eargs and ekwargs:

@@ -237,7 +237,7 @@ class Matcher(abc.ABC):
         return f"<{self.__class__.__name__} {self.name} {self.strs!r}>"
 
     @abc.abstractmethod
-    def match(self, s: str) -> bool:
+    def match(self, s: str, /) -> bool:
         """Does this string match?"""
 
     def info(self) -> list[str]:
@@ -270,7 +270,7 @@ class TreeMatcher(Matcher):
                 debug(f"        Normalized {p!r} to {ap!r}")
             self.paths.append(ap)
 
-    def match(self, fpath: str) -> bool:  # pylint: disable=arguments-renamed
+    def match(self, fpath: str, /) -> bool:
         """Does `fpath` indicate a file in one of our trees?"""
         fpath = abs_file(fpath)
         for p in self.paths:
@@ -297,7 +297,7 @@ class ModuleMatcher(Matcher):
         self.modules = list(module_names)
         super().__init__(self.modules, name=name, caption=caption, debug=debug)
 
-    def match(self, module_name: str) -> bool:  # pylint: disable=arguments-renamed
+    def match(self, module_name: str, /) -> bool:
         """Does `module_name` indicate a module in one of our packages?"""
         if not module_name:
             return False
@@ -327,7 +327,7 @@ class GlobMatcher(Matcher):
         super().__init__(self.pats, name=name, caption=caption, debug=debug)
         self.re = globs_to_regex(self.pats, case_insensitive=env.WINDOWS)
 
-    def match(self, fpath: str) -> bool:  # pylint: disable=arguments-renamed
+    def match(self, fpath: str, /) -> bool:
         """Does `fpath` match one of our file name patterns?"""
         return self.re.match(fpath) is not None
 
@@ -358,7 +358,7 @@ G2RX_TOKENS = [(re.compile(rx), sub) for rx, sub in [
     (r"\[.*?\]", r"\g<0>"),         # [a-f] matches [a-f]
     (r"[a-zA-Z0-9_-]+", r"\g<0>"),  # word chars match themselves
     (r"[\[\]]", None),              # Can't have single square brackets
-    (r".", r"\\\g<0>"),             # Anything else is escaped to be safe
+    (r"[\s\S]", r"\\\g<0>"),        # Anything else (including newline) is escaped to be safe
 ]]
 # fmt: on
 
@@ -454,6 +454,9 @@ class PathAliases:
         `pattern` can't end with a wildcard component, since that would
         match an entire tree, and not just its root.
 
+        `result` can't contain wildcards, since it is meant to be an
+        actual file path, not a pattern.
+
         """
         original_pattern = pattern
         pattern_sep = sep(pattern)
@@ -475,6 +478,11 @@ class PathAliases:
 
         # Make a regex from the pattern.
         regex = globs_to_regex([pattern], case_insensitive=True, partial=True)
+
+        # The result must be an actual file path: it can't contain wildcards.
+        # Such a rule could never apply, since the mapped path wouldn't exist.
+        if "*" in result or "?" in result:
+            raise ConfigError(f"Result path must not contain wildcards: {result!r}")
 
         # Normalize the result: it must end with a path separator.
         result_sep = sep(result)
@@ -577,7 +585,7 @@ def find_python_files(dirname: str, include_namespace_packages: bool) -> Iterabl
             # We're only interested in files that look like reasonable Python
             # files: Must end with .py or .pyw, and must not have certain funny
             # characters that probably mean they are editor junk.
-            if re.match(r"^[^.#~!$@%^&*()+=,]+\.pyw?$", filename):
+            if re.fullmatch(r"[^.#~!$@%^&*()+=,]+\.pyw?", filename):
                 yield os.path.join(dirpath, filename)
 
 
