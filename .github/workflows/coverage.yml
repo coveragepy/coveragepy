@@ -64,7 +64,7 @@ jobs:
   coverage:
     name: "${{ matrix.python-version }} on ${{ matrix.os }}"
     runs-on: "${{ matrix.os }}-${{ matrix.os-version }}"
-    timeout-minutes: 15
+    timeout-minutes: 30
 
     # Only run coverage if Python files or this workflow changed.
     needs: changed

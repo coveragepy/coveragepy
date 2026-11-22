@@ -69,7 +69,7 @@ jobs:
   tests:
     name: "${{ matrix.python-version }} on ${{ matrix.os }}"
     runs-on: "${{ matrix.os }}-${{ matrix.os-version }}"
-    timeout-minutes: 15
+    timeout-minutes: 30
 
     # Don't run tests if the branch name includes "-notests".
     # Only run tests if files that affect tests have changed.
@@ -172,7 +172,7 @@ jobs:
   js_tests:
     name: "JavaScript tests"
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
 
     # Don't run tests if the branch name includes "-notests".
     # Only run tests if files that affect the JavaScript tests have changed.
@@ -210,7 +210,7 @@ jobs:
     name: "3.12 on old SQLite 3.26"
     runs-on: ubuntu-latest
     container: rockylinux:8@sha256:9794037624aaa6212aeada1d28861ef5e0a935adaf93e4ef79837119f2a2d04c
-    timeout-minutes: 15
+    timeout-minutes: 30
 
     # Don't run tests if the branch name includes "-notests".
     # Only run tests if files that affect tests have changed.
