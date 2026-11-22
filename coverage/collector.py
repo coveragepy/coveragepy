@@ -469,9 +469,11 @@ class Collector:
             line_data = cast(dict[str, Collection[int]], snapshots)
             self.covdata.add_lines(self.mapped_file_dict(line_data))
 
+        # Tracers in other threads add to file_tracers too, so iterate a
+        # snapshot of it, like the data above.
         file_tracers = {
             self.cached_mapped_file(k): v
-            for k, v in self.file_tracers.items()
+            for k, v in self.file_tracers.copy().items()
             if v not in self.disabled_plugins
         }
         self.covdata.add_file_tracers(file_tracers)

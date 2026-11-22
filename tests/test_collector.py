@@ -62,6 +62,29 @@ class CollectorTest(CoverageTest):
         assert os.path.abspath("f1.py") in abs_files
         assert os.path.abspath("f2.py") in abs_files
 
+    def test_file_tracers_added_during_flush(self) -> None:
+        # A tracer in another thread can start a new plugin-handled file while
+        # flush_data is reading file_tracers.  That used to raise "dictionary
+        # changed size during iteration".  Simulate it by adding a file from
+        # the file mapping that flush_data does for each file tracer.
+        self.make_file("mod.py", "a = 1\n")
+        cov = coverage.Coverage()
+        self.start_import_stop(cov, "mod")
+
+        collector = cov._collector
+        assert collector is not None
+        collector.file_tracers["a.html"] = "fake.Plugin"
+        file_mapper = collector.file_mapper
+
+        def file_mapper_that_adds_a_file(filename: str) -> str:
+            if filename in collector.file_tracers:
+                collector.file_tracers[filename + ".new"] = "fake.Plugin"
+            return file_mapper(filename)
+
+        collector.file_mapper = file_mapper_that_adds_a_file
+        data = cov.get_data()
+        assert data.file_tracer(file_mapper("a.html")) == "fake.Plugin"
+
     @pytest.mark.parametrize("branch", [False, True])
     def test_in_frame_thread_across_flush(self, branch: bool) -> None:
         # A worker thread that stays inside an already-entered frame across a
