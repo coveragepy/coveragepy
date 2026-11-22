@@ -57,6 +57,7 @@ jobs:
               - "**.c"
               - ".github/workflows/testsuite.yml"
               - "tox.ini"
+              - "pyproject.toml"
               - "requirements/*.txt"
               - "tests/gold/**"
             run_js_tests:

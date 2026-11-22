@@ -36,7 +36,6 @@ jobs:
       pull-requests: read   # Needed for this check to run on pull requests
     outputs:
       run_coverage: ${{ steps.filter.outputs.run_coverage }}
-      workflow: ${{ steps.filter.outputs.workflow }}
     steps:
       - name: "Check out the repo"
         uses: actions/checkout@v7.0.1
@@ -53,10 +52,12 @@ jobs:
               - "coverage/**.py"
               - "tests/**.py"
               - "tools/igor.py"
+              - "lab/goals.py"
               - "**.h"
               - "**.c"
               - ".github/workflows/coverage.yml"
               - "tox.ini"
+              - "pyproject.toml"
               - "tools/metacov.ini"
               - "requirements/*.txt"
               - "tests/gold/**"
@@ -66,7 +67,7 @@ jobs:
     runs-on: "${{ matrix.os }}-${{ matrix.os-version }}"
     timeout-minutes: 30
 
-    # Only run coverage if Python files or this workflow changed.
+    # Only run coverage if something we need has changed.
     needs: changed
     if:
       needs.changed.outputs.run_coverage == 'true'

@@ -37,6 +37,7 @@ workflows:
         - 'actions/setup-python@v7.1.0'
         - 'dorny/paths-filter@v4.0.3'
         - 'j178/prek-action@v3.1.0'
+        - 're-actors/alls-green@v1.3.0'
     '.github/workflows/testsuite.yml':
         - 'actions/checkout@v7.0.1'
         - 'actions/setup-python@v7.1.0'

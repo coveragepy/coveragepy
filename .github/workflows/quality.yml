@@ -170,8 +170,6 @@ jobs:
   zizmor:
     name: "Zizmor GHA security check"
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
 
     needs: changed
     if:
@@ -203,3 +201,26 @@ jobs:
         run: |
           gh extension install github/gh-actions-lock --pin v0.4.1
           gh actions-lock --verify
+
+  # This job aggregates quality results. It's the required check for branch protection.
+  # https://github.com/marketplace/actions/alls-green#why
+  # https://github.com/orgs/community/discussions/33579
+  success:
+    name: "Quality successful"
+    needs:
+      - changed
+      - lint
+      - mypy
+      - doc
+      - zizmor
+    # Without this, GitHub skips this job when a needed job doesn't succeed, so
+    # the gate reports "skipped" instead of failing.  `allowed-skips` keeps the
+    # deliberate skips (no relevant files changed) passing.
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Decide success or failure"
+        uses: re-actors/alls-green@v1.3.0
+        with:
+          jobs: ${{ toJSON(needs) }}
+          allowed-skips: lint, mypy, doc, zizmor
