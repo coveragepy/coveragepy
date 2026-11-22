@@ -64,7 +64,7 @@ Less important:
 
 Out of scope:
 
-- `lab/`, `ci/`, `doc/`, `igor.py`, and `tests/` — developer tooling, not
+- `lab/`, `tools/`, `doc/`, and `tests/` — developer tooling, not
   shipped in the package.
 - The vendored JavaScript and CSS in `coverage/htmlfiles/` beyond how
   coverage.py fills in the data it renders.
@@ -78,7 +78,7 @@ Out of scope:
   (`ctrace`), the Python tracer (`pytrace`), and `sys.monitoring` (`sysmon`).
   It removes the C extension to test the other tracers; rebuild it with
   `python setup.py build_ext --inplace`.
-- `python igor.py test_with_core ctrace` runs the tests with just the C
+- `python tools/igor.py test_with_core ctrace` runs the tests with just the C
   tracer.  Standard pytest arguments can be added, for example `-k html`.
 - Typical flow to produce reports from a program:
   `coverage run --branch prog.py && coverage html && coverage xml && coverage json && coverage lcov`.

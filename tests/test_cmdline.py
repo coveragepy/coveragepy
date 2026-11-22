@@ -6,9 +6,11 @@
 from __future__ import annotations
 
 import ast
+import contextlib
 import os
 import pprint
 import re
+import sqlite3
 import sys
 import textwrap
 from collections.abc import Mapping
@@ -486,9 +488,13 @@ class CmdLineTest(BaseCmdLineTest):
         out = self.stdout()
         assert "sqlite3_sqlite_version:" in out
         assert "sqlite3_compile_options:" in out
-        assert len(out.splitlines()) > 15
-        # Lots of lines of indented SQLite compile-time options.
-        assert len(re_lines(r"^ {20,35}[A-Z]{3}", out)) > 12
+        with contextlib.closing(sqlite3.connect(":memory:")) as con:
+            copts = [row[0] for row in con.execute("pragma compile_options")]
+        assert copts
+        for copt in copts:
+            assert f"{copt}\n" in out
+        # The options are on indented lines.
+        assert re_lines(r"^ {20,35}[A-Z]{3}", out)
 
     def test_erase(self) -> None:
         # coverage erase

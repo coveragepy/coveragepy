@@ -159,6 +159,7 @@ make_pth_file()
 
 # Create the keyword arguments for setup()
 
+py_major, py_minor = sys.version_info[:2]
 setup_args = dict(
     name="coverage",
     version=version_data["__version__"],
@@ -177,8 +178,8 @@ setup_args = dict(
             # Install a script as "coverage".
             "coverage = coverage.cmdline:main",
             # And as "coverage3", and as "coverage-3.7" (or whatever), but deprecated.
-            "coverage%d = coverage.cmdline:main_deprecated" % sys.version_info[:1],
-            "coverage-%d.%d = coverage.cmdline:main_deprecated" % sys.version_info[:2],
+            f"coverage{py_major} = coverage.cmdline:main_deprecated",
+            f"coverage-{py_major}.{py_minor} = coverage.cmdline:main_deprecated",
         ],
     },
     extras_require={

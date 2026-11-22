@@ -42,7 +42,7 @@ PYPY = platform.python_implementation() == "PyPy"
 VERBOSITY = int(os.getenv("COVERAGE_IGOR_VERBOSE", "1"))
 
 # Functions named do_* are executable from the command line: do_blah is run
-# by "python igor.py blah".
+# by "python tools/igor.py blah".
 
 
 def do_show_env():
@@ -150,9 +150,11 @@ def should_skip(core, metacov):
 def make_env_id(core):
     """An environment id that will keep all the test runs distinct."""
     impl = platform.python_implementation().lower()
-    version = "{}{}".format(*sys.version_info[:2])
+    py_major, py_minor = sys.version_info[:2]
+    version = f"{py_major}{py_minor}"
     if PYPY:
-        version += "_{}{}".format(*sys.pypy_version_info[:2])
+        pypy_major, pypy_minor = sys.pypy_version_info[:2]
+        version += f"_{pypy_major}{pypy_minor}"
     env_id = f"{impl}{version}_{core}"
     return env_id
 
@@ -169,7 +171,7 @@ def run_tests_with_coverage(core, *runner_args):
     """Run tests, but with coverage."""
     # Need to define this early enough that the first import of env.py sees it.
     os.environ["COVERAGE_TESTING"] = "True"
-    os.environ["COVERAGE_PROCESS_START"] = os.path.abspath("metacov.ini")
+    os.environ["COVERAGE_PROCESS_START"] = os.path.abspath("tools/metacov.ini")
     os.environ["COVERAGE_HOME"] = os.getcwd()
     context = os.getenv("COVERAGE_CONTEXT")
     if context:
@@ -191,7 +193,7 @@ def run_tests_with_coverage(core, *runner_args):
 
     import coverage
 
-    cov = coverage.Coverage(config_file="metacov.ini")
+    cov = coverage.Coverage(config_file="tools/metacov.ini")
     cov._warn_unimported_source = False
     cov._warn_preimported_source = False
     cov.start()
@@ -230,7 +232,7 @@ def do_combine_html():
     import coverage
 
     os.environ["COVERAGE_HOME"] = os.getcwd()
-    cov = coverage.Coverage(config_file="metacov.ini", messages=True)
+    cov = coverage.Coverage(config_file="tools/metacov.ini", messages=True)
     cov.combine()
     cov.save()
     show_contexts = bool(
@@ -307,7 +309,8 @@ def print_banner(label):
     if not has_gil:
         version += "t"
     if PYPY:
-        version += " (pypy %s)" % ".".join(str(v) for v in sys.pypy_version_info)
+        pypy_ver = ".".join(map(str, sys.pypy_version_info))
+        version += f" (pypy {pypy_ver})"
     version += f" ({' '.join(platform.python_build())})"
     version += " (gil)" if has_gil else " (nogil)"
 
@@ -369,14 +372,6 @@ def do_edit_for_release():
         f"Copyright 2004-{facts.now:%Y} Ned",
     )
 
-    # CHANGES.rst
-    title = f"Version {facts.ver} — {facts.now:%Y-%m-%d}"
-    rule = "-" * len(title)
-    new_head = f".. _changes_{facts.anchor}:\n\n{title}\n{rule}"
-
-    update_file("CHANGES.rst", re.escape(RELEASES_START), "")
-    update_file("CHANGES.rst", re.escape(UNRELEASED), RELEASES_START + new_head)
-
     # doc/conf.py
     new_conf = textwrap.dedent(
         f"""\
@@ -414,7 +409,8 @@ def do_bump_version():
     update_file(
         "CHANGES.rst",
         re.escape(RELEASES_START),
-        f"{UNRELEASED}\n\nNothing yet.\n\n\n" + RELEASES_START,
+        f"{UNRELEASED}\n\nSee ``news/*.rst`` files for upcoming changelog fragments.\n\n\n"
+        + RELEASES_START,
     )
 
     # coverage/version.py

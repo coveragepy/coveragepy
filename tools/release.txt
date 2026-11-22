@@ -20,9 +20,11 @@
         $ make release_version
 - Update source files with release facts, and get useful snippets:
     $ make edit_for_release cheats
-- Edit supported Python version numbers. Search for "PYVERSIONS".
-    - Especially README.rst and doc/index.rst
 - Look over CHANGES.rst
+    - vim: :GatherRegs
+    - edit for priority, flow, etc.
+- Edit supported Python version numbers. Search for "PYVERSION".
+    - Especially README.rst and doc/index.rst
 - Update docs
     - IF PRE-RELEASE:
         - Version of latest stable release in doc/index.rst
@@ -31,14 +33,10 @@
     - Don't forget the man page: doc/python-coverage.1.txt
     - Check that the docs build correctly:
         $ tox -e doc
-- commit the release-prep changes
+- Commit the release-prep changes
     $ make relcommit
-- Generate new sample_html to get the latest, and publish:
-    - IF PRE-RELEASE:
-        $ make sample_html_beta install publishbeta
-    - IF NOT PRE-RELEASE:
-        $ make sample_html install publish
-    - commit and publish nedbatchelder.com
+- Generate a new sample HTML report for the docs:
+    $ make sample_html install
 - Done with changes to source files
     $ g puo; gshipit
         - check them in on the release prep branch

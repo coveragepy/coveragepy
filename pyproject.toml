@@ -97,8 +97,6 @@ disable = [
     # Messages that are noisy for now, eventually maybe we'll turn them on:
     "invalid-name",
     "protected-access",
-    "unspecified-encoding",
-    "consider-using-f-string",
     "duplicate-code",
     "cyclic-import",
 ]
@@ -149,16 +147,12 @@ verbosity_assertions = "5"
 ## Scriv
 
 [tool.scriv]
-changelog = "tmp/only-changes.md"
-ghrel_template = """
-## {{title}}
-
-{{body}}
-
-:arrow_right:\u00a0 PyPI page: [coverage {{version}}](https://pypi.org/project/coverage/{{version}}).
-:arrow_right:\u00a0 To install: `python3 -m pip install coverage=={{version}}`
-
-"""
+fragment_directory = "news"
+categories = []
+changelog = "CHANGES.rst"
+rst_header_chars = "-."
+version = "command: python setup.py --version"
+entry_title_template = "Version {{ version }} — {{ date.strftime('%Y-%m-%d') }}"
 
 ## CHECK-MANIFEST
 
@@ -173,12 +167,15 @@ ignore = [
     "setup.cfg",
     # Files that we create during packaging.
     "a1_coverage.pth",
+    # The sample HTML report is only for the docs.
+    "doc/_extra/*",
 ]
 
 ## UV
 
 [tool.uv.exclude-newer-package]
-# We trust sphinx-linklint, so it needs no cooldown.
+# We trust these packages, so they need no cooldown.
+scriv = "P0D"
 sphinx-linklint = "P0D"
 
 ## RUFF

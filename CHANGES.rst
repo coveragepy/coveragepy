@@ -20,7 +20,112 @@ upgrading your version of coverage.py.
     ..  Version 9.8.1 — 2027-07-27
     ..  --------------------------
 
-.. start-releases
+Unreleased
+----------
+
+See ``news/*.rst`` files for upcoming changelog fragments.
+
+
+.. scriv-insert-here
+
+.. _changelog-7.17.4:
+
+Version 7.17.4 — 2026-11-20
+---------------------------
+
+- Fix: since 7.13.1, a parallel data file could be named with the hash of
+  different data than it held, for example when nbval records a notebook's
+  coverage into pytest-cov's data file. Combining could then skip it as a
+  duplicate and lose its data. Now the hash comes from the data in the file
+  when it is saved. Fixes `issue 2370`_ with `pull 2387`_.
+
+- Fix: lines or arcs recorded by other threads while data was being flushed
+  (for example during ``Coverage.get_data()``, ``Coverage.save()``, or dynamic
+  context switches) could be lost. This is now fixed, closing `issue 2384`_.
+
+- Fix: on Python 3.14 with the pure-Python tracer (``COVERAGE_CORE=pytrace``)
+  and branch measurement, a function that returned right after an ``except*``
+  handler recorded an arc with no line number. Reporting on the data then
+  failed with a ``TypeError``. Now that arc is not recorded. `pull 2403`_.
+
+- Fix: in the JSON report with ``show_contexts``, each function and class had
+  the contexts for every line in the file. Now they only have the contexts for
+  their own lines. Closes `issue 2374`_.
+
+- The first entry in a ``[paths]`` list is the result path, and must be an
+  actual file path.  If it contained wildcards, the rule could never be used
+  and was silently ignored.  It is now reported as a configuration error.
+  Closes `issue 1531`_.
+
+- Fix: a configuration file (``.coveragerc``, ``setup.cfg``, ``tox.ini`` or
+  ``pyproject.toml``) saved with a UTF-8 byte order mark couldn't be read.
+  Now a leading BOM is ignored. `pull 2388`_.
+
+.. _issue 1531: https://github.com/coveragepy/coveragepy/issues/1531
+.. _issue 2370: https://github.com/coveragepy/coveragepy/issues/2370
+.. _issue 2374: https://github.com/coveragepy/coveragepy/issues/2374
+.. _issue 2384: https://github.com/coveragepy/coveragepy/issues/2384
+.. _pull 2387: https://github.com/coveragepy/coveragepy/pull/2387
+.. _pull 2388: https://github.com/coveragepy/coveragepy/pull/2388
+.. _pull 2403: https://github.com/coveragepy/coveragepy/pull/2403
+
+
+.. _changelog-7.17.3:
+
+Version 7.17.3 — 2026-11-11
+---------------------------
+
+- Fix: using ``patch = fork``, a child process wasn't measured unless ``patch =
+  subprocess`` was also used, as described in `issue 2340`_.  This is now fixed
+  in `pull 2342`_.
+
+- Fix: the JSON report keys functions and classes by name, but names can
+  repeat, for example a property getter and setter. Only the last one was
+  kept, so the others were missing from the report. Now repeated names get a
+  ``@<line number>`` suffix, as in the LCOV report. `pull 2353`_.
+
+- Fix: when combining parallel data files, a file that disappears after it
+  has been listed (for example, when the process writing it is still finishing
+  its write) is now reported with a warning, instead of stopping the combine
+  with a ``DataError``. This was a regression in 7.17.1. Closes `issue
+  2364`_.
+
+- Fix: with ``patch = subprocess`` on Python 3.13, a measured subprocess that
+  was stopped with SIGINT would exit with status 1 instead of dying from the
+  signal. This was a regression in 7.17.1, and is now fixed, closing `issue
+  2362`_.
+
+- Performance: on Python 3.13 and later, using the C tracer should result in
+  test suites running about 8% to 12% faster (`pull 2371`_).
+
+.. _issue 2340: https://github.com/coveragepy/coveragepy/issues/2340
+.. _pull 2342: https://github.com/coveragepy/coveragepy/pull/2342
+.. _pull 2353: https://github.com/coveragepy/coveragepy/pull/2353
+.. _issue 2364: https://github.com/coveragepy/coveragepy/issues/2364
+.. _issue 2362: https://github.com/coveragepy/coveragepy/issues/2362
+.. _pull 2371: https://github.com/coveragepy/coveragepy/pull/2371
+
+
+.. _changes_7-17-2:
+
+Version 7.17.2 — 2026-11-04
+---------------------------
+
+- Fix: two different scenarios failed with "attempt to write a readonly
+  database". These were regressions in 7.17.1. They are fixed, closing `issue
+  2356`_:
+
+  - When using a version of SQLite older than 3.34.0, such as on RHEL 8 or
+    Ubuntu 20.04, ``coverage combine`` (and pytest-cov, which combines
+    automatically) always failed.
+
+  - ``coverage combine`` and ``coverage debug data`` failed when a data file
+    existed but had no coverage schema, for example an empty file left behind
+    by a worker that died. A file we can't read is now reported like any other
+    unusable data file, and is left in place.
+
+.. _issue 2356: https://github.com/coveragepy/coveragepy/issues/2356
+
 
 .. _changes_7-17-1:
 
@@ -2828,7 +2933,7 @@ Version 5.3 — 2020-09-13
 .. _issue 1011: https://github.com/coveragepy/coveragepy/issues/1011
 
 
-.. endchangesinclude
+.. scriv-end-here
 
 Older changes
 -------------

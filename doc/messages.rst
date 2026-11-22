@@ -162,7 +162,7 @@ Couldn't import C tracer (no-ctracer)
 .. _warning_no_sysmon:
 
 Can't use core=sysmon: sys.monitoring isn't available in this version, using default core (no-sysmon)
-  You requested to the sys.monitoring measurement core, but are running on
+  You requested the sys.monitoring measurement core, but are running on
   Python 3.11 or lower where it isn't available.  A default core will be used
   instead.
 
