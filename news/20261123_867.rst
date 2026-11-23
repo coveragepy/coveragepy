@@ -1,0 +1,6 @@
+- Fix: missing branch explanations for exits from a ``finally`` clause could
+  incorrectly say a condition was always true, even when it was false while an
+  exception or return was pending. These explanations now describe the missing
+  jump without attributing it solely to the condition. Fixes `issue 867`_.
+
+.. _issue 867: https://github.com/coveragepy/coveragepy/issues/867
