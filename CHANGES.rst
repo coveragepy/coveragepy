@@ -28,6 +28,48 @@ See ``news/*.rst`` files for upcoming changelog fragments.
 
 .. scriv-insert-here
 
+.. _changelog-7.17.4:
+
+Version 7.17.4 — 2026-11-20
+---------------------------
+
+- Fix: since 7.13.1, a parallel data file could be named with the hash of
+  different data than it held, for example when nbval records a notebook's
+  coverage into pytest-cov's data file. Combining could then skip it as a
+  duplicate and lose its data. Now the hash comes from the data in the file
+  when it is saved. Fixes `issue 2370`_ with `pull 2387`_.
+
+- Fix: lines or arcs recorded by other threads while data was being flushed
+  (for example during ``Coverage.get_data()``, ``Coverage.save()``, or dynamic
+  context switches) could be lost. This is now fixed, closing `issue 2384`_.
+
+- Fix: on Python 3.14 with the pure-Python tracer (``COVERAGE_CORE=pytrace``)
+  and branch measurement, a function that returned right after an ``except*``
+  handler recorded an arc with no line number. Reporting on the data then
+  failed with a ``TypeError``. Now that arc is not recorded. `pull 2403`_.
+
+- Fix: in the JSON report with ``show_contexts``, each function and class had
+  the contexts for every line in the file. Now they only have the contexts for
+  their own lines. Closes `issue 2374`_.
+
+- The first entry in a ``[paths]`` list is the result path, and must be an
+  actual file path.  If it contained wildcards, the rule could never be used
+  and was silently ignored.  It is now reported as a configuration error.
+  Closes `issue 1531`_.
+
+- Fix: a configuration file (``.coveragerc``, ``setup.cfg``, ``tox.ini`` or
+  ``pyproject.toml``) saved with a UTF-8 byte order mark couldn't be read.
+  Now a leading BOM is ignored. `pull 2388`_.
+
+.. _issue 1531: https://github.com/coveragepy/coveragepy/issues/1531
+.. _issue 2370: https://github.com/coveragepy/coveragepy/issues/2370
+.. _issue 2374: https://github.com/coveragepy/coveragepy/issues/2374
+.. _issue 2384: https://github.com/coveragepy/coveragepy/issues/2384
+.. _pull 2387: https://github.com/coveragepy/coveragepy/pull/2387
+.. _pull 2388: https://github.com/coveragepy/coveragepy/pull/2388
+.. _pull 2403: https://github.com/coveragepy/coveragepy/pull/2403
+
+
 .. _changelog-7.17.3:
 
 Version 7.17.3 — 2026-11-11
