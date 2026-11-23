@@ -1000,6 +1000,16 @@ class CmdLineTest(BaseCmdLineTest):
             """,
         )
 
+    @pytest.mark.parametrize("cmd", ["annotate", "html", "json", "lcov", "report", "xml"])
+    def test_reporting_sys_path(self, cmd: str) -> None:
+        # Reporting adds the current directory to sys.path only for plugins,
+        # and at the end, so files there can't replace other modules.
+        sys_path = list(sys.path)
+        self.mock_command_line(cmd)
+        assert sys.path == sys_path
+        self.mock_command_line(cmd, options={"run:plugins": ["a_plugin"]})
+        assert sys.path == [*sys_path, ""]
+
     def test_run(self) -> None:
         # coverage run [-p] [-L] [--timid] MODULE.py [ARG1 ARG2 ...]
 
