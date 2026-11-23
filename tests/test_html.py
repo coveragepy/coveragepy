@@ -667,7 +667,7 @@ class HtmlTest(HtmlTestHelpers, CoverageTest):
 
         missing_file = os.path.join(self.temp_dir, "sub", "another.py")
         missing_file = os.path.realpath(missing_file)
-        msg = "(?i)No source for code: '%s'" % re.escape(missing_file)
+        msg = rf"(?i)No source for code: '{re.escape(missing_file)}'"
         with pytest.raises(NoSource, match=msg):
             cov.html_report()
 

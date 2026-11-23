@@ -21,6 +21,8 @@
 - Update source files with release facts, and get useful snippets:
     $ make edit_for_release cheats
 - Look over CHANGES.rst
+    - vim: :GatherRegs
+    - edit for priority, flow, etc.
 - Edit supported Python version numbers. Search for "PYVERSION".
     - Especially README.rst and doc/index.rst
 - Update docs

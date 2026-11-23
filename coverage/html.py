@@ -870,7 +870,8 @@ class IncrementalChecker:
 
 def pair(ratio: tuple[int, int]) -> str:
     """Format a pair of numbers so JavaScript can read them in an attribute."""
-    return "{} {}".format(*ratio)
+    num, den = ratio
+    return f"{num} {den}"
 
 
 def pretty_file(filename: str) -> str:

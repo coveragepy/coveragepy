@@ -24,7 +24,8 @@ permissions:
 
 concurrency:
   group: "${{ github.workflow }}-${{ github.ref }}"
-  cancel-in-progress: true
+  # Don't interrupt an upload that's underway.
+  cancel-in-progress: false
 
 jobs:
   find-run:
@@ -38,7 +39,8 @@ jobs:
         id: runs
         uses: octokit/request-action@v3.0.0
         with:
-          route: GET /repos/coveragepy/coveragepy/actions/workflows/kit.yml/runs
+          # Only our own `make build_kits` runs, never pull request runs.
+          route: GET /repos/coveragepy/coveragepy/actions/workflows/kit.yml/runs?event=repository_dispatch&branch=main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
