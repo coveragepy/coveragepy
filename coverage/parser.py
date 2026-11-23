@@ -195,15 +195,9 @@ class PythonParser:
         self.multiline_map = multiline_map_from_tokens(tokens)
         for toktype, ttext, (slineno, _), (elineno, _), ltext in tokens:
             if self.show_tokens:  # pragma: debugging
-                print(
-                    "%10s %5s %-20r %r"
-                    % (
-                        tokenize.tok_name.get(toktype, toktype),
-                        nice_pair((slineno, elineno)),
-                        ttext,
-                        ltext,
-                    )
-                )
+                tname = tokenize.tok_name.get(toktype, toktype)
+                start_end = nice_pair((slineno, elineno))
+                print(f"{tname:>10} {start_end:>5} {ttext!r:<20} {ltext!r}")
             if toktype == token.INDENT:
                 indent += 1
             elif toktype == token.DEDENT:

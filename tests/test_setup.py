@@ -49,8 +49,9 @@ class SetupPyTest(CoverageTest):
         classifiers = cast(list[str], setup_args["classifiers"])
         assert len(classifiers) > 7
         assert classifiers[0].startswith("Development Status ::")
-        assert "Programming Language :: Python :: %d" % sys.version_info[:1] in classifiers
-        assert "Programming Language :: Python :: %d.%d" % sys.version_info[:2] in classifiers
+        py_major, py_minor = sys.version_info[:2]
+        assert f"Programming Language :: Python :: {py_major}" in classifiers
+        assert f"Programming Language :: Python :: {py_major}.{py_minor}" in classifiers
 
         assert setup_args["license_files"] == ["LICENSE.txt", "NOTICE.txt"]
 

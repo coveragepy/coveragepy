@@ -67,7 +67,7 @@ class InfoFormatterTest(CoverageTest):
         assert expected == lines
 
     def test_info_formatter_with_generator(self) -> None:
-        lines = list(info_formatter(("info%d" % i, i) for i in range(3)))
+        lines = list(info_formatter((f"info{i}", i) for i in range(3)))
         expected = [
             "                         info0: 0",
             "                         info1: 1",

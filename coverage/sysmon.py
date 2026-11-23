@@ -244,6 +244,9 @@ class SysMonitor(Tracer):
     @panopticon()
     def start(self) -> None:
         """Start this Tracer."""
+        # Call this before taking the lock: once PY_START is enabled, calling a
+        # Python function can fire our own sysmon_py_start, which takes the lock.
+        local_events = self.local_events()
         with self.lock:
             assert sys_monitoring is not None
             while self.myid <= 5:
@@ -270,6 +273,11 @@ class SysMonitor(Tracer):
                 register(events.LINE, self.sysmon_line_lines)
             sys_monitoring.restart_events()
             self.sysmon_on = True
+            # If we are restarting, set the local events again on the code we
+            # already trace: Python 3.14 clears them in free_tool_id().
+            for code in self.code_objects:
+                if self.code_infos[id(code)].tracing:
+                    sys_monitoring.set_local_events(self.myid, code, local_events)
 
     @panopticon()
     def stop(self) -> None:
@@ -316,6 +324,15 @@ class SysMonitor(Tracer):
     def get_stats(self) -> dict[str, int] | None:
         """Return a dictionary of statistics, or None."""
         return self.stats
+
+    def local_events(self) -> int:
+        """The local events to set on code objects we are tracing."""
+        events = sys.monitoring.events
+        local_events = events.LINE
+        if self.trace_arcs:
+            assert env.PYBEHAVIOR.branch_right_left
+            local_events |= events.PY_RETURN | events.BRANCH_RIGHT | events.BRANCH_LEFT
+        return local_events
 
     @panopticon("code", "@")
     def sysmon_py_start(self, code: CodeType, instruction_offset: TOffset) -> MonitorReturn:
@@ -378,17 +395,10 @@ class SysMonitor(Tracer):
             if tracing_code:
                 if self.stats is not None:
                     self.stats["start_tracing"] += 1
-                events = sys.monitoring.events
                 with self.lock:
                     if self.sysmon_on:
                         assert sys_monitoring is not None
-                        local_events = events.LINE
-                        if self.trace_arcs:
-                            assert env.PYBEHAVIOR.branch_right_left
-                            local_events |= (
-                                events.PY_RETURN | events.BRANCH_RIGHT | events.BRANCH_LEFT
-                            )
-                        sys_monitoring.set_local_events(self.myid, code, local_events)
+                        sys_monitoring.set_local_events(self.myid, code, self.local_events())
 
                         if LOG:  # pragma: debugging
                             if code.co_filename not in {"<string>"}:

@@ -170,8 +170,6 @@ jobs:
   zizmor:
     name: "Zizmor GHA security check"
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
 
     needs: changed
     if:
@@ -184,12 +182,45 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: "Install uv"
-        uses: astral-sh/setup-uv@v10.3.3
+      - name: "Install prek"
+        uses: j178/prek-action@v3.1.0
         with:
-          enable-cache: false
+          prek-version: latest-known
+          # Only to run zizmor at the version pinned in .pre-commit-config.yaml.
+          install-only: true
 
       - name: "Run zizmor"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: uvx zizmor --pedantic .github/workflows
+        run: |
+          prek exec zizmor -- zizmor --pedantic .github/workflows
+
+      - name: "Verify the actions lockfile"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh extension install github/gh-actions-lock --pin v0.4.1
+          gh actions-lock --verify
+
+  # This job aggregates quality results. It's the required check for branch protection.
+  # https://github.com/marketplace/actions/alls-green#why
+  # https://github.com/orgs/community/discussions/33579
+  success:
+    name: "Quality successful"
+    needs:
+      - changed
+      - lint
+      - mypy
+      - doc
+      - zizmor
+    # Without this, GitHub skips this job when a needed job doesn't succeed, so
+    # the gate reports "skipped" instead of failing.  `allowed-skips` keeps the
+    # deliberate skips (no relevant files changed) passing.
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Decide success or failure"
+        uses: re-actors/alls-green@v1.3.0
+        with:
+          jobs: ${{ toJSON(needs) }}
+          allowed-skips: lint, mypy, doc, zizmor

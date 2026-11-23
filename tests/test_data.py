@@ -536,6 +536,60 @@ class CoverageDataTest(CoverageTest):
         with pytest.raises(DataError, match=msg):
             covdata2.update(covdata1)
 
+    def test_update_file_tracer_vs_touched_file(self) -> None:
+        covdata1 = DebugCoverageData(suffix="1")
+        covdata1.add_lines({"p1.html": [1, 2, 3]})
+        covdata1.add_file_tracers({"p1.html": "html.plugin"})
+
+        # A file that was touched but never executed holds no measurements, so
+        # it makes no claim about which plugin owns the file.  It shouldn't
+        # conflict with plugin-measured data for the same file, and the plugin
+        # association should survive the merge in either direction.
+        covdata2 = DebugCoverageData(suffix="2")
+        covdata2.add_lines({})
+        covdata2.touch_files(["p1.html"])
+
+        covdata1.update(covdata2)
+        assert covdata1.file_tracer("p1.html") == "html.plugin"
+
+        covdata3 = DebugCoverageData(suffix="3")
+        covdata3.add_lines({})
+        covdata3.touch_files(["p1.html"])
+
+        covdata3.update(covdata1)
+        assert covdata3.file_tracer("p1.html") == "html.plugin"
+
+    def test_update_file_tracer_vs_touched_file_arcs(self) -> None:
+        covdata1 = DebugCoverageData(suffix="1")
+        covdata1.add_arcs({"p1.html": [(-1, 1), (1, 2), (2, -1)]})
+        covdata1.add_file_tracers({"p1.html": "html.plugin"})
+
+        covdata2 = DebugCoverageData(suffix="2")
+        covdata2.add_arcs({})
+        covdata2.touch_files(["p1.html"])
+
+        covdata2.update(covdata1)
+        assert covdata2.file_tracer("p1.html") == "html.plugin"
+        assert sorted(covdata2.arcs("p1.html") or []) == [(-1, 1), (1, 2), (2, -1)]
+
+    def test_update_file_tracer_vs_touched_file_other_tracer(self) -> None:
+        covdata1 = DebugCoverageData(suffix="1")
+        covdata1.add_lines({"p1.html": [1, 2, 3]})
+        covdata1.add_file_tracers({"p1.html": "html.plugin"})
+
+        # A file touched with a different plugin is still a conflict.
+        covdata2 = DebugCoverageData(suffix="2")
+        covdata2.add_lines({})
+        covdata2.touch_files(["p1.html"], plugin_name="html.other_plugin")
+
+        msg = "Conflicting file tracer name for 'p1.html': 'html.plugin' vs 'html.other_plugin'"
+        with pytest.raises(DataError, match=msg):
+            covdata1.update(covdata2)
+
+        msg = "Conflicting file tracer name for 'p1.html': 'html.other_plugin' vs 'html.plugin'"
+        with pytest.raises(DataError, match=msg):
+            covdata2.update(covdata1)
+
     def test_update_lines_empty(self) -> None:
         covdata1 = DebugCoverageData(suffix="1")
         covdata1.add_lines(LINES_1)
@@ -934,6 +988,49 @@ class CoverageDataFilesTest(CoverageTest):
         covdata.write()
         assert covdata.data_filename() == data_file
         self.assert_file_count(".coverage.*", 1)
+
+    def test_true_suffix_with_data_written_by_another_object(self) -> None:
+        # nbval points a notebook kernel's Coverage at pytest-cov's parallel
+        # data file, so the kernel writes its data into a file it doesn't
+        # own. The hash in the file name has to include that data, or
+        # combining skips the file as a duplicate of a file with no data, like
+        # one from a subprocess that measured nothing, and deletes it.
+        # https://github.com/coveragepy/coveragepy/issues/2370
+        owner = DebugCoverageData(suffix=True)
+        owner.add_lines({})
+        kernel = DebugCoverageData(basename=owner.data_filename())
+        kernel.read()
+        kernel.add_lines(LINES_1)
+        kernel.write()
+        owner.write()
+
+        empty = DebugCoverageData(suffix=True)
+        empty.add_lines({})
+        empty.write()
+
+        classifier = DataFileClassifier()
+        assert classifier.classify(empty.data_filename()) == "combine"
+        assert classifier.classify(owner.data_filename()) == "combine"
+
+        covdata = DebugCoverageData()
+        combine_parallel_data(covdata)
+        assert_line_counts(covdata, SUMMARY_1)
+
+    def test_true_suffix_with_data_from_update(self) -> None:
+        # Data added with update() also has to be in the hash in the file name.
+        other = DebugCoverageData(basename="other")
+        other.add_lines(LINES_1)
+        owner = DebugCoverageData(suffix=True)
+        owner.update(other)
+        owner.write()
+
+        empty = DebugCoverageData(suffix=True)
+        empty.add_lines({})
+        empty.write()
+
+        classifier = DataFileClassifier()
+        assert classifier.classify(empty.data_filename()) == "combine"
+        assert classifier.classify(owner.data_filename()) == "combine"
 
     def test_combining(self) -> None:
         self.assert_file_count(".coverage.*", 0)

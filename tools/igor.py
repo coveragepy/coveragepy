@@ -150,9 +150,11 @@ def should_skip(core, metacov):
 def make_env_id(core):
     """An environment id that will keep all the test runs distinct."""
     impl = platform.python_implementation().lower()
-    version = "{}{}".format(*sys.version_info[:2])
+    py_major, py_minor = sys.version_info[:2]
+    version = f"{py_major}{py_minor}"
     if PYPY:
-        version += "_{}{}".format(*sys.pypy_version_info[:2])
+        pypy_major, pypy_minor = sys.pypy_version_info[:2]
+        version += f"_{pypy_major}{pypy_minor}"
     env_id = f"{impl}{version}_{core}"
     return env_id
 
@@ -307,7 +309,8 @@ def print_banner(label):
     if not has_gil:
         version += "t"
     if PYPY:
-        version += " (pypy %s)" % ".".join(str(v) for v in sys.pypy_version_info)
+        pypy_ver = ".".join(map(str, sys.pypy_version_info))
+        version += f" (pypy {pypy_ver})"
     version += f" ({' '.join(platform.python_build())})"
     version += " (gil)" if has_gil else " (nogil)"
 
