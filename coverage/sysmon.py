@@ -244,6 +244,9 @@ class SysMonitor(Tracer):
     @panopticon()
     def start(self) -> None:
         """Start this Tracer."""
+        # Call this before taking the lock: once PY_START is enabled, calling a
+        # Python function can fire our own sysmon_py_start, which takes the lock.
+        local_events = self.local_events()
         with self.lock:
             assert sys_monitoring is not None
             while self.myid <= 5:
@@ -272,7 +275,6 @@ class SysMonitor(Tracer):
             self.sysmon_on = True
             # If we are restarting, set the local events again on the code we
             # already trace: Python 3.14 clears them in free_tool_id().
-            local_events = self.local_events()
             for code in self.code_objects:
                 if self.code_infos[id(code)].tracing:
                     sys_monitoring.set_local_events(self.myid, code, local_events)
