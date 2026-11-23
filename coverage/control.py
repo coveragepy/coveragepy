@@ -50,7 +50,7 @@ from coverage.misc import (
 )
 from coverage.multiproc import patch_multiprocessing
 from coverage.patch import apply_patches
-from coverage.plugin import FileReporter
+from coverage.plugin import CoveragePlugin, FileReporter
 from coverage.plugin_support import Plugins, TCoverageInit
 from coverage.python import PythonFileReporter
 from coverage.report import SummaryReporter
@@ -918,6 +918,23 @@ class Coverage(TConfigurable):
             keep=keep,
             message=self._message,
         )
+
+    def get_plugins(self) -> list[CoveragePlugin]:
+        """Get the currently registered plug-ins.
+
+        Plugins are initialized if necessary, but measurement is not started.
+        Returns a new list in registration order, including disabled plug-ins.
+        Changing the list does not change the registered plug-ins.
+
+        Use :meth:`~coverage.CoveragePlugin.is_enabled` on the returned objects to check
+        their current enabled state. The objects reflect later state changes,
+        including when coverage.py disables a plug-in after an error.
+
+        .. version-added:: 7.17.6
+
+        """
+        self._init()
+        return list(self._plugins)
 
     def get_data(self) -> CoverageData:
         """Get the collected data.
