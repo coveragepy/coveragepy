@@ -260,7 +260,8 @@ class PluginTest(CoverageTest):
             """Fail when offered the test module."""
 
             def file_tracer(self, filename: str) -> None:
-                if filename.endswith("trigger.py"):
+                # The outer tracer cannot measure callbacks from the inner tracer.
+                if filename.endswith("trigger.py"):  # pragma: nested
                     raise ValueError("plugin failed")
 
         def register(reg: Plugins) -> None:
