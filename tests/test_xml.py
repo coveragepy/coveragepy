@@ -11,6 +11,7 @@ import re
 from collections.abc import Iterable
 from contextlib import chdir
 from typing import Any
+from unittest import mock
 from xml.etree import ElementTree
 
 import pytest
@@ -255,41 +256,36 @@ class XmlReportTest(XmlTestHelpers, CoverageTest):
         assert len(elts) == 1
         assert elts[0].get("line-rate") == "1"
 
-    def test_line_rate_not_one_when_uncovered_lines_exist(self) -> None:
-        # https://github.com/coveragepy/coveragepy/issues/2293
-        # When 25000 out of 25001 lines are covered, line-rate should not round to 1.
-        self.make_data_file(lines={abs_file("big.py"): list(range(1, 25001))})
-        lines = [f"x{i} = {i}" for i in range(24999)] + ["def never_called():", "    y = 1"]
-        self.make_file("big.py", "\n".join(lines) + "\n")
-        cov = coverage.Coverage()
-        cov.load()
-        cov.xml_report()
+    def test_rates_come_from_rate_function(self) -> None:
+        # The rate() edge cases are tested directly in test_rate. A fake rate()
+        # shows that every rate in the report uses it, with the right counts.
+        self.make_file(
+            "sub/doit.py",
+            """\
+            a = 1
+            if a == 2:
+                b = 3
+            c = 4
+            """,
+        )
+        self.make_file("main.py", "import sub.doit\nif sub.doit.a == 2:\n    x = 3\n")
+        cov = coverage.Coverage(branch=True)
+        self.start_import_stop(cov, "main")
+        with mock.patch("coverage.xmlreport.rate", side_effect=lambda hit, num: f"{hit}/{num}"):
+            cov.xml_report()
         dom = ElementTree.parse("coverage.xml")
-        root = dom.getroot()
-        assert root.get("lines-valid") == "25001"
-        assert root.get("lines-covered") == "25000"
-        assert root.get("line-rate") == "0.9999"
-        elt = dom.find(".//class[@name='big.py']")
-        assert elt is not None
-        assert elt.get("line-rate") == "0.9999"
-
-    def test_line_rate_no_scientific_notation(self) -> None:
-        # https://github.com/coveragepy/coveragepy/issues/2294
-        # When 1 out of 100000 lines is covered, line-rate should not use scientific notation.
-        self.make_data_file(lines={abs_file("huge.py"): [1]})
-        lines = ["def never_called():"] + [f"    x{i} = {i}" for i in range(99999)]
-        self.make_file("huge.py", "\n".join(lines) + "\n")
-        cov = coverage.Coverage()
-        cov.load()
-        cov.xml_report()
-        dom = ElementTree.parse("coverage.xml")
-        root = dom.getroot()
-        assert root.get("lines-valid") == "100000"
-        assert root.get("lines-covered") == "1"
-        assert root.get("line-rate") == "0.0001"
-        elt = dom.find(".//class[@name='huge.py']")
-        assert elt is not None
-        assert elt.get("line-rate") == "0.0001"
+        rates = [
+            (elt.tag, elt.get("name"), elt.get("line-rate"), elt.get("branch-rate"))
+            for elt in dom.iter()
+            if elt.get("line-rate") is not None
+        ]
+        assert rates == [
+            ("coverage", None, "5/7", "2/4"),
+            ("package", ".", "2/3", "1/2"),
+            ("class", "main.py", "2/3", "1/2"),
+            ("package", "sub", "3/4", "1/2"),
+            ("class", "doit.py", "3/4", "1/2"),
+        ]
 
     def test_empty_file_is_skipped(self) -> None:
         cov = self.run_doit()
@@ -617,7 +613,7 @@ def compare_xml(expected: str, actual: str, actual_extra: bool = False) -> None:
     scrubs = [
         (r' timestamp="\d+"', ' timestamp="TIMESTAMP"'),
         (r' version="[-.\w]+"', ' version="VERSION"'),
-        (r"<source>\s*.*?\s*</source>", "<source>%s</source>" % re.escape(source_path)),
+        (r"<source>\s*.*?\s*</source>", f"<source>{re.escape(source_path)}</source>"),
         (r"/coverage\.readthedocs\.io/?[-.\w/]*", "/coverage.readthedocs.io/VER"),
     ]
     compare(expected, actual, scrubs=scrubs, actual_extra=actual_extra)

@@ -49,16 +49,19 @@ jobs:
         with:
           filters: |
             run_tests:
-              - "*.py"
               - "coverage/**.py"
+              - "coverage/ctracer/*.h"
+              - "coverage/ctracer/*.c"
               - "tests/**.py"
-              - "tools/igor.py"
-              - "**.h"
-              - "**.c"
+              - "tests/gold/**"
+              - "requirements/*.txt"
+              - "*.py"
+              - "lab/goals.py"
               - ".github/workflows/testsuite.yml"
               - "tox.ini"
-              - "requirements/*.txt"
-              - "tests/gold/**"
+              - "pyproject.toml"
+              - "tools/igor.py"
+              - "tools/metacov.ini"
             run_js_tests:
               - "coverage/htmlfiles/*.js"
               - "tests/js/**"
@@ -69,7 +72,7 @@ jobs:
   tests:
     name: "${{ matrix.python-version }} on ${{ matrix.os }}"
     runs-on: "${{ matrix.os }}-${{ matrix.os-version }}"
-    timeout-minutes: 15
+    timeout-minutes: 30
 
     # Don't run tests if the branch name includes "-notests".
     # Only run tests if files that affect tests have changed.
@@ -79,7 +82,10 @@ jobs:
       && !contains(github.ref, '-notests')
 
     env:
+      MATRIX_ID: "${{ matrix.python-version }}.${{ matrix.os }}"
       TOX_GH_MAJOR_MINOR: "${{ matrix.python-version }}"
+      COVERAGE_COVERAGE: "${{ matrix.skip-coverage && 'no' || 'yes' }}"
+      COVERAGE_CONTEXT: "${{ matrix.python-version }}.${{ matrix.os }}"
 
     strategy:
       matrix:
@@ -105,6 +111,13 @@ jobs:
           - "3.16"
           - "3.16t"
           - "pypy-3.11"
+
+        include:
+          # Mac PyPy is the slowest to measure, and adds nothing to the
+          # coverage data, so only run its tests.
+          - os: macos
+            python-version: "pypy-3.11"
+            skip-coverage: true
 
         #
         # If we need to exclude any combinations, do it like this:
@@ -142,6 +155,7 @@ jobs:
       - name: "Show environment"
         run: |
           set -xe
+          echo matrix id: "$MATRIX_ID"
           python -VV
           python -m site
           # For extreme debugging:
@@ -169,10 +183,26 @@ jobs:
           # `exit 1` makes sure that the job remains red with flaky runs
           python -m tox -- -rfsEX --lf -vvvvv && exit 1
 
+      - name: "Combine data"
+        if: ${{ !matrix.skip-coverage }}
+        env:
+          COVERAGE_RCFILE: "tools/metacov.ini"
+        run: |
+          python -m coverage combine
+          mv .metacov ".metacov.$MATRIX_ID"
+
+      - name: "Upload coverage data"
+        if: ${{ !matrix.skip-coverage }}
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: metacov-${{ env.MATRIX_ID }}
+          path: .metacov.*
+          include-hidden-files: true
+
   js_tests:
     name: "JavaScript tests"
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
 
     # Don't run tests if the branch name includes "-notests".
     # Only run tests if files that affect the JavaScript tests have changed.
@@ -210,7 +240,7 @@ jobs:
     name: "3.12 on old SQLite 3.26"
     runs-on: ubuntu-latest
     container: rockylinux:8@sha256:9794037624aaa6212aeada1d28861ef5e0a935adaf93e4ef79837119f2a2d04c
-    timeout-minutes: 15
+    timeout-minutes: 30
 
     # Don't run tests if the branch name includes "-notests".
     # Only run tests if files that affect tests have changed.
@@ -249,15 +279,139 @@ jobs:
         run: |
           python3.12 -m tox -e py312 -- -rfsEX
 
+  combine:
+    name: "Combine coverage data"
+    needs: tests
+    runs-on: ubuntu-latest
+    outputs:
+      total: ${{ steps.total.outputs.total }}
+    env:
+      COVERAGE_RCFILE: "tools/metacov.ini"
+
+    steps:
+      - name: "Check out the repo"
+        uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 200
+
+      - name: "Set up Python"
+        uses: actions/setup-python@v7.1.0
+        with:
+          python-version: "3.11" # Minimum of PYVERSIONS
+          cache: pip
+          cache-dependency-path: 'requirements/*.txt'
+
+      - name: "Show environment"
+        run: |
+          set -xe
+          python -VV
+          python -m site
+          env | sort
+
+      - name: "Install dependencies"
+        run: |
+          set -xe
+          python -m pip install -e .
+          python -m pip install -r requirements/pytest.txt
+          python tools/igor.py zip_mods
+
+      - name: "Download coverage data"
+        uses: actions/download-artifact@v8.0.2
+        with:
+          pattern: metacov-*
+          merge-multiple: true
+
+      - name: "Combine and report"
+        id: combine
+        env:
+          COVERAGE_CONTEXT: "yes"
+        run: |
+          set -xe
+          python tools/igor.py combine_html
+
+      - name: "Upload HTML report"
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: html_report
+          path: htmlcov
+          include-hidden-files: true
+
+      - name: "Upload other reports"
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: json_xml
+          path: |
+            coverage.xml
+            coverage.json
+
+      - name: "Show text report"
+        run: |
+          set -xe
+          echo "## Coverage: $(python -m coverage report --format=total)%" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          python -m coverage report -m --skip-covered >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          cat "$GITHUB_STEP_SUMMARY"
+
+      - name: "Get total"
+        id: total
+        run: |
+          echo "total=$(python -m coverage report --format=total)" >> "$GITHUB_OUTPUT"
+
+      - name: "Check targets"
+        run: |
+          # Maybe someday goals will be a real feature
+          python -m pip install wcmatch
+          # Very crude check that nothing catastrophic has happened.
+          if ! python lab/goals.py --group 90 "coverage/*.py" "tests/*.py"; then
+              echo '***** Total coverage is less than 90%!'
+              exit 1
+          fi
+
+          # Files that have reached 100% coverage should stay that way.
+          # shellcheck disable=SC2046
+          if ! python lab/goals.py --file 100 $(grep -l -R 'pragma: enforce 100% coverage'); then
+              echo '***** Coverage dropped for a 100% file!'
+              exit 1
+          fi
+
+          # Absolutely all of our test code should be covered.
+          if ! python lab/goals.py --file 100 "tests/test_*.py"; then
+              echo '***** Coverage of test files must be 100%!'
+              exit 1
+          fi
+
+      - name: "Check coverage on changed lines"
+        # Changed code must be fully covered, unless the PR is labeled with "missing-coverage-ok".
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          FAIL_UNDER: ${{ contains(github.event.pull_request.labels.*.name, 'missing-coverage-ok') && '0' || '100' }}
+        run: |
+          git fetch origin "${BASE_REF}"
+          diff-cover coverage.xml \
+              --compare-branch "origin/${BASE_REF}" \
+              --fail-under="${FAIL_UNDER}" \
+              --format markdown:report.md \
+              || status=$?
+          cat report.md >> "$GITHUB_STEP_SUMMARY"
+          if [ -n "${status}" ]; then
+              echo '::error::Changed lines are not fully covered! Add tests, or label the PR "missing-coverage-ok" then close and re-open it.'
+          fi
+          exit "${status:-0}"
+
   # This job aggregates test results. It's the required check for branch protection.
   # https://github.com/marketplace/actions/alls-green#why
   # https://github.com/orgs/community/discussions/33579
   success:
     name: "Tests successful"
     needs:
+      - changed
       - tests
       - js_tests
       - old_sqlite
+      - combine
     # Without this, GitHub skips this job when `tests` doesn't succeed, so the
     # gate reports "skipped" instead of failing.  `allowed-skips` keeps the
     # deliberate skips (-notests branches, no test-relevant files) passing.
@@ -268,4 +422,95 @@ jobs:
         uses: re-actors/alls-green@v1.3.0
         with:
           jobs: ${{ toJSON(needs) }}
-          allowed-skips: tests, js_tests, old_sqlite
+          allowed-skips: tests, js_tests, old_sqlite, combine
+
+  publish:
+    name: "Publish coverage report"
+    needs: combine
+    if: |
+      github.repository_owner == 'coveragepy'
+      && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: "publish report"
+      deployment: false
+
+    steps:
+      - name: "Show environment"
+        run: |
+          set -xe
+          env | sort
+
+      - name: "Compute info for later steps"
+        id: info
+        env:
+          REF: ${{ github.ref }}
+          SHA: ${{ github.sha }}
+        run: |
+          SHA10=$(echo "$SHA" | cut -c 1-10)
+          export SHA10
+          SLUG=$(date +'%Y%m%d')_$SHA10
+          export SLUG
+          echo "sha10=$SHA10" >> "$GITHUB_ENV"
+          echo "slug=$SLUG" >> "$GITHUB_ENV"
+          echo "report_dir=reports/$SLUG/htmlcov" >> "$GITHUB_ENV"
+          echo "url=https://coveragepy.github.io/metacov-reports/reports/$SLUG/htmlcov" >> "$GITHUB_ENV"
+          echo "branch=${REF#refs/heads/}" >> "$GITHUB_ENV"
+
+      - name: "Checkout reports repo"
+        env:
+          # Fine-grained, with write access to coveragepy/metacov-reports
+          TOKEN: ${{ secrets.COVERAGE_REPORTS_TOKEN }}
+        run: |
+          set -xe
+          git clone --depth=1 --no-checkout "https://$TOKEN@github.com/coveragepy/metacov-reports" reports_repo
+          cd reports_repo
+          git sparse-checkout init --cone
+          git sparse-checkout set --skip-checks '/*' '!/reports'
+          git config user.name nedbat
+          git config user.email ned@nedbatchelder.com
+          git checkout main
+
+      - name: "Download coverage HTML report"
+        uses: actions/download-artifact@v8.0.2
+        with:
+          name: html_report
+          path: reports_repo/${{ env.report_dir }}
+
+      - name: "Push to report repo"
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          TOTAL: ${{ needs.combine.outputs.total }}
+        run: |
+          set -xe
+          # Make the redirect to the latest report.
+          echo "<html><head>" > reports_repo/latest.html
+          echo "<meta http-equiv='refresh' content='0;url=${url}' />" >> reports_repo/latest.html
+          echo "<body>Coverage report redirect..." >> reports_repo/latest.html
+          # Make the commit message.
+          echo "${TOTAL}% - ${COMMIT_MESSAGE}" > commit.txt
+          echo "" >> commit.txt
+          echo "${url}" >> commit.txt
+          echo "${sha10}: ${branch}" >> commit.txt
+          # Commit.
+          cd ./reports_repo
+          git sparse-checkout set --skip-checks '/*' "$report_dir"
+          rm "$report_dir/.gitignore"
+          git add "$report_dir" latest.html
+          git commit --file=../commit.txt
+          git push
+          echo "[${url}](${url})" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: "Create badge"
+        # https://gist.githubusercontent.com/nedbat/8c6980f77988a327348f9b02bbaf67f5
+        uses: schneegans/dynamic-badges-action@v1.9.0
+        with:
+          # Personal access token: gist access
+          auth: ${{ secrets.METACOV_GIST_SECRET }}
+          gistID: 8c6980f77988a327348f9b02bbaf67f5
+          filename: metacov.json
+          label: Coverage
+          message: ${{ needs.combine.outputs.total }}%
+          minColorRange: 60
+          maxColorRange: 95
+          valColorRange: ${{ needs.combine.outputs.total }}

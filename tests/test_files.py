@@ -460,7 +460,7 @@ class MatcherTest(CoverageTest):
         self.assertMatches(fnm, filepath, expected_match)
 
     def test_glob_matcher_overload(self) -> None:
-        fnm = GlobMatcher(["*x%03d*.txt" % i for i in range(500)])
+        fnm = GlobMatcher([f"*x{i:03d}*.txt" for i in range(500)])
         self.assertMatches(fnm, "x007foo.txt", True)
         self.assertMatches(fnm, "x123foo.txt", True)
         self.assertMatches(fnm, "x798bar.txt", False)
