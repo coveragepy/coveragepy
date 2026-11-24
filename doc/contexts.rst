@@ -67,6 +67,8 @@ There are three ways to enable dynamic contexts:
   :meth:`.Coverage.switch_context` method to set the context explicitly.
   The pytest plugin `pytest-cov`_ has a ``--cov-context`` option that uses this
   to set the dynamic context for each test.
+  This requires a settrace core such as ``ctrace`` or ``pytrace``;
+  ``core=sysmon`` does not support explicit context switching.
 
 .. _pytest-cov: https://pypi.org/project/pytest-cov/
 
