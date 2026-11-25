@@ -296,7 +296,7 @@ def import_local_file(modname: str, modfile: str | None = None) -> ModuleType:
 
 
 @functools.cache
-def _human_key(s: str) -> tuple[list[str | int], str]:
+def _human_key(s: str) -> tuple[list[str | float], str]:
     """Turn a string into a list of string and number chunks.
 
     "z23a" -> (["z", 23, "a"], "z23a")
@@ -305,14 +305,17 @@ def _human_key(s: str) -> tuple[list[str | int], str]:
     key is unique enough so that "x1y" and "x001y" can be distinguished.
     """
 
-    def tryint(s: str) -> str | int:
-        """If `s` is a number, return an int, else `s` unchanged."""
+    def number(s: str) -> float:
+        """Convert s to a number with no errors."""
         try:
             return int(s)
         except ValueError:
-            return s
+            # This only happens if the number is too large to convert to an int.
+            return float("inf")
 
-    return ([tryint(c) for c in re.split(r"(\d+)", s)], s)
+    parts = re.split(r"(\d+)", s)
+    split_key = [(number(p) if i % 2 else p) for i, p in enumerate(parts)]
+    return (split_key, s)
 
 
 def human_sorted(strings: Iterable[str]) -> list[str]:
