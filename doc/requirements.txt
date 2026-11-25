@@ -663,9 +663,9 @@ starlette==1.10.0 \
     --hash=sha256:478c0ab3b4ced6e82719849c118fa406f0278a3499c1a898cd15cd31bdc38ce4 \
     --hash=sha256:b8399098d4c1e3522734f7235dc79b1fc967f96cf139c81e0fa30479e0685f9b
     # via sphinx-autobuild
-stevedore==5.9.1 \
-    --hash=sha256:5c8ff3a9f336cc1a06ac0f597bc79d11a2f950bfd32e290ca56b5a301fafafbf \
-    --hash=sha256:e97a2667923efda926e8713fde6a73616df68210a3cbc6f02b48967b676fd8bf
+stevedore==5.10.0 \
+    --hash=sha256:47c48dc09e75933106c1bba0a7690eef3b5acecdb807df6d47cc40b2532fa927 \
+    --hash=sha256:6005f32c09dc3159802a61c04862770e439e32db22f6da78ba56e8a735466882
     # via doc8
 typing-extensions==4.16.0 ; python_full_version < '3.15' \
     --hash=sha256:481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8 \
