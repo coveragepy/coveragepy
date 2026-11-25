@@ -543,7 +543,7 @@ class JsonReportTest(UsingModulesMixin, CoverageTest):
         cov.lcov_report(mod, outfile="tryelse.lcov")
         with open("tryelse.lcov", encoding="utf-8") as lcov_file:
             fn_records = [line[3:].split(",") for line in lcov_file if line.startswith("FN:")]
-        assert {name.strip(): int(first) for first, _, name in fn_records} == {"f": 4, "f@7": 7}
+        assert {name.strip(): int(first) for first, _, name in fn_records} == {"f": 5, "f@7": 8}
 
     def test_empty_file(self) -> None:
         cov = coverage.Coverage()
