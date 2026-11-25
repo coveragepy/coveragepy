@@ -314,7 +314,7 @@ def _human_key(s: str) -> tuple[list[str | float], str]:
             return float("inf")
 
     parts = re.split(r"(\d+)", s)
-    split_key = [(number(p) if p[:1].isdigit() else p) for p in parts]
+    split_key = [(number(p) if i % 2 else p) for i, p in enumerate(parts)]
     return (split_key, s)
 
 

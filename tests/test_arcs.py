@@ -1210,6 +1210,52 @@ class ExceptionArcTest(CoverageTest):
             branchz="",
         )
 
+    @pytest.mark.parametrize("early_exit", ["raise ValueError", "return"])
+    def test_finally_condition_missing_arc_description(self, early_exit: str) -> None:
+        # The condition can be false without continuing after the finally,
+        # because an exception or return is still pending. See issue 867.
+        cov = self.check_coverage(
+            f"""\
+            seen = []
+            def run(condition, escape):
+                try:
+                    if escape:
+                        {early_exit}
+                finally:
+                    seen.append(condition)
+                    if condition:
+                        print("body")
+                print("after")
+            try:
+                run(False, True)
+            except ValueError:
+                pass
+            run(True, False)
+            assert seen == [False, True]
+            """,
+            branchz="45 47 89 8A",
+            branchz_missing="8A",
+        )
+        assert self.get_missing_arc_description(cov, 8, 10) == "line 8 didn't jump to line 10"
+
+    def test_finally_internal_condition_missing_arc_description(self) -> None:
+        cov = self.check_coverage(
+            """\
+            try:
+                print("try")
+            finally:
+                if len([]):
+                    print("body")
+                print("finally")
+            print("after")
+            """,
+            branchz="45 46",
+            branchz_missing="45",
+        )
+        assert self.get_missing_arc_description(cov, 4, 5) == (
+            "line 4 didn't jump to line 5 because the condition on line 4 was never true"
+        )
+
     def test_finally_in_loop(self) -> None:
         self.check_coverage(
             """\
