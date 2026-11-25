@@ -543,7 +543,7 @@ class JsonReportTest(UsingModulesMixin, CoverageTest):
         cov.lcov_report(mod, outfile="tryelse.lcov")
         with open("tryelse.lcov", encoding="utf-8") as lcov_file:
             fn_records = [line[3:].split(",") for line in lcov_file if line.startswith("FN:")]
-        assert {name.strip(): int(first) for first, _, name in fn_records} == {"f": 4, "f@7": 7}
+        assert {name.strip(): int(first) for first, _, name in fn_records} == {"f": 5, "f@7": 8}
 
     def test_empty_file(self) -> None:
         cov = coverage.Coverage()
@@ -666,3 +666,28 @@ class JsonReportTest(UsingModulesMixin, CoverageTest):
         cov = coverage.Coverage(branch=True)
         mod = self.start_import_stop(cov, "wtf")
         cov.json_report(mod)
+
+    def test_region_contexts(self) -> None:
+        # Each region only lists the contexts of its own lines.
+        self.make_file(
+            "two.py",
+            """\
+            def f():
+                return 1
+
+            def g():
+                return 2
+
+            f()
+            g()
+            """,
+        )
+        cov = coverage.Coverage(context="ctx")
+        cov.set_option("json:show_contexts", True)
+        mod = self.start_import_stop(cov, "two")
+        cov.json_report(mod, outfile="out.json")
+        with open("out.json", encoding="utf-8") as f:
+            functions = json.load(f)["files"]["two.py"]["functions"]
+        assert functions["f"]["contexts"] == {"2": ["ctx"]}
+        assert functions["g"]["contexts"] == {"5": ["ctx"]}
+        assert sorted(functions[""]["contexts"], key=int) == ["1", "4", "7", "8"]

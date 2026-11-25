@@ -5,14 +5,7 @@ version: 'v0.0.3'
 workflows:
     '.github/workflows/codeql-analysis.yml':
         - 'actions/checkout@v7.0.1'
-        - 'github/codeql-action@v4.39.2'
-    '.github/workflows/coverage.yml':
-        - 'actions/checkout@v7.0.1'
-        - 'actions/download-artifact@v8.0.2'
-        - 'actions/setup-python@v7.1.0'
-        - 'actions/upload-artifact@v7.0.2'
-        - 'dorny/paths-filter@v4.0.3'
-        - 'schneegans/dynamic-badges-action@v1.9.0'
+        - 'github/codeql-action@v4.39.3'
     '.github/workflows/dependency-review.yml':
         - 'actions/checkout@v7.0.1'
         - 'actions/dependency-review-action@v5.0.0'
@@ -22,6 +15,7 @@ workflows:
         - 'actions/setup-python@v7.1.0'
         - 'actions/upload-artifact@v7.0.2'
         - 'docker/setup-qemu-action@v4.4.0'
+        - 'dorny/paths-filter@v4.0.3'
         - 'sigstore/gh-action-sigstore-python@v3.5.0'
     '.github/workflows/publish.yml':
         - 'actions/attest-build-provenance@v4.2.2'
@@ -33,13 +27,17 @@ workflows:
     '.github/workflows/quality.yml':
         - 'actions/checkout@v7.0.1'
         - 'actions/setup-python@v7.1.0'
-        - 'astral-sh/setup-uv@v10.3.3'
         - 'dorny/paths-filter@v4.0.3'
+        - 'j178/prek-action@v3.1.0'
+        - 're-actors/alls-green@v1.3.0'
     '.github/workflows/testsuite.yml':
         - 'actions/checkout@v7.0.1'
+        - 'actions/download-artifact@v8.0.2'
         - 'actions/setup-python@v7.1.0'
+        - 'actions/upload-artifact@v7.0.2'
         - 'dorny/paths-filter@v4.0.3'
         - 're-actors/alls-green@v1.3.0'
+        - 'schneegans/dynamic-badges-action@v1.9.0'
 dependencies:
     'actions/attest-build-provenance@v4.2.2':
         ref: 'v4.2.2'
@@ -88,11 +86,6 @@ dependencies:
         commit: 'sha1-cf430e030ddbb5b0abf93d22962f4752f3646cd9'
         owner_id: 44036562
         repo_id: 192625955
-    'astral-sh/setup-uv@v10.3.3':
-        ref: 'v10.3.3'
-        commit: 'sha1-68559e99cc807c1eb7e9238fd43a15bba460eec2'
-        owner_id: 115962839
-        repo_id: 846733598
     'docker/setup-qemu-action@v4.4.0':
         ref: 'v4.4.0'
         commit: 'sha1-99012661954931238ded8c8b007157a8430204e1'
@@ -103,11 +96,16 @@ dependencies:
         commit: 'sha1-ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d'
         owner_id: 1588572
         repo_id: 265601040
-    'github/codeql-action@v4.39.2':
-        ref: 'v4.39.2'
-        commit: 'sha1-1fc58d04a4d4374f921bdac573c3811c240f9c26'
+    'github/codeql-action@v4.39.3':
+        ref: 'v4.39.3'
+        commit: 'sha1-33d7b85da1a04171e211befe2c739303b9a4c066'
         owner_id: 9919
         repo_id: 259445878
+    'j178/prek-action@v3.1.0':
+        ref: 'v3.1.0'
+        commit: 'sha1-44924fe9ef4a6f88253c4b6b1bf11c689d3ce53d'
+        owner_id: 10510431
+        repo_id: 1052387486
     'octokit/request-action@v3.0.0':
         ref: 'v3.0.0'
         commit: 'sha1-b91aabaa861c777dcdb14e2387e30eddf04619ae'

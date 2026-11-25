@@ -23,6 +23,7 @@ on:
     branches:
       # Don't build kits all the time, but do if the branch is about kits.
       - "**/*kit*"
+  pull_request:
   workflow_dispatch:
   repository_dispatch:
     types:
@@ -46,11 +47,37 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changed:
+    name: "Check changed files"
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read   # Needed for this check to run on pull requests
+    outputs:
+      build_kits: ${{ steps.filter.outputs.build_kits }}
+    steps:
+      - name: "Check out the repo"
+        uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: "Examine changed files"
+        uses: dorny/paths-filter@v4.0.3
+        id: filter
+        with:
+          filters: |
+            build_kits:
+              - ".github/workflows/kit.yml"
+              - "requirements/*.txt"
+
   wheels:
     name: "${{ matrix.py }} ${{ matrix.platform || matrix.os }} ${{ matrix.arch }} wheels"
     runs-on: "${{ matrix.os }}-${{ matrix.os-version || 'latest' }}"
     env:
       MATRIX_ID: "${{ matrix.py }}-${{ matrix.platform || matrix.os }}-${{ matrix.arch }}"
+    needs: changed
+    if:
+      needs.changed.outputs.build_kits == 'true'
+
     strategy:
       matrix:
         include:
@@ -121,7 +148,7 @@ jobs:
           #                   # https://github.com/actions/runner-images/issues/15312
           #                   them["os-version"] = "24.04"
           #               if the_arch == "ppc64le":
-          #                   them["os-version"] = "24.04-ppc64le"
+          #                   them["os-version"] = "24.04-ppc64le-p10"
           #               print(f"- {json.dumps(them)}")
           #   for (the_os, the_platform, the_os_version), archs in mobile_os_archs.items():
           #       for the_arch in archs:
@@ -157,11 +184,11 @@ jobs:
           - {"os": "ubuntu", "py": "cp313", "arch": "riscv64", "cipy": "3.11"}
           - {"os": "ubuntu", "py": "cp314", "arch": "riscv64", "cipy": "3.11"}
           - {"os": "ubuntu", "py": "cp315", "arch": "riscv64", "cipy": "3.11"}
-          - {"os": "ubuntu", "py": "cp311", "arch": "ppc64le", "cipy": "3.11", "os-version": "24.04-ppc64le"}
-          - {"os": "ubuntu", "py": "cp312", "arch": "ppc64le", "cipy": "3.11", "os-version": "24.04-ppc64le"}
-          - {"os": "ubuntu", "py": "cp313", "arch": "ppc64le", "cipy": "3.11", "os-version": "24.04-ppc64le"}
-          - {"os": "ubuntu", "py": "cp314", "arch": "ppc64le", "cipy": "3.11", "os-version": "24.04-ppc64le"}
-          - {"os": "ubuntu", "py": "cp315", "arch": "ppc64le", "cipy": "3.11", "os-version": "24.04-ppc64le"}
+          - {"os": "ubuntu", "py": "cp311", "arch": "ppc64le", "cipy": "3.11", "os-version": "24.04-ppc64le-p10"}
+          - {"os": "ubuntu", "py": "cp312", "arch": "ppc64le", "cipy": "3.11", "os-version": "24.04-ppc64le-p10"}
+          - {"os": "ubuntu", "py": "cp313", "arch": "ppc64le", "cipy": "3.11", "os-version": "24.04-ppc64le-p10"}
+          - {"os": "ubuntu", "py": "cp314", "arch": "ppc64le", "cipy": "3.11", "os-version": "24.04-ppc64le-p10"}
+          - {"os": "ubuntu", "py": "cp315", "arch": "ppc64le", "cipy": "3.11", "os-version": "24.04-ppc64le-p10"}
           - {"os": "macos", "py": "cp311", "arch": "arm64", "cipy": "3.11", "os-version": "26"}
           - {"os": "macos", "py": "cp312", "arch": "arm64", "cipy": "3.11", "os-version": "26"}
           - {"os": "macos", "py": "cp313", "arch": "arm64", "cipy": "3.11", "os-version": "26"}
@@ -199,7 +226,7 @@ jobs:
           - {"os": "macos", "py": "cp313", "arch": "arm64_iphonesimulator", "cipy": "3.11", "platform": "ios", "os-version": "26"}
           - {"os": "macos", "py": "cp314", "arch": "arm64_iphonesimulator", "cipy": "3.11", "platform": "ios", "os-version": "26"}
           - {"os": "macos", "py": "cp315", "arch": "arm64_iphonesimulator", "cipy": "3.11", "platform": "ios", "os-version": "26"}
-        # [[[end]]] (sum: LvtBpYV0Q0)
+        # [[[end]]] (sum: rFAKSFojuw)
         #            ^^^^^^^^^^^^^^^
         # If a check fails and points to this checksum line, it means you edited
         # the matrix directly instead of editing the Python code in the comment
@@ -274,6 +301,10 @@ jobs:
   non-binary:
     name: "Non-binary artifacts"
     runs-on: ubuntu-latest
+    needs: changed
+    if:
+      needs.changed.outputs.build_kits == 'true'
+
     steps:
       - name: "Check out the repo"
         uses: actions/checkout@v7.0.1
@@ -317,8 +348,12 @@ jobs:
     # yet.  Someday maybe PyPI will have a way to upload and verify them.
     name: "Sign artifacts"
     needs:
+      - changed
       - wheels
       - non-binary
+    if:
+      needs.changed.outputs.build_kits == 'true'
+
     runs-on: ubuntu-latest
     permissions:
       id-token: write   # Needed for signing artifacts

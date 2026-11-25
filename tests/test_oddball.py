@@ -218,7 +218,7 @@ class MemoryLeakTest(CoverageTest):
                 fails += 1  # pragma: only failure
 
         if fails > 8:
-            pytest.fail("RAM grew by %d" % (ram_growth))  # pragma: only failure
+            pytest.fail(f"RAM grew by {ram_growth}")  # pragma: only failure
 
     @pytest.mark.skipif(
         not testenv.C_TRACER,
