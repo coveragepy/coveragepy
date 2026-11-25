@@ -1,7 +1,7 @@
-- Feature: the :meth:`.Coverage.get_plugins` method returns the currently
-  registered plug-ins, including disabled ones. The new
-  :meth:`.CoveragePlugin.is_enabled` method reports their current enabled state.
-  This provides a supported way for plug-in tests to inspect their registration,
-  as requested in `issue 920`_.
+- Feature: two new methods for plug-ins to use in their test suites, as
+  requested in `issue 920`_.  The :meth:`.Coverage.get_plugins` method returns
+  the currently registered plug-ins, including disabled ones. The
+  :meth:`.CoveragePlugin.is_enabled` method reports their current enabled
+  state.
 
 .. _issue 920: https://github.com/coveragepy/coveragepy/issues/920
