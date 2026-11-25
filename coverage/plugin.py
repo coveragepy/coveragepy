@@ -131,6 +131,18 @@ class CoveragePlugin:
     _coverage_plugin_name: str
     _coverage_enabled: bool
 
+    def is_enabled(self) -> bool:
+        """Whether this registered plug-in is currently enabled.
+
+        Use this on plug-ins returned by :meth:`~coverage.Coverage.get_plugins`.
+        A plug-in can be disabled if it raises an exception during measurement,
+        or if the measurement core does not support it.
+
+        .. version-added:: 7.17.6
+
+        """
+        return self._coverage_enabled
+
     def file_tracer(self, filename: str) -> FileTracer | None:  # pylint: disable=unused-argument
         """Get a :class:`FileTracer` object for a file.
 
