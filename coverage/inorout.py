@@ -217,7 +217,11 @@ class InOrOut:
         self.source_pkgs: list[str] = list(config.source_pkgs)
         self.source_dirs: list[str] = list(config.source_dirs)
         for src in config.source or []:
-            if glob.has_magic(src):
+            # `glob.has_magic` is not a documented function in `glob`, so
+            # detect a pattern with the documented `glob.escape`: it escapes
+            # exactly the magic characters, so the result differs only when
+            # the entry contains a pattern.
+            if glob.escape(src) != src:
                 # A glob pattern in `source`: expand it to the paths it
                 # matches, and classify each match like a literal entry.
                 matches = sorted(glob.glob(src, recursive=True))
