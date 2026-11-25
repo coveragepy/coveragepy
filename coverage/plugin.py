@@ -138,7 +138,7 @@ class CoveragePlugin:
         A plug-in can be disabled if it raises an exception during measurement,
         or if the measurement core does not support it.
 
-        .. version-added:: 7.17.6
+        .. version-added:: 7.18
 
         """
         return self._coverage_enabled

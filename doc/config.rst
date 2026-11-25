@@ -715,7 +715,7 @@ default exclude patterns like ``pragma: no cover`` instead of overwriting them.
 
 See :ref:`config_report_exclude_lines` for further details.
 
-.. version-added:: 7.2.0
+.. version-added:: 7.2
 
 
 .. _config_report_exclude_lines:
@@ -825,7 +825,7 @@ like ``pragma: no branch`` instead of overwriting them.
 
 See :ref:`config_report_partial_branches` for further details.
 
-.. version-added:: 7.10.0
+.. version-added:: 7.10
 
 
 .. _config_report_partial_branches:

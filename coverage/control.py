@@ -930,7 +930,7 @@ class Coverage(TConfigurable):
         their current enabled state. The objects reflect later state changes,
         including when coverage.py disables a plug-in after an error.
 
-        .. version-added:: 7.17.6
+        .. version-added:: 7.18
 
         """
         self._init()
