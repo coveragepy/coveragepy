@@ -57,6 +57,14 @@ class RenderReportTest(CoverageTest):
             assert f.read().rstrip() == b"Gr\xc3\xa9\xc3\xa8tings!"
         assert msgs == ["Wrote fake report file to output.txt"]
 
+    def test_cant_write_report(self) -> None:
+        self.make_file("not_a_dir", "This is a file, not a directory.\n")
+        msgs: list[str] = []
+        msg = r"Couldn't write report to 'not_a_dir/output.txt'"
+        with pytest.raises(CoverageException, match=msg):
+            render_report("not_a_dir/output.txt", FakeReporter(), [], msgs.append)
+        assert not msgs
+
     @pytest.mark.parametrize("error", [CoverageException, ZeroDivisionError])
     def test_exception(self, error: type[Exception]) -> None:
         fake = FakeReporter(error=error)

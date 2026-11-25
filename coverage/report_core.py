@@ -11,7 +11,7 @@ import sys
 from collections.abc import Callable, Iterable
 from typing import IO, TYPE_CHECKING, Protocol
 
-from coverage.exceptions import NoDataError, NotPython
+from coverage.exceptions import CoverageException, NoDataError, NotPython
 from coverage.files import GlobMatcher, prep_patterns
 from coverage.misc import ensure_dir_for_file, file_be_gone
 from coverage.plugin import FileReporter
@@ -53,8 +53,13 @@ def render_report(
         # Ensure that the output directory is created; done here because this
         # report pre-opens the output file.  HtmlReporter does this on its own
         # because its task is more complex, being multiple files.
-        ensure_dir_for_file(output_path)
-        outfile = open(output_path, "w", encoding="utf-8")
+        try:
+            ensure_dir_for_file(output_path)
+            outfile = open(output_path, "w", encoding="utf-8")
+        except OSError as err:
+            raise CoverageException(
+                f"Couldn't write report to {output_path!r}: {err}"
+            ) from err
         file_to_close = outfile
         delete_file = True
 
