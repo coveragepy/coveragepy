@@ -10,6 +10,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import sys
+from io import StringIO
 from typing import IO, TYPE_CHECKING
 
 from coverage.plugin import FileReporter
@@ -230,7 +231,9 @@ class LcovReporter:
 
         lines = sorted(analysis.statements)
         if self.config.lcov_line_checksums:
-            source_lines = fr.source().splitlines()
+            # Universal newlines keep Unicode line separators within source lines.
+            with StringIO(fr.source(), newline=None) as source:
+                source_lines = [line.removesuffix("\n") for line in source]
         else:
             source_lines = []
 
