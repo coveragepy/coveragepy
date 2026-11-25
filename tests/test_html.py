@@ -23,7 +23,7 @@ import pytest
 import coverage
 import coverage.html
 from coverage import Coverage, env
-from coverage.exceptions import NoDataError, NoSource, NotPython
+from coverage.exceptions import CoverageException, NoDataError, NoSource, NotPython
 from coverage.files import abs_file, flat_rootname
 from coverage.misc import import_local_file
 from coverage.report_core import get_analysis_to_report
@@ -265,6 +265,14 @@ class HtmlDeltaTest(HtmlTestHelpers, CoverageTest):
             busted_file_pattern = rf"{base}_cb_\w{{8}}{ext}"
             matches = [m for f in files if (m := re.fullmatch(busted_file_pattern, f))]
             assert len(matches) == 1, f"Found {len(matches)} files for {static}"
+
+    def test_html_report_dir_cant_be_created(self) -> None:
+        self.create_initial_files()
+        self.make_file("not_a_dir", "This is a file, not a directory.\n")
+        cov = coverage.Coverage()
+        self.start_import_stop(cov, "main_file")
+        with pytest.raises(CoverageException, match=r"Couldn't create report directory"):
+            cov.html_report(directory="not_a_dir/htmlcov")
 
     def test_html_created(self) -> None:
         # Test basic HTML generation: files should be created.

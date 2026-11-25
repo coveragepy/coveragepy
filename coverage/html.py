@@ -23,7 +23,7 @@ from typing import TYPE_CHECKING, Any
 
 import coverage
 from coverage.data import CoverageData, add_data_to_hash
-from coverage.exceptions import NoDataError
+from coverage.exceptions import CoverageException, NoDataError
 from coverage.files import flat_rootname
 from coverage.misc import (
     Hasher,
@@ -416,7 +416,12 @@ class HtmlReporter:
 
     def make_directory(self) -> None:
         """Make sure our htmlcov directory exists."""
-        ensure_dir(self.directory)
+        try:
+            ensure_dir(self.directory)
+        except OSError as err:
+            raise CoverageException(
+                f"Couldn't create report directory {self.directory!r}: {err}"
+            ) from err
         if not os.listdir(self.directory):
             self.directory_was_empty = True
 
