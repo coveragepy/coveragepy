@@ -28,6 +28,47 @@ See ``news/*.rst`` files for upcoming changelog fragments.
 
 .. scriv-insert-here
 
+.. _changelog-7.17.5:
+
+Version 7.17.5 — 2026-11-23
+---------------------------
+
+- Fix: the reporting commands (``report``, ``html``, ``xml``, ``json``,
+  ``lcov``, and ``annotate``) used to put the current directory first on
+  ``sys.path``, to let plugins import local files.  Now the current directory
+  is added only if plugins are configured, and at the end of ``sys.path``, so
+  local files can't replace other modules.
+
+- Fix: local plugins interfered with ``erase`` and ``combine`` as reported in
+  `issue 1726`_. This is now fixed (`pull 2253`_).
+
+- Fix: with the sysmon core on Python 3.14, starting and stopping a second
+  Coverage object stopped the first one from measuring code it had already
+  run. Closes `issue 2302`_.
+
+- Fix: combining data files failed with "Conflicting file tracer name" when
+  one data file only listed a file without measuring it (as unexecuted source
+  files are) and another measured the same file with a plugin. This happened
+  in pytest-cov's distributed testing.  Now a file with no measurements doesn't
+  conflict with a plugin's measurements.  Fixes `issue 2358`_.
+
+- Fix: saving data while another thread started measuring a new file handled
+  by a plugin could fail with "dictionary changed size during iteration".
+  Fixed in `pull 2382`_.
+
+- Fix: a keyboard interrupt at just the wrong moment could leave a lock locked
+  and prevent saving data, as reported in `issue 2383`_. This is now fixed
+  (`pull 2396`_).
+
+.. _issue 1726: https://github.com/coveragepy/coveragepy/issues/1726
+.. _pull 2253: https://github.com/coveragepy/coveragepy/pull/2253
+.. _issue 2302: https://github.com/coveragepy/coveragepy/issues/2302
+.. _issue 2358: https://github.com/coveragepy/coveragepy/issues/2358
+.. _pull 2382: https://github.com/coveragepy/coveragepy/pull/2382
+.. _issue 2383: https://github.com/coveragepy/coveragepy/issues/2383
+.. _pull 2396: https://github.com/coveragepy/coveragepy/pull/2396
+
+
 .. _changelog-7.17.4:
 
 Version 7.17.4 — 2026-11-20
