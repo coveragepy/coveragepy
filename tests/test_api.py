@@ -389,6 +389,35 @@ class ApiTest(CoverageTest):
         last = self.last_line_squeezed(self.stdout())
         assert "TOTAL 1 1 0%" == last
 
+    def test_source_glob_expands_to_directories(self) -> None:
+        # https://github.com/coveragepy/coveragepy/issues/2400
+        # A glob pattern in `source` matches directories, including ones
+        # with files that were never executed.
+        self.make_file("packages/pkg_a/src/__init__.py", "")
+        self.make_file("packages/pkg_a/src/mod_a.py", "print('a')")
+        self.make_file("packages/pkg_b/src/__init__.py", "")
+        self.make_file("packages/pkg_b/src/mod_b.py", "print('b')")
+        self.make_file(
+            "main.py",
+            "import sys\nsys.path.insert(0, 'packages/pkg_a/src')\nimport mod_a\n",
+        )
+        cov = coverage.Coverage(source=["packages/*/src"])
+        self.start_import_stop(cov, "main")
+        cov.report()
+        out = self.stdout()
+        assert "mod_a.py" in out
+        assert "mod_b.py" in out
+        # mod_b was never imported, but the glob found its directory, so
+        # it is reported at 0%.
+        mod_b_line = next(line for line in out.splitlines() if "mod_b.py" in line)
+        assert mod_b_line.rstrip().endswith("0%")
+
+    def test_source_glob_no_match_warns(self) -> None:
+        cov = coverage.Coverage(source=["nothing/*/src"])
+        with self.assert_warnings(cov, ["matched no files or directories"]):
+            cov.start()
+        cov.stop()
+
     def make_code1_code2(self) -> None:
         """Create the code1.py and code2.py files."""
         self.make_file(

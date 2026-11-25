@@ -1,0 +1,7 @@
+- Feature: ``[run] source`` (and ``--source``) entries can now be glob
+  patterns, for example ``packages/*/src``. A pattern is expanded to the
+  directories it matches when measurement starts, so monorepo packages are
+  measured, and their un-executed files reported, without listing each one.
+  A pattern that matches nothing issues a warning. Closes `issue 2400`_.
+
+.. _issue 2400: https://github.com/coveragepy/coveragepy/issues/2400
