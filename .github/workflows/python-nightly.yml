@@ -71,8 +71,21 @@ jobs:
           sudo apt-get build-dep -y python3
 
       - name: "Install pyenv"
+        env:
+          # Pinned and hash-checked to guard against a compromised download.
+          # A newer pyenv is needed when CPython starts a new X.Y-dev branch.
+          # PYVERSIONS check if we need a newer pyenv.
+          # To update, get the hash with:
+          #   curl -fsSL https://github.com/pyenv/pyenv/archive/refs/tags/$TAG.tar.gz | shasum -a 256
+          PYENV_TAG: "v2.8.15"
+          PYENV_SHA256: "85546cbdaa5f4431d98b6412e359ab2abb28f7d94df56bba35240b59c3b111f3"
         run: |
-          curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash
+          set -xe
+          curl -fsSL -o pyenv.tar.gz "https://github.com/pyenv/pyenv/archive/refs/tags/${PYENV_TAG}.tar.gz"
+          printf '%s  %s\n' "$PYENV_SHA256" pyenv.tar.gz | sha256sum -c -
+          mkdir -p "$HOME/.pyenv"
+          tar -xzf pyenv.tar.gz -C "$HOME/.pyenv" --strip-components=1
+          rm pyenv.tar.gz
 
       - name: "Build Python ${{ matrix.python-version }}-dev"
         env:
