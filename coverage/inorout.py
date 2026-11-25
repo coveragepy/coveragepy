@@ -226,15 +226,13 @@ class InOrOut:
                         f"Source glob pattern {src!r} matched no files or directories.",
                         slug="source-glob-no-match",
                     )
-                for match in matches:
-                    if os.path.isdir(match):
-                        self.source_dirs.append(match)
-                    else:
-                        self.source_pkgs.append(match)
-            elif os.path.isdir(src):
-                self.source_dirs.append(src)
             else:
-                self.source_pkgs.append(src)
+                matches = [src]
+            for path in matches:
+                if os.path.isdir(path):
+                    self.source_dirs.append(path)
+                else:
+                    self.source_pkgs.append(path)
 
         # Canonicalize everything in `source_dirs`.
         # Also confirm that they actually are directories, and not a file system root.
