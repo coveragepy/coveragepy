@@ -296,25 +296,18 @@ def import_local_file(modname: str, modfile: str | None = None) -> ModuleType:
 
 
 @functools.cache
-def _human_key(s: str) -> tuple[list[str | float], str]:
+def _human_key(s: str) -> tuple[list[str | int], str]:
     """Turn a string into a list of string and number chunks.
 
-    "z23a" -> (["z", 23, "a"], "z23a")
+    "z23a" -> (["z", 35, "a"], "z23a")
 
-    The original string is appended as a last value to ensure the
-    key is unique enough so that "x1y" and "x001y" can be distinguished.
+    Runs of digits are converted using base 16 because it has no digit limit,
+    and the numbers will sort the same as if they were interpreted as base 10.
+    The original string is appended as a last value to ensure the key is unique
+    enough so that "x1y" and "x001y" can be distinguished.
     """
-
-    def number(s: str) -> float:
-        """Convert s to a number with no errors."""
-        try:
-            return int(s)
-        except ValueError:
-            # This only happens if the number is too large to convert to an int.
-            return float("inf")
-
     parts = re.split(r"(\d+)", s)
-    split_key = [(number(p) if i % 2 else p) for i, p in enumerate(parts)]
+    split_key = [(int(p, base=16) if i % 2 else p) for i, p in enumerate(parts)]
     return (split_key, s)
 
 
