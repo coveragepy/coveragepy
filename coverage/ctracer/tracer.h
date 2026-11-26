@@ -62,6 +62,9 @@ typedef struct CTracer {
     /* The current file's data stack entry. */
     DataStackEntry * pcur_entry;
 
+    /* An empty entry for pcur_entry when the data stack is empty. */
+    DataStackEntry empty_entry;
+
     Stats stats;
 } CTracer;
 
