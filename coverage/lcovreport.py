@@ -193,7 +193,7 @@ class LcovReporter:
         outfile is the file object to write the file into.
         """
 
-        self.coverage.get_data()
+        self.coverage.get_data().set_query_contexts(self.coverage.config.report_contexts)
         outfile = outfile or sys.stdout
 
         # ensure file records are sorted by the _relative_ filename, not the full path

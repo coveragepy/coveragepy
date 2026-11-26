@@ -137,6 +137,23 @@ class XmlReportTest(XmlTestHelpers, CoverageTest):
         cov.load()
         cov.xml_report(**kwargs)
 
+    def test_report_context_filter(self) -> None:
+        self.make_file("example.py", "a = 1\nb = 2\n")
+        cov = coverage.Coverage()
+        data = cov.get_data()
+        filename = os.path.abspath("example.py")
+        data.set_context("first")
+        data.add_lines({filename: [1]})
+        data.set_context("second")
+        data.add_lines({filename: [2]})
+
+        assert cov.xml_report(contexts=["^first$"]) == 50.0
+        lines = ElementTree.parse("coverage.xml").findall(".//line")
+        assert [(line.get("number"), line.get("hits")) for line in lines] == [
+            ("1", "1"),
+            ("2", "0"),
+        ]
+
     def test_default_file_placement(self) -> None:
         self.make_mycode_data()
         self.run_xml_report()

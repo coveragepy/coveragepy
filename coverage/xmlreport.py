@@ -98,7 +98,9 @@ class XmlReporter:
         """
         # Initial setup.
         outfile = outfile or sys.stdout
-        has_arcs = self.coverage.get_data().has_arcs()
+        coverage_data = self.coverage.get_data()
+        coverage_data.set_query_contexts(self.config.report_contexts)
+        has_arcs = coverage_data.has_arcs()
 
         # Create the DOM that will store the data.
         impl = xml.dom.minidom.getDOMImplementation()
