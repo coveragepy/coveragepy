@@ -3,6 +3,8 @@
 
 """Helpers for coverage.py tests."""
 
+# pragma: enforce 100% coverage
+
 from __future__ import annotations
 
 import collections
@@ -393,7 +395,7 @@ def all_our_source_files() -> Iterable[tuple[Path, str]]:
     cov_dir = Path(__file__).parent.parent
     # To run against all the files in the tox venvs:
     #   for source_file in cov_dir.rglob("*.py"):
-    for sub in [".", "ci", "coverage", "lab", "tests"]:
+    for sub in [".", "tools", "coverage", "lab", "tests"]:
         assert (cov_dir / sub).is_dir()
         for source_file in (cov_dir / sub).glob("*.py"):
             yield (source_file, source_file.read_text(encoding="utf-8"))

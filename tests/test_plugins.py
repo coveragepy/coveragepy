@@ -177,6 +177,111 @@ class LoadPluginsTest(CoverageTest):
 class PluginTest(CoverageTest):
     """Test plugins through the Coverage class."""
 
+    def test_get_plugins_empty(self) -> None:
+        cov = coverage.Coverage(config_file=False)
+        assert cov.get_plugins() == []
+
+    def test_get_plugins_from_callables(self) -> None:
+        plugins = [coverage.CoveragePlugin() for _ in range(4)]
+        calls = 0
+
+        def register(reg: Plugins) -> None:
+            nonlocal calls
+            calls += 1
+            reg.add_file_tracer(plugins[0])
+            reg.add_configurer(plugins[1])
+            reg.add_dynamic_context(plugins[2])
+            reg.add_file_tracer(plugins[3])
+
+        cov = coverage.Coverage(config_file=False, plugins=[register])
+        got = cov.get_plugins()
+        assert got == plugins
+        assert all(plugin.is_enabled() for plugin in got)
+        assert coverage.Coverage.current() is not cov
+        assert cov._collector is None
+
+        # The list is independent, and repeated calls don't initialize again.
+        got.clear()
+        assert cov.get_plugins() == plugins
+        assert calls == 1
+
+    def test_get_plugins_from_config(self) -> None:
+        self.make_file(
+            "inspect_plugins.py",
+            """\
+            import coverage
+
+            class Plugin(coverage.CoveragePlugin):
+                def __init__(self, name):
+                    self.name = name
+                def sys_info(self):
+                    return [("name", self.name)]
+
+            def coverage_init(reg, options):
+                reg.add_file_tracer(Plugin("first"))
+                reg.add_file_tracer(Plugin("second"))
+            """,
+        )
+        cov = coverage.Coverage(config_file=False)
+        cov.set_option("run:plugins", ["inspect_plugins"])
+        plugins = cov.get_plugins()
+        assert [list(plugin.sys_info()) for plugin in plugins] == [
+            [("name", "first")],
+            [("name", "second")],
+        ]
+        assert all(plugin.is_enabled() for plugin in plugins)
+
+    @pytest.mark.parametrize("debug", [False, True])
+    def test_get_plugins_disabled_by_core(self, debug: bool) -> None:
+        def register(reg: Plugins) -> None:
+            reg.add_file_tracer(coverage.CoveragePlugin())
+
+        cov = coverage.Coverage(
+            config_file=False,
+            timid=True,
+            plugins=[register],
+            debug=["plugin"] if debug else [],
+        )
+        plugins = cov.get_plugins()
+        assert len(plugins) == 1
+        assert plugins[0].is_enabled()
+
+        with pytest.warns(CoverageWarning, match="aren't supported with PyTracer"):
+            cov.start()
+        cov.stop()  # pragma: nested
+
+        assert cov.get_plugins() == plugins
+        assert not plugins[0].is_enabled()
+
+    @pytest.mark.skipif(not testenv.PLUGINS, reason="Plugins are not supported with this core.")
+    @pytest.mark.parametrize("debug", [False, True])
+    def test_get_plugins_disabled_after_error(self, debug: bool) -> None:
+        class BrokenPlugin(coverage.CoveragePlugin):
+            """Fail when offered the test module."""
+
+            def file_tracer(self, filename: str) -> None:
+                # The outer tracer cannot measure callbacks from the inner tracer.
+                if filename.endswith("trigger.py"):  # pragma: nested
+                    raise ValueError("plugin failed")
+
+        def register(reg: Plugins) -> None:
+            reg.add_file_tracer(BrokenPlugin())
+
+        self.make_file("trigger.py", "answer = 42\n")
+        cov = coverage.Coverage(
+            config_file=False,
+            plugins=[register],
+            debug=["plugin"] if debug else [],
+        )
+        plugins = cov.get_plugins()
+        assert plugins[0].is_enabled()
+        with pytest.warns(CoverageWarning, match="Disabling plug-in") as warns:
+            self.start_import_stop(cov, "trigger")
+        assert cov.get_plugins() == plugins
+        assert not plugins[0].is_enabled()
+        error_output = self.stderr() + "".join(str(w.message) for w in warns)
+        assert "ValueError: plugin failed" in error_output
+
     def test_plugin_imported(self) -> None:
         # Prove that a plugin will be imported.
         self.make_file(
@@ -311,6 +416,37 @@ class PluginTest(CoverageTest):
         out = self.run_command("coverage html -q")  # sneak in a test of -q
         assert out == ""
 
+    def test_local_files_are_importable_for_erase_and_combine(self) -> None:
+        # https://github.com/coveragepy/coveragepy/issues/1726
+        self.make_file(
+            "importing_plugin.py",
+            """\
+            from coverage import CoveragePlugin
+            import local_module
+            class MyPlugin(CoveragePlugin):
+                pass
+            def coverage_init(reg, options):
+                reg.add_noop(MyPlugin())
+            """,
+        )
+        self.make_file("local_module.py", "CONST = 1")
+        self.make_file(
+            ".coveragerc",
+            """\
+            [run]
+            plugins = importing_plugin
+            parallel = True
+            """,
+        )
+        self.make_file("main_file.py", "print('MAIN')")
+
+        out = self.run_command("coverage run main_file.py")
+        assert out == "MAIN\n"
+        out = self.run_command("coverage combine")
+        assert "ModuleNotFoundError" not in out
+        out = self.run_command("coverage erase")
+        assert out == ""
+
     def test_coverage_init_plugins(self) -> None:
         called = False
 
@@ -432,7 +568,7 @@ class GoodFileTracerTest(FileTracerTest):
         # source files.
         def lines(n: int) -> str:
             """Make a string with n lines of text."""
-            return "".join("line %d\n" % i for i in range(n))
+            return "".join(f"line {i}\n" for i in range(n))
 
         self.make_file("bar_4.html", lines(4))
         self.make_file("foo_7.html", lines(7))

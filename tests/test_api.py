@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import fnmatch
 import glob
-import io
 import os
 import os.path
 import re
@@ -215,8 +214,7 @@ class ApiTest(CoverageTest):
         with mock.patch.object(coverage.inorout, "sysconfig", FakeSysconfig()):
             cov = coverage.Coverage()
             self.start_import_stop(cov, "mymain")
-        files = cov.get_data().measured_files()
-        assert not any(os.path.basename(f) == "colorsys.py" for f in files)
+        assert "colorsys.py" not in self.get_measured_filenames(cov.get_data())
 
     def test_exclude_list(self) -> None:
         cov = coverage.Coverage()
@@ -487,6 +485,35 @@ class ApiTest(CoverageTest):
         last = self.last_line_squeezed(self.stdout())
         assert "TOTAL 1 1 0%" == last
 
+    def test_source_glob_expands_to_directories(self) -> None:
+        # https://github.com/coveragepy/coveragepy/issues/2400
+        # A glob pattern in `source` matches directories, including ones
+        # with files that were never executed.
+        self.make_file("packages/pkg_a/src/__init__.py", "")
+        self.make_file("packages/pkg_a/src/mod_a.py", "print('a')")
+        self.make_file("packages/pkg_b/src/__init__.py", "")
+        self.make_file("packages/pkg_b/src/mod_b.py", "print('b')")
+        self.make_file(
+            "main.py",
+            "import sys\nsys.path.insert(0, 'packages/pkg_a/src')\nimport mod_a\n",
+        )
+        cov = coverage.Coverage(source=["packages/*/src"])
+        self.start_import_stop(cov, "main")
+        cov.report()
+        out = self.stdout()
+        assert "mod_a.py" in out
+        assert "mod_b.py" in out
+        # mod_b was never imported, but the glob found its directory, so
+        # it is reported at 0%.
+        mod_b_line = next(line for line in out.splitlines() if "mod_b.py" in line)
+        assert mod_b_line.rstrip().endswith("0%")
+
+    def test_source_glob_no_match_warns(self) -> None:
+        cov = coverage.Coverage(source=["nothing/*/src"])
+        with self.assert_warnings(cov, ["matched no files or directories"]):
+            cov.start()
+        cov.stop()
+
     def make_code1_code2(self) -> None:
         """Create the code1.py and code2.py files."""
         self.make_file(
@@ -537,6 +564,27 @@ class ApiTest(CoverageTest):
             cov.save()
             import_local_file("code2")
             self.check_code1_code2(cov)
+
+    def test_nested_start_stop_keeps_measuring(self) -> None:
+        # https://github.com/coveragepy/coveragepy/issues/2302
+        self.make_file(
+            "classify.py",
+            """\
+            def classify(n):
+                if n < 0:
+                    return "negative"
+                return "other"
+            """,
+        )
+        cov = coverage.Coverage()
+        with cov.collect():
+            mod = import_local_file("classify")
+            assert mod.classify(-1) == "negative"
+            with coverage.Coverage(data_file=None).collect():
+                pass
+            assert mod.classify(1) == "other"
+        _, _, missing, _ = cov.analysis("classify.py")
+        assert missing == []
 
     def test_two_getdata_only_warn_once(self) -> None:
         self.make_code1_code2()
@@ -648,6 +696,28 @@ class ApiTest(CoverageTest):
         cov.combine()
         assert self.stdout() == ""
         self.check_code1_code2(cov)
+
+    def test_combining_after_saving_twice(self) -> None:
+        # Two parallel runs measure the same code and save while still running,
+        # then each measures different code and saves again. Combining must
+        # keep both.
+        self.make_code1_code2()
+        self.make_file("code3.py", "code3 = 1\n")
+        for later in ["code2", "code3"]:
+            cov = coverage.Coverage(data_suffix=True)
+            with cov.collect():
+                import_local_file("code1")
+                cov.save()
+                import_local_file(later)
+            cov.save()
+        self.assert_file_count(".coverage.*", 2)
+
+        cov = coverage.Coverage()
+        cov.combine()
+        self.check_code1_code2(cov)
+        _, statements, missing, _ = cov.analysis("code3.py")
+        assert statements == [1]
+        assert missing == []
 
     def test_ordered_combine(self) -> None:
         # https://github.com/coveragepy/coveragepy/issues/649
@@ -1217,6 +1287,16 @@ class SourceIncludeOmitTest(IncludeOmitTestsMixin, CoverageTest):
         ):
             self.coverage_usepkgs_counts(source_dirs=["i-do-not-exist"])
 
+    @pytest.mark.parametrize("src", ["/", "/.."])
+    def test_source_dir_is_file_system_root(self, src: str) -> None:
+        cov = coverage.Coverage(source=[src])
+        with pytest.raises(
+            ConfigError,
+            match=re.escape(f"Source dir can't be a file system root: {src!r}"),
+        ):
+            with cov.collect():
+                pass
+
 
 class ReportIncludeOmitTest(IncludeOmitTestsMixin, CoverageTest):
     """Tests of the report include/omit functionality."""
@@ -1226,9 +1306,7 @@ class ReportIncludeOmitTest(IncludeOmitTestsMixin, CoverageTest):
         cov = coverage.Coverage()
         with cov.collect():
             import usepkgs  # pylint: disable=import-error, unused-import
-        report = io.StringIO()
-        cov.report(file=report, **kwargs)
-        return report.getvalue()
+        return self.get_report(cov, squeeze=False, **kwargs)
 
 
 class XmlIncludeOmitTest(IncludeOmitTestsMixin, CoverageTest):
@@ -1369,11 +1447,15 @@ class TestRunnerPluginTest(CoverageTest):
         self.start_import_stop(cov, "prog")
         cov.combine()
         cov.save()
-        report = io.StringIO()
-        cov.report(
-            show_missing=None, ignore_errors=True, file=report, skip_covered=None, skip_empty=None
+        report = self.get_report(
+            cov,
+            squeeze=False,
+            show_missing=None,
+            ignore_errors=True,
+            skip_covered=None,
+            skip_empty=None,
         )
-        assert report.getvalue() == textwrap.dedent("""\
+        assert report == textwrap.dedent("""\
             Name      Stmts   Miss  Cover
             -----------------------------
             prog.py       4      1    75%
@@ -1408,7 +1490,7 @@ class RelativePathTest(CoverageTest):
         res = cov.report()
         assert res == 100
 
-        expected = re.escape("No source for code: '{}'.".format(abs_file("foo.py")))
+        expected = re.escape(f"No source for code: '{abs_file('foo.py')}'.")
         os.remove("foo.py")
         self.make_file("new/foo.py", "a = 1")
         shutil.move(".coverage", "new/.coverage")
@@ -1658,6 +1740,39 @@ class CombiningTest(CoverageTest):
         data = coverage.CoverageData()
         data.read()
         assert line_counts(data)["b_or_c.py"] == 8
+
+    def test_combine_parallel_data_with_an_empty_file(self) -> None:
+        # A parallel data file can be empty if a worker died before writing
+        # anything.  An empty file is a valid empty SQLite database, so it has
+        # no coverage schema.  Combine reads parallel files read-only, so it
+        # can't write the schema into one.  The file is reported the same way
+        # as any other unreadable data file: warned about, kept, and counted as
+        # an error.  https://github.com/coveragepy/coveragepy/issues/2356
+        self.make_b_or_c_py()
+        self.make_data_file(".coverage.b", lines=self.B_LINES)
+        self.make_file(".coverage.empty")
+
+        cov = coverage.Coverage(messages=True)
+        with pytest.warns(Warning) as warns:
+            cov.combine(strict=True)
+        assert_coverage_warnings(
+            warns,
+            re.compile(
+                r"Data file .*[/\\]\.coverage\.empty' isn't a coverage data file: "
+                + r".*no such table: coverage_schema",
+            ),
+        )
+        assert self.stderr().splitlines()[-1] == "Combined 1 file, 1 file errored"
+
+        # The empty file is left in place: we couldn't read it, so we don't
+        # delete it.
+        self.assert_exists(".coverage")
+        self.assert_exists(".coverage.empty")
+        self.assert_file_count(".coverage.*", 1)
+
+        data = coverage.CoverageData()
+        data.read()
+        assert line_counts(data)["b_or_c.py"] == 6
 
     def test_combine_no_usable_files(self) -> None:
         # https://github.com/coveragepy/coveragepy/issues/629

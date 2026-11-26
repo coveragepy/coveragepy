@@ -50,7 +50,7 @@ from coverage.misc import (
 )
 from coverage.multiproc import patch_multiprocessing
 from coverage.patch import apply_patches
-from coverage.plugin import FileReporter
+from coverage.plugin import CoveragePlugin, FileReporter
 from coverage.plugin_support import Plugins, TCoverageInit
 from coverage.python import PythonFileReporter
 from coverage.report import SummaryReporter
@@ -613,14 +613,11 @@ class Coverage(TConfigurable):
 
         # Early warning if we aren't going to be able to support plugins.
         if self._plugins.file_tracers and not self._core.supports_plugins:
-            self._warn(
-                "Plugin file tracers ({}) aren't supported with {}".format(
-                    ", ".join(
-                        plugin._coverage_plugin_name for plugin in self._plugins.file_tracers
-                    ),
-                    self._collector.tracer_name(),
-                ),
+            plug_names = ", ".join(
+                plugin._coverage_plugin_name for plugin in self._plugins.file_tracers
             )
+            tracer = self._collector.tracer_name()
+            self._warn(f"Plugin file tracers ({plug_names}) aren't supported with {tracer}")
             for plugin in self._plugins.file_tracers:
                 plugin._coverage_enabled = False
 
@@ -955,6 +952,23 @@ class Coverage(TConfigurable):
             keep=keep,
             message=self._message,
         )
+
+    def get_plugins(self) -> list[CoveragePlugin]:
+        """Get the currently registered plug-ins.
+
+        Plugins are initialized if necessary, but measurement is not started.
+        Returns a new list in registration order, including disabled plug-ins.
+        Changing the list does not change the registered plug-ins.
+
+        Use :meth:`~coverage.CoveragePlugin.is_enabled` on the returned objects to check
+        their current enabled state. The objects reflect later state changes,
+        including when coverage.py disables a plug-in after an error.
+
+        .. version-added:: 7.18
+
+        """
+        self._init()
+        return list(self._plugins)
 
     def get_data(self) -> CoverageData:
         """Get the collected data.
@@ -1480,7 +1494,7 @@ def process_startup(
     *,
     force: bool = False,
     slug: str = "default",  # pylint: disable=unused-argument
-) -> Coverage | None:
+) -> Coverage | None:  # pragma: process start
     """Call this at Python start-up to perhaps measure coverage.
 
     Coverage is started if one of these environment variables is defined:
@@ -1531,22 +1545,39 @@ def process_startup(
         # No request for coverage, nothing to do.
         return None
 
-    cov = Coverage(config_file=config_file)
+    cov = _start_process_coverage(config_file)
     process_startup.coverage = cov  # type: ignore[attr-defined]
+    return cov
+
+
+def _after_fork_in_child() -> None:  # pragma: process start
+    """Used by patch=fork in the child process to restart coverage."""
+    if parent_cov := Coverage.current():
+        parent_config = parent_cov.config
+        parent_cov._auto_save = False  # prevent child from saving parent's pre-fork data
+        parent_cov.stop()
+        # Restart with the same configuration the parent had.
+        # process_startup() requires COVERAGE_PROCESS_START or
+        # COVERAGE_PROCESS_CONFIG to be set, but those are only present
+        # when patch=subprocess is also used.  With patch=fork alone,
+        # neither variable is set, so we must start coverage directly
+        # from the serialized parent config instead of going through
+        # the env-var lookup path.
+        config_file = CONFIG_DATA_PREFIX + parent_config.serialize()
+        _start_process_coverage(config_file)
+    else:
+        process_startup(force=True, slug="fork")
+
+
+def _start_process_coverage(config_file: str) -> Coverage:  # pragma: process start
+    """Create a new Coverage object for a new process."""
+    cov = Coverage(config_file=config_file)
     cov._warn_no_data = False
     cov._warn_unimported_source = False
     cov._warn_preimported_source = False
     cov._auto_save = True
     cov.start()
-
     return cov
-
-
-def _after_fork_in_child() -> None:
-    """Used by patch=fork in the child process to restart coverage."""
-    if cov := Coverage.current():
-        cov.stop()
-    process_startup(force=True, slug="fork")
 
 
 def _prevent_sub_process_measurement() -> None:

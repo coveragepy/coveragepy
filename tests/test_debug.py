@@ -67,7 +67,7 @@ class InfoFormatterTest(CoverageTest):
         assert expected == lines
 
     def test_info_formatter_with_generator(self) -> None:
-        lines = list(info_formatter(("info%d" % i, i) for i in range(3)))
+        lines = list(info_formatter((f"info{i}", i) for i in range(3)))
         expected = [
             "                         info0: 0",
             "                         info1: 1",
@@ -459,7 +459,7 @@ class ShortFilenameTest(CoverageTest):
         assert short_filename(env.__file__) == f"cov:{s}env.py"
         self.make_file("hello.txt", "hi")
         short_hello = short_filename(os.path.abspath("hello.txt"))
-        assert re.match(rf"tmp:{se}t\d+{se}hello.txt", short_hello)
+        assert re.fullmatch(rf"tmp:{se}t\d+{se}hello.txt", short_hello)
         oddball = f"{s}xyzzy{s}plugh{s}foo.txt"
         assert short_filename(oddball) == oddball
         assert short_filename(None) is None
@@ -511,4 +511,4 @@ def test_auto_repr() -> None:
 
     stuff = MyStuff()
     setattr(stuff, "$coverage.object_id", 123456)
-    assert re.match(r"<MyStuff @0x[a-f\d]+ x=17 y='hello'>", repr(stuff))
+    assert re.fullmatch(r"<MyStuff @0x[a-f\d]+ x=17 y='hello'>", repr(stuff))

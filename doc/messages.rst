@@ -144,6 +144,13 @@ Already imported a file that will be measured: XXX (already-imported)
   are meant to focus measurement on a particular part of your source code, so
   ``--include`` is ignored in favor of ``--source``.
 
+.. _warning_source_glob_no_match:
+
+Source glob pattern XXX matched no files or directories (source-glob-no-match)
+  A ``--source`` value contained glob wildcards, but the pattern matched
+  nothing on the file system.  Check the pattern for typos, and that it is
+  written relative to the directory coverage.py is running in.
+
 .. _warning_dynamic_conflict:
 
 Conflicting dynamic contexts (dynamic-conflict)
@@ -162,7 +169,7 @@ Couldn't import C tracer (no-ctracer)
 .. _warning_no_sysmon:
 
 Can't use core=sysmon: sys.monitoring isn't available in this version, using default core (no-sysmon)
-  You requested to the sys.monitoring measurement core, but are running on
+  You requested the sys.monitoring measurement core, but are running on
   Python 3.11 or lower where it isn't available.  A default core will be used
   instead.
 

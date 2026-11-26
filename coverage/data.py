@@ -203,7 +203,7 @@ def combine_parallel_data(
             if data._debug.should("dataio"):
                 data._debug.write(f"Combining data file {f!r}")
             try:
-                new_data = CoverageData(f, debug=data._debug)
+                new_data = CoverageData(f, debug=data._debug, read_only=True)
                 new_data.read()
             except CoverageException as exc:
                 errored += 1
@@ -244,7 +244,7 @@ def combine_parallel_data(
 
 def debug_data_file(filename: str) -> None:
     """Implementation of 'coverage debug data'."""
-    data = CoverageData(filename)
+    data = CoverageData(filename, read_only=True)
     filename = data.data_filename()
     print(f"path: {filename}")
     if not os.path.exists(filename):

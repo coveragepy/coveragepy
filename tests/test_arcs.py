@@ -237,6 +237,56 @@ class SimpleArcTest(CoverageTest):
         )
         assert self.stdout() == "Done\n"
 
+    def test_bug_2167(self) -> None:
+        # A one-line class body followed by another statement was reported as
+        # missing the fall-through branch ("line 1 didn't jump to line 4") with
+        # the sys.monitoring core, because the class body's exit arc gives the
+        # class line a second destination that defeated the resolution of the
+        # sequential fall-through.  The class line is fully covered.
+        self.check_coverage(
+            """\
+            class Foo: ...
+
+
+            pass
+            """,
+            branchz="1. 14",
+            branchz_missing="",
+        )
+        # It happens for any one-line class body, not just `...`.
+        self.check_coverage(
+            """\
+            class Foo: x = 1
+
+
+            pass
+            """,
+            branchz="1. 14",
+            branchz_missing="",
+        )
+        # And when the following statement is itself a branch.
+        self.check_coverage(
+            """\
+            class A: ...
+            if len([]) == 0:
+                x = 1
+            print(x)
+            """,
+            branchz="1. 12 23 24",
+            branchz_missing="24",
+        )
+
+    def test_bug_2337(self) -> None:
+        self.check_coverage(
+            """\
+            def test(): 0
+            0
+            test()
+            """,
+            branchz="1. 12",
+            branchz_missing="",
+        )
+
 
 class WithTest(CoverageTest):
     """Arc-measuring tests involving context managers."""
@@ -1160,6 +1210,52 @@ class ExceptionArcTest(CoverageTest):
             branchz="",
         )
 
+    @pytest.mark.parametrize("early_exit", ["raise ValueError", "return"])
+    def test_finally_condition_missing_arc_description(self, early_exit: str) -> None:
+        # The condition can be false without continuing after the finally,
+        # because an exception or return is still pending. See issue 867.
+        cov = self.check_coverage(
+            f"""\
+            seen = []
+            def run(condition, escape):
+                try:
+                    if escape:
+                        {early_exit}
+                finally:
+                    seen.append(condition)
+                    if condition:
+                        print("body")
+                print("after")
+            try:
+                run(False, True)
+            except ValueError:
+                pass
+            run(True, False)
+            assert seen == [False, True]
+            """,
+            branchz="45 47 89 8A",
+            branchz_missing="8A",
+        )
+        assert self.get_missing_arc_description(cov, 8, 10) == "line 8 didn't jump to line 10"
+
+    def test_finally_internal_condition_missing_arc_description(self) -> None:
+        cov = self.check_coverage(
+            """\
+            try:
+                print("try")
+            finally:
+                if len([]):
+                    print("body")
+                print("finally")
+            print("after")
+            """,
+            branchz="45 46",
+            branchz_missing="45",
+        )
+        assert self.get_missing_arc_description(cov, 4, 5) == (
+            "line 4 didn't jump to line 5 because the condition on line 4 was never true"
+        )
+
     def test_finally_in_loop(self) -> None:
         self.check_coverage(
             """\
@@ -1518,6 +1614,23 @@ class ExceptionArcTest(CoverageTest):
             """,
             lines=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
             missing="5-6, 11-12",
+            branchz="",
+            branchz_missing="",
+        )
+
+    def test_exception_group_in_function(self) -> None:
+        # The return event after an except* handler can have f_lineno None.
+        self.check_coverage(
+            """\
+            def func():
+                try:
+                    raise ExceptionGroup("Zero!", [ZeroDivisionError()])
+                except* ZeroDivisionError:
+                    pass
+            func()
+            """,
+            lines=[1, 2, 3, 4, 5, 6],
+            missing="",
             branchz="",
             branchz_missing="",
         )

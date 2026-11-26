@@ -25,7 +25,7 @@ Coverage.py runs on these versions of Python:
 
 .. PYVERSIONS
 
-* Python 3.11 through 3.15, including free-threading.
+* Python 3.11 through 3.16.0a2, including free-threading.
 * PyPy3 version 3.11.
 
 Documentation is on `Read the Docs`_.  Code repository and issue tracker are on
@@ -46,12 +46,12 @@ For Enterprise
    :widths: 10 100
 
    * - |tideliftlogo|
-     - `Available as part of the Tidelift Subscription. <https://tidelift.com/subscription/pkg/pypi-coverage?utm_source=pypi-coverage&utm_medium=referral&utm_campaign=readme>`_
+     - `Available as part of the Tidelift Subscription. <https://tidelift.com/subscription/pkg/pypi-coverage?utm_source=pypi-coverage&utm_medium=referral&utm_campaign=readme>`__
        Coverage and thousands of other packages are working with
        Tidelift to deliver one enterprise subscription that covers all of the open
        source you use.  If you want the flexibility of open source and the confidence
        of commercial-grade software, this is for you.
-       `Learn more. <https://tidelift.com/subscription/pkg/pypi-coverage?utm_source=pypi-coverage&utm_medium=referral&utm_campaign=readme>`_
+       `Learn more. <https://tidelift.com/subscription/pkg/pypi-coverage?utm_source=pypi-coverage&utm_medium=referral&utm_campaign=readme>`__
 
 
 Getting Started
@@ -63,7 +63,7 @@ of the docs.
 .. _Quick Start section: https://coverage.readthedocs.io/#quick-start
 
 
-Change history
+Change History
 --------------
 
 The complete history of changes is on the `change history page`_.
@@ -84,8 +84,13 @@ Community Code of Conduct`_.
 Contributing
 ------------
 
-Found a bug? Want to help improve the code or documentation? See the
-`Contributing section`_ of the docs.
+The `Contributing section`_ of the docs has full details about contributing to
+coverage.py, but importantly:
+
+- Communicate concisely.
+- Check for pull requests in progress.
+- Include tests but don't over-mock.
+- Describe user-visible changes in a scriv changelog fragment.
 
 .. _Contributing section: https://coverage.readthedocs.io/en/latest/contributing.html
 

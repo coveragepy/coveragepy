@@ -454,6 +454,9 @@ class PathAliases:
         `pattern` can't end with a wildcard component, since that would
         match an entire tree, and not just its root.
 
+        `result` can't contain wildcards, since it is meant to be an
+        actual file path, not a pattern.
+
         """
         original_pattern = pattern
         pattern_sep = sep(pattern)
@@ -475,6 +478,11 @@ class PathAliases:
 
         # Make a regex from the pattern.
         regex = globs_to_regex([pattern], case_insensitive=True, partial=True)
+
+        # The result must be an actual file path: it can't contain wildcards.
+        # Such a rule could never apply, since the mapped path wouldn't exist.
+        if "*" in result or "?" in result:
+            raise ConfigError(f"Result path must not contain wildcards: {result!r}")
 
         # Normalize the result: it must end with a path separator.
         result_sep = sep(result)
@@ -577,7 +585,7 @@ def find_python_files(dirname: str, include_namespace_packages: bool) -> Iterabl
             # We're only interested in files that look like reasonable Python
             # files: Must end with .py or .pyw, and must not have certain funny
             # characters that probably mean they are editor junk.
-            if re.match(r"^[^.#~!$@%^&*()+=,]+\.pyw?$", filename):
+            if re.fullmatch(r"[^.#~!$@%^&*()+=,]+\.pyw?", filename):
                 yield os.path.join(dirpath, filename)
 
 

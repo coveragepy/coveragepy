@@ -24,7 +24,8 @@ permissions:
 
 concurrency:
   group: "${{ github.workflow }}-${{ github.ref }}"
-  cancel-in-progress: true
+  # Don't interrupt an upload that's underway.
+  cancel-in-progress: false
 
 jobs:
   find-run:
@@ -36,9 +37,10 @@ jobs:
     steps:
       - name: "Find latest kit.yml run"
         id: runs
-        uses: octokit/request-action@b91aabaa861c777dcdb14e2387e30eddf04619ae # v3.0.0
+        uses: octokit/request-action@v3.0.0
         with:
-          route: GET /repos/coveragepy/coveragepy/actions/workflows/kit.yml/runs
+          # Only our own `make build_kits` runs, never pull request runs.
+          route: GET /repos/coveragepy/coveragepy/actions/workflows/kit.yml/runs?event=repository_dispatch&branch=main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -69,7 +71,7 @@ jobs:
 
     steps:
       - name: "Download dists"
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        uses: actions/download-artifact@v8.0.2
         with:
           repository: "coveragepy/coveragepy"
           run-id: ${{ needs.find-run.outputs.run-id }}
@@ -86,12 +88,12 @@ jobs:
           files=$(find dist/* 2>/dev/null | wc -l) && [ "$files" -eq "$EXPECTED" ] || exit 1
 
       - name: "Generate attestations"
-        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        uses: actions/attest-build-provenance@v4.2.2
         with:
           subject-path: "dist/*"
 
       - name: "Publish dists to Test PyPI"
-        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        uses: pypa/gh-action-pypi-publish@v1.14.3
         with:
           repository-url: https://test.pypi.org/legacy/
 
@@ -110,7 +112,7 @@ jobs:
 
     steps:
       - name: "Download dists"
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        uses: actions/download-artifact@v8.0.2
         with:
           repository: "coveragepy/coveragepy"
           run-id: ${{ needs.find-run.outputs.run-id }}
@@ -127,9 +129,9 @@ jobs:
           files=$(find dist/* 2>/dev/null | wc -l) && [ "$files" -eq "$EXPECTED" ] || exit 1
 
       - name: "Generate attestations"
-        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        uses: actions/attest-build-provenance@v4.2.2
         with:
           subject-path: "dist/*"
 
       - name: "Publish dists to PyPI"
-        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        uses: pypa/gh-action-pypi-publish@v1.14.3

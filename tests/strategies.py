@@ -3,6 +3,8 @@
 
 """Hypothesis strategies for use in tests."""
 
+# pragma: enforce 100% coverage
+
 from __future__ import annotations
 
 from collections.abc import Sequence

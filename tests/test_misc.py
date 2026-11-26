@@ -149,6 +149,8 @@ HUMAN_DATA = [
     ("z1 a2z a01 a2a a3 a1", "a01 a1 a2a a2z a3 z1"),
     ("a10 a9 a100 a1", "a1 a9 a10 a100"),
     ("4.0 3.10-win 3.10-mac 3.9-mac 3.9-win", "3.9-mac 3.9-win 3.10-mac 3.10-win 4.0"),
+    (f"a{'1' * 4400}z a1z", f"a1z a{'1' * 4400}z"),
+    ("a1²b a1b", "a1b a1²b"),
 ]
 
 
