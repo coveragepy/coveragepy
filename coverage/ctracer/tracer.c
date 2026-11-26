@@ -335,6 +335,7 @@ CTracer_handle_call(CTracer *self, PyFrameObject *frame)
     PyObject * has_dynamic_filename = NULL;
 
     CFileDisposition * pdisp = NULL;
+    BOOL pushed = FALSE;
 
     STATS( self->stats.calls++; )
 
@@ -346,6 +347,7 @@ CTracer_handle_call(CTracer *self, PyFrameObject *frame)
         goto error;
     }
     self->pcur_entry = &self->pdata_stack->stack[self->pdata_stack->depth];
+    pushed = TRUE;
 
     /* See if this frame begins a new context. */
     if (self->should_start_context != Py_None && self->context == Py_None) {
@@ -599,6 +601,13 @@ CTracer_handle_call(CTracer *self, PyFrameObject *frame)
     ret = RET_OK;
 
 error:
+    if (ret != RET_OK && pushed) {
+        /* Don't leave the previous frame's data in this slot: this frame's
+         * later events would record into it.
+         */
+        Py_CLEAR(self->pcur_entry->file_data);
+        self->pcur_entry->file_tracer = Py_None;
+    }
 #ifdef RESUME
     MyCode_FreeCode(pCode);
 #endif
