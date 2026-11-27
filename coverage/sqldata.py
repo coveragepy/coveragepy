@@ -32,6 +32,7 @@ from coverage.debug import NoDebugging, auto_repr, file_summary
 from coverage.exceptions import ConfigError, CoverageException, DataError
 from coverage.misc import Hasher, file_be_gone, isolate_module
 from coverage.numbits import (
+    NumbitsUnionAgg,
     numbits_to_nums,
     numbits_union,
     nums_to_numbits,
@@ -1167,12 +1168,11 @@ class CoverageData:
                     ids_array = ", ".join("?" * len(self._query_context_ids))
                     query += " AND context_id IN (" + ids_array + ")"
                     data += self._query_context_ids
+                combined = NumbitsUnionAgg()
                 with con.execute(query, data) as cur:
-                    bitmaps = list(cur)
-                nums = set()
-                for row in bitmaps:
-                    nums.update(numbits_to_nums(row[0]))
-                return list(nums)
+                    for (bitmap,) in cur:
+                        combined.step(bitmap)
+                return numbits_to_nums(combined.finalize())
 
     def arcs(self, filename: str) -> list[TArc] | None:
         """Get the list of arcs executed for a file.
