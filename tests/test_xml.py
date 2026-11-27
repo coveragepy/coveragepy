@@ -294,6 +294,51 @@ class XmlReportTest(XmlTestHelpers, CoverageTest):
         elts = dom.findall(".//class[@name='__init__.py']")
         assert len(elts) == 0
 
+    def test_methods_are_populated(self) -> None:
+        # https://github.com/coveragepy/coveragepy/issues/2056
+        self.make_file(
+            "prog.py",
+            """\
+            def add(a, b):
+                return a + b
+
+            def unused(x):
+                if x:
+                    return 1
+                return 2
+
+            class Greeter:
+                def greet(self):
+                    return "hello"
+
+            assert add(1, 2) == 3
+            assert Greeter().greet() == "hello"
+            """,
+        )
+        cov = coverage.Coverage(branch=True)
+        prog = self.start_import_stop(cov, "prog")
+        cov.xml_report(prog)
+        dom = ElementTree.parse("coverage.xml")
+        methods = dom.findall(".//class[@name='prog.py']/methods/method")
+        by_name = {m.get("name"): m for m in methods}
+        assert set(by_name) == {"add", "unused", "Greeter.greet"}
+
+        add = by_name["add"]
+        assert add.get("line-rate") == "1"
+        assert add.get("branch-rate") == "1"
+        assert [elt.get("number") for elt in add.findall("lines/line")] == ["2"]
+
+        unused = by_name["unused"]
+        assert unused.get("line-rate") == "0"
+        assert unused.get("branch-rate") == "0"
+        unused_lines = unused.findall("lines/line")
+        assert [elt.get("number") for elt in unused_lines] == ["5", "6", "7"]
+        assert all(elt.get("hits") == "0" for elt in unused_lines)
+
+        greet = by_name["Greeter.greet"]
+        assert greet.get("line-rate") == "1"
+        assert [elt.get("number") for elt in greet.findall("lines/line")] == ["11"]
+
     def test_curdir_source(self) -> None:
         # With no source= option, the XML report should explain that the source
         # is in the current directory.
