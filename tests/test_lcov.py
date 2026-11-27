@@ -56,6 +56,20 @@ class LcovTest(CoverageTest):
         with open(filename, encoding="utf-8") as file:
             return file.read()
 
+    def test_report_context_filter(self) -> None:
+        self.make_file("example.py", "a = 1\nb = 2\n")
+        cov = coverage.Coverage()
+        data = cov.get_data()
+        filename = os.path.abspath("example.py")
+        data.set_context("first")
+        data.add_lines({filename: [1]})
+        data.set_context("second")
+        data.add_lines({filename: [2]})
+
+        assert cov.lcov_report(contexts=["^first$"]) == 50.0
+        lines = self.get_lcov_report_content().splitlines()
+        assert [line for line in lines if line.startswith("DA:")] == ["DA:1,1", "DA:2,0"]
+
     def test_lone_file(self) -> None:
         # For a single file with a couple of functions, the lcov should cover
         # the function definitions themselves, but not the returns.
