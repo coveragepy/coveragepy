@@ -1188,7 +1188,8 @@ class Coverage(TConfigurable):
             format=output_format,
         ):
             reporter = SummaryReporter(self)
-            return reporter.report(morfs, outfile=file)
+            with self.get_data().keep_db_open():
+                return reporter.report(morfs, outfile=file)
 
     def annotate(
         self,
@@ -1218,7 +1219,8 @@ class Coverage(TConfigurable):
             report_contexts=contexts,
         ):
             reporter = AnnotateReporter(self)
-            reporter.report(morfs, directory=directory)
+            with self.get_data().keep_db_open():
+                reporter.report(morfs, directory=directory)
 
     def html_report(
         self,
@@ -1311,7 +1313,10 @@ class Coverage(TConfigurable):
             report_contexts=contexts,
             skip_empty=skip_empty,
         ):
-            return render_report(self.config.xml_output, XmlReporter(self), morfs, self._message)
+            with self.get_data().keep_db_open():
+                return render_report(
+                    self.config.xml_output, XmlReporter(self), morfs, self._message
+                )
 
     def json_report(
         self,
@@ -1349,7 +1354,10 @@ class Coverage(TConfigurable):
             json_pretty_print=pretty_print,
             json_show_contexts=show_contexts,
         ):
-            return render_report(self.config.json_output, JsonReporter(self), morfs, self._message)
+            with self.get_data().keep_db_open():
+                return render_report(
+                    self.config.json_output, JsonReporter(self), morfs, self._message
+                )
 
     def lcov_report(
         self,
@@ -1378,7 +1386,10 @@ class Coverage(TConfigurable):
             lcov_output=outfile,
             report_contexts=contexts,
         ):
-            return render_report(self.config.lcov_output, LcovReporter(self), morfs, self._message)
+            with self.get_data().keep_db_open():
+                return render_report(
+                    self.config.lcov_output, LcovReporter(self), morfs, self._message
+                )
 
     def sys_info(self) -> Iterable[tuple[str, Any]]:
         """Return a list of (key, value) pairs showing internal information."""
