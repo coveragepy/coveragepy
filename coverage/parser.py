@@ -22,7 +22,7 @@ from coverage.bytecode import ByteParser
 from coverage.debug import short_stack
 from coverage.exceptions import NoSource, NotPython
 from coverage.misc import isolate_module, nice_pair
-from coverage.phystokens import TToken, generate_tokens
+from coverage.phystokens import TToken, add_soft_key_lines, generate_tokens
 from coverage.types import TArc, TLineNo
 
 os = isolate_module(os)
@@ -103,6 +103,9 @@ class PythonParser:
 
         # The parsed AST of the text.
         self._ast_root: ast.AST | None = None
+
+        # The lines containing soft keywords, as found in the parsed AST.
+        self.soft_key_lines: set[TLineNo] = set()
 
         # The normalized line numbers of the statements in the code. Exclusions
         # are taken into account, and statements are adjusted to their first
@@ -242,6 +245,9 @@ class PythonParser:
         # functions and classes.
         assert self._ast_root is not None
         for node in walk_statement_nodes(self._ast_root):
+            # Soft keywords only appear in statements, so this finds them all.
+            add_soft_key_lines(node, self.soft_key_lines)
+
             # Find docstrings.
             if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef, ast.Module)):
                 if node.body:
