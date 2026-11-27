@@ -21,7 +21,7 @@ from typing import Literal
 
 from coverage.exceptions import CoverageException, NoDataError
 from coverage.files import PathAliases
-from coverage.misc import Hasher, file_be_gone, human_sorted, neutralize_control, plural
+from coverage.misc import file_be_gone, human_sorted, neutralize_control, plural
 from coverage.sqldata import (  # pylint: disable=useless-import-alias
     CoverageData as CoverageData,
     filename_match,
@@ -50,21 +50,6 @@ def line_counts(data: CoverageData, fullpath: bool = False) -> dict[str, int]:
         assert lines is not None
         summ[filename_fn(filename)] = len(lines)
     return summ
-
-
-def add_data_to_hash(data: CoverageData, filename: str, hasher: Hasher) -> None:
-    """Contribute `filename`'s data to the `hasher`.
-
-    `hasher` is a `coverage.misc.Hasher` instance to be updated with
-    the file's data.  It should only get the results data, not the run
-    data.
-
-    """
-    if data.has_arcs():
-        hasher.update(sorted(data.arcs(filename) or []))
-    else:
-        hasher.update(sorted_lines(data, filename))
-    hasher.update(data.file_tracer(filename))
 
 
 def combinable_files(data_file: str, data_paths: Iterable[str] | None = None) -> list[str]:

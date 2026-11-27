@@ -16,7 +16,7 @@ from coverage.files import GlobMatcher, prep_patterns
 from coverage.misc import ensure_dir_for_file, file_be_gone
 from coverage.plugin import FileReporter
 from coverage.results import Analysis
-from coverage.types import TMorfs
+from coverage.types import TMorf, TMorfs
 
 if TYPE_CHECKING:
     from coverage import Coverage
@@ -82,6 +82,17 @@ def get_analysis_to_report(
     `Analysis` for the morf.
 
     """
+    for fr, morf in get_files_to_report(coverage, morfs):
+        analysis = analyze_file(coverage, fr, morf)
+        if analysis is not None:
+            yield fr, analysis
+
+
+def get_files_to_report(
+    coverage: Coverage,
+    morfs: TMorfs,
+) -> Iterable[tuple[FileReporter, TMorf]]:
+    """Yield reporters in report order after applying include and omit patterns."""
     fr_morfs = coverage._get_file_reporters(morfs)
     config = coverage.config
 
@@ -102,25 +113,33 @@ def get_analysis_to_report(
     # the file reporters as we go.
     fr_morfs.sort(reverse=True)
     while fr_morfs:
-        fr, morf = fr_morfs.pop()
-        try:
-            analysis = coverage._analyze(morf, file_reporter=fr)
-        except NotPython:
-            # Only report errors for .py files, and only if we didn't
-            # explicitly suppress those errors.
-            # NotPython is only raised by PythonFileReporter, which has a
-            # should_be_python() method.
-            if fr.should_be_python():  # type: ignore[attr-defined]
-                if config.ignore_errors:
-                    msg = f"Couldn't parse Python file '{fr.filename}'"
-                    coverage._warn(msg, slug="couldnt-parse")
-                else:
-                    raise
-        except Exception as exc:
+        yield fr_morfs.pop()
+
+
+def analyze_file(
+    coverage: Coverage,
+    fr: FileReporter,
+    morf: TMorf,
+) -> Analysis | None:
+    """Analyze a file, returning None for a suppressed parse error."""
+    config = coverage.config
+    try:
+        return coverage._analyze(morf, file_reporter=fr)
+    except NotPython:
+        # Only report errors for .py files, and only if we didn't
+        # explicitly suppress those errors.
+        # NotPython is only raised by PythonFileReporter, which has a
+        # should_be_python() method.
+        if fr.should_be_python():  # type: ignore[attr-defined]
             if config.ignore_errors:
-                msg = f"Couldn't parse '{fr.filename}': {exc}".rstrip()
+                msg = f"Couldn't parse Python file '{fr.filename}'"
                 coverage._warn(msg, slug="couldnt-parse")
             else:
                 raise
+    except Exception as exc:
+        if config.ignore_errors:
+            msg = f"Couldn't parse '{fr.filename}': {exc}".rstrip()
+            coverage._warn(msg, slug="couldnt-parse")
         else:
-            yield (fr, analysis)
+            raise
+    return None
