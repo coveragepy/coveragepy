@@ -133,3 +133,10 @@ def code_regions(source: str) -> list[CodeRegion]:
     rf = RegionFinder()
     rf.parse_source(source)
     return rf.regions
+
+
+def _code_regions_from_ast(root: ast.AST) -> list[CodeRegion]:
+    """Find function and class regions in a parsed AST."""
+    rf = RegionFinder()
+    rf.handle_node(root)
+    return rf.regions

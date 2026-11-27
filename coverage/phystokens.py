@@ -90,6 +90,11 @@ def _phys_tokens(toks: TokenInfos) -> TokenInfos:
 
 def find_soft_key_lines(source: str) -> set[TLineNo]:
     """Helper for finding lines with soft keywords, like match/case lines."""
+    return _find_soft_key_lines(source, None)
+
+
+def _find_soft_key_lines(source: str, nodes: Iterable[ast.AST] | None) -> set[TLineNo]:
+    """Find soft keywords using existing statement nodes when available."""
     # Do a quick check first, to eliminate files with no possibility of soft keywords.
     # match/case is only a soft keyword if both words are in the source.
     if "match" not in source or "case" not in source:
@@ -99,7 +104,9 @@ def find_soft_key_lines(source: str) -> set[TLineNo]:
 
     soft_key_lines: set[TLineNo] = set()
 
-    for node in ast.walk(ast.parse(source)):
+    if nodes is None:
+        nodes = ast.walk(ast.parse(source))
+    for node in nodes:
         # PYVERSION: we use sys.version_info here so that mypy will be ok with
         # us accessing attributes that appeared in those versions.
         if isinstance(node, ast.Match):
@@ -130,7 +137,11 @@ def source_token_lines(source: str) -> TSourceTokenLines:
     is indistinguishable from a final line with a newline.
 
     """
+    yield from _source_token_lines(source, None)
 
+
+def _source_token_lines(source: str, soft_key_lines: set[TLineNo] | None) -> TSourceTokenLines:
+    """Tokenize source, using known soft keyword lines when available."""
     ws_tokens = {token.INDENT, token.DEDENT, token.NEWLINE, tokenize.NL}
     line: list[tuple[str, str]] = []
     col = 0
@@ -138,7 +149,8 @@ def source_token_lines(source: str) -> TSourceTokenLines:
     source = source.expandtabs(8).replace("\r\n", "\n")
     tokgen = generate_tokens(source)
 
-    soft_key_lines = find_soft_key_lines(source)
+    if soft_key_lines is None:
+        soft_key_lines = find_soft_key_lines(source)
 
     for ttype, ttext, (sline, scol), (_, ecol), _ in _phys_tokens(tokgen):
         mark_start = True

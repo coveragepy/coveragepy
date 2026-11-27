@@ -12,6 +12,7 @@ import os.path
 import sys
 import time
 import xml.dom.minidom
+from contextlib import nullcontext
 from dataclasses import dataclass
 from typing import IO, TYPE_CHECKING, Any
 
@@ -24,6 +25,8 @@ from coverage.types import TMorfs
 from coverage.version import __url__, __version__
 
 if TYPE_CHECKING:
+    from _typeshed import SupportsWrite
+
     from coverage import Coverage
 
 os = isolate_module(os)
@@ -67,6 +70,42 @@ def appendChild(parent: Any, child: Any) -> None:
     parent.appendChild(child)
 
 
+_LineAttributes = list[tuple[str, int | str]]
+
+
+class _LinesElement(xml.dom.minidom.Element):
+    """Serialize the numeric line records without a DOM node for each line."""
+
+    def __init__(self, records: list[_LineAttributes]) -> None:
+        super().__init__("lines")
+        self.records = records
+
+    def writexml(
+        self,
+        writer: SupportsWrite[str],
+        indent: str = "",
+        addindent: str = "",
+        newl: str = "",
+    ) -> None:
+        records = self.records
+        if not records:
+            super().writexml(writer, indent, addindent, newl)
+            return
+        prefix = indent + addindent
+        writer.write(f"{indent}<lines>{newl}{prefix}")
+        lines = []
+        for attrs in records:
+            if len(attrs) == 2:
+                # Most records have two attributes, which can be formatted directly.
+                (name1, value1), (name2, value2) = attrs
+                line = f'<line {name1}="{value1}" {name2}="{value2}"/>'
+            else:
+                line = "<line " + " ".join([f'{name}="{value}"' for name, value in attrs]) + "/>"
+            lines.append(line)
+        writer.write((newl + prefix).join(lines))
+        writer.write(f"{newl}{indent}</lines>{newl}")
+
+
 class XmlReporter:
     """A reporter for writing Cobertura-style XML coverage results."""
 
@@ -98,7 +137,8 @@ class XmlReporter:
         """
         # Initial setup.
         outfile = outfile or sys.stdout
-        has_arcs = self.coverage.get_data().has_arcs()
+        data = self.coverage.get_data()
+        has_arcs = data.has_arcs()
 
         # Create the DOM that will store the data.
         impl = xml.dom.minidom.getDOMImplementation()
@@ -117,9 +157,10 @@ class XmlReporter:
         )
         xcoverage.appendChild(self.xml_out.createComment(f" Based on {DTD_URL} "))
 
-        # Call xml_file for each file in the data.
-        for fr, analysis in get_analysis_to_report(self.coverage, morfs):
-            self.xml_file(fr, analysis, has_arcs)
+        # Opening a connection with no data would create an empty database.
+        with data.keep_db_open() if data.measured_files() else nullcontext():
+            for fr, analysis in get_analysis_to_report(self.coverage, morfs):
+                self.xml_file(fr, analysis, has_arcs)
 
         xsources = self.xml_out.createElement("sources")
         xcoverage.appendChild(xsources)
@@ -215,9 +256,6 @@ class XmlReporter:
 
         appendChild(xclass, self.xml_out.createElement("methods"))
 
-        xlines = self.xml_out.createElement("lines")
-        appendChild(xclass, xlines)
-
         xclass.setAttribute("name", os.path.relpath(rel_name, dirname))
         xclass.setAttribute("filename", rel_name.replace("\\", "/"))
         xclass.setAttribute("complexity", "0")
@@ -225,27 +263,28 @@ class XmlReporter:
         branch_stats = analysis.branch_stats()
         missing_branch_arcs = analysis.missing_branch_arcs()
 
-        # For each statement, create an XML "line" element.
+        records = []
         for line in sorted(analysis.statements):
-            xline = self.xml_out.createElement("line")
-            xline.setAttribute("number", str(line))
-
-            # Q: can we get info about the number of times a statement is
-            # executed?  If so, that should be recorded here.
-            xline.setAttribute("hits", str(int(line not in analysis.missing)))
+            # Use only integers and fixed ASCII strings safe in double-quoted XML
+            # attributes. _LinesElement writes these values verbatim.
+            line_attrs: _LineAttributes = [
+                ("number", line),
+                ("hits", int(line not in analysis.missing)),
+            ]
 
             if has_arcs:
                 if line in branch_stats:
                     total, taken = branch_stats[line]
-                    xline.setAttribute("branch", "true")
-                    xline.setAttribute(
-                        "condition-coverage",
-                        f"{100 * taken // total}% ({taken}/{total})",
-                    )
+                    condition = f"{100 * taken // total}% ({taken}/{total})"
+                    line_attrs.extend((("branch", "true"), ("condition-coverage", condition)))
                 if line in missing_branch_arcs:
                     annlines = ["exit" if b < 0 else str(b) for b in missing_branch_arcs[line]]
-                    xline.setAttribute("missing-branches", ",".join(annlines))
-            appendChild(xlines, xline)
+                    line_attrs.append(("missing-branches", ",".join(annlines)))
+            records.append(line_attrs)
+
+        xlines = _LinesElement(records)
+        xlines.ownerDocument = self.xml_out
+        appendChild(xclass, xlines)
 
         class_lines = len(analysis.statements)
         class_hits = class_lines - len(analysis.missing)
