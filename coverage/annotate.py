@@ -76,7 +76,7 @@ class AnnotateReporter:
         excluded = sorted(analysis.excluded)
 
         if self.directory:
-            ensure_dir(self.directory)
+            ensure_dir(self.directory, "annotated files")
             rel_fname = fr.relative_filename()
             dest_file = os.path.join(self.directory, flat_rootname(rel_fname))
             # flat_rootname turned the dot of the extension into an underscore.

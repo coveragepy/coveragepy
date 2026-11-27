@@ -416,7 +416,7 @@ class HtmlReporter:
 
     def make_directory(self) -> None:
         """Make sure our htmlcov directory exists."""
-        ensure_dir(self.directory)
+        ensure_dir(self.directory, "HTML report")
         if not os.listdir(self.directory):
             self.directory_was_empty = True
 

@@ -117,18 +117,30 @@ def file_be_gone(path: str) -> None:
             raise
 
 
-def ensure_dir(directory: str) -> None:
+def ensure_dir(directory: str, purpose: str) -> None:
     """Make sure the directory exists.
+
+    `purpose` describes what the directory is for, to use in an error message
+    if the directory can't be created.
 
     If `directory` is None or empty, do nothing.
     """
     if directory:
-        os.makedirs(directory, exist_ok=True)
+        try:
+            os.makedirs(directory, exist_ok=True)
+        except OSError as err:
+            raise CoverageException(
+                f"Couldn't create directory {os.path.abspath(directory)!r} for {purpose}: {err}"
+            ) from err
 
 
-def ensure_dir_for_file(path: str) -> None:
-    """Make sure the directory for the path exists."""
-    ensure_dir(os.path.dirname(path))
+def ensure_dir_for_file(path: str, purpose: str) -> None:
+    """Make sure the directory for the file `path` exists.
+
+    `purpose` describes what the file is, to use in an error message if the
+    directory can't be created.
+    """
+    ensure_dir(os.path.dirname(path), f"{purpose} {os.path.abspath(path)!r}")
 
 
 class Hasher:

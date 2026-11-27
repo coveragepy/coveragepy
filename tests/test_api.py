@@ -1799,3 +1799,45 @@ class CombiningTest(CoverageTest):
         data = coverage.CoverageData()
         data.read()
         assert {os_sep("sub/myprog.py")} == data.measured_files()
+
+
+class EnsureDirErrorTest(CoverageTest):
+    """Tests of the errors when an output directory can't be created."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        # A file where a directory is needed.
+        self.make_file("blocker", "")
+
+    def blocked_msg(self, purpose: str) -> str:
+        """The start of the error message for a blocked directory."""
+        return re.escape(f"Couldn't create directory {os.path.abspath('blocker')!r} for {purpose}")
+
+    def measured_cov(self) -> Coverage:
+        """Make a Coverage object with some data to report."""
+        self.make_file("prog.py", "a = 1\n")
+        cov = coverage.Coverage()
+        self.start_import_stop(cov, "prog")
+        return cov
+
+    def test_data_file(self) -> None:
+        cov = coverage.Coverage(data_file="blocker/.coverage")
+        data_file = os.path.abspath("blocker/.coverage")
+        with pytest.raises(CoverageException, match=self.blocked_msg(f"data file {data_file!r}")):
+            cov.load()
+
+    def test_xml_report(self) -> None:
+        cov = self.measured_cov()
+        out_file = os.path.abspath("blocker/out.xml")
+        with pytest.raises(CoverageException, match=self.blocked_msg(f"XML report {out_file!r}")):
+            cov.xml_report(outfile="blocker/out.xml")
+
+    def test_html_report(self) -> None:
+        cov = self.measured_cov()
+        with pytest.raises(CoverageException, match=self.blocked_msg("HTML report:")):
+            cov.html_report(directory="blocker")
+
+    def test_annotate(self) -> None:
+        cov = self.measured_cov()
+        with pytest.raises(CoverageException, match=self.blocked_msg("annotated files:")):
+            cov.annotate(directory="blocker")
