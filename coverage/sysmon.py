@@ -173,7 +173,6 @@ else:
 class CodeInfo:
     """The information we want about each code object."""
 
-    tracing: bool
     file_data: TTraceFileData | None
     byte_to_line: dict[TOffset, TLineNo] | None
 
@@ -214,8 +213,7 @@ class SysMonitor(Tracer):
 
         # Map id(code_object) -> CodeInfo
         self.code_infos: dict[int, CodeInfo] = {}
-        # A list of code_objects, just to keep them alive so that id's are
-        # useful as identity.
+        # Keep traced code objects alive so that their id's are useful as identity.
         self.code_objects: list[CodeType] = []
 
         # Map filename:__name__ -> set(id(code_object))
@@ -276,8 +274,7 @@ class SysMonitor(Tracer):
             # If we are restarting, set the local events again on the code we
             # already trace: Python 3.14 clears them in free_tool_id().
             for code in self.code_objects:
-                if self.code_infos[id(code)].tracing:
-                    sys_monitoring.set_local_events(self.myid, code, local_events)
+                sys_monitoring.set_local_events(self.myid, code, local_events)
 
     @panopticon()
     def stop(self) -> None:
@@ -346,14 +343,7 @@ class SysMonitor(Tracer):
             return DISABLE
 
         # Entering a new frame.  Decide if we should trace in this file.
-        code_info = self.code_infos.get(id(code))
-        tracing_code: bool | None = None
-        file_data: TTraceFileData | None = None
-        if code_info is not None:
-            tracing_code = code_info.tracing
-            file_data = code_info.file_data
-
-        if tracing_code is None:
+        if id(code) not in self.code_infos:
             filename = code.co_filename
             disp = self.should_trace_cache.get(filename)
             if disp is None:
@@ -366,45 +356,40 @@ class SysMonitor(Tracer):
                 disp = self.should_trace(filename, frame)  # type: ignore[arg-type]
                 self.should_trace_cache[filename] = disp
 
-            tracing_code = disp.trace
-            if tracing_code:
-                tracename = disp.source_filename
-                assert tracename is not None
-                self.lock_data()
-                try:
-                    if tracename not in self.data:
-                        self.data[tracename] = set()
-                finally:
-                    self.unlock_data()
-                file_data = self.data[tracename]
-                # byte_to_line is only read by the arc callbacks
-                b2l = bytes_to_lines(code) if self.trace_arcs else None
-            else:
-                file_data = None
-                b2l = None
+            if not disp.trace:
+                return DISABLE
 
-            code_info = CodeInfo(
-                tracing=tracing_code,
+            tracename = disp.source_filename
+            assert tracename is not None
+            self.lock_data()
+            try:
+                if tracename not in self.data:
+                    self.data[tracename] = set()
+            finally:
+                self.unlock_data()
+            file_data = self.data[tracename]
+            # byte_to_line is only read by the arc callbacks
+            b2l = bytes_to_lines(code) if self.trace_arcs else None
+
+            self.code_infos[id(code)] = CodeInfo(
                 file_data=file_data,
                 byte_to_line=b2l,
                 branch_resolver=None,
             )
-            self.code_infos[id(code)] = code_info
             self.code_objects.append(code)
 
-            if tracing_code:
-                if self.stats is not None:
-                    self.stats["start_tracing"] += 1
-                with self.lock:
-                    if self.sysmon_on:
-                        assert sys_monitoring is not None
-                        sys_monitoring.set_local_events(self.myid, code, self.local_events())
+            if self.stats is not None:
+                self.stats["start_tracing"] += 1
+            with self.lock:
+                if self.sysmon_on:
+                    assert sys_monitoring is not None
+                    sys_monitoring.set_local_events(self.myid, code, self.local_events())
 
-                        if LOG:  # pragma: debugging
-                            if code.co_filename not in {"<string>"}:
-                                self.filename_code_ids[f"{code.co_filename}:{code.co_name}"].add(
-                                    id(code)
-                                )
+                    if LOG:  # pragma: debugging
+                        if code.co_filename not in {"<string>"}:
+                            self.filename_code_ids[f"{code.co_filename}:{code.co_name}"].add(
+                                id(code)
+                            )
 
         return DISABLE
 
