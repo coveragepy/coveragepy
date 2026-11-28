@@ -429,7 +429,7 @@ class PythonParser:
         for missing_cause_msg, action_msg in fragment_pairs:
             action_msg = self._finish_action_msg(action_msg, end)
             msg = f"line {start} didn't {action_msg}"
-            if missing_cause_msg is not None:
+            if missing_cause_msg:
                 msg += f" because {missing_cause_msg.format(lineno=start)}"
 
             msgs.append(msg)
@@ -1203,7 +1203,10 @@ class AstArcAnalyzer:
             if exits:
                 # The finally clause's exits are only exits for the try block
                 # as a whole if the try block had some exits to begin with.
-                exits = final_exits
+                # A pending exception or return can prevent an exit even if
+                # its condition was met. Don't attribute a missing exit solely
+                # to a condition at the end of the finally clause.
+                exits = {ArcStart(xit.lineno) for xit in final_exits}
 
         return exits
 

@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import glob
 import importlib.util
 import inspect
 import itertools
@@ -216,10 +217,26 @@ class InOrOut:
         self.source_pkgs: list[str] = list(config.source_pkgs)
         self.source_dirs: list[str] = list(config.source_dirs)
         for src in config.source or []:
-            if os.path.isdir(src):
-                self.source_dirs.append(src)
+            # `glob.has_magic` is not a documented function in `glob`, so
+            # detect a pattern with the documented `glob.escape`: it escapes
+            # exactly the magic characters, so the result differs only when
+            # the entry contains a pattern.
+            if glob.escape(src) != src:
+                # A glob pattern in `source`: expand it to the paths it
+                # matches, and classify each match like a literal entry.
+                matches = sorted(glob.glob(src, recursive=True))
+                if not matches:
+                    self.warn(
+                        f"Source glob pattern {src!r} matched no files or directories.",
+                        slug="source-glob-no-match",
+                    )
             else:
-                self.source_pkgs.append(src)
+                matches = [src]
+            for path in matches:
+                if os.path.isdir(path):
+                    self.source_dirs.append(path)
+                else:
+                    self.source_pkgs.append(path)
 
         # Canonicalize everything in `source_dirs`.
         # Also confirm that they actually are directories, and not a file system root.

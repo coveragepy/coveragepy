@@ -53,7 +53,7 @@ def render_report(
         # Ensure that the output directory is created; done here because this
         # report pre-opens the output file.  HtmlReporter does this on its own
         # because its task is more complex, being multiple files.
-        ensure_dir_for_file(output_path)
+        ensure_dir_for_file(output_path, reporter.report_type)
         outfile = open(output_path, "w", encoding="utf-8")
         file_to_close = outfile
         delete_file = True

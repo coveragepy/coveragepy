@@ -285,6 +285,17 @@ class CoverageDataTest(CoverageTest):
         covdata.set_query_contexts(["other"])
         assert covdata.lines("a.py") == []
 
+    def test_overlapping_lines_across_contexts(self) -> None:
+        covdata = DebugCoverageData()
+        covdata.set_context("test_a")
+        covdata.add_lines({"a.py": {1, 8}})
+        covdata.set_context("test_b")
+        covdata.add_lines({"a.py": {8, 65}})
+
+        assert_count_equal(covdata.lines("a.py"), [1, 8, 65])
+        covdata.set_query_context("test_a")
+        assert_count_equal(covdata.lines("a.py"), [1, 8])
+
     def test_contexts_by_lineno_with_lines(self) -> None:
         covdata = DebugCoverageData()
         covdata.set_context("test_a")

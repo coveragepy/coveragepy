@@ -117,18 +117,30 @@ def file_be_gone(path: str) -> None:
             raise
 
 
-def ensure_dir(directory: str) -> None:
+def ensure_dir(directory: str, purpose: str) -> None:
     """Make sure the directory exists.
+
+    `purpose` describes what the directory is for, to use in an error message
+    if the directory can't be created.
 
     If `directory` is None or empty, do nothing.
     """
     if directory:
-        os.makedirs(directory, exist_ok=True)
+        try:
+            os.makedirs(directory, exist_ok=True)
+        except OSError as err:
+            raise CoverageException(
+                f"Couldn't create directory {os.path.abspath(directory)!r} for {purpose}: {err}"
+            ) from err
 
 
-def ensure_dir_for_file(path: str) -> None:
-    """Make sure the directory for the path exists."""
-    ensure_dir(os.path.dirname(path))
+def ensure_dir_for_file(path: str, purpose: str) -> None:
+    """Make sure the directory for the file `path` exists.
+
+    `purpose` describes what the file is, to use in an error message if the
+    directory can't be created.
+    """
+    ensure_dir(os.path.dirname(path), f"{purpose} {os.path.abspath(path)!r}")
 
 
 class Hasher:
@@ -299,20 +311,16 @@ def import_local_file(modname: str, modfile: str | None = None) -> ModuleType:
 def _human_key(s: str) -> tuple[list[str | int], str]:
     """Turn a string into a list of string and number chunks.
 
-    "z23a" -> (["z", 23, "a"], "z23a")
+    "z23a" -> (["z", 35, "a"], "z23a")
 
-    The original string is appended as a last value to ensure the
-    key is unique enough so that "x1y" and "x001y" can be distinguished.
+    Runs of digits are converted using base 16 because it has no digit limit,
+    and the numbers will sort the same as if they were interpreted as base 10.
+    The original string is appended as a last value to ensure the key is unique
+    enough so that "x1y" and "x001y" can be distinguished.
     """
-
-    def tryint(s: str) -> str | int:
-        """If `s` is a number, return an int, else `s` unchanged."""
-        try:
-            return int(s)
-        except ValueError:
-            return s
-
-    return ([tryint(c) for c in re.split(r"(\d+)", s)], s)
+    parts = re.split(r"(\d+)", s)
+    split_key = [(int(p, base=16) if i % 2 else p) for i, p in enumerate(parts)]
+    return (split_key, s)
 
 
 def human_sorted(strings: Iterable[str]) -> list[str]:

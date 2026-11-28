@@ -38,7 +38,10 @@ all code, unless it is part of the Python standard library.
 You can specify source to measure with the ``--source`` command-line switch, or
 the ``[run] source`` configuration value.  The value is a comma- or
 newline-separated list of directories or importable names (packages or
-modules).
+modules).  A directory entry can be a glob pattern (for example,
+``packages/*/src``): it is expanded to the directories it matches when
+measurement starts, so new packages are picked up without editing the
+configuration.  A pattern that matches nothing produces a warning.
 
 If the source option is specified, only code in those locations will be
 measured.  Specifying the source option also enables coverage.py to report on

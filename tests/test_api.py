@@ -389,6 +389,35 @@ class ApiTest(CoverageTest):
         last = self.last_line_squeezed(self.stdout())
         assert "TOTAL 1 1 0%" == last
 
+    def test_source_glob_expands_to_directories(self) -> None:
+        # https://github.com/coveragepy/coveragepy/issues/2400
+        # A glob pattern in `source` matches directories, including ones
+        # with files that were never executed.
+        self.make_file("packages/pkg_a/src/__init__.py", "")
+        self.make_file("packages/pkg_a/src/mod_a.py", "print('a')")
+        self.make_file("packages/pkg_b/src/__init__.py", "")
+        self.make_file("packages/pkg_b/src/mod_b.py", "print('b')")
+        self.make_file(
+            "main.py",
+            "import sys\nsys.path.insert(0, 'packages/pkg_a/src')\nimport mod_a\n",
+        )
+        cov = coverage.Coverage(source=["packages/*/src"])
+        self.start_import_stop(cov, "main")
+        cov.report()
+        out = self.stdout()
+        assert "mod_a.py" in out
+        assert "mod_b.py" in out
+        # mod_b was never imported, but the glob found its directory, so
+        # it is reported at 0%.
+        mod_b_line = next(line for line in out.splitlines() if "mod_b.py" in line)
+        assert mod_b_line.rstrip().endswith("0%")
+
+    def test_source_glob_no_match_warns(self) -> None:
+        cov = coverage.Coverage(source=["nothing/*/src"])
+        with self.assert_warnings(cov, ["matched no files or directories"]):
+            cov.start()
+        cov.stop()
+
     def make_code1_code2(self) -> None:
         """Create the code1.py and code2.py files."""
         self.make_file(
@@ -1770,3 +1799,45 @@ class CombiningTest(CoverageTest):
         data = coverage.CoverageData()
         data.read()
         assert {os_sep("sub/myprog.py")} == data.measured_files()
+
+
+class EnsureDirErrorTest(CoverageTest):
+    """Tests of the errors when an output directory can't be created."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        # A file where a directory is needed.
+        self.make_file("blocker", "")
+
+    def blocked_msg(self, purpose: str) -> str:
+        """The start of the error message for a blocked directory."""
+        return re.escape(f"Couldn't create directory {os.path.abspath('blocker')!r} for {purpose}")
+
+    def measured_cov(self) -> Coverage:
+        """Make a Coverage object with some data to report."""
+        self.make_file("prog.py", "a = 1\n")
+        cov = coverage.Coverage()
+        self.start_import_stop(cov, "prog")
+        return cov
+
+    def test_data_file(self) -> None:
+        cov = coverage.Coverage(data_file="blocker/.coverage")
+        data_file = os.path.abspath("blocker/.coverage")
+        with pytest.raises(CoverageException, match=self.blocked_msg(f"data file {data_file!r}")):
+            cov.load()
+
+    def test_xml_report(self) -> None:
+        cov = self.measured_cov()
+        out_file = os.path.abspath("blocker/out.xml")
+        with pytest.raises(CoverageException, match=self.blocked_msg(f"XML report {out_file!r}")):
+            cov.xml_report(outfile="blocker/out.xml")
+
+    def test_html_report(self) -> None:
+        cov = self.measured_cov()
+        with pytest.raises(CoverageException, match=self.blocked_msg("HTML report:")):
+            cov.html_report(directory="blocker")
+
+    def test_annotate(self) -> None:
+        cov = self.measured_cov()
+        with pytest.raises(CoverageException, match=self.blocked_msg("annotated files:")):
+            cov.annotate(directory="blocker")
