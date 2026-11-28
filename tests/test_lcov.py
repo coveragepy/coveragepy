@@ -13,6 +13,7 @@ import pytest
 
 import coverage
 from coverage import env
+from coverage.exceptions import NoDataError
 from tests.coveragetest import CoverageTest
 from tests.helpers import re_lines_text
 
@@ -371,6 +372,29 @@ class LcovTest(CoverageTest):
         expected_result = ""
         actual_result = self.get_lcov_report_content()
         assert expected_result == actual_result
+
+    def test_empty_data_file(self) -> None:
+        # Nothing measured: the data file is empty, so the LCOV file is too,
+        # instead of a "No data to report" error.
+        # https://github.com/coveragepy/coveragepy/issues/2054
+        self.make_file("nopython/README.txt", "No Python files here.")
+        self.make_file("main.py", "a = 1\n")
+        cov = coverage.Coverage(source=["nopython"])
+        with self.assert_warnings(cov, ["No data was collected"]):
+            self.start_import_stop(cov, "main")
+            cov.save()
+        self.assert_exists(".coverage")
+        self.command_line("lcov")
+        assert self.get_lcov_report_content() == ""
+
+    def test_no_files_to_report(self) -> None:
+        # Data that the report filters out entirely is still an error.
+        self.create_initial_files()
+        cov = coverage.Coverage(source=".")
+        self.start_import_stop(cov, "test_file")
+        with pytest.raises(NoDataError, match="No data to report."):
+            cov.lcov_report(include=["nothing.py"])
+        self.assert_doesnt_exist("coverage.lcov")
 
     def test_excluded_lines(self) -> None:
         self.make_file(

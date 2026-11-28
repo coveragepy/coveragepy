@@ -16,7 +16,8 @@
 LCOV reporting: ``coverage lcov``
 ---------------------------------
 
-The **lcov** command writes coverage data to a "coverage.lcov" file.
+The **lcov** command writes coverage data to a "coverage.lcov" file.  If no
+data was measured, the file is still written, but empty.
 
 .. [[[cog show_help("lcov") ]]]
 .. code::
