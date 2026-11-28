@@ -129,6 +129,23 @@ class LcovTest(CoverageTest):
         actual_result = self.get_lcov_report_content()
         assert expected_result == actual_result
 
+    def test_line_checksums_with_unicode_line_separator(self) -> None:
+        self.make_file("main_file.py", 'value = "a\u2028b"\nprint(value)\n')
+        self.make_file(".coveragerc", "[lcov]\nline_checksums = true\n")
+        cov = coverage.Coverage()
+        self.start_import_stop(cov, "main_file")
+        cov.lcov_report()
+
+        expected_result = textwrap.dedent("""\
+            SF:main_file.py
+            DA:1,1,XJ6vwDdW8Gx/D1t/2Y929Q
+            DA:2,1,402PC8YYvdo0KyTUGD+vrA
+            LF:2
+            LH:2
+            end_of_record
+            """)
+        assert expected_result == self.get_lcov_report_content()
+
     @pytest.mark.skipif(env.WINDOWS, reason="Newlines are disallowed in Windows filenames.")
     def test_newline_in_filename_does_not_inject_records(self) -> None:
         # A POSIX file name may contain a newline. Written verbatim into the
