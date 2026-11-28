@@ -5,16 +5,30 @@
 
 from __future__ import annotations
 
+import gc
+import weakref
 from unittest import mock
 
 import pytest
 
-from coverage import env
+from coverage import Coverage, env
 from coverage.sysmon import SysMonitor, compute_multiline_map
+from tests import testenv
 from tests.coveragetest import CoverageTest
 
 MULTI_PY = "x = (\n    1 +\n    2\n)\ny = 5\n"
 MULTI_MAP = {1: 1, 2: 1, 3: 1, 4: 1}
+
+
+@pytest.mark.skipif(not testenv.SYS_MON, reason="Requires the sysmon core")
+def test_untraced_code_is_not_retained() -> None:
+    with Coverage(data_file=None).collect():
+        code = compile("x = 1", "<generated>", "exec")
+        code_ref = weakref.ref(code)
+        exec(code, {})
+        del code
+        gc.collect()
+        assert code_ref() is None
 
 
 class ComputeMultilineMapTest(CoverageTest):

@@ -1,0 +1,5 @@
+- Fix: the sysmon core no longer keeps code objects alive for code it does not
+  trace. This reduces memory use in programs that compile code at runtime.
+  Fixes `issue 2421`_.
+
+.. _issue 2421: https://github.com/coveragepy/coveragepy/issues/2421
